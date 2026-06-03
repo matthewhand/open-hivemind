@@ -260,7 +260,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                 size="sm"
                 onClick={() => handleExportSingleBot(previewBot)}
                 className="btn-square"
-                aria-label="Export bot config"
+                aria-label={`Export ${previewBot.name} config`}
               >
                 <Download className="w-3 h-3" />
               </Button>
@@ -271,7 +271,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                 size="sm"
                 onClick={() => handleToggleBotStatus(previewBot)}
                 className={`btn-square ${previewBot.status === 'active' ? 'text-error border-error' : ''}`}
-                aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+                aria-label={previewBot.status === 'active' ? `Deactivate ${previewBot.name}` : `Activate ${previewBot.name}`}
               >
                 {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </Button>

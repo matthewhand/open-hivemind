@@ -21,6 +21,7 @@ import { randomUUID } from 'crypto';
 import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents } from '@src/events/types';
+import { AnomalyDetectionService } from '../services/AnomalyDetectionService';
 
 const debug = Debug('app:pipeline-tracer');
 
@@ -86,12 +87,19 @@ function closeSpan(span: Span, status: 'ok' | 'error' = 'ok'): void {
 export type TraceCompletedCallback = (trace: Trace) => void;
 
 export class PipelineTracer {
+  private static instance: PipelineTracer | null = null;
   private activeTraces = new Map<string, Trace>();
   private completedTraces: Trace[] = [];
   private maxCompleted = 100;
   private traceCompletedCallbacks: TraceCompletedCallback[] = [];
 
-  constructor(private bus: MessageBus) {}
+  constructor(private bus: MessageBus) {
+    PipelineTracer.instance = this;
+  }
+
+  public static getInstance(): PipelineTracer | null {
+    return PipelineTracer.instance;
+  }
 
   /**
    * Register a callback to be invoked whenever a trace completes.
@@ -172,6 +180,14 @@ export class PipelineTracer {
 
     const closing = this.findSpan(trace, closeName);
     if (closing) {
+      // Capture stage-specific metadata from ctx.metadata
+      const stageMeta = ctx.metadata[closeName];
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          closing.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(closing);
       debug('Span %s closed (%dms)', closeName, closing.durationMs);
     }
@@ -192,6 +208,14 @@ export class PipelineTracer {
 
     const decision = this.findSpan(trace, 'decision');
     if (decision) {
+      // Capture decision metadata
+      const stageMeta = ctx.metadata.decision;
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          decision.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(decision);
       decision.attributes.skipped = true;
       decision.attributes.reason = ctx.reason;
@@ -211,6 +235,14 @@ export class PipelineTracer {
 
     const sendSpan = this.findSpan(trace, 'send');
     if (sendSpan) {
+      // Capture send metadata
+      const stageMeta = ctx.metadata.send;
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          sendSpan.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(sendSpan);
       debug('Span send closed (%dms)', sendSpan.durationMs);
     }
@@ -367,5 +399,25 @@ export class PipelineTracer {
         debug('TraceCompleted callback error: %O', err);
       }
     }
+
+    // Report to AnomalyDetectionService
+    try {
+      const ads = AnomalyDetectionService.getInstance();
+      ads.addDataPoint('responseTime', trace.totalDurationMs ?? 0, trace.traceId);
+      if (trace.rootSpan.status === 'error') {
+        ads.addDataPoint('errors', 1, trace.traceId);
+      } else {
+        ads.addDataPoint('errors', 0, trace.traceId);
+      }
+    } catch (err) {
+      debug('Failed to report metrics to AnomalyDetectionService: %O', err);
+    }
   }
+}
+
+/**
+ * Helper to get the current global tracer instance
+ */
+export function getActiveTracer(): PipelineTracer | null {
+  return PipelineTracer.getInstance();
 }

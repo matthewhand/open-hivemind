@@ -129,7 +129,7 @@ test.describe('Plugin Security Page', () => {
 
     // Refresh button should exist
     const refreshBtn = page.getByRole('button', { name: /refresh/i });
-    if (await refreshBtn.count() > 0) {
+    if ((await refreshBtn.count()) > 0) {
       await expect(refreshBtn).toBeEnabled();
     }
   });

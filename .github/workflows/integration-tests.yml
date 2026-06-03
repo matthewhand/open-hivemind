@@ -7,6 +7,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: integration-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integration-api:
     runs-on: ubuntu-latest
@@ -25,7 +29,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -43,7 +47,8 @@ jobs:
             --testTimeout=15000 \
             --verbose \
             --ci \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests
 
   integration-monitoring:
     runs-on: ubuntu-latest
@@ -62,7 +67,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -99,7 +104,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -113,7 +118,9 @@ jobs:
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/webhook/ \
             tests/integration/auth/ \
+            --passWithNoTests \
             --testTimeout=15000 \
             --verbose \
             --ci \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests

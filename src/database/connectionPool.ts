@@ -2,8 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { SQLiteWrapper as Database } from './sqliteWrapper';
-import type { DatabaseConfig } from './types';
+import { IDatabase as Database, type DatabaseConfig } from './types';
 
 const debug = Debug('app:ConnectionPool');
 
@@ -59,7 +58,9 @@ export class ConnectionPool {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = new Database(dbPath);
+        // Import Database dynamically or use SQLiteWrapper, IDatabase is an interface so it can't be 'new'ed directly like this.
+        const { SQLiteWrapper } = require('./sqliteWrapper');
+        this.db = new SQLiteWrapper(dbPath);
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,

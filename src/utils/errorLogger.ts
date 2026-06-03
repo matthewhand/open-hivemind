@@ -6,11 +6,12 @@
  */
 
 import Debug from 'debug';
+import type { Request } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
-const debug = Debug('app:utils:errorLogger');
+// const debug = Debug('app:utils:errorLogger');
 
 /**
  * Error log entry structure
@@ -95,6 +96,13 @@ export interface LoggerConfig {
   maxFiles?: number;
   enableMetrics: boolean;
   enableTracing: boolean;
+}
+
+interface RecoveryStrategy {
+  canRecover: boolean;
+  retryDelay?: number;
+  maxRetries?: number;
+  recoverySteps?: string[];
 }
 
 /**
@@ -214,12 +222,23 @@ export class ErrorLogger {
         error &&
         typeof error === 'object' &&
         'getRecoveryStrategy' in error &&
-        typeof (error as any).getRecoveryStrategy === 'function'
+        typeof (error as Record<string, unknown>).getRecoveryStrategy === 'function'
           ? {
-              canRecover: (error as any).getRecoveryStrategy().canRecover,
-              retryDelay: (error as any).getRecoveryStrategy().retryDelay,
-              maxRetries: (error as any).getRecoveryStrategy().maxRetries,
-              steps: (error as any).getRecoveryStrategy().recoverySteps,
+              canRecover: (
+                error as { getRecoveryStrategy: () => RecoveryStrategy }
+              ).getRecoveryStrategy().canRecover,
+
+              retryDelay: (
+                error as { getRecoveryStrategy: () => RecoveryStrategy }
+              ).getRecoveryStrategy().retryDelay,
+
+              maxRetries: (
+                error as { getRecoveryStrategy: () => RecoveryStrategy }
+              ).getRecoveryStrategy().maxRetries,
+
+              steps: (
+                error as { getRecoveryStrategy: () => RecoveryStrategy }
+              ).getRecoveryStrategy().recoverySteps,
             }
           : undefined,
     };
@@ -277,12 +296,12 @@ export class ErrorLogger {
   private getErrorType(error: HivemindError): string {
     if (error && typeof error === 'object') {
       // Check for source property first (for frontend errors)
-      if ('source' in error && error.source === 'frontend') {
+      if ('source' in error && (error as any).source === 'frontend') {
         return 'frontend';
       }
       // Check for type property
-      if ('type' in error && error.type) {
-        return String(error.type);
+      if ('type' in error && (error as any).type) {
+        return String((error as any).type);
       }
       // Check for other properties that might indicate type
       if ('name' in error && error.name) {
@@ -318,13 +337,13 @@ export class ErrorLogger {
         console.info(message, meta);
         break;
       case 'warn':
-        debug('WARN:', message, meta);
+        this.debug('WARN:', message, meta);
         break;
       case 'error':
       case 'fatal':
-        debug('ERROR:', message, meta);
+        this.debug('ERROR:', message, meta);
         if (logEntry.error.stack) {
-          debug('ERROR:', logEntry.error.stack);
+          this.debug('ERROR:', logEntry.error.stack);
         }
         break;
     }
@@ -341,7 +360,7 @@ export class ErrorLogger {
     // In a real implementation, this would write to a file
     // For now, we'll use console.log with a file-like format
     const logLine = JSON.stringify(logEntry) + '\n';
-    debug(`[FILE:${level.toUpperCase()}]`, logLine);
+    this.debug(`[FILE:${level.toUpperCase()}]`, logLine);
   }
 
   /**
@@ -353,12 +372,14 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-    (process as any).emit('hivemind:log', {
-      type: 'error',
-      level,
-      entry: logEntry,
-    });
+    process.emit(
+      'hivemind:log' as any,
+      {
+        type: 'error',
+        level,
+        entry: logEntry,
+      } as any
+    );
   }
 
   /**
@@ -404,13 +425,15 @@ export class ErrorLogger {
     if (count > 10 && count % 10 === 0) {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-      (process as any).emit('hivemind:alert', {
-        type: 'error_spike',
-        errorType,
-        count,
-        timestamp: new Date().toISOString(),
-      });
+      process.emit(
+        'hivemind:alert' as any,
+        {
+          type: 'error_spike',
+          errorType,
+          count,
+          timestamp: new Date().toISOString(),
+        } as any
+      );
     }
 
     // Check for repeated errors from same correlation ID
@@ -421,13 +444,15 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-      (process as any).emit('hivemind:alert', {
-        type: 'high_error_rate',
-        count: recentErrors,
-        timeframe: '1 minute',
-        timestamp: new Date().toISOString(),
-      });
+      process.emit(
+        'hivemind:alert' as any,
+        {
+          type: 'high_error_rate',
+          count: recentErrors,
+          timeframe: '1 minute',
+          timestamp: new Date().toISOString(),
+        } as any
+      );
     }
   }
 
@@ -569,17 +594,18 @@ export function logError(error: HivemindError, context: ErrorContext): void {
 /**
  * Create error context from Express request
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express request with arbitrary middleware augmentation
-export function createErrorContext(req: any): ErrorContext {
+export function createErrorContext(req: Request): ErrorContext {
+  const reqAny = req as any;
   return {
-    correlationId: req.correlationId || req.headers['x-correlation-id'] || 'unknown',
+    correlationId:
+      (reqAny.correlationId as string) || (req.headers['x-correlation-id'] as string) || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: req.user?.id || req.user?.sub,
+    userId: (reqAny.user?.id as string) || (reqAny.user?.sub as string),
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection.remoteAddress,
-    duration: req.startTime ? Date.now() - req.startTime : undefined,
+    ip: req.ip || req.socket.remoteAddress,
+    duration: reqAny.startTime ? Date.now() - (reqAny.startTime as number) : undefined,
     body: req.body,
     params: req.params,
     query: req.query,
@@ -589,10 +615,10 @@ export function createErrorContext(req: any): ErrorContext {
 /**
  * Error logging middleware
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express middleware with augmented request
-export function errorLoggingMiddleware(req: any, _res: unknown, next: () => void): void {
+export function errorLoggingMiddleware(req: Request, _res: unknown, next: () => void): void {
   // Add error logger to request object
-  req.errorLogger = errorLogger;
+
+  (req as any).errorLogger = errorLogger;
   next();
 }
 

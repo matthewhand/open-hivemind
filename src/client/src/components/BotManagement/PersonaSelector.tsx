@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import type { Persona, PersonaCategory } from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';
 import Card from '../DaisyUI/Card';
@@ -13,6 +14,17 @@ import {
   XCircle as ClearIcon,
 } from 'lucide-react';
 import PersonaChip from './PersonaChip';
+
+const categories: Array<{ value: PersonaCategory | 'all'; label: string; color: string }> = [
+  { value: 'all', label: 'All Personas', color: 'neutral' },
+  { value: 'general', label: 'General', color: 'neutral' },
+  { value: 'customer_service', label: 'Customer Service', color: 'primary' },
+  { value: 'creative', label: 'Creative', color: 'secondary' },
+  { value: 'technical', label: 'Technical', color: 'accent' },
+  { value: 'educational', label: 'Educational', color: 'info' },
+  { value: 'entertainment', label: 'Entertainment', color: 'warning' },
+  { value: 'professional', label: 'Professional', color: 'success' },
+];
 
 interface PersonaSelectorProps {
   personas: Persona[];
@@ -37,18 +49,12 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PersonaCategory | 'all'>('all');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useLocalStorage('ui.personaSelector.isExpanded', false);
 
-  const categories: Array<{ value: PersonaCategory | 'all'; label: string; color: string }> = [
-    { value: 'all', label: 'All Personas', color: 'neutral' },
-    { value: 'general', label: 'General', color: 'neutral' },
-    { value: 'customer_service', label: 'Customer Service', color: 'primary' },
-    { value: 'creative', label: 'Creative', color: 'secondary' },
-    { value: 'technical', label: 'Technical', color: 'accent' },
-    { value: 'educational', label: 'Educational', color: 'info' },
-    { value: 'entertainment', label: 'Entertainment', color: 'warning' },
-    { value: 'professional', label: 'Professional', color: 'success' },
-  ];
+  // Performance optimization: pre-compute map for O(1) category color lookups instead of calling .find() inside .map() loops
+  const categoryColorMap = useMemo(() => {
+    return Object.fromEntries(categories.map(c => [c.value, c.color]));
+  }, []);
 
   // Static class lookup maps (Tailwind JIT-safe — avoids dynamic `bg-${color}` anti-pattern)
   const COLOR_BTN_CLASSES: Record<string, { active: string; dot: string }> = {
@@ -192,7 +198,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           <div
                             className={`
                               w-2 h-2 rounded-full
-                              ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                              ${getCategoryDotClass(categoryColorMap[persona.category] || 'neutral')}
                             `}
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
@@ -337,7 +343,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       <div
                         className={`
                           w-3 h-3 rounded-full
-                          ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                          ${getCategoryDotClass(categoryColorMap[persona.category] || 'neutral')}
                         `}
                       />
                       <h4 className="font-semibold">{persona.name}</h4>

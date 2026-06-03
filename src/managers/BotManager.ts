@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
@@ -7,6 +8,7 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import ProviderConfigManager from '@config/ProviderConfigManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
+import type { MCPConfig } from '../mcp/MCPService';
 import { webUIStorage } from '../storage/webUIStorage';
 import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
@@ -14,6 +16,9 @@ import { performSingleBotHealthCheck, type BotHealthResult } from './botHealthCh
 import {
   BotRunningState,
   getMessengerService,
+  sendDailyStatusReport,
+  sendErrorAlertMessage,
+  sendShutdownMessage,
   sendWelcomeMessage,
   shutdownBotProvider,
   startBotById as startBotByIdHelper,
@@ -40,6 +45,7 @@ export class BotManager extends EventEmitter {
   private botsFilePath: string;
   private runningState = new BotRunningState();
   private allBotsCache: BotInstance[] | null = null;
+  private statusReportInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     super();
@@ -50,6 +56,26 @@ export class BotManager extends EventEmitter {
     // Note: loadCustomBots is now async but called from constructor
     // We'll handle initialization separately
     debug('BotManager initialized');
+
+    // Schedule periodic status reports (every 24 hours by default)
+    this.scheduleStatusReports();
+  }
+
+  /**
+   * Schedule status reports for all running bots.
+   */
+  private scheduleStatusReports(): void {
+    const intervalMs = parseInt(process.env.STATUS_REPORT_INTERVAL_MS || '86400000', 10);
+    this.statusReportInterval = setInterval(async () => {
+      const runningBots = await this.getAllBots();
+      for (const bot of runningBots) {
+        if (this.runningState.isRunning(bot.id)) {
+          await sendDailyStatusReport(bot).catch((err: Error) =>
+            debug(`Failed to send status report for ${bot.name}:`, err)
+          );
+        }
+      }
+    }, intervalMs);
   }
 
   public static async getInstance(): Promise<BotManager> {
@@ -78,9 +104,7 @@ export class BotManager extends EventEmitter {
       if (botsToDelete.length === 0) return;
 
       const customBots = await webUIStorage.getAgents();
-      const customBotIds = new Set(
-        customBots.map((b: Record<string, unknown>) => b.id as string)
-      );
+      const customBotIds = new Set(customBots.map((b: Record<string, unknown>) => b.id as string));
 
       const customIdsToDelete: string[] = [];
       const configuredNamesToDelete: string[] = [];
@@ -176,7 +200,7 @@ export class BotManager extends EventEmitter {
       // Add custom bots from web UI storage (overwriting configured bots with same ID)
       const customBots = await webUIStorage.getAgents();
       for (const bot of customBots) {
-        botMap.set(bot.id, bot as BotInstance);
+        botMap.set(bot.id, bot as unknown as BotInstance);
       }
 
       const botInstances = Array.from(botMap.values());
@@ -192,25 +216,29 @@ export class BotManager extends EventEmitter {
   /**
    * Helper to map a raw configuration object to a BotInstance
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private mapConfigToBotInstance(bot: Record<string, any>): BotInstance {
+  private mapConfigToBotInstance(bot: Record<string, unknown>): BotInstance {
+    const name = String(bot.name || 'unknown');
     return {
       // Use bot name as stable ID - random UUIDs break getBot() lookups
-      id: bot.name,
-      name: bot.name,
-      messageProvider: bot.messageProvider,
-      llmProvider: bot.llmProvider,
+      id: name,
+      name: name,
+
+      messageProvider: String(bot.messageProvider || 'unknown') as any,
+
+      llmProvider: String(bot.llmProvider || 'unknown') as any,
       isActive: true, // Configured bots are considered active
       createdAt: new Date().toISOString(),
       lastModified: new Date().toISOString(),
       config: sanitizeConfig(bot),
-      persona: bot.persona || 'default',
-      systemInstruction: bot.systemInstruction,
-      mcpServers: bot.mcpServers || [],
-      mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-      envOverrides: checkBotEnvOverrides(bot.name),
-      messageProviderInstanceId: this.providerConfigManager.getMessageProviderIdForBot(bot.name),
-      llmProviderInstanceId: this.providerConfigManager.getLlmProviderIdForBot(bot.name),
+      persona: (bot.persona as string) || 'default',
+
+      systemInstruction: bot.systemInstruction as string,
+      mcpServers: (bot.mcpServers as MCPConfig[]) || [],
+
+      mcpGuard: (bot.mcpGuard as any) || { enabled: false, type: 'owner' },
+      envOverrides: checkBotEnvOverrides(name),
+      messageProviderInstanceId: this.providerConfigManager.getMessageProviderIdForBot(name),
+      llmProviderInstanceId: this.providerConfigManager.getLlmProviderIdForBot(name),
     };
   }
 
@@ -220,8 +248,8 @@ export class BotManager extends EventEmitter {
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {
       // Check custom bots first
-      if (this.customBots.has(botId)) {
-        const bot = this.customBots.get(botId)!;
+      const bot = this.customBots.get(botId);
+      if (bot) {
         debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
         return bot;
       }
@@ -231,7 +259,7 @@ export class BotManager extends EventEmitter {
 
       if (configuredBot) {
         debug(`Retrieved configured bot: ${configuredBot.name} (${botId})`);
-        return this.mapConfigToBotInstance(configuredBot);
+        return this.mapConfigToBotInstance(configuredBot as Record<string, unknown>);
       }
 
       debug(`Bot not found: ${botId}`);
@@ -270,10 +298,11 @@ export class BotManager extends EventEmitter {
       };
 
       // Store sensitive configuration securely
+
       await storeSecureConfig(this.secureConfigManager, botId, request.config || {});
 
       // Add to web UI storage
-      await webUIStorage.saveAgent(botInstance);
+      await webUIStorage.saveAgent(botInstance as any);
       this.invalidateCache();
 
       debug(`Created new bot: ${request.name} (${botId})`);
@@ -388,7 +417,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
-      await webUIStorage.saveAgent(updatedBot);
+      await webUIStorage.saveAgent(updatedBot as any);
       this.invalidateCache();
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
@@ -455,12 +484,12 @@ export class BotManager extends EventEmitter {
    * Start a bot instance
    */
   public async startBot(botId: string): Promise<boolean> {
-    try {
-      const bot = await this.getBot(botId);
-      if (!bot) {
-        throw new Error('Bot not found');
-      }
+    const bot = await this.getBot(botId);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
 
+    try {
       // Persist enabled state to user config file
       const userConfigStore = UserConfigStore.getInstance();
       await userConfigStore.setBotDisabled(bot.name, false);
@@ -488,6 +517,11 @@ export class BotManager extends EventEmitter {
       return true;
     } catch (error: unknown) {
       debug('Error starting bot:', ErrorUtils.getMessage(error));
+      // Send error alert to channel
+      await sendErrorAlertMessage(bot, error).catch((err: Error) =>
+        debug('Failed to send error alert:', err)
+      );
+
       throw ErrorUtils.createError(
         `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
@@ -499,12 +533,12 @@ export class BotManager extends EventEmitter {
    * Stop a bot instance
    */
   public async stopBot(botId: string): Promise<boolean> {
-    try {
-      const bot = await this.getBot(botId);
-      if (!bot) {
-        throw new Error('Bot not found');
-      }
+    const bot = await this.getBot(botId);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
 
+    try {
       // Persist disabled state to user config file
       const userConfigStore = UserConfigStore.getInstance();
       await userConfigStore.setBotDisabled(bot.name, true);
@@ -517,6 +551,11 @@ export class BotManager extends EventEmitter {
         this.customBots.set(botId, updatedBot);
         await this.saveCustomBots();
       }
+
+      // Send shutdown message before actual disconnect
+      await sendShutdownMessage(bot).catch((err: Error) =>
+        debug('Failed to send shutdown message:', err)
+      );
 
       // Use integration-agnostic shutdown
       try {
@@ -552,9 +591,7 @@ export class BotManager extends EventEmitter {
       if (!botIds || botIds.length === 0) return;
       debug(`Starting ${botIds.length} bots...`);
 
-      const results = await Promise.allSettled(
-        botIds.map((id) => this.startBot(id))
-      );
+      const results = await Promise.allSettled(botIds.map((id) => this.startBot(id)));
 
       const failed = results.filter((r) => r.status === 'rejected');
       if (failed.length > 0) {
@@ -574,9 +611,7 @@ export class BotManager extends EventEmitter {
       if (!botIds || botIds.length === 0) return;
       debug(`Stopping ${botIds.length} bots...`);
 
-      const results = await Promise.allSettled(
-        botIds.map((id) => this.stopBot(id))
-      );
+      const results = await Promise.allSettled(botIds.map((id) => this.stopBot(id)));
 
       const failed = results.filter((r) => r.status === 'rejected');
       if (failed.length > 0) {
@@ -662,8 +697,10 @@ export class BotManager extends EventEmitter {
 
       const targetChannel =
         channelId ||
-        (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
-        (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId;
+        (bot.config as Record<string, { defaultChannelId?: string } | undefined>)?.slack
+          ?.defaultChannelId ||
+        (bot.config as Record<string, { defaultChannelId?: string } | undefined>)?.discord
+          ?.defaultChannelId;
       if (!targetChannel) {
         debug(`No channel specified for bot ${bot.name} history`);
         return [];
@@ -788,5 +825,12 @@ export class BotManager extends EventEmitter {
         issues: ['Health check failed to execute'],
       };
     });
+  }
+
+  /**
+   * Check if a bot is currently running.
+   */
+  public isBotRunning(botId: string): boolean {
+    return this.runningState.isRunning(botId);
   }
 }

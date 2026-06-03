@@ -33,6 +33,7 @@ async function loadWebhookRoutes(): Promise<void> {
       });
   } catch (error) {
     log('Failed to load webhook routes:', error);
+
     configureWebhookRoutes = (_app: express.Application) => {
       return;
     };
@@ -50,7 +51,7 @@ export const webhookService = {
     app: express.Application | null,
     messageService: IMessengerService | null,
     channelId: string
-  ) => {
+  ): Promise<void> => {
     if (!app) {
       app = express(); // Create a new app if none is passed
       app.use(express.json()); // Middleware to parse JSON request bodies
@@ -61,14 +62,16 @@ export const webhookService = {
 
     // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
-    if (!messageService) {
-      try {
-        configureWebhookRoutes!(app, null as unknown as IMessengerService, channelId);
-      } catch {
-        // Keep startup resilient when no message service is available
+    if (configureWebhookRoutes) {
+      if (!messageService) {
+        try {
+          configureWebhookRoutes(app, null as unknown as IMessengerService, channelId);
+        } catch {
+          // Keep startup resilient when no message service is available
+        }
+      } else {
+        configureWebhookRoutes(app, messageService as IMessengerService, channelId);
       }
-    } else {
-      configureWebhookRoutes!(app, messageService as IMessengerService, channelId);
     }
 
     log('Webhook service initialized. Ready to accept webhook requests.');

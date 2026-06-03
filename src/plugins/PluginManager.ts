@@ -5,6 +5,7 @@ import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -124,6 +125,7 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
 /**
  * Validates that a loaded module exports a well-formed manifest.
  */
+
 function validateManifest(name: string, mod: any): PluginManifest {
   const manifest: PluginManifest = mod.manifest;
 
@@ -167,13 +169,20 @@ async function readPackageVersion(pluginPath: string): Promise<string> {
 }
 
 async function deriveNameFromPath(pluginPath: string): Promise<string> {
+  let name = path.basename(pluginPath);
   try {
     const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
     const pkg = JSON.parse(content);
-    return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
-  } catch {
-    return path.basename(pluginPath);
+    if (pkg.name && typeof pkg.name === 'string') {
+      name = pkg.name.replace(/^@[^/]+\//, '');
+    }
+  } catch {}
+
+  if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+    throw new PluginValidationError(`Invalid plugin name: ${name}`);
   }
+
+  return name;
 }
 
 function exec(cmd: string, args: string[], cwd: string): void {
@@ -238,6 +247,12 @@ function validateRepoUrl(url: string): void {
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
+
+  const check = await isSafeUrl(repoUrl);
+  if (!check.safe) {
+    throw new PluginValidationError(`Security policy violation: ${check.reason}`);
+  }
+
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
@@ -418,6 +433,12 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
 
 if (!PLUGIN_SIGNING_KEY) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'CRITICAL: HIVEMIND_PLUGIN_SIGNING_KEY environment variable is required in production.'
+    );
+  }
+
   PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
   logger.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
   logger.warn('   Generated a temporary plugin signing key for this session.');
@@ -434,7 +455,10 @@ let _securityPolicy: PluginSecurityPolicy | undefined;
  */
 export function getSecurityPolicy(): PluginSecurityPolicy {
   if (!_securityPolicy) {
-    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY!);
+    if (!PLUGIN_SIGNING_KEY) {
+      throw new Error('HIVEMIND_PLUGIN_SIGNING_KEY is required but not configured');
+    }
+    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY);
   }
   return _securityPolicy;
 }

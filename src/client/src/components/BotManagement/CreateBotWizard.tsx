@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, User, Shield, Check, AlertCircle } from 'lucide-react';
+import { User, Check, AlertCircle, Wand2, Sparkles, Send, MessageSquare } from 'lucide-react';
 import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
 import StepWizard, { Step } from '../DaisyUI/StepWizard';
 import Modal from '../DaisyUI/Modal';
-import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { Alert } from '../DaisyUI/Alert';
@@ -16,14 +15,80 @@ import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
 import Select from '../DaisyUI/Select';
 import Textarea from '../DaisyUI/Textarea';
+import Mockup from '../DaisyUI/Mockup';
+import LlmTestChat from '../LlmTestChat';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
+
+/**
+ * Minimal shapes of the dynamic data this wizard consumes from `apiService`.
+ * These intentionally describe only the fields the wizard reads, so the
+ * component is decoupled from the full backend payloads while still being
+ * type-checked instead of relying on `any`.
+ */
+interface WizardPersona {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+interface WizardLlmProfile {
+    id: string;
+    name: string;
+    provider?: string;
+    key?: string;
+}
+
+interface WizardGuardProfile {
+    id: string;
+    name: string;
+}
+
+interface AiGeneratedConfig {
+    name?: string;
+    personaName?: string;
+    systemInstruction?: string;
+    suggestedMcpTools?: string[];
+}
+
+/** Common `{ success, data }` envelope returned by several admin/config endpoints. */
+interface ApiEnvelope<T> {
+    success?: boolean;
+    data?: T;
+}
+
+/** Response shape of `GET /api/config/llm-profiles` (several historical shapes supported). */
+interface LlmProfilesResponse {
+    llm?: WizardLlmProfile[];
+    profiles?: { llm?: WizardLlmProfile[] };
+    data?: WizardLlmProfile[];
+}
+
+/** Response shape of `GET /api/config/llm-status`. */
+interface LlmStatusResponse {
+    defaultConfigured?: boolean;
+}
+
+interface BotSubmitPayload {
+    name: string;
+    description: string;
+    messageProvider: string;
+    llmProvider?: string;
+    persona: string;
+    mcpGuardProfile: string;
+    maxTokensPerDay?: number;
+    config: {
+        mcpGuard: { enabled: boolean };
+        rateLimit: { enabled: boolean };
+        contentFilter: { enabled: boolean };
+    };
+}
 
 interface CreateBotWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit?: (data: any) => void;
-    personas?: any[];
-    llmProfiles?: any[];
+    onSubmit?: (data: BotSubmitPayload) => void | Promise<void>;
+    personas?: WizardPersona[];
+    llmProfiles?: WizardLlmProfile[];
     defaultLlmConfigured?: boolean;
 }
 
@@ -39,9 +104,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [guardProfiles, setGuardProfiles] = useState<any[]>([]);
-    const [fetchedPersonas, setFetchedPersonas] = useState<any[]>([]);
-    const [fetchedLlmProfiles, setFetchedLlmProfiles] = useState<any[]>([]);
+    const [guardProfiles, setGuardProfiles] = useState<WizardGuardProfile[]>([]);
+    const [fetchedPersonas, setFetchedPersonas] = useState<WizardPersona[]>([]);
+    const [fetchedLlmProfiles, setFetchedLlmProfiles] = useState<WizardLlmProfile[]>([]);
     const [fetchedDefaultLlmConfigured, setFetchedDefaultLlmConfigured] = useState(true);
 
     const personas = propsPersonas ?? fetchedPersonas;
@@ -55,6 +120,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         llmProvider: '',
         persona: 'default',
         mcpGuardProfile: '',
+        maxTokensPerDay: 0,
         guards: {
             accessControl: false,
             rateLimit: false,
@@ -64,24 +130,60 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [formData, setFormData] = useState(initialFormData);
     const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+    
+    // AI Generation state
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+    const [aiDescription, setAiDescription] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [aiGeneratedResult, setAiGeneratedResult] = useState<AiGeneratedConfig | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    const handleAiGenerate = async () => {
+        if (!aiDescription.trim()) return;
+        setIsGenerating(true);
+        setAiGeneratedResult(null);
+        try {
+            const result: ApiEnvelope<AiGeneratedConfig> = await apiService.post('/api/bots/generate-config', {
+                description: aiDescription
+            });
+            if (result.success && result.data) {
+                setAiGeneratedResult(result.data);
+            }
+        } catch (e) {
+            debug('ERROR:', 'AI generation failed', e);
+            setError('AI generation failed. Please try a different description.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const applyAiGeneratedConfig = () => {
+        if (!aiGeneratedResult) return;
+        
+        setFormData({
+            ...formData,
+            name: aiGeneratedResult.name || formData.name,
+            description: aiGeneratedResult.personaName || formData.description,
+            // Pre-fill system instructions would require adding a field to bot config or creating a persona
+            // For now, we'll map description to personaName
+        });
+        
+        setIsAiModalOpen(false);
+        setAiGeneratedResult(null);
+        setAiDescription('');
+    };
 
     const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
-    const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
+    const { hasChanges, diff, setOriginalConfig } = useConfigDiff(formDataAsRecord);
 
     useEffect(() => {
         setOriginalConfig(initialFormData as unknown as Record<string, unknown>);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    const handleUndoAll = () => {
-        const original = resetToOriginal();
-        setFormData(original as typeof formData);
-    };
 
     useEffect(() => {
         const fetchGuardProfiles = async () => {
             try {
-                const data: any = await apiService.get('/api/admin/guard-profiles');
+                const data: ApiEnvelope<WizardGuardProfile[]> = await apiService.get('/api/admin/guard-profiles');
                 setGuardProfiles(Array.isArray(data.data) ? data.data : []);
             } catch (e) {
                 debug('ERROR:', 'Failed to fetch guard profiles', e);
@@ -93,7 +195,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsPersonas) {
             const fetchPersonas = async () => {
                 try {
-                    const data: any = await apiService.getPersonas();
+                    const data = await apiService.getPersonas();
                     setFetchedPersonas(Array.isArray(data) ? data : []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch personas', e);
@@ -106,7 +208,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsLlmProfiles) {
             const fetchLlmProfiles = async () => {
                 try {
-                    const data: any = await apiService.getLlmProfiles();
+                    const data = await apiService.getLlmProfiles() as LlmProfilesResponse;
                     setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM profiles', e);
@@ -119,7 +221,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (propsDefaultLlmConfigured === undefined) {
             const fetchLlmStatus = async () => {
                 try {
-                    const data: any = await apiService.get('/api/config/llm-status');
+                    const data: LlmStatusResponse = await apiService.get('/api/config/llm-status');
                     setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM status', e);
@@ -144,25 +246,18 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         return guardProfiles.find(p => p.id === formData.mcpGuardProfile)?.name || formData.mcpGuardProfile;
     };
 
-    const steps = [
-        { id: 1, title: 'Basics', icon: Bot },
-        { id: 2, title: 'Persona', icon: User },
-        { id: 3, title: 'Guardrails', icon: Shield },
-        { id: 4, title: 'Review', icon: Check },
-    ];
-
-
     const handleSubmit = async () => {
         setLoading(true);
         setError(null);
         try {
-            const payload = {
+            const payload: BotSubmitPayload = {
                 name: formData.name,
                 description: formData.description,
                 messageProvider: formData.messageProvider,
                 ...(formData.llmProvider ? { llmProvider: formData.llmProvider } : {}),
                 persona: formData.persona,
                 mcpGuardProfile: formData.mcpGuardProfile,
+                maxTokensPerDay: formData.maxTokensPerDay > 0 ? formData.maxTokensPerDay : undefined,
                 config: {
                     mcpGuard: { enabled: formData.guards.accessControl },
                     rateLimit: { enabled: formData.guards.rateLimit },
@@ -240,13 +335,26 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
             validation: () => validateStep(1).valid,
             content: (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <Input
-                        label={<span>Bot Name <span className="text-error">*</span></span>}
-                        placeholder="e.g. HelpBot"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        autoFocus
-                    />
+                    <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                            <Input
+                                label={<span>Bot Name <span className="text-error">*</span></span>}
+                                placeholder="e.g. HelpBot"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                        <Button 
+                            variant="primary" 
+                            className="gap-2 mb-1" 
+                            onClick={() => setIsAiModalOpen(true)}
+                            aria-label="Generate with AI"
+                        >
+                            <Wand2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">AI Help</span>
+                        </Button>
+                    </div>
 
                     <div className="form-control">
                         <Textarea
@@ -375,7 +483,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         <Select
                             className="select-bordered"
                             value={formData.mcpGuardProfile || ''}
-                            onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value || null })}
+                            onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value })}
                         >
                             <option value="">No Profile (Use Manual Config)</option>
                             {guardProfiles.map(p => (
@@ -433,6 +541,24 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </label>
                     </div>
+
+                    <Divider>Cost Control</Divider>
+
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text font-bold">Daily Token Limit</span>
+                        </label>
+                        <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 50000"
+                            value={formData.maxTokensPerDay || ''}
+                            onChange={e => setFormData({ ...formData, maxTokensPerDay: parseInt(e.target.value, 10) || 0 })}
+                        />
+                        <label className="label">
+                            <span className="label-text-alt">Bot will pause automatically if it exceeds this daily usage (0 = unlimited).</span>
+                        </label>
+                    </div>
                 </div>
             )
         },
@@ -485,6 +611,16 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
                     </Alert>
+
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 flex items-center justify-between mt-4">
+                        <div>
+                           <p className="text-sm font-medium text-primary">Live Sandbox Preview</p>
+                           <p className="text-xs opacity-60">Test this persona's logic before saving.</p>
+                        </div>
+                        <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsPreviewOpen(true)}>
+                           <MessageSquare className="w-4 h-4" /> Preview Chat
+                        </Button>
+                    </div>
                 </div>
             )
         }
@@ -492,32 +628,122 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
 
     return (
+        <>
+            <Modal isOpen={isOpen} onClose={onClose} title="Create New Bot" size="lg">
+                <div className="flex flex-col h-full max-h-[70vh]">
+                    {error && (
+                        <Alert status="error" className="mb-4" message={error} />
+                    )}
 
-        <Modal isOpen={isOpen} onClose={onClose} title="Create New Bot" size="lg">
-            <div className="flex flex-col h-full max-h-[70vh]">
-                {error && (
-                    <Alert status="error" className="mb-4" message={error} />
-                )}
-
-                <div className="flex-1 overflow-y-auto px-1 pb-16">
-                    <StepWizard
-                        steps={wizardSteps}
-                        onComplete={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()}
-                        onCancel={onClose}
-                        showProgress={true}
-                    />
+                    <div className="flex-1 overflow-y-auto px-1 pb-16">
+                        <StepWizard
+                            steps={wizardSteps}
+                            onComplete={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()}
+                            onCancel={onClose}
+                            showProgress={true}
+                        />
+                    </div>
                 </div>
-            </div>
 
-        <ConfigDiffConfirmDialog
-            isOpen={showDiffConfirm}
-            diff={diff}
-            onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
-            onCancel={() => setShowDiffConfirm(false)}
-            title="Confirm Bot Configuration"
-            loading={loading}
-        />
+                <ConfigDiffConfirmDialog
+                    isOpen={showDiffConfirm}
+                    diff={diff}
+                    onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
+                    onCancel={() => setShowDiffConfirm(false)}
+                    title="Confirm Bot Configuration"
+                    loading={loading}
+                />
+            </Modal>
+
+            {/* AI Persona Generator Modal */}
+        <Modal 
+            isOpen={isAiModalOpen} 
+            onClose={() => setIsAiModalOpen(false)} 
+            title="AI Persona Generator"
+            size="md"
+        >
+            <div className="space-y-4">
+                {!aiGeneratedResult ? (
+                    <>
+                        <p className="text-sm opacity-70">
+                            Describe what you want your bot to do, and our AI will generate a name, 
+                            persona, and expert system instructions for you.
+                        </p>
+                        <div className="form-control">
+                            <Textarea
+                                className="h-32 bg-base-200"
+                                placeholder="e.g. A proactive DevOps assistant that monitors my Slack channels for infrastructure alerts and suggests fixes..."
+                                value={aiDescription}
+                                onChange={e => setAiDescription(e.target.value)}
+                                autoFocus
+                                disabled={isGenerating}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" onClick={() => setIsAiModalOpen(false)}>Cancel</Button>
+                            <Button 
+                                variant="primary" 
+                                className="gap-2" 
+                                onClick={handleAiGenerate}
+                                loading={isGenerating}
+                                disabled={!aiDescription.trim()}
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                {isGenerating ? 'Designing...' : 'Generate Persona'}
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                        <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+                            <h4 className="text-xs font-bold text-primary uppercase mb-2">Generated Draft</h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-xs opacity-50">Suggested Name:</span>
+                                    <span className="text-sm font-bold">{aiGeneratedResult.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs opacity-50">Persona:</span>
+                                    <span className="text-sm font-medium italic">{aiGeneratedResult.personaName}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Collapse title="View System Instructions" className="bg-base-200" size="sm">
+                            <Mockup 
+                                type="code" 
+                                content={aiGeneratedResult.systemInstruction} 
+                                className="text-[10px] max-h-48 overflow-auto"
+                            />
+                        </Collapse>
+
+                        {aiGeneratedResult.suggestedMcpTools && (
+                            <div className="flex flex-wrap gap-2">
+                                {aiGeneratedResult.suggestedMcpTools.map((tool: string) => (
+                                    <Badge key={tool} variant="outline" size="sm">+{tool}</Badge>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex justify-between pt-2">
+                            <Button variant="ghost" onClick={() => setAiGeneratedResult(null)}>Try Again</Button>
+                            <Button variant="primary" className="gap-2" onClick={applyAiGeneratedConfig}>
+                                <Send className="w-4 h-4" />
+                                Apply to Wizard
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </Modal>
 
+        {/* Sandbox Preview Chat */}
+        {isPreviewOpen && (
+            <LlmTestChat 
+                sandboxConfig={formData}
+                onClose={() => setIsPreviewOpen(false)}
+            />
+        )}
+    </>
     );
 };

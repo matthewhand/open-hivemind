@@ -94,6 +94,13 @@ export const strings = {
   truncate: (str: string, length: number): string => {
     return str.length > length ? str.substring(0, length) + '...' : str;
   },
+
+  /**
+   * Escape special regex characters
+   */
+  escapeRegExp: (str: string): string => {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  },
 };
 
 /**

@@ -373,6 +373,7 @@ router.get('/metrics', async (req, res) => {
         },
         database: {
           connected: false,
+
           stats: null as any,
         },
       },

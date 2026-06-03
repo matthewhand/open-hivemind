@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+ 
 import { BotConfigurationManager } from './BotConfigurationManager';
 import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
@@ -93,7 +95,7 @@ export class HotReloadManager {
   private detectConfigurationChanges(): void {
     try {
       const manager = BotConfigurationManager.getInstance();
-      const currentBots = manager.getAllBots();
+      const _currentBots = manager.getAllBots();
 
       // Compare with previous state and detect changes
       // This is a simplified implementation - in production you'd want more sophisticated diffing

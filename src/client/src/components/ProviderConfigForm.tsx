@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useDisclosure } from '../hooks/useDisclosure';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import Avatar from './DaisyUI/Avatar';
 import Input from './DaisyUI/Input';
@@ -38,40 +40,45 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [healthStatus, setHealthStatus] = useState<Record<string, boolean | null>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.providerConfigForm.showAdvanced', false);
+  const advancedDisclosure = useDisclosure({
+    id: 'advanced-settings-content',
+    isOpen: showAdvanced,
+    onOpenChange: setShowAdvanced,
+  });
 
   // Separate mandatory and advanced fields
-  const mandatoryFields = schema.fields.filter(field => field.required);
-  const advancedFields = schema.fields.filter(field => !field.required);
+  const mandatoryFields = useMemo(() => schema.fields.filter(field => field.required), [schema.fields]);
+  const advancedFields = useMemo(() => schema.fields.filter(field => !field.required), [schema.fields]);
 
   // Group fields by their group property
-  const groupedFields = schema.fields.reduce((groups, field) => {
+  const groupedFields = useMemo(() => schema.fields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [schema.fields]);
 
   // Group mandatory and advanced fields separately
-  const groupedMandatoryFields = mandatoryFields.reduce((groups, field) => {
+  const groupedMandatoryFields = useMemo(() => mandatoryFields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [mandatoryFields]);
 
-  const groupedAdvancedFields = advancedFields.reduce((groups, field) => {
+  const groupedAdvancedFields = useMemo(() => advancedFields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [advancedFields]);
 
   const validateField = (field: ProviderConfigField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
@@ -498,9 +505,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {Object.keys(groupedAdvancedFields).length > 0 && (
         <Card className="shadow-sm border border-base-200">
           <Card.Body className="p-6">
-            <div 
-              className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors"
-              onClick={() => setShowAdvanced(!showAdvanced)}
+            <div
+              {...advancedDisclosure.triggerProps}
+              className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-2">
                 <Badge variant="ghost" size="sm">Optional</Badge>
@@ -510,14 +517,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                 </span>
               </div>
               {showAdvanced ? (
-                <ChevronDown className="w-5 h-5 text-base-content/60" />
+                <ChevronDown className="w-5 h-5 text-base-content/60" aria-hidden="true" />
               ) : (
-                <ChevronRight className="w-5 h-5 text-base-content/60" />
+                <ChevronRight className="w-5 h-5 text-base-content/60" aria-hidden="true" />
               )}
             </div>
             
             {showAdvanced && (
-              <div className="mt-4 space-y-6">
+              <div {...advancedDisclosure.contentProps} className="mt-4 space-y-6">
                 {Object.entries(groupedAdvancedFields).map(([groupName, fields]) => (
                   <div key={groupName}>
                     {Object.keys(groupedAdvancedFields).length > 1 && (

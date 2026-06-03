@@ -123,6 +123,7 @@ export function createRuleRoutes(): Router {
         // For now, we'll just create a placeholder validator
         const rule = {
           ...req.body,
+
           validator: (_config: unknown) => ({
             isValid: true,
             errors: [],
@@ -152,6 +153,7 @@ export function createRuleRoutes(): Router {
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
               ? (hivemindError as any).timestamp
@@ -198,6 +200,7 @@ export function createRuleRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
+
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
@@ -277,6 +280,7 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
+
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:

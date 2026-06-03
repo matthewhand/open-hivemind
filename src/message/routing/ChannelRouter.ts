@@ -26,6 +26,7 @@ function parseKeyNumberMap(
   if (typeof raw === 'object' && !Array.isArray(raw)) {
     // assume already a map of numbers or strings
     const out: Record<string, number> = {};
+
     for (const [k, v] of Object.entries(raw as Record<string, any>)) {
       // Always apply validation
       const num = coerce(String(v));

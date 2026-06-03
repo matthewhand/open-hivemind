@@ -8,6 +8,7 @@ import {
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
 import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
@@ -51,28 +52,38 @@ const MCPServerManager: React.FC = () => {
       setError(null);
       const data: any = await apiService.get('/api/admin/mcp-servers');
 
+      // The endpoint wraps its payload in an envelope: { success, data: { servers, configurations, ... } }.
+      // `servers` is an array of connected servers; `configurations` is an array of stored configs.
+      const payload = data?.data ?? {};
+
       const serverList: MCPServer[] = [];
-      if (data.servers) {
-        Object.entries(data.servers).forEach(([name, server]: [string, unknown]) => {
-          const serverObj = server as { serverUrl?: string; apiKey?: string };
-          serverList.push({
-            name,
-            serverUrl: serverObj.serverUrl || '',
-            apiKey: serverObj.apiKey || '',
-            connected: true,
-          });
+      if (Array.isArray(payload.servers)) {
+        payload.servers.forEach((server: unknown) => {
+          const serverObj = server as { name?: string; serverUrl?: string; apiKey?: string; connected?: boolean };
+          if (serverObj.name) {
+            serverList.push({
+              name: serverObj.name,
+              serverUrl: serverObj.serverUrl || '',
+              apiKey: serverObj.apiKey || '',
+              connected: serverObj.connected ?? true,
+            });
+          }
         });
       }
-      if (data.configurations) {
-        data.configurations.forEach((config: unknown) => {
+      if (Array.isArray(payload.configurations)) {
+        // Performance optimization: use Set for O(1) lookups instead of O(N) array search inside loop
+        const existingServerNames = new Set(serverList.map(s => s.name));
+
+        payload.configurations.forEach((config: unknown) => {
           const configObj = config as { name?: string; serverUrl?: string; apiKey?: string };
-          if (!serverList.find((s) => s.name === configObj.name) && configObj.name) {
+          if (configObj.name && !existingServerNames.has(configObj.name)) {
             serverList.push({
               name: configObj.name,
               serverUrl: configObj.serverUrl || '',
               apiKey: configObj.apiKey || '',
               connected: false,
             });
+            existingServerNames.add(configObj.name);
           }
         });
       }
@@ -126,7 +137,7 @@ const MCPServerManager: React.FC = () => {
     setSelectedServer(server);
     try {
       const data: any = await apiService.get(`/api/admin/mcp-servers/${server.name}/tools`);
-      setServerTools(data.tools || []);
+      setServerTools(data?.data?.tools || []);
       setToolsDialogOpen(true);
     } catch (err) {
       setToastMessage(err instanceof Error ? err.message : 'Failed to fetch tools');

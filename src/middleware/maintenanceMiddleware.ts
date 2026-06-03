@@ -82,7 +82,8 @@ export const maintenanceModeMiddleware = async (
     (req as Request & { maintenanceMode?: boolean }).maintenanceMode = isMaintenanceMode;
 
     next();
-  } catch (error) {
+
+  } catch {
     // If we can't check maintenance mode, allow the request to proceed
     // to avoid blocking all requests due to a configuration error
     next();
@@ -117,7 +118,7 @@ export const createSelectiveMaintenanceMiddleware = (
       }
 
       next();
-    } catch (error) {
+    } catch {
       next();
     }
   };

@@ -13,6 +13,17 @@ export function botsMixin(api: ApiService) {
         .then(res => res.data?.history || []);
     },
 
+    getBotChannels(botId: string): Promise<Array<{ id: string; name: string; type?: string }>> {
+      return api.request<Array<{ id: string; name: string; type?: string }>>(`/api/bots/${botId}/channels`);
+    },
+
+    sendBotMessage(botId: string, channelId: string, message: string): Promise<{ success: boolean; data: { messageId: string } }> {
+      return api.request<{ success: boolean; data: { messageId: string } }>(`/api/bots/${botId}/message`, {
+        method: 'POST',
+        body: JSON.stringify({ channelId, message }),
+      });
+    },
+
     createBot(botData: {
       name: string;
       messageProvider: string;
@@ -80,6 +91,13 @@ export function botsMixin(api: ApiService) {
       return api.request('/api/bots/bulk/stop', {
         method: 'POST',
         body: JSON.stringify({ ids }),
+      });
+    },
+
+    generateBotConfig(description: string): Promise<any> {
+      return api.request('/api/bots/generate-config', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
       });
     },
   };

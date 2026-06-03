@@ -60,7 +60,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
         ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}`}
       onClick={onPreview ? () => onPreview(bot) : undefined}
     >
-      <Card.Body className="p-6">
+      <Card.Body>
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             size="sm"
             className={`btn-square ${isActive ? 'text-error border-error' : ''}`}
             onClick={(e) => { e.stopPropagation(); onToggleStatus?.(bot); }}
-            aria-label={isActive ? 'Deactivate' : 'Activate'}
+            aria-label={isActive ? `Deactivate ${bot.name}` : `Activate ${bot.name}`}
           >
             {isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </Button>

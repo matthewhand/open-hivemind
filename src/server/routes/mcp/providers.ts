@@ -63,10 +63,10 @@ router.get(
     try {
       return res.json({ success: true, data: mcpProviderManager.getTemplates() });
     } catch (error: unknown) {
-      const e = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.toHivemindError(error);
       return res
-        .status(ErrorUtils.getStatusCode(e) || 500)
-        .json({ success: false, error: ErrorUtils.getMessage(e) });
+        .status(ErrorUtils.getStatusCode(errorInfo) || 500)
+        .json({ success: false, error: ErrorUtils.getMessage(errorInfo) });
     }
   })
 );

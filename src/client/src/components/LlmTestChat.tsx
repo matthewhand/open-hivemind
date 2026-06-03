@@ -7,8 +7,9 @@ import Toggle from './DaisyUI/Toggle';
 import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 
 interface LlmTestChatProps {
-  providerKey: string;
-  providerType: string;
+  providerKey?: string;
+  providerType?: string;
+  sandboxConfig?: any; // For testing unsaved bot configs
   onClose: () => void;
 }
 
@@ -50,10 +51,18 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
 
     try {
       const start = Date.now();
-      const res = await fetch(`/api/admin/llm-providers/providers/${encodeURIComponent(providerKey)}/test`, {
+      const endpoint = sandboxConfig 
+        ? '/api/bots/test-chat'
+        : `/api/admin/llm-providers/providers/${encodeURIComponent(providerKey!)}/test`;
+        
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(sandboxConfig ? {
+          botConfig: sandboxConfig,
+          message: userMsg.content,
+          history: messages.map(m => ({ role: m.role, content: m.content })),
+        } : {
           message: userMsg.content,
           systemPrompt: systemPrompt.trim() || undefined,
         }),
@@ -109,9 +118,11 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
       <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-200/50">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-sm">Test: {providerKey}</span>
+          <span className="font-semibold text-sm">
+            {sandboxConfig ? `Preview: ${sandboxConfig.name || 'New Bot'}` : `Test: ${providerKey}`}
+          </span>
           <span className="text-xs text-base-content/50 px-1.5 py-0.5 bg-base-200 rounded">
-            {providerType}
+            {sandboxConfig ? sandboxConfig.llmProvider : providerType}
           </span>
         </div>
         <button

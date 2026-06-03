@@ -14,10 +14,18 @@ interface TokenPayload {
 const debug = Debug('app:AuthMiddleware');
 
 export class AuthMiddleware {
+  private static instance: AuthMiddleware;
   private authManager: AuthManager;
 
-  constructor() {
+  private constructor() {
     this.authManager = AuthManager.getInstance();
+  }
+
+  public static getInstance(): AuthMiddleware {
+    if (!AuthMiddleware.instance) {
+      AuthMiddleware.instance = new AuthMiddleware();
+    }
+    return AuthMiddleware.instance;
   }
 
   /**
@@ -280,42 +288,35 @@ export class AuthMiddleware {
   };
 }
 
-// Create middleware functions that get fresh AuthManager instance
+// Create middleware functions that use singleton AuthMiddleware instance
 export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const middleware = new AuthMiddleware();
-  return middleware.authenticate(req, res, next);
+  return AuthMiddleware.getInstance().authenticate(req, res, next);
 };
 
 export const requireRole = (
   requiredRole: UserRole
 ): ((req: Request, res: Response, next: NextFunction) => void) => {
-  const middleware = new AuthMiddleware();
-  return middleware.requireRole(requiredRole);
+  return AuthMiddleware.getInstance().requireRole(requiredRole);
 };
 
 export const requirePermission = (
   permission: string
 ): ((req: Request, res: Response, next: NextFunction) => void) => {
-  const middleware = new AuthMiddleware();
-  return middleware.requirePermission(permission);
+  return AuthMiddleware.getInstance().requirePermission(permission);
 };
 
-export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = (() => {
-  const middleware = new AuthMiddleware();
-  return middleware.requireAdmin;
-})();
+export const requireAdmin = AuthMiddleware.getInstance().requireAdmin;
 
 export const optionalAuth = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const middleware = new AuthMiddleware();
-  return middleware.optionalAuth(req, res, next);
+  return AuthMiddleware.getInstance().optionalAuth(req, res, next);
 };
 
 /**

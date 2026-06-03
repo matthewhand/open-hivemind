@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
@@ -147,6 +148,7 @@ export class ShutdownCoordinator {
    */
   public registerMessengerService(service: IMessengerService): void {
     this.messengerServices.push(service);
+
     debug(
       `Messenger service registered: ${(service as any).providerName || service.constructor?.name || 'unknown'}`
     );
@@ -519,6 +521,18 @@ export class ShutdownCoordinator {
       debug('Error shutting down ToolPreferencesService:', error);
     }
 
+    // Stop MCPFavoritesService
+    try {
+      const { MCPFavoritesService } = require('@server/services/MCPFavoritesService');
+      const mcpFavorites = MCPFavoritesService.getInstance();
+      if (mcpFavorites && typeof mcpFavorites.shutdown === 'function') {
+        await mcpFavorites.shutdown();
+        debug('MCPFavoritesService shut down');
+      }
+    } catch (error) {
+      debug('Error shutting down MCPFavoritesService:', error);
+    }
+
     // Stop PerformanceProfiler
     try {
       const { PerformanceProfiler } = require('@utils/PerformanceProfiler');
@@ -583,6 +597,7 @@ export class ShutdownCoordinator {
     this.logger.info('Phase 4: Disconnect external services');
 
     // Disconnect messenger services in parallel
+
     const messengerShutdowns = this.messengerServices.map(async (service) => {
       try {
         if (typeof (service as any).shutdown === 'function') {

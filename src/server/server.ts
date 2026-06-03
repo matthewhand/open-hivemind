@@ -58,6 +58,7 @@ const resolveFrontendDistPath = (): string => {
 
 export class WebUIServer {
   private app: express.Application;
+
   private server: any;
   private port: number;
   private readonly frontendDistPath: string;
@@ -85,7 +86,7 @@ export class WebUIServer {
       origin: (
         origin: string | undefined,
         callback: (err: Error | null, origin?: string) => void
-      ) => {
+      ): void => {
         const allowedOrigins = process.env.CORS_ORIGIN
           ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
           : [];
@@ -145,6 +146,7 @@ export class WebUIServer {
     this.app.use('/api', csrfProtection);
 
     // Error handler for malformed JSON in health API endpoints
+
     this.app.use(
       (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
         const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
@@ -212,16 +214,16 @@ export class WebUIServer {
     this.app.use('/api/providers', authenticateToken, providersRouter);
 
     // WebUI application routes (serve React app)
-    this.app.get('/admin/*', (req, res) => {
+    this.app.get('/admin/*', (req: express.Request, res: express.Response): void => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
-    this.app.get('/webui/*', (req, res) => {
+    this.app.get('/webui/*', (req: express.Request, res: express.Response): void => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
     // API documentation
-    this.app.get('/api', (req, res) => {
+    this.app.get('/api', (req: express.Request, res: express.Response): void => {
       res.json({
         name: 'Hivemind WebUI API',
         version: '1.0.0',
@@ -292,6 +294,7 @@ export class WebUIServer {
     return new Promise((resolve, reject) => {
       if (!this.server) {
         resolve();
+
         return;
       }
 

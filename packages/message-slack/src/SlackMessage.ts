@@ -37,11 +37,6 @@ interface SlackMessageData {
  * - timestamp from data.ts (seconds.fraction) to Date
  */
 export default class SlackMessage extends IMessage {
-  public content: string;
-  public channelId: string;
-  public data: SlackMessageData;
-  public role: string;
-
   private authorId: string;
   private authorName: string | undefined;
   private messageId: string | undefined;
@@ -55,7 +50,6 @@ export default class SlackMessage extends IMessage {
     this.content = sanitizeMessageText(content ?? '');
     this.channelId = InputSanitizer.sanitizeChannelId(channelId ?? '');
     this.data = this.sanitizeMessageData(data || {});
-    this.role = 'user';
 
     this.authorId = this.resolveAuthorId(this.data);
     this.authorName = this.resolveAuthorName(this.data);
@@ -63,6 +57,7 @@ export default class SlackMessage extends IMessage {
     this.isBot = this.resolveIsBot(this.data);
     this.mentions = this.extractMentions(this.content);
     this.timestamp = this.resolveTimestamp(this.data) ?? new Date(0);
+    this.platform = 'slack';
   }
 
   getText(): string {

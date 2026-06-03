@@ -71,7 +71,7 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
   const routeInfos: RouteInfo[] = [];
 
   // Walk the Express app stack
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const stack = (app as any)._router?.stack || [];
   for (const layer of stack) {
     if (layer.route) {
@@ -92,10 +92,13 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
     const segments = route.path.split('/').filter(Boolean);
     const prefix =
       segments.length >= 2 ? `/${segments[0]}/${segments[1]}` : `/${segments[0] || ''}`;
-    if (!groupMap.has(prefix)) {
-      groupMap.set(prefix, []);
+    let group = groupMap.get(prefix);
+    if (!group) {
+      group = [];
+      groupMap.set(prefix, group);
     }
-    groupMap.get(prefix)!.push(route);
+
+    group.push(route);
   }
 
   const groups: RouteGroup[] = [];
@@ -113,13 +116,12 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
   return groups.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractMountPath(layer: any): string {
   if (layer.regexp) {
     if (layer.regexp.fast_slash) {
       return '';
     }
-    const regexpStr = layer.regexp.source || '';
+    const regexpStr = (layer.regexp.source as string) || '';
     const pathMatch = regexpStr.match(/^\^\\(\/[^?]*?)(?:\\\/\?)?/);
     if (pathMatch) {
       return pathMatch[1].replace(/\\\//g, '/');
@@ -129,25 +131,26 @@ function extractMountPath(layer: any): string {
 }
 
 function extractRoute(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   layer: any,
   prefix: string,
   routeInfos: RouteInfo[],
   summaries: Map<string, string>
 ): void {
   const route = layer.route;
-  if (!route) return;
+  if (!route) {
+    return;
+  }
 
-  const methods = Object.keys(route.methods).filter((m) => route.methods[m]);
+  const methods = Object.keys(route.methods).filter((m: string) => (route.methods as any)[m]);
   const routePath = prefix + route.path;
 
   for (const method of methods) {
     const upperMethod = method.toUpperCase();
     const middlewareNames: string[] = [];
     if (route.stack) {
-      for (const handler of route.stack) {
+      for (const handler of route.stack as any[]) {
         if (handler.name && handler.name !== '<anonymous>' && handler.name !== 'anonymous') {
-          middlewareNames.push(handler.name);
+          middlewareNames.push(handler.name as string);
         }
       }
     }

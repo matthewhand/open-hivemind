@@ -14,6 +14,7 @@ const redactDebug = debug('app:redactSensitiveInfo');
  * // Returns 'publicValue'
  * redactSensitiveInfo('username', 'admin')
  */
+
 export function redactSensitiveInfo(key: string, value: any): string {
   const sensitivePatterns = [
     'password',

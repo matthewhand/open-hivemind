@@ -72,7 +72,7 @@ export const BotListGrid: React.FC<BotListGridProps> = memo(({
                   className="btn-square p-0"
                   onClick={() => onBotMoveUp(index)}
                   disabled={index === 0}
-                  aria-label="Move up"
+                  aria-label={`Move ${bot.name} up`}
                 >
                   <ChevronUp className="w-3 h-3" />
                 </Button>
@@ -82,7 +82,7 @@ export const BotListGrid: React.FC<BotListGridProps> = memo(({
                   className="btn-square p-0"
                   onClick={() => onBotMoveDown(index)}
                   disabled={index === filteredBots.length - 1}
-                  aria-label="Move down"
+                  aria-label={`Move ${bot.name} down`}
                 >
                   <ChevronDown className="w-3 h-3" />
                 </Button>

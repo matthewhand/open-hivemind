@@ -1,7 +1,8 @@
+/* eslint-disable max-lines */
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { injectable, singleton, inject } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
 
@@ -13,6 +14,7 @@ export interface ConfigurationTemplate {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   isBuiltIn: boolean;
   createdBy?: string;
@@ -26,6 +28,7 @@ export interface CreateTemplateRequest {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   createdBy?: string;
 }
@@ -34,7 +37,9 @@ export interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
+
   tags?: string[];
+
   config?: any;
 }
 

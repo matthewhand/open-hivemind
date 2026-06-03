@@ -98,11 +98,16 @@ export function usePersonasLogic() {
     setBots(filledBots);
 
     const rawPersonas = personasResponse || [];
+
+    // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
+    // This reduces the time complexity of the persona mapping from O(P * B) to O(P + B)
+    const botNameMap = new Map(filledBots.map((b: any) => [b.id, b.name]));
+
     const mappedPersonas = rawPersonas.map((p) => {
       const assignedIds = Array.isArray(p.bots) ? p.bots : [];
       const assignedNames = assignedIds.map((bid: string) => {
-        const found = filledBots.find((b: any) => b.id === bid);
-        return found ? found.name : bid;
+        const foundName = botNameMap.get(bid);
+        return foundName || bid;
       });
       return {
         ...p,

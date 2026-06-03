@@ -65,10 +65,12 @@ export const useMCPServerData = (): {
         })
       );
 
+      // Performance optimization: use Set for O(1) lookups instead of O(N) array search inside loop
+      const connectedServerNames = new Set(connectedServers.map(s => s.name));
+
       const storedConfigs: MCPServer[] = (Array.isArray(data.data?.configurations) ? data.data.configurations : [])
         .map((config: any, index: number) => {
-          const existing = connectedServers.find((s) => s.name === config.name);
-          if (existing) return null;
+          if (connectedServerNames.has(config.name)) return null;
           return {
             id: config.name || `config-${index}`,
             name: config.name || 'Unknown',

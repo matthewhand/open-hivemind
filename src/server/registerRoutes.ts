@@ -9,7 +9,7 @@ import path from 'path';
 import { type NextFunction, type Request, type Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { authenticateToken } from '@src/server/middleware/auth';
-import { csrfTokenHandler } from '@src/server/middleware/csrf';
+import { csrfProtection, csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
 import activityRouter from '@src/server/routes/activity';
 import adminApiRouter from '@src/server/routes/admin';
@@ -33,6 +33,7 @@ import lettaRouter from '@src/server/routes/letta';
 import marketplaceRouter from '@src/server/routes/marketplace';
 import mcpRouter from '@src/server/routes/mcp';
 import mcpToolsRouter from '@src/server/routes/mcpTools';
+import monitoringRouter from '@src/server/routes/monitoring';
 import onboardingRouter from '@src/server/routes/onboarding';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
@@ -42,8 +43,10 @@ import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import templatesRouter from '@src/server/routes/templates';
+import testRouter from '@src/server/routes/testRoutes';
 import usageTrackingRouter from '@src/server/routes/usageTracking';
 import validationRouter from '@src/server/routes/validation';
+import webhookEventsRouter from '@src/server/routes/webhookEvents';
 import webhooksRouter from '@src/server/routes/webhooks';
 import webuiRouter from '@src/server/routes/webui';
 import Logger from '@common/logger';
@@ -52,16 +55,23 @@ import * as healthRouteModule from './routes/health';
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const healthRoute = (healthRouteModule.default || healthRouteModule) as import('express').Router;
 
 export interface RouteContext {
   frontendDistPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by route handlers. */
+
   viteServerRef: { current: any };
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 export function registerRoutes(app: import('express').Application, ctx: RouteContext): void {
   const { frontendDistPath, viteServerRef } = ctx;
+
+  // Health endpoints (MUST be above IP filter/auth)
+  app.use('/api/health', healthRoute);
+  app.use('/health', healthRoute);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // IP Filtering Security (when auth is disabled)
@@ -84,8 +94,30 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
     return ipWhitelist(req, res, next);
   });
 
-  // CSRF token endpoint
+  // CSRF token endpoint — must be registered BEFORE csrfProtection so the
+  // client can always fetch a token (GET requests are exempt anyway).
   app.get('/api/csrf-token', csrfTokenHandler);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CSRF Protection for state-changing /api requests
+  // ─────────────────────────────────────────────────────────────────────────────
+  // csrfProtection only validates unsafe methods (POST/PUT/DELETE/PATCH); safe
+  // methods (GET/HEAD/OPTIONS) pass through untouched, so read APIs are unaffected.
+  // The WebUI client (src/client/src/services/api/core.ts) already fetches a token
+  // from /api/csrf-token and sends it via the X-CSRF-Token header on mutations.
+  //
+  // Exemptions:
+  //   • /api/auth — login/refresh must work before a session/token exists, and
+  //     these endpoints are protected by dedicated auth rate limiters.
+  //   • /api/csrf-token — handled above (GET, already exempt).
+  // External inbound webhooks are mounted at /webhook/* (see webhookService),
+  // NOT under /api, so they are unaffected by this middleware.
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/auth')) {
+      return next();
+    }
+    return csrfProtection(req, res, next);
+  });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // API Route Registration
@@ -117,42 +149,48 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/import-export', authenticateToken, importExportRouter);
 
   // 3. Resource routers (specific paths, no catch-all conflict)
-  app.use('/api/activity', activityRouter);
-  app.use('/api/agents', agentsRouter);
-  app.use('/api/dashboard', dashboardRouter);
-  app.use('/api/config', webuiConfigRouter);
-  app.use('/api/bots', botsRouter);
+  app.use('/api/activity', authenticateToken, activityRouter);
+  app.use('/api/agents', authenticateToken, agentsRouter);
+  app.use('/api/dashboard', authenticateToken, dashboardRouter);
+  app.use('/api/config', authenticateToken, webuiConfigRouter);
+  app.use('/api/bots', authenticateToken, botsRouter);
   app.use('/api/bot-config', botConfigRouter);
   app.use('/api/validation', validationRouter);
-  app.use('/api/hot-reload', hotReloadRouter);
+  app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
   app.use('/api/ci', ciRouter);
-  app.use('/api/enterprise', enterpriseRouter);
-  app.use('/api/secure-config', secureConfigRouter);
+  app.use('/api/enterprise', authenticateToken, enterpriseRouter);
+  app.use('/api/secure-config', authenticateToken, secureConfigRouter);
+  // Mount the plugin-security router at /api/admin/plugins BEFORE the catch-all
+  // /api/admin adminApiRouter so its /security, /:name/verify and /:name/trust
+  // routes (consumed by the PluginSecurity dashboard) take precedence. The router
+  // applies its own authenticate/requireAdmin middleware.
+  app.use('/api/admin/plugins', pluginSecurityRouter);
   app.use('/api/admin', adminApiRouter);
   app.use('/api/integrations', integrationsRouter);
-  app.use('/api/letta', lettaRouter);
-  app.use('/api/marketplace', marketplaceRouter);
-  app.use('/api/mcp', mcpRouter);
+  app.use('/api/letta', authenticateToken, lettaRouter);
+  app.use('/api/marketplace', authenticateToken, marketplaceRouter);
+  app.use('/api/mcp', authenticateToken, mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
-  app.use('/api/onboarding', onboardingRouter);
-  app.use('/api/personas', personasRouter);
-  app.use('/api/providers', providersRouter);
-  app.use('/api/templates', templatesRouter);
+  app.use('/api/monitoring', authenticateToken, monitoringRouter);
+  app.use('/api/onboarding', authenticateToken, onboardingRouter);
+  app.use('/api/personas', authenticateToken, personasRouter);
+  app.use('/api/providers', authenticateToken, providersRouter);
+  app.use('/api/templates', authenticateToken, templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
-  app.use('/api/webhooks', webhooksRouter);
-  app.use('/api/webui', webuiRouter);
+  // webhookEventsRouter serves /events* (list, detail, retry) with the contract
+  // the WebUI expects; webhooksRouter handles /scheduled*. Order matters so the
+  // events routes are matched first.
+  app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
+  app.use('/api/webhooks', authenticateToken, webhooksRouter);
+  app.use('/api/webui', authenticateToken, webuiRouter);
+  app.use('/api/test', authenticateToken, testRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
-  app.use('/api/pluginSecurity', pluginSecurityRouter);
 
   // 4. Catch-all '/api' router — MUST be last
   //    openapiRouter handles /api/openapi, /api/openapi.json, etc.
   //    If mounted earlier it would intercept ALL /api/* requests.
   app.use('/api', openapiRouter);
-
-  // Health endpoints
-  app.use('/api/health', healthRoute);
-  app.use('/health', healthRoute);
 
   app.use(sitemapRouter); // Sitemap routes at root level
 
@@ -176,7 +214,8 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
     ) {
       return next();
     }
-    if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
+    const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (isDevOrTest && viteServerRef.current) {
       // In dev mode, serve through Vite's HTML transform
       const url = req.originalUrl;
       fs.promises
@@ -196,7 +235,8 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
 
   // Vite Proxy Middleware for Development (Must be before 404 handler)
   app.use((req: Request, res: Response, next: NextFunction) => {
-    if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
+    const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (isDevOrTest && viteServerRef.current) {
       viteServerRef.current.middlewares(req, res, next);
     } else {
       next();

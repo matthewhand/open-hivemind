@@ -1,5 +1,5 @@
 import { Logger } from '@common/logger';
-import type { Database } from '../sqliteWrapper';
+import type { IDatabase as Database } from '../types';
 import type { ISchemaModule } from './ISchemaModule';
 
 export class MetricsSchemas implements ISchemaModule {

@@ -87,3 +87,57 @@ export const BulkActionSchema = z.object({
     ids: z.array(z.string()).min(1, { message: 'At least one bot ID is required' }),
   }),
 });
+
+export const BotVersionParamSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, { message: 'Bot ID is required' }),
+    versionId: z.string().min(1, { message: 'Version ID is required' }),
+  }),
+});
+
+export const BotImportSchema = z.object({
+  body: z.object({
+    bots: z.array(z.record(z.unknown())).min(1, { message: 'Bots array must not be empty' }),
+  }),
+});
+
+export const BotGenerateConfigSchema = z.object({
+  body: z.object({
+    description: z.string().min(1, { message: 'Description is required' }),
+  }),
+});
+
+export const BotTestChatSchema = z.object({
+  body: z.object({
+    botConfig: z.record(z.unknown()),
+    message: z.string().min(1, { message: 'Message is required' }),
+    history: z.array(z.record(z.unknown())).optional(),
+  }),
+});
+
+export const BotTaskCreateSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+  }),
+  body: z.object({
+    prompt: z.string().min(1, { message: 'Prompt is required' }),
+    intervalMinutes: z.number().min(1, { message: 'Interval must be at least 1 minute' }),
+  }),
+});
+
+export const BotTaskDeleteSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+    taskId: z.string().min(1, { message: 'Task ID is required' }),
+  }),
+});
+
+export const BotMessageSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+  }),
+  body: z.object({
+    channelId: z.string().min(1, { message: 'Channel ID is required' }),
+    message: z.string().min(1, { message: 'Message content is required' }),
+  }),
+});

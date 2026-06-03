@@ -85,6 +85,7 @@ export async function getMessengerProvider() {
   const hasType = (type: string) =>
     providersArray.some((p) => String(p.type).toLowerCase() === type.toLowerCase());
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   const LOW_MEMORY = process.env.LOW_MEMORY_MODE === 'true';
   const hasDiscord = hasType('discord') || providerFilter.includes('discord');
   const hasSlack = hasType('slack') || providerFilter.includes('slack');
@@ -146,6 +147,7 @@ export async function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
+
           sendMessageToChannel: () => {},
           getClientId: () => 'SLACK_CLIENT_ID',
         } as unknown as MessengerServiceInstance);

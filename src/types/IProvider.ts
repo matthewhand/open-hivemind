@@ -1,4 +1,4 @@
-export interface IProvider<TConfig = any> {
+export interface IProvider<TConfig = unknown> {
   /**
    * Unique identifier for the provider (e.g., 'slack', 'discord', 'openai').
    */
@@ -17,12 +17,12 @@ export interface IProvider<TConfig = any> {
   /**
    * Returns the configuration schema object for this provider.
    */
-  getSchema(): any;
+  getSchema(): Record<string, unknown>;
 
   /**
    * Returns the configuration instance or properties.
    */
-  getConfig(): any;
+  getConfig(): TConfig | Record<string, unknown>;
 
   /**
    * Returns a list of sensitive configuration keys (e.g., tokens, secrets) that should be redacted.
@@ -40,13 +40,13 @@ export interface IProvider<TConfig = any> {
   helpText?: string;
 }
 
-export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
+export interface IMessageProvider<TConfig = unknown> extends IProvider<TConfig> {
   type: 'messenger';
 
   /**
    * Returns the status of the provider (e.g., connected bots).
    */
-  getStatus(): Promise<any>;
+  getStatus(): Promise<Record<string, unknown>>;
 
   /**
    * Returns a list of configured bot names.
@@ -56,17 +56,17 @@ export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
   /**
    * Returns detailed bot information.
    */
-  getBots(): Promise<any[]>;
+  getBots(): Promise<Record<string, unknown>[]>;
 
   /**
    * Adds a new bot configuration.
    */
-  addBot(config: any): Promise<void>;
+  addBot(config: Record<string, unknown>): Promise<void>;
 
   /**
    * Reloads the provider configuration.
    */
-  reload?(): Promise<any>;
+  reload?(): Promise<unknown>;
 
   /**
    * Sends a message to a specific channel.
@@ -83,7 +83,7 @@ export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
    * @param limit - Optional maximum number of messages to retrieve
    * @returns A promise that resolves to an array of messages
    */
-  getMessages(channelId: string, limit?: number): Promise<any[]>;
+  getMessages(channelId: string, limit?: number): Promise<unknown[]>;
 
   /**
    * Sends a message to a channel with an optional agent name.
@@ -112,7 +112,7 @@ export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
   getForumOwner(forumId: string): Promise<string>;
 }
 
-export interface ILLMProvider<TConfig = any> extends IProvider<TConfig> {
+export interface ILLMProvider<TConfig = unknown> extends IProvider<TConfig> {
   type: 'llm';
 }
 

@@ -1,19 +1,25 @@
 import { Logger } from '@common/logger';
-import type { Database } from '../sqliteWrapper';
+import type { IDatabase as Database } from '../types';
 import { type ISchemaModule } from './ISchemaModule';
 
 export class ActivitySchemas implements ISchemaModule {
   async createTables(db: Database): Promise<void> {
+    const isPostgres = (db as any).constructor.name === 'PostgresWrapper' || !!(db as any).pool;
+    const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    const datetime_type = isPostgres ? 'TIMESTAMP' : 'DATETIME';
+    const default_now = isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP';
+
     await this.createTable(
       db,
       `
       CREATE TABLE IF NOT EXISTS activity_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
+        id ${pk_auto},
+        bot_id INTEGER,
         action TEXT NOT NULL,
         details TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
+        metadata TEXT,
+        timestamp ${datetime_type} DEFAULT ${default_now},
+        FOREIGN KEY (bot_id) REFERENCES bot_configurations (id) ON DELETE SET NULL
       )
     `
     );
@@ -22,14 +28,14 @@ export class ActivitySchemas implements ISchemaModule {
       db,
       `
       CREATE TABLE IF NOT EXISTS message_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
+        id ${pk_auto},
+        bot_id INTEGER,
         channel_id TEXT,
         user_id TEXT,
         message TEXT,
         response TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
+        timestamp ${datetime_type} DEFAULT ${default_now},
+        FOREIGN KEY (bot_id) REFERENCES bot_configurations (id) ON DELETE SET NULL
       )
     `
     );
@@ -38,14 +44,14 @@ export class ActivitySchemas implements ISchemaModule {
       db,
       `
       CREATE TABLE IF NOT EXISTS bot_audit_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
+        id ${pk_auto},
+        bot_id INTEGER NOT NULL,
         action TEXT NOT NULL,
         user_id TEXT,
         old_values TEXT,
         new_values TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
+        timestamp ${datetime_type} DEFAULT ${default_now},
+        FOREIGN KEY (bot_id) REFERENCES bot_configurations (id) ON DELETE CASCADE
       )
     `
     );
@@ -54,13 +60,13 @@ export class ActivitySchemas implements ISchemaModule {
       db,
       `
       CREATE TABLE IF NOT EXISTS bot_error_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
+        id ${pk_auto},
+        bot_id INTEGER,
         error_message TEXT NOT NULL,
         stack_trace TEXT,
         severity TEXT DEFAULT 'medium',
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
+        timestamp ${datetime_type} DEFAULT ${default_now},
+        FOREIGN KEY (bot_id) REFERENCES bot_configurations (id) ON DELETE SET NULL
       )
     `
     );

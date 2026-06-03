@@ -2,10 +2,9 @@ import 'reflect-metadata';
 import { injectable, singleton } from 'tsyringe';
 import convict from 'convict';
 import Debug from 'debug';
-import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
-import { validateUrl, validateString, validateEnum } from './validationUtils';
+import { validateUrl, validateEnum } from './validationUtils';
 import { type IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
@@ -17,18 +16,27 @@ const debug = Debug('app:ConfigurationManager');
 const schema = convict({
   NODE_ENV: {
     doc: 'The application environment.',
+   
+     
+     
     format: (val: any) => validateEnum('NODE_ENV', val, ['production', 'development', 'test']),
     default: 'development',
     env: 'NODE_ENV',
   },
   VITE_API_BASE_URL: {
     doc: 'API base URL for Vite frontend',
+    
+   
+     
     format: (val: any) => validateUrl('VITE_API_BASE_URL', val),
     default: 'http://localhost:3000/api',
     env: 'VITE_API_BASE_URL',
   },
   PLAYWRIGHT_BASE_URL: {
+     
     doc: 'Base URL for Playwright E2E tests',
+   
+     
     format: (val: any) => validateUrl('PLAYWRIGHT_BASE_URL', val),
     default: 'http://localhost:3000',
     env: 'PLAYWRIGHT_BASE_URL',
@@ -60,8 +68,11 @@ const schema = convict({
  */
 @singleton()
 @injectable()
+ 
 export class ConfigurationManager implements IConfigurationManager {
   private static instance: ConfigurationManager | null = null;
+   
+   
   private configs: Record<string, convict.Config<any>> = {};
   private sessionStore: Record<string, Record<string, string>> = {};
 
@@ -105,7 +116,7 @@ export class ConfigurationManager implements IConfigurationManager {
       ConfigurationManager.instance = new ConfigurationManager();
       debug('ConfigurationManager instance created');
     }
-    return ConfigurationManager.instance!;
+    return ConfigurationManager.instance as ConfigurationManager;
   }
 
   /**
@@ -113,9 +124,12 @@ export class ConfigurationManager implements IConfigurationManager {
      * @param {string} configName - Name of the configuration to retrieve
      * @returns {convict.Config<any>|null} Requested configuration or null if not found
      * @throws {TypeError} If configName is not a string
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
      * @example
      * const dbConfig = configManager.getConfig('database');
      */
+   
+   
   public getConfig(configName: string): convict.Config<any> | null {
     if (typeof configName !== 'string') {
       throw new ValidationError(
@@ -145,7 +159,7 @@ export class ConfigurationManager implements IConfigurationManager {
      * @example
      * configManager.setSession('slack', 'C123456', 'session_789');
      */
-  public setSession(integration: string, channelId: string, sessionId: string) {
+  public setSession(integration: string, channelId: string, sessionId: string): void {
     if (typeof integration !== 'string') {
       throw new ValidationError(
         'integration must be a string',

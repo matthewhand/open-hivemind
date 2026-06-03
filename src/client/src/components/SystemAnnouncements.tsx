@@ -142,6 +142,7 @@ const SystemAnnouncements: React.FC<SystemAnnouncementsProps> = ({
               className="btn btn-ghost btn-sm btn-circle"
               onClick={() => setIsLive(!isLive)}
               title={isLive ? 'Pause live updates' : 'Resume live updates'}
+              aria-label={isLive ? 'Pause live updates' : 'Resume live updates'}
             >
               {isLive ? '⏸️' : '▶️'}
             </button>

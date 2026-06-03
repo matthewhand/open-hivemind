@@ -5,6 +5,7 @@ import { type IToolInstaller } from '@src/types/IToolInstaller';
 import Logger from '@common/logger';
 
 const execAsync = promisify(exec);
+const logger = Logger.withContext('SwarmInstaller');
 
 export class SwarmInstaller implements IToolInstaller {
   id = 'openswarm';
@@ -74,12 +75,13 @@ export class SwarmInstaller implements IToolInstaller {
         return { success: true, message: 'OpenSwarm already installed' };
       }
 
-      Logger.info('Installing OpenSwarm via pip...');
+      logger.info('Installing OpenSwarm via pip...');
       // SECURITY: No user input - hardcoded package name
       await execAsync('pip install open-swarm');
 
       return { success: true, message: 'OpenSwarm installed successfully via pip' };
     } catch (error: any) {
+      logger.error('Installation failed', { error: error.message });
       return { success: false, message: `Installation failed: ${error.message}` };
     }
   }
@@ -117,8 +119,10 @@ export class SwarmInstaller implements IToolInstaller {
       // Wait a moment for startup
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
+      logger.info(`OpenSwarm API started on port ${portNum}`);
       return { success: true, message: `OpenSwarm API started on port ${portNum}` };
     } catch (error: any) {
+      logger.error('Failed to start OpenSwarm', { error: error.message });
       return { success: false, message: `Failed to start: ${error.message}` };
     }
   }

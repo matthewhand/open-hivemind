@@ -74,11 +74,17 @@ export const MessageProfileKeyParamSchema = z.object({
 // ── Memory Profile Schemas ───────────────────────────────────────────────────
 
 export const CreateMemoryProfileSchema = z.object({
-  body: z.object({
-    key: profileKeyField,
-    name: profileNameField,
-    provider: profileProviderField,
-  }),
+  body: z
+    .object({
+      key: profileKeyField,
+      name: profileNameField,
+      provider: profileProviderField,
+      type: z.string().optional(),
+      description: z.string().optional(),
+      isDefault: z.boolean().optional(),
+      config: z.record(z.unknown()).optional(),
+    })
+    .passthrough(),
 });
 
 export const MemoryProfileKeyParamSchema = z.object({

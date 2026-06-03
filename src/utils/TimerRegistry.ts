@@ -298,6 +298,7 @@ export class TimerRegistry {
   public static resetInstance(): void {
     if (TimerRegistry.instance) {
       TimerRegistry.instance.clearAll();
+
       TimerRegistry.instance = null as any;
     }
   }

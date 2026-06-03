@@ -1,4 +1,6 @@
 import Debug from 'debug';
+import type { ILlmProvider } from '../llm/interfaces/ILlmProvider';
+import type { IMessage } from '../message/interfaces/IMessage';
 import { ToolManager, type OpenAITool, type ToolResult } from './ToolManager';
 
 const debug = Debug('app:toolAugmentedCompletion');
@@ -32,10 +34,10 @@ interface ChatMessage {
  */
 export async function toolAugmentedCompletion(opts: {
   botName: string;
-  llmProvider: any;
+  llmProvider: ILlmProvider;
   userMessage: string;
-  historyMessages: any[];
-  metadata: Record<string, any>;
+  historyMessages: IMessage[];
+  metadata: Record<string, unknown>;
   systemPrompt: string;
   /** Extra context forwarded to tool execution for guard checks. */
   toolContext?: {
@@ -82,7 +84,7 @@ export async function toolAugmentedCompletion(opts: {
   for (const h of historyMessages) {
     try {
       const role = (h as any).role || 'user';
-      const content = typeof h.getText === 'function' ? h.getText() : String(h);
+      const content = h.getText();
       messages.push({ role, content });
     } catch {
       // skip malformed history entries
@@ -127,18 +129,40 @@ export async function toolAugmentedCompletion(opts: {
 // ---------------------------------------------------------------------------
 
 /**
- * Calls the LLM using the OpenAI SDK (via the provider's existing OpenAI
- * client configuration). Because ILlmProvider doesn't expose tool calling,
- * we dynamically detect if the provider is OpenAI-compatible and reconstruct
- * the call.
+ * Calls the LLM with tool definitions.
+ *
+ * Routes through the provider abstraction (`generateChatCompletionWithTools`)
+ * when the provider implements native function calling, so non-OpenAI
+ * providers can participate. Providers that do not implement it fall through
+ * to the direct OpenAI-SDK path below, preserving the original behavior.
  */
 async function callLLMWithTools(
-  llmProvider: any,
+  llmProvider: ILlmProvider,
   messages: ChatMessage[],
   tools: OpenAITool[],
+
   metadata: Record<string, any>
 ): Promise<ChatMessage> {
-  // Strategy: Try to use the OpenAI SDK directly. We load it dynamically
+  // Preferred path: route through the provider abstraction when supported.
+  if (typeof llmProvider.generateChatCompletionWithTools === 'function') {
+    try {
+      const result = await llmProvider.generateChatCompletionWithTools(
+        messages,
+        tools,
+        metadata
+      );
+      return {
+        role: 'assistant',
+        content: result.content ?? null,
+        tool_calls: result.tool_calls as LLMToolCall[] | undefined,
+      };
+    } catch (error) {
+      debug('Provider tool-aware completion failed, falling back to direct path:', error);
+      // Fall through to the direct OpenAI path below.
+    }
+  }
+
+  // Fallback path: use the OpenAI SDK directly. We load it dynamically
   // to avoid hard coupling. The provider's config tells us the API key
   // and base URL.
   try {
@@ -146,23 +170,29 @@ async function callLLMWithTools(
     const openaiConfig = (await import('@config/openaiConfig')).default;
 
     const apiKey =
-      metadata?.openaiApiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+      (metadata?.openaiApiKey as string) ||
+      openaiConfig.get('OPENAI_API_KEY') ||
+      process.env.OPENAI_API_KEY;
 
     const baseURL =
-      metadata?.openaiBaseUrl ||
+      (metadata?.openaiBaseUrl as string) ||
       openaiConfig.get('OPENAI_BASE_URL') ||
       process.env.OPENAI_BASE_URL ||
       'https://api.openai.com/v1';
 
     const model =
-      metadata?.modelOverride ||
-      metadata?.model ||
+      (metadata?.modelOverride as string) ||
+      (metadata?.model as string) ||
       process.env.OPENAI_MODEL ||
       openaiConfig.get('OPENAI_MODEL') ||
       'gpt-4o';
 
-    const temperature = metadata?.temperature ?? openaiConfig.get('OPENAI_TEMPERATURE') ?? 0.7;
-    const maxTokens = metadata?.maxTokens ?? openaiConfig.get('OPENAI_MAX_TOKENS') ?? 150;
+    const temperature =
+      (metadata?.temperature as number) ??
+      (openaiConfig.get('OPENAI_TEMPERATURE') as number) ??
+      0.7;
+    const maxTokens =
+      (metadata?.maxTokens as number) ?? (openaiConfig.get('OPENAI_MAX_TOKENS') as number) ?? 150;
 
     const client = new OpenAI({ apiKey, baseURL });
 
@@ -235,10 +265,10 @@ function formatToolResultContent(result: ToolResult): string {
 
   // MCP tool results often come as { content: [{ type, text }] }.
   if (result.result && typeof result.result === 'object') {
-    const r = result.result as any;
+    const r = result.result as { content?: { type: string; text?: string }[] };
     if (Array.isArray(r.content)) {
       return r.content
-        .map((c: any) => (typeof c.text === 'string' ? c.text : JSON.stringify(c)))
+        .map((c) => (typeof c.text === 'string' ? c.text : JSON.stringify(c)))
         .join('\n');
     }
   }

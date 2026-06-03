@@ -3,14 +3,26 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
+import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { AIFeedbackRepository } from './AIFeedbackRepository';
-import { AnomalyRepository } from './AnomalyRepository';
-import { ApprovalRepository } from './ApprovalRepository';
-import { BotConfigRepository } from './BotConfigRepository';
-import { DecisionRepository } from './DecisionRepository';
-import { MessageRepository } from './MessageRepository';
-import { SQLiteWrapper as Database } from './sqliteWrapper';
+import { runMigrations } from './migrationRunner';
+import { PostgresWrapper } from './postgresWrapper';
+import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
+import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
+import { AnomalyRepository } from './repositories/AnomalyRepository';
+import { ApprovalRepository } from './repositories/ApprovalRepository';
+import {
+  AuditEventRepository,
+  type AuditEventQuery,
+  type AuditEventRecord,
+  type AuditEventStats,
+} from './repositories/AuditEventRepository';
+import { BotConfigRepository } from './repositories/BotConfigRepository';
+import { DecisionRepository } from './repositories/DecisionRepository';
+import { InferenceRepository } from './repositories/InferenceRepository';
+import { MemoryRepository } from './repositories/MemoryRepository';
+import { MessageRepository } from './repositories/MessageRepository';
+import { SQLiteWrapper } from './sqliteWrapper';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -21,6 +33,9 @@ import type {
   ConversationSummary,
   DatabaseConfig,
   DecisionRecord,
+  IDatabase,
+  InferenceLog,
+  MemoryRecord,
   MessageRecord,
 } from './types';
 
@@ -52,7 +67,14 @@ export type {
   Anomaly,
   ApprovalRequest,
   AIFeedback,
+  IDatabase,
 } from './types';
+
+export type {
+  AuditEventRecord,
+  AuditEventQuery,
+  AuditEventStats,
+} from './repositories/AuditEventRepository';
 
 export type { Database } from './sqliteWrapper';
 
@@ -65,18 +87,39 @@ export class DatabaseManager {
   private config?: DatabaseConfig;
   private configured = false;
   private connected = false;
-  private db: Database | null = null;
+  private db: IDatabase | null = null;
 
   // Repositories
   private messageRepo!: MessageRepository;
   private botConfigRepo!: BotConfigRepository;
   private anomalyRepo!: AnomalyRepository;
   private approvalRepo!: ApprovalRepository;
+  private auditEventRepo!: AuditEventRepository;
   private aiFeedbackRepo!: AIFeedbackRepository;
   private decisionRepo!: DecisionRepository;
+  private activityRepo!: ActivityRepository;
+  private inferenceRepo!: InferenceRepository;
+  private memoryRepo!: MemoryRepository;
 
   constructor() {
     this.initRepositories();
+    // Load config from databaseConfig (convict)
+    const type = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres';
+    if (type === 'sqlite') {
+      this.configure({
+        type: 'sqlite',
+        path: databaseConfig.get('DATABASE_PATH'),
+      });
+    } else {
+      this.configure({
+        type: 'postgres',
+        host: databaseConfig.get('DATABASE_HOST'),
+        port: databaseConfig.get('DATABASE_PORT'),
+        username: databaseConfig.get('DATABASE_USER'),
+        password: databaseConfig.get('DATABASE_PASSWORD'),
+        database: databaseConfig.get('DATABASE_NAME'),
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -88,14 +131,6 @@ export class DatabaseManager {
    *
    * @param {DatabaseConfig} [config] - Optional database configuration to apply
    * @returns {DatabaseManager} The singleton instance
-   * @example
-   * ```typescript
-   * const db = DatabaseManager.getInstance({
-   *   type: 'sqlite',
-   *   path: './data/hivemind.db'
-   * });
-   * await db.connect();
-   * ```
    */
 
   static getInstance(config?: DatabaseConfig): DatabaseManager {
@@ -148,15 +183,25 @@ export class DatabaseManager {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = new Database(dbPath);
-        debug('DATABASE_MANAGER: this.db initialized, type:', typeof this.db);
-        if (this.db && (this.db as any).exec) {
-           debug('DATABASE_MANAGER: this.db.exec exists');
+        this.db = new SQLiteWrapper(dbPath);
+        debug('DATABASE_MANAGER: this.db initialized (SQLite)');
+        await runMigrations(this.db, false);
+      } else if (this.config.type === 'postgres') {
+        const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
+        if (dbUrl) {
+          this.db = new PostgresWrapper(dbUrl);
+        } else {
+          this.db = new PostgresWrapper({
+            host: this.config.host,
+            port: this.config.port,
+            user: this.config.username,
+            password: this.config.password,
+            database: this.config.database,
+            ssl: databaseConfig.get('DATABASE_SSL') ? { rejectUnauthorized: false } : false,
+          });
         }
-
-        await this.createTables();
-        await this.createIndexes();
-        await this.migrate();
+        debug('DATABASE_MANAGER: this.db initialized (Postgres)');
+        await runMigrations(this.db, true);
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,
@@ -166,6 +211,13 @@ export class DatabaseManager {
 
       this.connected = true;
       debug('Database connected successfully');
+
+      // Trigger automatic cleanup on startup if enabled
+      if (databaseConfig.get('AUTO_CLEANUP_ON_STARTUP')) {
+        this.runFullCleanup().catch((err) => {
+          debug('Automatic startup cleanup failed:', err);
+        });
+      }
     } catch (error) {
       debug('Database connection failed:', error);
       if (error instanceof DatabaseError) {
@@ -201,426 +253,51 @@ export class DatabaseManager {
   // ---------------------------------------------------------------------------
 
   private initRepositories(): void {
-    const getDb = (): Database => {
-      if (!this.db) throw new Error('Database not initialized');
-      return this.db;
-    };
+    const getDb = (): any => this.db ?? null;
     const isConn = (): boolean => this.connected;
     const ensure = (): void => this.ensureConnected();
+    const isPg = (): boolean => this.config?.type === 'postgres';
 
-    this.messageRepo = new MessageRepository(getDb as any, isConn, ensure as any);
-    this.botConfigRepo = new BotConfigRepository(getDb as any, ensure as any);
-    this.anomalyRepo = new AnomalyRepository(getDb as any, isConn);
-    this.approvalRepo = new ApprovalRepository(getDb as any, ensure as any);
-    this.aiFeedbackRepo = new AIFeedbackRepository(getDb as any, ensure as any);
-    this.decisionRepo = new DecisionRepository(getDb as any, isConn);
+    this.messageRepo = new MessageRepository(getDb, isConn, ensure);
+    this.botConfigRepo = new BotConfigRepository(getDb, ensure);
+    this.anomalyRepo = new AnomalyRepository(getDb, isConn);
+    this.approvalRepo = new ApprovalRepository(getDb, ensure);
+    this.auditEventRepo = new AuditEventRepository(getDb, isConn);
+    this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
+    this.decisionRepo = new DecisionRepository(getDb, isConn);
+    this.activityRepo = new ActivityRepository(getDb, isConn);
+    this.inferenceRepo = new InferenceRepository(getDb, isConn);
+    this.memoryRepo = new MemoryRepository(getDb, isConn, isPg);
   }
 
   // ---------------------------------------------------------------------------
-  // Schema creation (private, unchanged)
+
+  // Log operations
   // ---------------------------------------------------------------------------
 
-  private async createTables(): Promise<void> {
-    if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
-    const db = this.db;
-
-    // Messages table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        messageId TEXT NOT NULL,
-        channelId TEXT NOT NULL,
-        content TEXT NOT NULL,
-        authorId TEXT NOT NULL,
-        authorName TEXT NOT NULL,
-        timestamp DATETIME NOT NULL,
-        provider TEXT NOT NULL,
-        metadata TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Conversation summaries table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS conversation_summaries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        channelId TEXT NOT NULL,
-        summary TEXT NOT NULL,
-        messageCount INTEGER NOT NULL,
-        startTimestamp DATETIME NOT NULL,
-        endTimestamp DATETIME NOT NULL,
-        provider TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Bot metrics table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS bot_metrics (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        botName TEXT NOT NULL,
-        messagesSent INTEGER DEFAULT 0,
-        messagesReceived INTEGER DEFAULT 0,
-        conversationsHandled INTEGER DEFAULT 0,
-        averageResponseTime REAL DEFAULT 0,
-        lastActivity DATETIME,
-        provider TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Bot sessions table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS bot_sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sessionId TEXT UNIQUE NOT NULL,
-        botName TEXT NOT NULL,
-        channelId TEXT NOT NULL,
-        provider TEXT NOT NULL,
-        startTime DATETIME NOT NULL,
-        endTime DATETIME,
-        messageCount INTEGER DEFAULT 0,
-        isActive BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Bot configurations table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS bot_configurations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        messageProvider TEXT NOT NULL,
-        llmProvider TEXT NOT NULL,
-        persona TEXT,
-        systemInstruction TEXT,
-        mcpServers TEXT,
-        mcpGuard TEXT,
-        discord TEXT,
-        slack TEXT,
-        mattermost TEXT,
-        openai TEXT,
-        flowise TEXT,
-        openwebui TEXT,
-        openswarm TEXT,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        createdBy TEXT,
-        updatedBy TEXT
-      )
-    `);
-
-    // Bot configuration versions table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS bot_configuration_versions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        botConfigurationId INTEGER NOT NULL,
-        version TEXT NOT NULL,
-        name TEXT NOT NULL,
-        messageProvider TEXT NOT NULL,
-        llmProvider TEXT NOT NULL,
-        persona TEXT,
-        systemInstruction TEXT,
-        mcpServers TEXT,
-        mcpGuard TEXT,
-        discord TEXT,
-        slack TEXT,
-        mattermost TEXT,
-        openai TEXT,
-        flowise TEXT,
-        openwebui TEXT,
-        openswarm TEXT,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        createdBy TEXT,
-        changeLog TEXT,
-        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Bot configuration audit table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS bot_configuration_audit (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        botConfigurationId INTEGER NOT NULL,
-        action TEXT NOT NULL,
-        oldValues TEXT,
-        newValues TEXT,
-        performedBy TEXT,
-        performedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        ipAddress TEXT,
-        userAgent TEXT,
-        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Tenants table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS tenants (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        domain TEXT UNIQUE NOT NULL,
-        plan TEXT NOT NULL DEFAULT 'free',
-        maxBots INTEGER DEFAULT 5,
-        maxUsers INTEGER DEFAULT 3,
-        storageQuota INTEGER DEFAULT 1073741824,
-        features TEXT, -- JSON array
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expiresAt DATETIME
-      )
-    `);
-
-    // Roles table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT,
-        level INTEGER DEFAULT 0,
-        permissions TEXT, -- JSON array
-        isActive BOOLEAN DEFAULT 1,
-        tenantId TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Users table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        passwordHash TEXT NOT NULL,
-        roleId INTEGER,
-        tenantId TEXT NOT NULL,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        lastLogin DATETIME,
-        FOREIGN KEY (roleId) REFERENCES roles(id),
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Audits table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS audits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        userId INTEGER,
-        action TEXT NOT NULL,
-        resource TEXT NOT NULL,
-        resourceId TEXT,
-        tenantId TEXT NOT NULL,
-        ipAddress TEXT,
-        userAgent TEXT,
-        severity TEXT DEFAULT 'info',
-        status TEXT DEFAULT 'success',
-        details TEXT, -- JSON
-        metadata TEXT, -- JSON
-        FOREIGN KEY (userId) REFERENCES users(id),
-        FOREIGN KEY (tenantId) REFERENCES tenants(id)
-      )
-    `);
-
-    // Approval requests table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS approval_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        resourceType TEXT NOT NULL,
-        resourceId INTEGER NOT NULL,
-        changeType TEXT NOT NULL,
-        requestedBy TEXT NOT NULL,
-        diff TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        reviewedBy TEXT,
-        reviewedAt DATETIME,
-        reviewComments TEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        tenantId TEXT,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Anomalies table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS anomalies (
-        id TEXT PRIMARY KEY,
-        timestamp DATETIME NOT NULL,
-        metric TEXT NOT NULL,
-        value REAL NOT NULL,
-        expectedMean REAL NOT NULL,
-        standardDeviation REAL NOT NULL,
-        zScore REAL NOT NULL,
-        threshold REAL NOT NULL,
-        severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-        explanation TEXT NOT NULL,
-        resolved BOOLEAN DEFAULT 0,
-        tenantId TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
-      )
-    `);
-
-    // AI Feedback table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS ai_feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        recommendationId TEXT NOT NULL,
-        feedback TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        metadata TEXT
-      )
-    `);
-
-    // Decisions table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS decisions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        botName TEXT,
-        shouldReply BOOLEAN,
-        reason TEXT,
-        probabilityRoll REAL,
-        threshold REAL,
-        timestamp TEXT
-      )
-    `);
-
-    debug('Database tables created');
-  }
-
-  private async createIndexes(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
-
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`
-    );
-
-    // Bot configuration indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`
-    );
-
-    // Approval requests indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`
-    );
-
-    // Anomalies indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`
-    );
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
-
-    // AI Feedback indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_ai_feedback_recommendation ON ai_feedback(recommendationId)`
-    );
-
-    debug('Database indexes created');
-  }
-
-  private async migrate(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+  async saveLog(log: {
+    level: string;
+    message: string;
+    context?: string;
+    details?: any;
+    metadata?: any;
+  }): Promise<void> {
+    if (!this.db || !this.connected) return;
 
     try {
-      // Add tenantId columns to existing tables
-      await db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
-
-      // Add RBAC enhancements to roles table
-      await db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-
-      // Add indexes for tenantId
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`
+      await this.db.run(
+        `INSERT INTO logs (level, context, message, details, metadata) VALUES (?, ?, ?, ?, ?)`,
+        [
+          log.level,
+          log.context || null,
+          log.message,
+          log.details ? JSON.stringify(log.details) : null,
+          log.metadata ? JSON.stringify(log.metadata) : null,
+        ]
       );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`
-      );
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`
-      );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
-
-      debug('Database migration completed');
     } catch (error) {
-      // Ignore errors if columns already exist (SQLite ALTER throws if exists)
-      if ((error as Error).message.includes('duplicate column name')) {
-        debug('Some columns already exist, skipping');
-      } else {
-        debug('Migration error:', error);
-        throw error;
-      }
+      // Don't throw here to avoid infinite log loops if DB fails
+      console.error('Failed to save log to database:', error);
     }
   }
 
@@ -633,11 +310,11 @@ export class DatabaseManager {
     userId: string,
     content: string,
     provider = 'unknown'
-  ): Promise<number> {
+  ): Promise<number | string> {
     return this.messageRepo.saveMessage(channelId, userId, content, provider);
   }
 
-  async storeMessage(message: MessageRecord): Promise<number> {
+  async storeMessage(message: MessageRecord): Promise<number | string> {
     return this.messageRepo.storeMessage(message);
   }
 
@@ -649,7 +326,7 @@ export class DatabaseManager {
     return this.messageRepo.getMessages(channelId, limit, offset);
   }
 
-  async storeConversationSummary(summary: ConversationSummary): Promise<number> {
+  async storeConversationSummary(summary: ConversationSummary): Promise<number | string> {
     return this.messageRepo.storeConversationSummary(summary);
   }
 
@@ -713,6 +390,10 @@ export class DatabaseManager {
 
   async createBotConfigurationVersion(version: BotConfigurationVersion): Promise<number> {
     return this.botConfigRepo.createBotConfigurationVersion(version);
+  }
+
+  async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<number[]> {
+    return this.botConfigRepo.createBotConfigurationVersionsBulk(versions);
   }
 
   async getBotConfigurationVersions(
@@ -802,6 +483,26 @@ export class DatabaseManager {
   }
 
   // ---------------------------------------------------------------------------
+  // Audit event operations -- delegated to AuditEventRepository
+  // ---------------------------------------------------------------------------
+
+  async insertAuditEvent(event: AuditEventRecord): Promise<boolean> {
+    return this.auditEventRepo.insert(event);
+  }
+
+  async queryAuditEvents(filters?: AuditEventQuery): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.query(filters);
+  }
+
+  async getRecentAuditEvents(limit = 100): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.getRecent(limit);
+  }
+
+  async getAuditEventStats(startTime?: string, endTime?: string): Promise<AuditEventStats> {
+    return this.auditEventRepo.getStats(startTime, endTime);
+  }
+
+  // ---------------------------------------------------------------------------
   // AI Feedback operations -- delegated to AIFeedbackRepository
   // ---------------------------------------------------------------------------
 
@@ -809,7 +510,7 @@ export class DatabaseManager {
     recommendationId: string;
     feedback: string;
     metadata?: Record<string, unknown>;
-  }): Promise<number> {
+  }): Promise<number | string> {
     return this.aiFeedbackRepo.storeAIFeedback(feedback);
   }
 
@@ -825,7 +526,293 @@ export class DatabaseManager {
     return this.decisionRepo.saveDecision(decision);
   }
 
-  async getRecentDecisions(limit = 100): Promise<any[]> {
+  async getRecentDecisions(limit = 100): Promise<DecisionRecord[]> {
     return this.decisionRepo.getRecentDecisions(limit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Activity operations -- delegated to ActivityRepository
+  // ---------------------------------------------------------------------------
+
+  async logActivity(activity: ActivityLog): Promise<number | string> {
+    return this.activityRepo.logActivity(activity);
+  }
+
+  async logMessageActivity(log: {
+    bot_id?: string;
+    channel_id: string;
+    user_id: string;
+    message: string;
+    response?: string;
+  }): Promise<number | string> {
+    return this.activityRepo.logMessageActivity(log);
+  }
+
+  async logAudit(audit: {
+    bot_id: string;
+    action: string;
+    user_id?: string;
+    old_values?: string;
+    new_values?: string;
+  }): Promise<number | string> {
+    return this.activityRepo.logAudit(audit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Inference operations -- delegated to InferenceRepository
+  // ---------------------------------------------------------------------------
+
+  async logInference(log: InferenceLog): Promise<number | string> {
+    if (!databaseConfig.get('PERSIST_INFERENCE')) return 0;
+    return this.inferenceRepo.logInference(log);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Memory operations -- delegated to MemoryRepository
+  // ---------------------------------------------------------------------------
+
+  async addMemory(record: MemoryRecord): Promise<number | string> {
+    return this.memoryRepo.addMemory(record);
+  }
+
+  async searchMemories(
+    embedding: number[],
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<(MemoryRecord & { score: number })[]> {
+    return this.memoryRepo.searchMemories(embedding, options);
+  }
+
+  async getMemories(
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<MemoryRecord[]> {
+    return this.memoryRepo.getMemories(options);
+  }
+
+  async getMemoryById(id: string | number): Promise<MemoryRecord | null> {
+    return this.memoryRepo.getMemoryById(id);
+  }
+
+  async deleteMemory(id: string | number): Promise<boolean> {
+    return this.memoryRepo.deleteMemory(id);
+  }
+
+  async deleteAllMemories(options: { userId?: string; agentId?: string } = {}): Promise<void> {
+    return this.memoryRepo.deleteAll(options);
+  }
+
+  /**
+   * Evict (prune) stored memories based on a TTL and/or max-count policy.
+   * Opt-in and safe: a no-op when no positive policy is supplied.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async evictMemories(
+    options: {
+      olderThanDays?: number;
+      maxCount?: number;
+      userId?: string;
+      agentId?: string;
+    } = {}
+  ): Promise<number> {
+    return this.memoryRepo.evictMemories(options);
+  }
+
+  /**
+   * Reset the database by clearing all major tables.
+   * This is a destructive operation used for "Factory Reset".
+   */
+  async resetDatabase(): Promise<void> {
+    if (!this.db || !this.connected) throw new Error('Database not connected');
+    const db = this.db;
+
+    const tables = [
+      'messages',
+      'conversation_summaries',
+      'bot_metrics',
+      'bot_sessions',
+      'bot_configurations',
+      'bot_configuration_versions',
+      'bot_configuration_audit',
+      'tenants',
+      'roles',
+      'users',
+      'audits',
+      'approval_requests',
+      'anomalies',
+      'ai_feedback',
+      'decisions',
+      'logs',
+      'inference_logs',
+      'memories',
+      'activity_logs',
+      'message_logs',
+      'bot_audit_logs',
+      'bot_error_logs',
+    ];
+
+    debug('Starting factory reset (nuke)...');
+
+    // Disable foreign key checks for the nuke to avoid dependency issues
+    if (this.config?.type === 'sqlite') {
+      await db.exec('PRAGMA foreign_keys = OFF');
+    } else if (this.config?.type === 'postgres') {
+      await db.exec('SET CONSTRAINTS ALL DEFERRED');
+    }
+
+    for (const table of tables) {
+      try {
+        console.log(`Clearing ${table}...`);
+        await db.run(`DELETE FROM ${table}`);
+      } catch (e) {
+        debug(`Failed to clear table ${table}:`, e);
+      }
+    }
+
+    // Re-enable foreign key checks
+    if (this.config?.type === 'sqlite') {
+      await db.exec('PRAGMA foreign_keys = ON');
+    }
+
+    debug('Factory reset completed.');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cleanup operations
+  // ---------------------------------------------------------------------------
+
+  async cleanupTableByDate(
+    tableName: string,
+    days: number,
+    dateColumn = 'timestamp'
+  ): Promise<number> {
+    if (!this.db || !this.connected) return 0;
+
+    const isPostgres = this.config?.type === 'postgres';
+    let sql: string;
+
+    if (isPostgres) {
+      sql = `DELETE FROM ${tableName} WHERE ${dateColumn} < NOW() - INTERVAL '${days} days'`;
+    } else {
+      sql = `DELETE FROM ${tableName} WHERE ${dateColumn} < datetime('now', '-${days} days')`;
+    }
+
+    try {
+      const result = await this.db.run(sql);
+      debug(`Cleaned up ${result.changes} rows from ${tableName} (by date)`);
+      return result.changes;
+    } catch (error) {
+      console.error(`Error cleaning up table ${tableName}:`, error);
+      debug(`Error cleaning up table ${tableName}:`, error);
+      return 0;
+    }
+  }
+
+  async cleanupTableByRows(tableName: string, maxRows: number): Promise<number> {
+    if (!this.db || !this.connected) return 0;
+
+    try {
+      // Find the cutoff ID using an index-optimized query
+      // OFFSET is maxRows, meaning we want the ID of the (maxRows + 1)th newest row
+      const cutoffRow = await this.db.get(
+        `SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`,
+        [maxRows]
+      );
+
+      // If we have fewer rows than maxRows, or no rows, there's nothing to delete
+      if (!cutoffRow || !cutoffRow.id) return 0;
+
+      // Execute a fast range deletion
+      const result = await this.db.run(`DELETE FROM ${tableName} WHERE id <= ?`, [cutoffRow.id]);
+      debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
+      return result.changes;
+    } catch (error) {
+      console.error(`Error cleaning up table ${tableName}:`, error);
+      debug(`Error cleaning up table ${tableName}:`, error);
+      return 0;
+    }
+  }
+
+  private getRetentionLimits(): { days: number; maxRows: number } {
+    const autoRetention = databaseConfig.get('AUTO_RETENTION');
+    let days = databaseConfig.get('LOG_RETENTION_DAYS');
+    let maxRows = databaseConfig.get('MAX_HISTORY_ROWS');
+
+    if (autoRetention) {
+      if (this.config?.type === 'sqlite' && this.config.path === ':memory:') {
+        // Lite: Miniscule retention for RAM efficiency
+        days = 1;
+        maxRows = 100;
+        debug('Applying LITE retention limits (1 day, 100 rows)');
+      } else if (this.config?.type === 'postgres') {
+        // Cloud: Limited retention for Neon Free Tier (0.5 GB limit)
+        days = 7;
+        maxRows = 1000;
+        debug('Applying CLOUD retention limits (7 days, 1000 rows)');
+      } else {
+        // Standard: Regular disk settings
+        debug(`Applying STANDARD retention limits (${days} days, ${maxRows} rows)`);
+      }
+    }
+
+    return { days, maxRows };
+  }
+
+  async runFullCleanup(): Promise<void> {
+    const { days, maxRows } = this.getRetentionLimits();
+
+    const tables = [
+      { name: 'messages', dateCol: 'timestamp' },
+      { name: 'logs', dateCol: 'timestamp' },
+      { name: 'bot_configuration_audit', dateCol: 'performedAt' },
+      { name: 'activity_logs', dateCol: 'timestamp' },
+      { name: 'message_logs', dateCol: 'timestamp' },
+      { name: 'bot_audit_logs', dateCol: 'timestamp' },
+      { name: 'bot_error_logs', dateCol: 'timestamp' },
+      { name: 'audits', dateCol: 'timestamp' },
+      { name: 'inference_logs', dateCol: 'timestamp' },
+      { name: 'memories', dateCol: 'created_at' },
+    ];
+
+    debug(`Running full database cleanup: retention=${days}d, maxRows=${maxRows}`);
+
+    for (const table of tables) {
+      try {
+        await this.cleanupTableByDate(table.name, days, table.dateCol);
+        await this.cleanupTableByRows(table.name, maxRows);
+      } catch (e) {
+        console.error(`Failed to cleanup table ${table.name}:`, e);
+        debug(`Failed to cleanup table ${table.name}:`, e);
+      }
+    }
+
+    // Dedicated, opt-in memory retention pass. Runs only when an explicit
+    // memory policy is configured (both default to 0 = disabled), so default
+    // behaviour is unchanged.
+    try {
+      await this.runMemoryEviction();
+    } catch (e) {
+      console.error('Failed to run memory eviction:', e);
+      debug('Failed to run memory eviction:', e);
+    }
+  }
+
+  /**
+   * Apply the configured memory retention policy (TTL + max-count).
+   *
+   * Controlled by `MEMORY_RETENTION_DAYS` and `MEMORY_MAX_ENTRIES`. Both
+   * default to 0 (disabled), making this a no-op unless explicitly enabled.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async runMemoryEviction(): Promise<number> {
+    const olderThanDays = Number(databaseConfig.get('MEMORY_RETENTION_DAYS')) || 0;
+    const maxCount = Number(databaseConfig.get('MEMORY_MAX_ENTRIES')) || 0;
+
+    if (olderThanDays <= 0 && maxCount <= 0) {
+      return 0;
+    }
+
+    debug(`Running memory eviction: retentionDays=${olderThanDays}, maxEntries=${maxCount}`);
+    return this.evictMemories({ olderThanDays, maxCount });
   }
 }

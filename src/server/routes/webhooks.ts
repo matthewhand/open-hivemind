@@ -15,23 +15,13 @@ const debug = Debug('app:webhooks');
 const router = Router();
 
 // In-memory store for scheduled messages (would be DB in production)
+
 const scheduledMessages = new Map<string, any>();
 
-/**
- * GET /api/webhooks/events
- * List webhook events
- */
-router.get('/events', (_req, res) => {
-  res.json({ events: [], count: 0 });
-});
-
-/**
- * GET /api/webhooks/events/:id
- * Get a specific webhook event by ID
- */
-router.get('/events/:id', (req, res) => {
-  res.json({ event: null, id: req.params.id, message: 'Event not found' });
-});
+// Note: /events, /events/:id and /events/:id/retry are served by
+// webhookEventsRouter (src/server/routes/webhookEvents.ts), which is mounted at
+// /api/webhooks ahead of this router. It returns the { success, data } contract
+// the WebUI (WebhookEventsPage) expects.
 
 // ─── Scheduled Messages ───────────────────────────────────────────────
 
@@ -60,7 +50,7 @@ router.get('/scheduled/:id', configLimiter, authenticateToken, (req, res) => {
  * POST /api/webhooks/scheduled
  * Create a scheduled message
  */
-router.post('/scheduled', configLimiter, requireRole('admin'), (req, res) => {
+router.post('/scheduled', configLimiter, authenticateToken, requireRole('admin'), (req, res) => {
   const { botId, channelId, message, scheduledTime } = req.body;
   if (!botId || !channelId || !message || !scheduledTime) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
@@ -84,13 +74,21 @@ router.post('/scheduled', configLimiter, requireRole('admin'), (req, res) => {
  * DELETE /api/webhooks/scheduled/:id
  * Delete a scheduled message
  */
-router.delete('/scheduled/:id', configLimiter, requireRole('admin'), (req, res) => {
-  const deleted = scheduledMessages.delete(req.params.id);
-  if (!deleted) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Scheduled message not found'));
+router.delete(
+  '/scheduled/:id',
+  configLimiter,
+  authenticateToken,
+  requireRole('admin'),
+  (req, res) => {
+    const deleted = scheduledMessages.delete(req.params.id);
+    if (!deleted) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Scheduled message not found'));
+    }
+    debug('Deleted scheduled message %s', req.params.id);
+    return res.json(ApiResponse.success({ message: 'Deleted' }));
   }
-  debug('Deleted scheduled message %s', req.params.id);
-  return res.json(ApiResponse.success({ message: 'Deleted' }));
-});
+);
 
 export default router;

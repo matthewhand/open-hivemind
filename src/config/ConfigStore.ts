@@ -40,6 +40,9 @@ export class ConfigStore {
     return ConfigStore.instance;
   }
 
+   
+   
+   
   private constructor() {}
 
   // ---------------------------------------------------------------------------
@@ -57,6 +60,9 @@ export class ConfigStore {
 
     // 2. Secure config (encrypted secrets)
     try {
+    
+   
+       
       const scm = (SecureConfigManager as any).getInstanceSync?.();
       if (scm && typeof scm.getDecryptedMainConfigSync === 'function') {
         const decrypted = scm.getDecryptedMainConfigSync();
@@ -204,7 +210,10 @@ export class ConfigStore {
    */
   getSource(key: string): 'env' | 'secure' | 'provider' | 'user' | 'profile' | 'default' | undefined {
     if (process.env[key] !== undefined) return 'env';
+     
     try {
+   
+       
       const scm = (SecureConfigManager as any).getInstanceSync?.();
       if (scm && typeof scm.getDecryptedMainConfigSync === 'function') {
         const decrypted = scm.getDecryptedMainConfigSync();

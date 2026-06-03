@@ -3,6 +3,7 @@ import { z } from 'zod';
 // ── Reusable Validators ──────────────────────────────────────────────────────
 
 /** Validates a non-empty trimmed string for name-like fields */
+
 export const nameString = (field = 'Name') =>
   z
     .string({ required_error: `${field} is required` })
@@ -10,6 +11,7 @@ export const nameString = (field = 'Name') =>
     .max(200, { message: `${field} must be 200 characters or fewer` });
 
 /** Validates a non-empty trimmed string for key/identifier fields (alphanumeric + hyphens/underscores) */
+
 export const keyString = (field = 'Key') =>
   z
     .string({ required_error: `${field} is required` })
@@ -20,6 +22,7 @@ export const keyString = (field = 'Key') =>
     });
 
 /** Validates a generic ID path parameter */
+
 export const idParam = (field = 'id') => z.string().min(1, { message: `${field} is required` });
 
 /** Validates pagination query parameters */

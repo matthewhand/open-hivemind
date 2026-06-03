@@ -6,7 +6,7 @@ export interface HivemindError {
   code?: string;
   statusCode?: number;
   originalError?: Error;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export const ErrorClassification = {
@@ -50,12 +50,17 @@ export class ErrorUtils {
    * @param context - Additional context information.
    * @returns A standardized HivemindError object.
    */
-  public static toHivemindError(error: unknown, context?: Record<string, any>): HivemindError {
+  public static toHivemindError(error: unknown, context?: Record<string, unknown>): HivemindError {
     if (error instanceof Error) {
+      const typedError = error as Error & {
+        code?: string;
+        statusCode?: number;
+        status?: number;
+      };
       return {
         message: error.message,
-        code: (error as any).code,
-        statusCode: (error as any).statusCode || (error as any).status,
+        code: typedError.code,
+        statusCode: typedError.statusCode || typedError.status,
         originalError: error,
         context,
       };

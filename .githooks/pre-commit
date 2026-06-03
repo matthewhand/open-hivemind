@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Run lint-staged on files staged for commit.
+# Mirrors the previous .husky/pre-commit which never executed because the
+# repo's prepare script sets core.hooksPath=.githooks, bypassing husky.
+set -e
+ROOT="$(git rev-parse --show-toplevel)"
+export PATH="$ROOT/node_modules/.bin:$PATH"
+exec lint-staged

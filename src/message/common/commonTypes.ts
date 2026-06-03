@@ -49,6 +49,7 @@ export interface ICommonUIElement {
    * Additional properties can be added here as needed.
    * For example: action IDs for buttons, embed titles, etc.
    */
+
   [key: string]: any;
 }
 

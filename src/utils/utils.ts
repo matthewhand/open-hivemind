@@ -59,7 +59,6 @@ export async function readFile(filePath: string): Promise<string> {
 
   // Use async file operations for consistency
   const stat = fs.promises.stat;
-  const readFileAsync = fs.promises.readFile;
 
   const stats = await stat(filePath);
   if (stats.isDirectory()) {

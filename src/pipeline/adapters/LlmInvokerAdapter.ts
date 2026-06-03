@@ -17,7 +17,13 @@ import type { IMessage } from '@message/interfaces/IMessage';
  * Dependencies required by the LlmInvokerAdapter.
  */
 export interface LlmInvokerDeps {
-  /** The active bot configuration used to resolve the LLM provider. */
+  /**
+   * Fallback bot configuration used to resolve the LLM provider when no
+   * per-message config is supplied to {@link LlmInvokerAdapter.generateResponse}.
+   *
+   * In normal pipeline operation the per-message `ctx.botConfig` is passed
+   * through and takes precedence, so this is only a fallback.
+   */
   botConfig: Record<string, unknown>;
 }
 
@@ -32,9 +38,17 @@ export class LlmInvokerAdapter implements LlmInvoker {
     userMessage: string,
     history: IMessage[],
     systemPrompt: string,
-    metadata?: Record<string, any>
+
+    metadata?: Record<string, any>,
+    botConfig?: Record<string, unknown>
   ): Promise<string> {
-    const provider = await getLlmProviderForBot(this.deps.botConfig);
+    // Prefer the per-message bot config so the pipeline resolves the provider
+    // for the bot actually handling this message. Fall back to the config
+    // captured at construction time only when none is supplied.
+    const resolvedConfig =
+      botConfig && Object.keys(botConfig).length > 0 ? botConfig : this.deps.botConfig;
+
+    const provider = await getLlmProviderForBot(resolvedConfig);
 
     return provider.generateChatCompletion(userMessage, history, {
       ...metadata,

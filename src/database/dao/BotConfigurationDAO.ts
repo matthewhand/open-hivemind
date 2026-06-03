@@ -1,6 +1,5 @@
 import { Logger } from '@common/logger';
-import type { Database } from '../sqliteWrapper';
-import type { BotConfiguration as TypesBotConfiguration } from '../types';
+import type { IDatabase as Database, BotConfiguration as TypesBotConfiguration } from '../types';
 
 // We map our type loosely for type flexibility (allowing parsed objects or stringified variants)
 export type BotConfiguration = TypesBotConfiguration;
@@ -54,7 +53,9 @@ export class BotConfigurationDAO {
 
     try {
       const result = await this.db.run(sql, params);
-      return result.lastID ?? 0;
+      return typeof result.lastID === 'number'
+        ? result.lastID
+        : parseInt(String(result.lastID ?? 0), 10) || 0;
     } catch (err) {
       Logger.error('Error creating bot configuration:', err);
       throw err;

@@ -1,14 +1,22 @@
-/* eslint-disable no-console */
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import Logger from '@common/logger';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type CommandHandler } from './CommandHandler';
+
+interface AddBotOptions {
+  name?: string;
+  provider?: string;
+  llm?: string;
+  token?: string;
+}
 
 export class BotCommandHandler implements CommandHandler {
   private configManager: BotConfigurationManager;
   private dbManager: DatabaseManager;
+  private logger = Logger.withContext('BotCommandHandler');
 
   constructor() {
     this.configManager = BotConfigurationManager.getInstance();
@@ -37,7 +45,7 @@ export class BotCommandHandler implements CommandHandler {
             await this.addBot(options);
           }
         } catch (error) {
-          console.error(chalk.red('Error adding bot:'), error);
+          this.logger.error(chalk.red('Error adding bot:'), error);
         }
       });
 
@@ -57,7 +65,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.removeBot(name, options.force);
         } catch (error) {
-          console.error(chalk.red('Error removing bot:'), error);
+          this.logger.error(chalk.red('Error removing bot:'), error);
         }
       });
 
@@ -68,7 +76,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.startBot(name);
         } catch (error) {
-          console.error(chalk.red('Error starting bot:'), error);
+          this.logger.error(chalk.red('Error starting bot:'), error);
         }
       });
 
@@ -79,7 +87,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.stopBot(name);
         } catch (error) {
-          console.error(chalk.red('Error stopping bot:'), error);
+          this.logger.error(chalk.red('Error stopping bot:'), error);
         }
       });
 
@@ -91,28 +99,28 @@ export class BotCommandHandler implements CommandHandler {
       });
   }
 
-  private async addBot(options: any): Promise<void> {
-    console.log(chalk.blue('Adding new bot...'));
+  private async addBot(options: AddBotOptions): Promise<void> {
+    this.logger.info(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
-      console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
+      this.logger.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
       return;
     }
 
     // Here you would save to configuration
-    console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
-    console.log(`  Provider: ${options.provider} → ${options.llm}`);
+    this.logger.info(chalk.green(`✓ Bot '${options.name}' added successfully`));
+    this.logger.info(`  Provider: ${options.provider} → ${options.llm}`);
   }
 
   private async addBotInteractive(): Promise<void> {
-    console.log(chalk.blue('Interactive Bot Setup'));
+    this.logger.info(chalk.blue('Interactive Bot Setup'));
 
     const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required',
+        validate: (input: string): true | string => input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
@@ -141,21 +149,22 @@ export class BotCommandHandler implements CommandHandler {
     const bots = this.configManager.getAllBots();
 
     if (bots.length === 0) {
-      console.log(chalk.yellow('No bots configured'));
+      this.logger.info(chalk.yellow('No bots configured'));
       return;
     }
 
-    console.log(chalk.blue(`Found ${bots.length} bot(s):`));
+    this.logger.info(chalk.blue(`Found ${bots.length} bot(s):`));
 
     bots.forEach((bot, index) => {
-      console.log(`${index + 1}. ${chalk.green(bot.name)}`);
-      console.log(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
+      this.logger.info(`${index + 1}. ${chalk.green(bot.name)}`);
+      this.logger.info(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
 
       if (verbose) {
-        console.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
-        console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
+        this.logger.info(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
+        const createdAt = typeof bot.createdAt === 'string' ? bot.createdAt : 'Unknown';
+        this.logger.info(`   Created: ${createdAt}`);
       }
-      console.log();
+      this.logger.info();
     });
   }
 
@@ -164,7 +173,7 @@ export class BotCommandHandler implements CommandHandler {
     const bot = bots.find((b) => b.name === name);
 
     if (!bot) {
-      console.error(chalk.red(`Bot '${name}' not found`));
+      this.logger.error(chalk.red(`Bot '${name}' not found`));
       return;
     }
 
@@ -179,25 +188,25 @@ export class BotCommandHandler implements CommandHandler {
       ]);
 
       if (!confirm) {
-        console.log(chalk.yellow('Operation cancelled'));
+        this.logger.info(chalk.yellow('Operation cancelled'));
         return;
       }
     }
 
     // Here you would remove from configuration
-    console.log(chalk.green(`✓ Bot '${name}' removed successfully`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' removed successfully`));
   }
 
   private async startBot(name: string): Promise<void> {
-    console.log(chalk.blue(`Starting bot '${name}'...`));
+    this.logger.info(chalk.blue(`Starting bot '${name}'...`));
     // Here you would start the specific bot
-    console.log(chalk.green(`✓ Bot '${name}' started`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' started`));
   }
 
   private async stopBot(name: string): Promise<void> {
-    console.log(chalk.blue(`Stopping bot '${name}'...`));
+    this.logger.info(chalk.blue(`Stopping bot '${name}'...`));
     // Here you would stop the specific bot
-    console.log(chalk.green(`✓ Bot '${name}' stopped`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' stopped`));
   }
 
   private showBotStatus(name?: string): void {
@@ -206,24 +215,24 @@ export class BotCommandHandler implements CommandHandler {
     if (name) {
       const bot = bots.find((b) => b.name === name);
       if (!bot) {
-        console.error(chalk.red(`Bot '${name}' not found`));
+        this.logger.error(chalk.red(`Bot '${name}' not found`));
         return;
       }
 
-      console.log(chalk.blue(`Status for bot '${name}':`));
-      console.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
-      console.log(`  Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
-      console.log(`  Uptime: ${chalk.green('2h 30m')}`); // This would be dynamic
+      this.logger.info(chalk.blue(`Status for bot '${name}':`));
+      this.logger.info(`  Status: ${chalk.green('Running')}`); // This would be dynamic
+      this.logger.info(`  Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
+      this.logger.info(`  Uptime: ${chalk.green('2h 30m')}`); // This would be dynamic
     } else {
-      console.log(chalk.blue('System Status:'));
-      console.log(`Active bots: ${chalk.green(bots.length)}`);
+      this.logger.info(chalk.blue('System Status:'));
+      this.logger.info(`Active bots: ${chalk.green(bots.length)}`);
       const databaseStatus = !this.dbManager.isConfigured()
         ? chalk.yellow('Not configured')
         : this.dbManager.isConnected()
           ? chalk.green('Connected')
           : chalk.red('Disconnected');
-      console.log(`Database: ${databaseStatus}`);
-      console.log(`Server: ${chalk.green('Running')}`); // This would be dynamic
+      this.logger.info(`Database: ${databaseStatus}`);
+      this.logger.info(`Server: ${chalk.green('Running')}`); // This would be dynamic
     }
   }
 }

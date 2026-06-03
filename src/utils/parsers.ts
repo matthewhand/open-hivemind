@@ -87,7 +87,7 @@ export const jsonParser = {
   /**
    * Safely parse JSON with fallback
    */
-  safeParse: <T = any>(jsonString: string, fallback: T): T => {
+  safeParse: <T = unknown>(jsonString: string, fallback: T): T => {
     try {
       return JSON.parse(jsonString);
     } catch {
@@ -98,7 +98,7 @@ export const jsonParser = {
   /**
    * Safely stringify JSON with error handling
    */
-  safeStringify: (obj: any, fallback = '{}'): string => {
+  safeStringify: (obj: unknown, fallback = '{}'): string => {
     try {
       return JSON.stringify(obj);
     } catch {

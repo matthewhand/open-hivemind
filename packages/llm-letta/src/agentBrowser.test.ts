@@ -1,8 +1,8 @@
+import { getAgent, listAgents } from './agentBrowser';
+
 jest.mock('dns', () => ({
   promises: { lookup: jest.fn().mockResolvedValue({ address: '1.2.3.4', family: 4 }) },
 }));
-
-import { listAgents, getAgent } from './agentBrowser';
 
 jest.mock('@hivemind/shared-types', () => {
   const actual = jest.requireActual('@hivemind/shared-types');
@@ -20,7 +20,13 @@ jest.mock('@letta-ai/letta-client', () =>
 
 beforeEach(() => jest.clearAllMocks());
 
-const AGENT = { id: 'a1', name: 'TestAgent', description: 'desc', created_at: '2024-01-01', updated_at: '2024-01-02' };
+const AGENT = {
+  id: 'a1',
+  name: 'TestAgent',
+  description: 'desc',
+  created_at: '2024-01-01',
+  updated_at: '2024-01-02',
+};
 
 describe('listAgents', () => {
   it('returns array of agent summaries', async () => {
@@ -40,7 +46,9 @@ describe('listAgents', () => {
     mockAgentsList.mockResolvedValue([AGENT]);
     const Letta = require('@letta-ai/letta-client');
     await listAgents('api-key', 'https://custom.letta.com/v1');
-    expect(Letta).toHaveBeenCalledWith(expect.objectContaining({ baseURL: 'https://custom.letta.com/v1' }));
+    expect(Letta).toHaveBeenCalledWith(
+      expect.objectContaining({ baseURL: 'https://custom.letta.com/v1' })
+    );
   });
 
   it('throws on SSRF unsafe URL', async () => {
