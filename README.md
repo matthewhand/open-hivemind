@@ -31,11 +31,14 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
-*   **Consistent Voice**: Maintain consistent identities across different platforms.
-*   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
-*   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required.
-*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression ensure stability.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and inbound webhooks from a single dashboard — with two-way messaging (receive + send) and native typing indicators.
+*   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
+*   **Shared Context & Memory**: Bots share a collective memory with conversation summarization and retention/eviction, allowing for sophisticated interactions.
+*   **Flexible LLMs**: OpenAI, Flowise, Ollama, OpenWebUI, Letta and more — with live model listing, response streaming, and function/tool calling.
+*   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required. Import/export config as JSON, YAML, or CSV.
+*   **Scheduled Tasks**: Schedule recurring bot prompts and manage them from the dashboard.
+*   **Safety & Compliance**: Built-in guards, rate limiting, durable audit logging, and duplicate response suppression ensure stability.
+*   **Observability**: Real-time monitoring, health checks, Prometheus-compatible metrics, and trace export (console/file/OTLP).
 *   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
 
 ## Installation & Quick Start

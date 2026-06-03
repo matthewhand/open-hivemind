@@ -188,16 +188,13 @@ export class ServerLifecycle {
         resolve(providerProcess);
       });
 
-   
-       
-       
-      providerProcess.on('configuration', (error: any) => {
+      // Spawn failures (e.g. ENOENT when the command is missing) surface as an
+      // 'error' event on the ChildProcess, not 'configuration'. Reject so the
+      // caller can mark the provider as errored.
+      providerProcess.on('error', (error: any) => {
         reject(error);
       });
 
-    
-   
-       
       providerProcess.on('close', (code: any) => {
         if (code !== 0) {
           reject(new Error(`MCP process exited with code ${code}`));
