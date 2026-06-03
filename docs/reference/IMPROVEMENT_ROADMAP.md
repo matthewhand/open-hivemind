@@ -106,10 +106,11 @@ Low impact, low urgency - Address within 10-12 weeks
 - Memory profiles management via `src/config/memoryProfiles.ts` + REST routes
 - Memory **eviction/retention** is now implemented (`MemoryRepository.evictMemories` — TTL + size-cap), though no automatic scheduler invokes it yet
 - A DB-backed **conversation summarization** service exists (`src/memory/ConversationSummaryService.ts`) but is not yet wired into the live pipeline
-- **MemVault is NOT implemented**: there is no `packages/memory-memvault` package; the type is referenced only as a config option. The hybrid-scoring backend described below remains aspirational.
+- **MemVault is now implemented** (in-process): `packages/memory-memvault` provides `MemVaultProvider` with hybrid scoring; durable Postgres + pgvector persistence remains deferred behind the pluggable `MemVaultStore` seam.
 
-**Planned Memory Provider Packages:**
-- `@hivemind/memory-memvault` - (NOT YET BUILT) Open-source RAG memory server in Node.js with Postgres + pgvector; intended hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)
+**New Memory Provider Packages:**
+- `@hivemind/memory-mem4ai` - Open-source, LLM-friendly memory management with adaptive personalization and flexible metadata tagging
+- `@hivemind/memory-memvault` - Native in-process RAG memory implementing hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2). Storage is delegated to a pluggable `MemVaultStore`; the default is dependency-free and in-process. A durable Postgres + pgvector store can implement the same `MemVaultStore` contract (deferred — not yet wired).
 
 **MCP Server Trust System:**
 - Add config file listing trusted MCP server repositories

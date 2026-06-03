@@ -58,7 +58,9 @@
       "@hivemind/message-webhook": ["packages/message-webhook/src/index.ts"],
       "@hivemind/message-webhook/*": ["packages/message-webhook/src/*"],
       "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
-      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
+      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"],
+      "@hivemind/memory-memvault": ["packages/memory-memvault/src/index.ts"],
+      "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
