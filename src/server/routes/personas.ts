@@ -149,7 +149,7 @@ router.post(
       }
 
       // Basic validation until strict schema is hooked up globally if needed
-      const newPersona = manager.createPersona(req.body);
+      const newPersona = await manager.createPersona(req.body);
       return res.status(HTTP_STATUS.CREATED).json(newPersona);
     } catch (error: unknown) {
       return res
@@ -175,7 +175,7 @@ router.post(
         }
       }
 
-      const clonedPersona = manager.clonePersona(req.params.id, req.body);
+      const clonedPersona = await manager.clonePersona(req.params.id, req.body);
       return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
     } catch (error: unknown) {
       if (
@@ -199,7 +199,7 @@ router.put(
   asyncErrorHandler(async (req, res) => {
     try {
       const manager = await getManager();
-      const updatedPersona = manager.updatePersona(req.params.id, req.body);
+      const updatedPersona = await manager.updatePersona(req.params.id, req.body);
       return res.json(updatedPersona);
     } catch (error: unknown) {
       return res
