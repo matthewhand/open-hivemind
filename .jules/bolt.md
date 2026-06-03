@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2024-05-23 - ProviderConfig env overrides re-renders
+**Learning:** `ProviderConfig.tsx` had an $O(N \times M)$ rendering bottleneck where `Object.keys(envOverrides).find(...)` was executing sequentially inside `renderField` for every field being mapped. A naive approach of moving this logic into a `useMemo` array was originally attempted but failed because the `sections` dependency array (`getProviderSections()`) was defined inside the component and generated a new reference on every render, invalidating the cache and resulting in the same $O(N \times M)$ performance.
+**Action:** When extracting mapping logic into a `useMemo` block, ensure that internally defined functions used to compute dependencies (like `getProviderSections`) are safely contained inside the `useMemo` block or wrapped in `useCallback` to prevent continuous reference invalidations.
