@@ -11,7 +11,6 @@ import DiagnosticModal from './BotManagement/DiagnosticModal';
 import InsightsModal from './BotManagement/InsightsModal';
 import VersionHistoryModal from './BotManagement/VersionHistoryModal';
 import BenchmarkModal from './BotManagement/BenchmarkModal';
-import Tooltip from './DaisyUI/Tooltip';
 
 interface DashboardBotCardProps {
   bot: Bot;
