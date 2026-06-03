@@ -34,6 +34,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
   - [API Documentation](#api-documentation)
+  - [Help & FAQ](#help--faq)
 - [Documentation Maintenance](#documentation-maintenance)
 
 ---
@@ -390,6 +391,16 @@ A detailed view of all system integrations and configurations.
 
 ## Developer & Tools
 
+### [Help & FAQ](/admin/help)
+Access the comprehensive help guide, frequently asked questions, and keyboard shortcuts reference.
+
+![Help & FAQ Main Page](screenshots/help-page.png)
+![Help & FAQ Expanded](screenshots/help-page-expanded.png)
+
+*   **FAQ**: Find answers to common questions about setting up and using the platform.
+*   **Keyboard Shortcuts**: View global navigation and action shortcuts for power users.
+*   **Getting Started**: Step-by-step guidance for new users configuring their first bot.
+
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
@@ -411,7 +422,8 @@ Manage system configuration backups and download API documentation.
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
-*   **Configuration Export**: Export the current running configuration as a JSON file.
+*   **Configuration Export**: Export the current running configuration as **JSON, YAML, or CSV**. Optional gzip compression and encryption are supported for exports.
+*   **Configuration Import**: Upload a previously exported JSON, YAML, or CSV file (including compressed `.gz` and encrypted `.enc` variants) to restore configuration. Imports can be validated before being applied, giving a full round-trip between formats.
 *   **API Specifications**: Download the OpenAPI specification (JSON/YAML) for development.
 
 ### [Sitemap](/admin/sitemap)
