@@ -45,16 +45,27 @@ ollama serve
 
 #### Option A: Environment Variables
 
+> **Note on variable names:** the runtime config schema reads the
+> underscore-separated `OPEN_WEBUI_*` form (e.g. `OPEN_WEBUI_API_URL`), not
+> `OPENWEBUI_*`. The `OPEN_WEBUI_API_URL` should point at the instance's API
+> base (it defaults to `http://host.docker.internal:3000/api/`).
+
 ```bash
 # Required
 LLM_PROVIDER=openwebui
-OPENWEBUI_BASE_URL=http://localhost:8080
+OPEN_WEBUI_API_URL=http://localhost:3000/api/
 
-# Optional - for authenticated instances
-OPENWEBUI_API_KEY=your-api-key
+# Authentication — password mode (default)
+OPEN_WEBUI_AUTH_METHOD=password
+OPEN_WEBUI_USERNAME=admin
+OPEN_WEBUI_PASSWORD=your-password
+
+# Or API-key mode
+# OPEN_WEBUI_AUTH_METHOD=apiKey
+# OPEN_WEBUI_API_KEY=your-api-key
 
 # Model selection (if not using default)
-OPENWEBUI_MODEL=llama2
+OPEN_WEBUI_MODEL=llama3.2
 ```
 
 #### Option B: WebUI Configuration
@@ -71,10 +82,13 @@ OPENWEBUI_MODEL=llama2
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENWEBUI_BASE_URL` | Yes | - | Base URL of your OpenWebUI instance |
-| `OPENWEBUI_API_KEY` | No | - | API key for authentication |
-| `OPENWEBUI_MODEL` | No | (server default) | Model to use for completions |
-| `OPENWEBUI_TIMEOUT` | No | `60000` | Request timeout in milliseconds |
+| `OPEN_WEBUI_API_URL` | Yes | `http://host.docker.internal:3000/api/` | API base URL of your OpenWebUI instance |
+| `OPEN_WEBUI_AUTH_METHOD` | No | `password` | Authentication method: `password` or `apiKey` |
+| `OPEN_WEBUI_USERNAME` | No* | `admin` | Username (*required when `OPEN_WEBUI_AUTH_METHOD=password`) |
+| `OPEN_WEBUI_PASSWORD` | No* | - | Password (*required when `OPEN_WEBUI_AUTH_METHOD=password`) |
+| `OPEN_WEBUI_API_KEY` | No* | - | API key (*used when `OPEN_WEBUI_AUTH_METHOD=apiKey`) |
+| `OPEN_WEBUI_MODEL` | No | `llama3.2` | Model to use for completions |
+| `OPEN_WEBUI_KNOWLEDGE_FILE` | No | - | Optional path to a knowledge file to upload |
 
 ## Connecting to OpenWebUI
 
@@ -82,31 +96,32 @@ OPENWEBUI_MODEL=llama2
 
 ```bash
 # Default local setup
-OPENWEBUI_BASE_URL=http://localhost:8080
+OPEN_WEBUI_API_URL=http://localhost:3000/api/
 ```
 
 ### Docker Network
 
 ```bash
 # If running in Docker Compose
-OPENWEBUI_BASE_URL=http://openwebui:8080
+OPEN_WEBUI_API_URL=http://openwebui:8080/api/
 ```
 
 ### Remote Server
 
 ```bash
 # Remote OpenWebUI instance
-OPENWEBUI_BASE_URL=https://openwebui.yourdomain.com
-OPENWEBUI_API_KEY=your-secure-api-key
+OPEN_WEBUI_API_URL=https://openwebui.yourdomain.com/api/
+OPEN_WEBUI_AUTH_METHOD=apiKey
+OPEN_WEBUI_API_KEY=your-secure-api-key
 ```
 
 ### With Ollama on Different Host
 
 ```bash
-# Ollama on remote machine
-OPENWEBUI_BASE_URL=http://ollama-server:8080
+# Ollama on remote machine, fronted by OpenWebUI
+OPEN_WEBUI_API_URL=http://ollama-server:8080/api/
 # Ensure Ollama is configured to accept connections:
-# O0.0.LLAMA_HOST=0.0
+# OLLAMA_HOST=0.0.0.0
 ```
 
 ## Authentication Setup
@@ -121,8 +136,9 @@ OPENWEBUI_BASE_URL=http://ollama-server:8080
 ### Using the API Key
 
 ```bash
-OPENWEBUI_BASE_URL=http://localhost:8080
-OPENWEBUI_API_KEY=sk-your-key-here
+OPEN_WEBUI_API_URL=http://localhost:3000/api/
+OPEN_WEBUI_AUTH_METHOD=apiKey
+OPEN_WEBUI_API_KEY=sk-your-key-here
 ```
 
 ## Model Management
@@ -141,9 +157,9 @@ curl http://localhost:8080/api/models -H "Authorization: Bearer sk-your-key"
 #### Via Environment Variable
 
 ```bash
-OPENWEBUI_MODEL=llama2
-OPENWEBUI_MODEL=mistral
-OPENWEBUI_MODEL=codellama
+OPEN_WEBUI_MODEL=llama2
+OPEN_WEBUI_MODEL=mistral
+OPEN_WEBUI_MODEL=codellama
 ```
 
 #### Via Metadata (Per-Request)
@@ -171,7 +187,7 @@ System: Use the codellama model for code-related queries
 **Solution**:
 1. Verify API key is correct
 2. Check if API key authentication is enabled in OpenWebUI
-3. Ensure `OPENWEBUI_API_KEY` is set in environment
+3. Ensure `OPEN_WEBUI_API_KEY` (with `OPEN_WEBUI_AUTH_METHOD=apiKey`) or `OPEN_WEBUI_USERNAME`/`OPEN_WEBUI_PASSWORD` is set in environment
 
 ### Error: "Model not found"
 
@@ -180,17 +196,17 @@ System: Use the codellama model for code-related queries
 **Solution**:
 1. List available models: `ollama list`
 2. Pull the model: `ollama pull <model-name>`
-3. Update `OPENWEBUI_MODEL` to match available models
+3. Update `OPEN_WEBUI_MODEL` to match available models
 
 ### Error: "Timeout"
 
 **Cause**: Model is taking too long to respond.
 
 **Solution**:
-1. Increase timeout: `OPENWEBUI_TIMEOUT=120000`
-2. Use a smaller/faster model
-3. Check system resources (RAM, GPU)
-4. Check Ollama logs for loading issues
+1. Use a smaller/faster model
+2. Check system resources (RAM, GPU)
+3. Check Ollama logs for loading issues
+4. Pre-load the model in Ollama so the first request does not pay the load cost
 
 ### Error: "Context length exceeded"
 
@@ -209,20 +225,11 @@ Configure different bots to use different models:
 ```bash
 # Bot 1 - General purpose
 BOTS_bot1_LLM_PROVIDER=openwebui
-BOTS_bot1_OPENWEBUI_MODEL=llama2
+BOTS_bot1_OPEN_WEBUI_MODEL=llama2
 
 # Bot 2 - Code-focused
 BOTS_bot2_LLM_PROVIDER=openwebui
-BOTS_bot2_OPENWEBUI_MODEL=codellama
-```
-
-### Streaming Responses
-
-OpenWebUI supports streaming for real-time output:
-
-```bash
-# Enable streaming (enabled by default)
-OPENWEBUI_ENABLE_STREAMING=true
+BOTS_bot2_OPEN_WEBUI_MODEL=codellama
 ```
 
 ### Custom Ollama Settings
@@ -286,7 +293,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 # After (OpenWebUI)
 LLM_PROVIDER=openwebui
-OPENWEBUI_BASE_URL=http://localhost:8080
+OPEN_WEBUI_API_URL=http://localhost:3000/api/
 ```
 
 OpenWebUI provides additional features like:

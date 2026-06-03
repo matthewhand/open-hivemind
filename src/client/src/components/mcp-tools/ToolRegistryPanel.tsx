@@ -129,7 +129,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                 </div>
               </div>
               <button
-                className="btn btn-xs btn-ghost btn-circle"
+                className="btn btn-xs btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(tool.id);
@@ -146,12 +146,13 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
             </div>
             <div className="flex gap-2 mt-2">
               <button
-                className="btn btn-xs btn-primary flex-1"
+                className="btn btn-xs btn-primary flex-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100"
                 onClick={() => {
                   const lastUsage = recentlyUsed.find(r => r.toolId === tool.id);
                   onRunTool(tool, lastUsage?.arguments);
                 }}
                 disabled={!tool.enabled}
+                aria-label={`Quick run ${tool.name}`}
               >
                 <RunIcon className="w-3 h-3" />
                 Run
@@ -173,7 +174,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="btn btn-sm btn-ghost btn-circle"
+                className="btn btn-sm btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 onClick={() => onToggleFavorite(tool.id)}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -217,15 +218,17 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 
           <Card.Actions className="justify-between mt-auto">
             <button
-              className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
+              className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'} focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100`}
               onClick={() => onToggleTool(tool.id)}
+              aria-label={`${tool.enabled ? 'Disable' : 'Enable'} ${tool.name}`}
             >
               {tool.enabled ? 'Disable' : 'Enable'}
             </button>
             <button
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100"
               onClick={() => onRunTool(tool)}
               disabled={!tool.enabled}
+              aria-label={`Run ${tool.name} tool`}
             >
               <RunIcon className="w-4 h-4 mr-1" />
               Run Tool
