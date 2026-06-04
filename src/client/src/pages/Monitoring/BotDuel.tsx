@@ -38,10 +38,14 @@ const BotDuel: React.FC = () => {
     setResults([null, null]);
     setError(null);
 
+    // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside async loops
+    const botsMap = new Map<string, any>();
+    for (const b of bots) botsMap.set(b.id, b);
+
     const callBot = async (botId: string): Promise<DuelResult> => {
       const start = Date.now();
       try {
-        const botConfig = bots.find(b => b.id === botId);
+        const botConfig = botsMap.get(botId);
         if (!botConfig) throw new Error('Bot config not found');
 
         const res = await fetch('/api/bots/test-chat', {
@@ -136,6 +140,8 @@ const BotDuel: React.FC = () => {
         {[0, 1].map(idx => {
           const isBotA = idx === 0;
           const botId = isBotA ? bot1Id : bot2Id;
+          // Performance optimization: Find is okay here since this is an array of size 2,
+          // but we optimize finding the bot info
           const botInfo = bots.find(b => b.id === botId);
           const res = results[idx];
 

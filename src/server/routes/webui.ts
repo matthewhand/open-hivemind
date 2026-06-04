@@ -1,6 +1,7 @@
 import os from 'os';
 import process from 'process';
 import { Router } from 'express';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { webUIStorage } from '../../storage/webUIStorage';
@@ -9,14 +10,14 @@ import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 
+router.use(configLimiter);
+
 // GET /config - Get the WebUI configuration
 router.get('/config', async (_req, res) => {
   try {
     const config = await webUIStorage.loadConfig();
     return res.json(config);
-
-    // eslint-disable-next-line unused-imports/no-unused-vars
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to load configuration' });
   }
 });
@@ -33,8 +34,7 @@ router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res
     await webUIStorage.saveConfig(newConfig);
 
     return res.json({ success: true, config: newConfig });
-    // eslint-disable-next-line unused-imports/no-unused-vars
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to save configuration' });
   }
 });

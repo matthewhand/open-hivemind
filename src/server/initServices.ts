@@ -29,6 +29,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
 import { reloadGlobalConfigs } from './routes/config';
@@ -244,6 +245,14 @@ export async function initServices(
 
   registerServices();
 
+  // Load user configuration early (async)
+  try {
+    await UserConfigStore.getInstance().loadConfig();
+    appLogger.info('User configuration loaded');
+  } catch (error) {
+    appLogger.warn('Failed to load user configuration', { error });
+  }
+
   // Initialize database connection
   try {
     const { DatabaseManager } = await import('../database/DatabaseManager');
@@ -368,6 +377,23 @@ export async function initServices(
   AnomalyDetectionService.getInstance();
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
+  // Initialize and start IntegrationAnomalyDetector. It reads live provider
+  // metrics from ProviderMetricsCollector on its own interval, so simply
+  // starting it feeds it the relevant signals. Skip in test runs to avoid
+  // leaking timers. Results are exposed via GET /api/monitoring/anomalies.
+  if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_INTEGRATION_ANOMALY !== 'true') {
+    const { IntegrationAnomalyDetector } = await import(
+      '@src/monitoring/IntegrationAnomalyDetector'
+    );
+    const integrationDetector = IntegrationAnomalyDetector.getInstance();
+    integrationDetector.startDetection();
+    shutdownCoordinator.registerService({
+      name: 'IntegrationAnomalyDetector',
+      shutdown: () => integrationDetector.shutdown(),
+    });
+    appLogger.info('\ud83d\udd0d Integration Anomaly Detector started');
+  }
+
   // Prepare messenger services collection for optional webhook registration later
 
   let messengerServices: any[] = [];
@@ -454,15 +480,18 @@ export async function initServices(
 
     const bus = MessageBus.getInstance();
 
-    // Create and register a pipeline instance per messenger service.
-    // createPipeline() internally creates a PipelineTracer and stores it
-    // via setActiveTracer() — no need to create a second tracer here.
-    for (const service of messengerServices) {
+    // The pipeline stages subscribe to shared, bus-wide events that carry no
+    // per-service identity, so the pipeline must be wired onto the shared bus
+    // exactly once. createPipeline() is idempotent per bus instance: it returns
+    // true on the first registration and is a no-op for subsequent services.
+    // (It internally creates a PipelineTracer and stores it via setActiveTracer().)
+    const primaryService = messengerServices[0];
+    if (primaryService) {
       createPipeline(bus, {
         botConfig: {},
-        messengerService: service,
-        botId: service.botId,
-        defaultChannelId: service.getDefaultChannel?.() ?? undefined,
+        messengerService: primaryService,
+        botId: primaryService.botId,
+        defaultChannelId: primaryService.getDefaultChannel?.() ?? undefined,
       });
     }
 

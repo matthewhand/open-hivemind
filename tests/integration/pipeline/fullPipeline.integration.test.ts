@@ -335,12 +335,13 @@ describe('Full 5-stage pipeline integration', () => {
       expect(events.enriched?.[0].memories).toEqual(['memory-alpha', 'memory-beta']);
       expect(events.enriched?.[0].systemPrompt).toBe('Custom system prompt.');
 
-      // LLM invoker received the system prompt
+      // LLM invoker received the system prompt and the per-message bot config
       expect(llm.generateResponse).toHaveBeenCalledWith(
         'question',
         expect.any(Array),
         'Custom system prompt.',
-        expect.any(Object)
+        expect.any(Object),
+        expect.objectContaining({ BOT_NAME: 'TestBot' })
       );
     });
   });
