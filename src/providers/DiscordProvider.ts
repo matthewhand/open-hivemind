@@ -86,9 +86,27 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     let cfg: any = { discord: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(fileContent);
-    } catch {
-      // Ignore
+      // A JSON parse error means the file is corrupted — surface it instead of
+      // continuing, which would overwrite the file below with a fresh default
+      // and destroy every existing bot config.
+      try {
+        cfg = JSON.parse(fileContent);
+      } catch (parseErr: unknown) {
+        const parseMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
+        throw new Error(
+          `messengers.json is corrupted and cannot be parsed: ${parseMessage}. ` +
+            `Please fix or remove ${messengersPath} before adding a new bot.`
+        );
+      }
+    } catch (readErr: unknown) {
+      const isEnoent =
+        readErr instanceof Error &&
+        'code' in readErr &&
+        (readErr as NodeJS.ErrnoException).code === 'ENOENT';
+      if (!isEnoent) {
+        throw readErr;
+      }
+      // File doesn't exist yet — start with the default empty structure.
     }
     cfg.discord = cfg.discord || {};
     cfg.discord.instances = cfg.discord.instances || [];
