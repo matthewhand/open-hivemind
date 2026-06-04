@@ -93,6 +93,7 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
                     e.stopPropagation();
                     onViewResult(result);
                   }}
+                  aria-label={`View result for ${result.toolName} tool`}
                 >
                   <EyeIcon className="w-4 h-4" />
                   View
