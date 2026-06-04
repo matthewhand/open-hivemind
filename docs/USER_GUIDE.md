@@ -20,6 +20,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [MCP Servers](#mcp-servers)
   - [MCP Tools](#mcp-tools)
   - [Marketplace](#marketplace)
+  - [Plugin Security](#plugin-security)
 - [System](#system)
   - [Settings Overview](#settings-overview)
   - [Audit & Governance](#audit--governance)
@@ -194,6 +195,18 @@ Browse and manage tools available from your connected MCP servers.
 *   **Schema Inspection**: View input and output schemas for each tool.
 *   **Tool Execution**: Test tools directly via **Form Mode** (based on the tool's schema) and **JSON Mode** for advanced input.
 *   **Enable/Disable**: Toggle individual tools on or off.
+
+### [Plugin Security](/admin/plugin-security)
+Manage trust levels and capabilities for installed plugins and extensions.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Trust Management**: Review and update the trust status (Trusted or Untrusted) for individual plugins. Built-in plugins are trusted by default.
+*   **Capability Inspection**: View the granted, denied, and required capabilities (such as network access or file system access) for each plugin.
+*   **Signature Verification**: Automatically verify the integrity of community plugins via signature checks.
+*   **Filtering & Review**: Filter plugins by their security or verification status to quickly identify potential risks.
+
+![Plugin Security Filtered](screenshots/plugin-security-filtered.png)
 
 ### [Marketplace](/admin/marketplace)
 Browse, install, and manage extensions and packages for your application.

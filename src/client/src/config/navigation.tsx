@@ -20,7 +20,7 @@ import {
   LayoutDashboard, Bot,
   Settings, Cog, Component, MessageSquare, Brain,
   Map, Webhook, FileText, Store, BarChart3, ClipboardList,
-  FileDown, HeartPulse, HelpCircle, FileCode, Info, Activity,
+  FileDown, HeartPulse, HelpCircle, FileCode, Info, Activity, ShieldCheck,
 } from 'lucide-react';
 import React from 'react';
 
@@ -107,6 +107,13 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Guards',
     icon: <NavIcon><HeartPulse className="w-4 h-4" /></NavIcon>,
     path: '/admin/guards',
+    visible: true,
+  },
+  {
+    id: 'plugin-security',
+    label: 'Plugin Security',
+    icon: <NavIcon><ShieldCheck className="w-4 h-4" /></NavIcon>,
+    path: '/admin/plugin-security',
     visible: true,
   },
   {

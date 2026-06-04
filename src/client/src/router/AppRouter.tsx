@@ -49,6 +49,8 @@ const MemoryProvidersPage = lazy(() => import('../pages/MemoryProvidersPage'));
 const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
 const ResponseProfilesPage = lazy(() => import('../pages/ResponseProfilesPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
+const PluginSecurityPage = lazy(() => import('../pages/PluginSecurityPage'));
+
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
 const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
@@ -141,6 +143,8 @@ const AppRouter: React.FC = () => {
           {/* Personas and Guards are standalone pages */}
           <Route path="personas" element={<ErrorBoundary pageName="Personas"><PersonasPage /></ErrorBoundary>} />
           <Route path="guards" element={<ErrorBoundary pageName="Guards"><GuardsPage /></ErrorBoundary>} />
+          <Route path="plugin-security" element={<ErrorBoundary pageName="Plugin Security"><PluginSecurityPage /></ErrorBoundary>} />
+
 
           {/* Legacy redirects */}
           <Route path="providers" element={<Navigate to="/admin/llm" replace />} />
