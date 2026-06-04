@@ -2,7 +2,7 @@ import { BusinessKpiRecorder } from '../../../src/observability/BusinessKpiRecor
 import { BusinessKpiCollector } from '../../../src/monitoring/BusinessKpiCollector';
 import { MessageBus } from '../../../src/events/MessageBus';
 import type { MessageContext } from '../../../src/events/types';
-import type { IMessage } from '../../../src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 function makeMessage(authorId: string): IMessage {
   return {

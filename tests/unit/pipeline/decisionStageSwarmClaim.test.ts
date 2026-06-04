@@ -17,7 +17,7 @@ import { MessageBus } from '@src/events/MessageBus';
 import type { ActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stub message

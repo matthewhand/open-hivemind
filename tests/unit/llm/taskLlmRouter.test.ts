@@ -10,7 +10,7 @@
  */
 
 import { getTaskLlm } from '@src/llm/taskLlmRouter';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { ILlmProvider } from '@hivemind/shared-types';
 
 // --- Mocks for collaborators ----------------------------------------------
 

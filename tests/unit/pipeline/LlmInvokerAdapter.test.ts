@@ -10,7 +10,7 @@
 
 import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
 import * as getLlmProvider from '@src/llm/getLlmProvider';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { ILlmProvider } from '@hivemind/shared-types';
 
 describe('LlmInvokerAdapter', () => {
   let provider: ILlmProvider;

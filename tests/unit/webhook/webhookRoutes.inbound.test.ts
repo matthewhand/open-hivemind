@@ -22,7 +22,7 @@ jest.mock('@webhook/security/webhookSecurity', () => ({
 
 import express from 'express';
 import request from 'supertest';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessengerService } from '@hivemind/shared-types';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import { WebhookService } from '@hivemind/message-webhook';
 
