@@ -157,7 +157,12 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
     try {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
-      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      // messengers.json holds bot tokens — restrict to owner read/write (0o600),
+      // matching TelegramProvider, so other OS users can't read the secrets.
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), {
+        encoding: 'utf8',
+        mode: 0o600,
+      });
     } catch (e: unknown) {
       debug('ERROR:', 'Failed writing messengers.json', e);
     }
