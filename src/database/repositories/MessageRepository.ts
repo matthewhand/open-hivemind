@@ -17,7 +17,8 @@ export class MessageRepository {
   constructor(
     private getDb: () => Database | null,
     private isConnected: () => boolean,
-    private ensureConnected: () => void
+    private ensureConnected: () => void,
+    private isPostgres: () => boolean = () => false
   ) {}
 
   async saveMessage(
@@ -241,13 +242,32 @@ export class MessageRepository {
         throw new Error('Database not available');
       }
 
-      await db.run(
-        `
+      // SQLite supports `INSERT OR REPLACE`; Postgres does not. bot_metrics is
+      // keyed for upsert on its UNIQUE botName, so emit an `ON CONFLICT (botName)
+      // DO UPDATE` on Postgres — otherwise the statement is a syntax error and
+      // the metrics update is silently lost.
+      const sql = this.isPostgres()
+        ? `
+        INSERT INTO bot_metrics (
+          botName, messagesSent, messagesReceived, conversationsHandled,
+          averageResponseTime, lastActivity, provider, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (botName) DO UPDATE SET
+          messagesSent = EXCLUDED.messagesSent,
+          messagesReceived = EXCLUDED.messagesReceived,
+          conversationsHandled = EXCLUDED.conversationsHandled,
+          averageResponseTime = EXCLUDED.averageResponseTime,
+          lastActivity = EXCLUDED.lastActivity, provider = EXCLUDED.provider,
+          updated_at = CURRENT_TIMESTAMP
+      `
+        : `
         INSERT OR REPLACE INTO bot_metrics (
           botName, messagesSent, messagesReceived, conversationsHandled,
           averageResponseTime, lastActivity, provider, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `,
+      `;
+      await db.run(
+        sql,
         [
           metrics.botName,
           metrics.messagesSent,

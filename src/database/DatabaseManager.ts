@@ -259,9 +259,9 @@ export class DatabaseManager {
     const ensure = (): void => this.ensureConnected();
     const isPg = (): boolean => this.config?.type === 'postgres';
 
-    this.messageRepo = new MessageRepository(getDb, isConn, ensure);
+    this.messageRepo = new MessageRepository(getDb, isConn, ensure, isPg);
     this.botConfigRepo = new BotConfigRepository(getDb, ensure);
-    this.anomalyRepo = new AnomalyRepository(getDb, isConn);
+    this.anomalyRepo = new AnomalyRepository(getDb, isConn, isPg);
     this.approvalRepo = new ApprovalRepository(getDb, ensure);
     this.auditEventRepo = new AuditEventRepository(getDb, isConn);
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
