@@ -26,6 +26,9 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+  // Permissions Policy
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
   // Content Security Policy (CSP)
   // SECURITY NOTE: CSP with 'unsafe-eval' and 'unsafe-inline'
   //
