@@ -24,6 +24,10 @@ config/*
 *credentials*
 *secrets*
 
+# Runtime upload artifacts and encrypted exports - never commit (see PR #2961)
+config/uploads/
+config/exports/
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
