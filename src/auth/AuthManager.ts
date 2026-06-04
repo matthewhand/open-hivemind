@@ -100,8 +100,8 @@ export class AuthManager {
     }
 
     if (process.env.NODE_ENV === 'test') {
-      this.jwtSecret = envJwtSecret || 'open-hivemind-test-secret-123';
-      this.jwtRefreshSecret = envJwtRefreshSecret || 'open-hivemind-test-refresh-secret-123';
+      this.jwtSecret = envJwtSecret || crypto.randomBytes(64).toString('hex');
+      this.jwtRefreshSecret = envJwtRefreshSecret || crypto.randomBytes(64).toString('hex');
     } else {
       this.jwtSecret = envJwtSecret || secureJwtSecret || this.generateSecureSecret('jwt_access');
       this.jwtRefreshSecret =

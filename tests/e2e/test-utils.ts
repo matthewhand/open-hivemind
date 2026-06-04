@@ -13,7 +13,7 @@ const collectedErrors: string[] = [];
  */
 export async function setupAuth(page: Page) {
   // Use the same JWT_SECRET as the hivemind service (AuthManager.ts fallback for NODE_ENV=test)
-  const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
+  const jwtSecret = process.env.JWT_SECRET || 'e2e-test-secret-mock';
   const fakeToken = require('jsonwebtoken').sign(
     {
       exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
