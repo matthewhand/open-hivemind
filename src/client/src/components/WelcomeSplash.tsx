@@ -177,7 +177,14 @@ const WelcomeSplash: React.FC = () => {
             <Sparkles className="w-5 h-5 text-primary" />
             Setup Progress
           </h3>
-          <Button variant="ghost" size="sm" onClick={handleRefresh} loading={refreshing}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            loading={refreshing}
+            aria-label="Refresh setup progress"
+            title="Refresh setup progress"
+          >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
