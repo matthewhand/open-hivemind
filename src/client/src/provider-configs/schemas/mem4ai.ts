@@ -85,5 +85,14 @@ export const mem4aiProviderSchema: ProviderConfigSchema = {
             placeholder: '30000',
             group: 'Advanced',
         },
+        {
+            name: 'maxRetries',
+            label: 'Max Retries',
+            type: 'number',
+            required: false,
+            description: 'Maximum number of retries on transient (429 / 5xx) errors before failing',
+            defaultValue: 3,
+            group: 'Advanced',
+        },
     ],
 };
