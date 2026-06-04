@@ -53,6 +53,12 @@ try {
 
 // Validation must happen outside the generic try-catch to fail fast if config is malformed
 openWebUIConfig.validate({ allowed: 'strict' });
-debug('OpenWebUIConfig initialized:', openWebUIConfig.getProperties());
+// Redact the password before logging — getProperties() returns the resolved
+// plaintext value, which would otherwise leak into the debug stream.
+const _loggedProps = { ...openWebUIConfig.getProperties() } as Record<string, unknown>;
+if (_loggedProps.OPEN_WEBUI_PASSWORD) {
+  _loggedProps.OPEN_WEBUI_PASSWORD = '***redacted***';
+}
+debug('OpenWebUIConfig initialized:', _loggedProps);
 
 export default openWebUIConfig;
