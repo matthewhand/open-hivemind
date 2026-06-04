@@ -36,6 +36,7 @@ export class UserConfigStore {
     try {
       const data = require('fs').readFileSync(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
+      this.initializeBotMap();
     } catch (error) {
       // If config file doesn't exist, use default empty config
       this.config = {
@@ -43,13 +44,10 @@ export class UserConfigStore {
         bots: [],
         botDisabledStates: {},
       };
+      this.botMap.clear();
     }
-    this.initializeBotMap();
   }
 
-  /**
-   * Initialize the internal bot map for O(1) lookups.
-   */
   private initializeBotMap(): void {
     this.botMap.clear();
     if (this.config.bots) {
@@ -72,6 +70,7 @@ export class UserConfigStore {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
+      this.initializeBotMap();
     } catch (error) {
       // If config file doesn't exist, use default empty config
       this.config = {
@@ -79,8 +78,8 @@ export class UserConfigStore {
         bots: [],
         botDisabledStates: {},
       };
+      this.botMap.clear();
     }
-    this.initializeBotMap();
   }
 
   /**
@@ -155,10 +154,6 @@ export class UserConfigStore {
    * @returns A BotOverride object if found, otherwise undefined.
    */
   public getBotOverride(botName: string): BotOverride | undefined {
-    if (!this.config.bots) {
-      return undefined;
-    }
-    // Use the O(1) Map lookup
     const botConfig = this.botMap.get(botName);
     if (!botConfig) {
       return undefined;
@@ -219,34 +214,29 @@ export class UserConfigStore {
     if (!this.config.bots) {
       this.config.bots = [];
     }
-
-    // Use the map to find existing config in O(1)
-    const existingBot = this.botMap.get(botName);
-
+    const existingBotIndex = this.config.bots.findIndex(bot => bot.name === botName);
     const botConfig: BotConfiguration = {
       name: botName,
-      messageProvider: overrides.messageProvider || ('discord' as MessageProvider),
-      llmProvider: overrides.llmProvider || ('flowise' as LlmProvider),
+      messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
+      llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
       llmProfile: 'llmProfile' in overrides ? (overrides.llmProfile as string | undefined) : undefined,
       responseProfile: overrides.responseProfile,
       persona: overrides.persona,
       systemInstruction: overrides.systemInstruction,
       mcpServers: overrides.mcpServers,
       mcpGuard: overrides.mcpGuard,
-      mcpGuardProfile:
-        'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
+      mcpGuardProfile: 'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
       isActive: true,
-      createdAt: existingBot?.createdAt || new Date(),
+      createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    if (existingBot) {
-      // Update existing object in-place in both the array and the map
-      Object.assign(existingBot, botConfig);
+    if (existingBotIndex >= 0) {
+      this.config.bots[existingBotIndex] = botConfig;
     } else {
       this.config.bots.push(botConfig);
-      this.botMap.set(botName, botConfig);
     }
+    this.botMap.set(botName, botConfig);
   }
 
   /**

@@ -90,7 +90,6 @@ export const BUILTIN_PERSONAS: Persona[] = [
 export class PersonaManager extends EventEmitter {
   private static instance: PersonaManager;
   private personas = new Map<string, Persona>();
-  private nameMap = new Map<string, string>(); // name -> id
   private personasFilePath: string;
 
   private constructor() {
@@ -113,13 +112,9 @@ export class PersonaManager extends EventEmitter {
     try {
       // Clear existing personas (for reload functionality)
       this.personas.clear();
-      this.nameMap.clear();
 
       // Load built-ins first
-      BUILTIN_PERSONAS.forEach((p) => {
-        this.personas.set(p.id, { ...p });
-        this.nameMap.set(p.name, p.id);
-      });
+      BUILTIN_PERSONAS.forEach((p) => this.personas.set(p.id, { ...p }));
 
       try {
         await fs.promises.access(this.personasFilePath);
@@ -130,9 +125,6 @@ export class PersonaManager extends EventEmitter {
           // Determine ID if not present (migration) or just use id
           if (p.id) {
             this.personas.set(p.id, p);
-            if (p.name) {
-              this.nameMap.set(p.name, p.id);
-            }
           }
         });
         debug(`Loaded ${Object.keys(customPersonas).length} custom personas`);
@@ -187,11 +179,6 @@ export class PersonaManager extends EventEmitter {
     return this.personas.get(id);
   }
 
-  public getPersonaByName(name: string): Persona | undefined {
-    const id = this.nameMap.get(name);
-    return id ? this.personas.get(id) : undefined;
-  }
-
   public async createPersona(request: CreatePersonaRequest): Promise<Persona> {
     const id = crypto.randomUUID();
     const newPersona: Persona = {
@@ -203,7 +190,6 @@ export class PersonaManager extends EventEmitter {
     };
 
     this.personas.set(id, newPersona);
-    this.nameMap.set(newPersona.name, id);
     await this.savePersonas();
     this.emit('personaCreated', newPersona);
     return newPersona;
@@ -219,18 +205,11 @@ export class PersonaManager extends EventEmitter {
       throw new Error('Cannot update built-in personas');
     }
 
-    const oldName = existing.name;
-
     const updated: Persona = {
       ...existing,
       ...updates,
       updatedAt: new Date().toISOString(),
     };
-
-    if (updates.name && updates.name !== oldName) {
-      this.nameMap.delete(oldName);
-      this.nameMap.set(updated.name, id);
-    }
 
     this.personas.set(id, updated);
     await this.savePersonas();
@@ -274,7 +253,6 @@ export class PersonaManager extends EventEmitter {
       throw new Error('Cannot delete built-in personas');
     }
 
-    this.nameMap.delete(existing.name);
     this.personas.delete(id);
     await this.savePersonas();
     this.emit('personaDeleted', id);

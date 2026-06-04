@@ -140,7 +140,8 @@ router.post(
     try {
       const manager = await getManager();
       // Idempotency check: see if persona with same name exists
-      const existingPersona = manager.getPersonaByName(req.body.name);
+      const allPersonas = manager.getAllPersonas();
+      const existingPersona = allPersonas.find((p) => p.name === req.body.name);
       if (existingPersona) {
         return res.status(HTTP_STATUS.OK).json(existingPersona);
       }
@@ -163,7 +164,8 @@ router.post(
       const manager = await getManager();
       if (req.body.name) {
         // Idempotency check: see if cloned persona already exists
-        const existingPersona = manager.getPersonaByName(req.body.name);
+        const allPersonas = manager.getAllPersonas();
+        const existingPersona = allPersonas.find((p) => p.name === req.body.name);
         if (existingPersona) {
           return res.status(HTTP_STATUS.OK).json(existingPersona);
         }

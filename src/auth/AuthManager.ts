@@ -112,9 +112,9 @@ export class AuthManager {
         lastLogin: null,
         passwordHash: 'test-admin-hash',
       };
-      this.users.set(defaultAdmin.id, defaultAdmin);
-      this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
-      this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
+      this.users.set('admin', defaultAdmin);
+    this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
+    this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
       return;
     }
 
@@ -141,7 +141,7 @@ export class AuthManager {
       passwordHash: bcrypt.hashSync(password, this.bcryptRounds),
     };
 
-    this.users.set(defaultAdmin.id, defaultAdmin);
+    this.users.set('admin', defaultAdmin);
     this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
     this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
     debug('Default admin user created');
@@ -233,7 +233,7 @@ export class AuthManager {
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
     const userId = this.usernameMap.get(credentials.username);
-    const user = userId !== undefined ? this.users.get(userId) : undefined;
+    const user = userId ? this.users.get(userId) : undefined;
 
     if (!user || !user.isActive) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
@@ -406,29 +406,17 @@ export class AuthManager {
       return null;
     }
 
-    const oldUsername = user.username;
-    const oldEmail = user.email;
-
-    // Validate both before updating any maps to ensure consistency
-    if (updates.username && updates.username !== oldUsername && this.usernameMap.has(updates.username)) {
-      throw new ValidationError('Username already exists', 'USER_ALREADY_EXISTS');
-    }
-    if (updates.email && updates.email !== oldEmail && this.emailMap.has(updates.email)) {
-      throw new ValidationError('Email already exists', 'USER_ALREADY_EXISTS');
-    }
-
-    const updatedUser = { ...user, ...updates };
-
-    // Perform Map updates only after validation passes
-    if (updates.username && updates.username !== oldUsername) {
-      this.usernameMap.delete(oldUsername);
+    // Update secondary maps if username or email changes
+    if (updates.username && updates.username !== user.username) {
+      this.usernameMap.delete(user.username);
       this.usernameMap.set(updates.username, userId);
     }
-    if (updates.email && updates.email !== oldEmail) {
-      this.emailMap.delete(oldEmail);
+    if (updates.email && updates.email !== user.email) {
+      this.emailMap.delete(user.email);
       this.emailMap.set(updates.email, userId);
     }
 
+    const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
 
     const { passwordHash: _ph, ...safeUser } = updatedUser;
@@ -443,8 +431,9 @@ export class AuthManager {
     if (user) {
       this.usernameMap.delete(user.username);
       this.emailMap.delete(user.email);
+      return this.users.delete(userId);
     }
-    return this.users.delete(userId);
+    return false;
   }
 
   /**

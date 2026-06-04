@@ -41,33 +41,14 @@ class TokenTracker {
    */
   public recordTokens(channelId: string, tokenCount: number): void {
     const now = Date.now();
-    let records = this.channelTokens.get(channelId);
+    const records = this.channelTokens.get(channelId) || [];
 
-    if (!records) {
-      records = [];
-      this.channelTokens.set(channelId, records);
-    }
-
-    // Clean old records only if needed to avoid constant O(N) filtering
-    if (records.length > 50 || (records.length > 0 && now - records[0].timestamp > this.WINDOW_MS)) {
-      const cutoff = now - this.WINDOW_MS;
-      let firstValid = -1;
-      for (let i = 0; i < records.length; i++) {
-        if (records[i].timestamp >= cutoff) {
-          firstValid = i;
-          break;
-        }
-      }
-
-      if (firstValid === -1) {
-        records.length = 0;
-      } else if (firstValid > 0) {
-        records.splice(0, firstValid);
-      }
-    }
+    // Clean old records
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
 
     // Add new record
-    records.push({ tokens: tokenCount, timestamp: now });
+    recentRecords.push({ tokens: tokenCount, timestamp: now });
+    this.channelTokens.set(channelId, recentRecords);
 
     debug(
       `Recorded ${tokenCount} tokens for channel ${channelId}. Total in window: ${this.getTokensInWindow(channelId)}`
@@ -79,21 +60,9 @@ class TokenTracker {
    */
   public getTokensInWindow(channelId: string): number {
     const now = Date.now();
-    const records = this.channelTokens.get(channelId);
-    if (!records || records.length === 0) {
-      return 0;
-    }
-
-    const cutoff = now - this.WINDOW_MS;
-    let sum = 0;
-    // Iterate backwards as newer records are at the end
-    for (let i = records.length - 1; i >= 0; i--) {
-      if (records[i].timestamp < cutoff) {
-        break;
-      }
-      sum += records[i].tokens;
-    }
-    return sum;
+    const records = this.channelTokens.get(channelId) || [];
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
+    return recentRecords.reduce((sum, r) => sum + r.tokens, 0);
   }
 
   /**

@@ -72,32 +72,22 @@ export default class DuplicateMessageDetector {
       const now = Date.now();
 
       // Get or create message history for this channel
-      const history = this.recentMessages.get(channelId);
-      if (!history || history.length === 0) {
-        // Still check external history
-        const normalizedContent = this.normalizeContent(content);
-        return externalHistory
-          .slice(-15)
-          .some((msgContent) => this.areMessagesDuplicate(msgContent, normalizedContent));
-      }
+      const history = this.recentMessages.get(channelId) || [];
 
-      const cutoff = now - windowMs;
+      // Clean up old messages outside the time window
+      const recentHistory = history.filter((msg) => now - msg.timestamp < windowMs);
+
+      // Normalize content for comparison (trim, lowercase, remove extra whitespace)
       const normalizedContent = this.normalizeContent(content);
 
       // Check for duplicates in internal history (what WE sent recently)
-      // Iterate backwards as newer messages are at the end, and only within window
-      let isInternalDupe = false;
-      for (let i = history.length - 1; i >= 0; i--) {
-        if (history[i].timestamp < cutoff) {
-          break;
-        }
-        if (history[i].normalizedContent === normalizedContent) {
-          isInternalDupe = true;
-          break;
-        }
-      }
+      // Optimized: Use pre-calculated normalized content to avoid re-normalizing on every check
+      const isInternalDupe = recentHistory.some(
+        (msg) => msg.normalizedContent === normalizedContent
+      );
 
       // Check for duplicates in external history (what OTHERS sent recently)
+      // Increased to last 15 messages to catch wider mirroring
       const isExternalDupe = externalHistory
         .slice(-15)
         .some((msgContent) => this.areMessagesDuplicate(msgContent, normalizedContent));
@@ -199,27 +189,10 @@ export default class DuplicateMessageDetector {
       const now = Date.now();
 
       // Get or create message history for this channel
-      let history = this.recentMessages.get(channelId);
-      if (!history) {
-        history = [];
-        this.recentMessages.set(channelId, history);
-      }
+      let history = this.recentMessages.get(channelId) || [];
 
-      // Clean up old messages using optimized search
-      const cutoff = now - windowMs;
-      let firstValid = -1;
-      for (let i = 0; i < history.length; i++) {
-        if (history[i].timestamp >= cutoff) {
-          firstValid = i;
-          break;
-        }
-      }
-
-      if (firstValid === -1) {
-        history.length = 0;
-      } else if (firstValid > 0) {
-        history.splice(0, firstValid);
-      }
+      // Clean up old messages
+      history = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Add new message
       history.push({
@@ -231,9 +204,10 @@ export default class DuplicateMessageDetector {
 
       // Trim to max history size
       if (history.length > historySize) {
-        history.splice(0, history.length - historySize);
+        history = history.slice(-historySize);
       }
 
+      this.recentMessages.set(channelId, history);
       debug(`Recorded message in channel ${channelId}, history size: ${history.length}`);
     } catch (error) {
       debug(`Error recording message: ${error}`);
