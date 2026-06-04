@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { introspectRoutes } from '../utils/routeIntrospection';
+import { apiLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ const router = Router();
  */
 router.get(
   '/',
+  apiLimiter,
   asyncErrorHandler(async (req: Request, res: Response) => {
     const app = req.app;
     const groups = await introspectRoutes(app);

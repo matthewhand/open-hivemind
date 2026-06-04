@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { apiLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
-router.get(['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'], (req, res) => {
+router.get(['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'], apiLimiter, (req, res) => {
   let format = String(req.query.format || 'json').toLowerCase();
   const path = req.path.toLowerCase();
 
