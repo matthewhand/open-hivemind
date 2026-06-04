@@ -400,6 +400,10 @@ export class AuthManager {
         throw new AuthenticationError('Two-factor authentication code required', 'TOTP_REQUIRED');
       }
       if (!verifyTotpToken(credentials.totpCode, user.twoFactorSecret)) {
+        // Count an invalid second factor toward account lockout, otherwise the
+        // 6-digit TOTP space could be brute-forced past an already-verified
+        // password without ever tripping the lockout that guards password tries.
+        this.loginAttempts.recordFailure(lockoutKey);
         throw new AuthenticationError('Invalid two-factor code', 'INVALID_TOTP');
       }
     }

@@ -373,7 +373,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
             const startTime = Date.now();
 
             const targetUrl = `${serverUrl}/api/v4/users/me`;
-            if (!(await isSafeUrl(targetUrl))) {
+            if (!(await isSafeUrl(targetUrl)).safe) {
               return {
                 name,
                 connected: false,
