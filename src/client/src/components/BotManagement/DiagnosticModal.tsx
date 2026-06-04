@@ -77,7 +77,13 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       size="md"
       ariaLabelledBy="diagnostic-modal-title"
     >
-      <div className="space-y-6 p-4 sm:p-6" role="region" aria-label="Diagnostic results">
+      <div
+        className="space-y-6 p-4 sm:p-6"
+        role="region"
+        aria-label="Diagnostic results"
+        aria-live="polite"
+        aria-busy={loading}
+      >
         {loading && !results ? (
           <div className="py-12 text-center space-y-4">
              <LoadingSpinner lg />
@@ -87,7 +93,13 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
           <div className="alert alert-error">
              <XCircle className="w-6 h-6" />
              <span>{error}</span>
-             <button onClick={runDiagnostic} className="btn btn-xs btn-ghost">Retry</button>
+             <button
+               onClick={runDiagnostic}
+               className="btn btn-xs btn-ghost"
+               aria-label="Retry diagnostic"
+             >
+               Retry
+             </button>
           </div>
         ) : results ? (
           <div className="space-y-6 py-2">

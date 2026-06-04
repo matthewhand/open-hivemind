@@ -48,7 +48,13 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
       size="lg"
       ariaLabelledBy={`insights-title-${botId}`}
     >
-      <div className="space-y-4 p-4 sm:p-6" role="region" aria-label="Insights content">
+      <div
+        className="space-y-4 p-4 sm:p-6"
+        role="region"
+        aria-label="Insights content"
+        aria-live="polite"
+        aria-busy={loading}
+      >
         {loading ? (
           <div className="py-20 text-center space-y-4">
             <div className="flex justify-center">
@@ -66,7 +72,11 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               <h3 className="font-bold">Error</h3>
               <div className="text-xs">{error}</div>
             </div>
-            <button onClick={fetchInsights} className="btn btn-sm btn-ghost">
+            <button
+              onClick={fetchInsights}
+              className="btn btn-sm btn-ghost"
+              aria-label="Retry loading insights"
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </button>
