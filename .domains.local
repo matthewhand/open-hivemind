@@ -1,0 +1,118 @@
+# =============================================================
+# open-hivemind: Project-Specific Domains (revised 2026-03-28)
+# Format:  label | persona | task description
+#
+# LESSONS FROM 258 JULES PRS:
+# - Narrow, specific tasks with file paths = clean PRs (4/5)
+# - Broad structural tasks = cascading breakage (2/5)
+# - Tasks that say "fix all X" spawn 10+ fix-the-fix PRs
+# - Keep each task to ONE clear deliverable with concrete criteria
+# - REMOVED: completed items (JWT refresh, correlation IDs, stub pages, barrel exports)
+# - REMOVED: tasks that overlap with generic .domains
+# =============================================================
+
+# =====================
+# TIER 1: QUICK WINS (narrow scope, high confidence, 1 PR each)
+# These are ideal for Jules — specific file, specific change, clear done criteria.
+# =====================
+
+# --- Replace remaining window.alert() calls ---
+replace-alerts | ui | Replace all remaining window.alert() calls with toast notifications in these 7 files: PersonasPage.tsx, LLMProvidersPage.tsx, SystemManagement.tsx, MessageProvidersPage.tsx, MCPProviderManager.tsx, IntegrationsPanel.tsx, AIAssistButton.tsx. Use the existing useToast hook or ToastNotification component from src/client/src/components/DaisyUI/ToastNotification.tsx. Do NOT touch test files. Verify each replacement renders correctly.
+
+# --- Extend rate limiter to remaining routes ---
+rate-limit-coverage | security | The rate limiter middleware in src/middleware/rateLimiter.ts (682 lines) is only applied to 3 route files: auth.ts, admin.ts, guardProfiles.ts. Apply appropriate rate limits to ALL remaining route files that accept mutations (POST/PUT/DELETE): config.ts, botConfig.ts, mcp.ts, importExport.ts, marketplace.ts, personas.ts, specs.ts, integrations.ts. Use the existing configRateLimit or create route-specific limiters. Do NOT change the rateLimiter.ts implementation itself.
+
+# --- API service deduplication ---
+api-service-dedup | ui | src/client/src/services/api.ts is 929 lines with repetitive endpoint functions. Extract a typed base request helper that handles auth headers, error unwrapping, and token refresh. Group endpoints into domain objects (bots, config, mcp, auth, guards, personas). The file should shrink to under 300 lines of unique logic. Do NOT change any API endpoint URLs or response handling — this is purely a DRY refactor.
+
+# --- Logger migration (console calls) ---
+logger-migration-server | architecture | There are 231 console.error/console.warn calls across 98 files in src/. Focus ONLY on src/server/ and src/middleware/ (non-test files). Replace every console.error and console.warn with the structured Logger service. Import Logger from the existing logger module. Do NOT touch src/client/, test files, or src/scripts/. Count the replacements in your PR description.
+
+# --- Logger migration (frontend) ---
+logger-migration-client | ui | Replace all console.error and console.warn calls in src/client/src/ (non-test files) with a frontend logging utility. If one does not exist, create a simple src/client/src/utils/logger.ts that wraps console methods with structured output (timestamp, component name, level). Do NOT touch test files. Count the replacements in your PR description.
+
+# =====================
+# TIER 2: MEDIUM TASKS (well-scoped, some complexity, 1 PR each)
+# Each targets a single file or small group of closely related files.
+# =====================
+
+# --- Frontend: Socket.io consolidation ---
+websocket-consolidation | performance | The frontend creates 3 separate Socket.io connections: useWebSocket.ts (line 37, namespace /webui), WebSocketContext.tsx (line 54, custom path), and ApiStatusMonitor.tsx (default namespace). Consolidate into a SINGLE connection in WebSocketContext.tsx with topic-based event subscriptions. Remove the duplicate io() call from useWebSocket.ts — make it consume WebSocketContext instead. Update ApiStatusMonitor.tsx to use the shared context. Acceptance: only ONE io() call in the entire frontend.
+
+# --- Frontend: NaturalLanguageInterface split ---
+natural-language-split | ui | src/client/src/ai/NaturalLanguageInterface.tsx is 943 lines. Split into 3 files in src/client/src/ai/: NLCommandParser.tsx (parsing logic), NLSuggestionPanel.tsx (autocomplete UI), NLResponseRenderer.tsx (response display). Extract shared AI interaction state into a useNaturalLanguage.ts hook. NaturalLanguageInterface.tsx becomes a thin wrapper composing the three. Each new file should be under 300 lines. Update any imports in pages that use NaturalLanguageInterface.
+
+# --- Frontend: EnterpriseManager split ---
+enterprise-manager-split | ui | src/client/src/components/EnterpriseManager.tsx is 865 lines. Create src/client/src/components/enterprise/ directory. Extract into: LicensePanel.tsx, UsageAnalyticsPanel.tsx, TeamConfigPanel.tsx, and EnterpriseContext.tsx (shared state). EnterpriseManager.tsx becomes a layout wrapper under 100 lines. Update imports in AuditPage.tsx and any other pages that reference EnterpriseManager.
+
+# --- Frontend: SystemManagement split ---
+system-management-split | ui | src/client/src/pages/SystemManagement.tsx is 838 lines. It contains alert management, backup status, system resources, performance tuning, and environment config all in one file. Extract into: AlertManagementTab.tsx, BackupManagementTab.tsx, PerformanceTuningTab.tsx, EnvironmentConfigTab.tsx. SystemManagement.tsx becomes a tab container under 100 lines. Create src/client/src/components/system/ directory for the extracted components.
+
+# --- Backend: API error envelope utility ---
+error-envelope-utility | architecture | Create src/server/utils/apiResponse.ts with two helper functions: ApiResponse.success(data) and ApiResponse.error(message, code, statusCode). The envelope shape must be {success: boolean, data?: any, error?: string, code?: string}. Then migrate ONLY these 3 route files to use it: auth.ts (506 lines), botConfig.ts (569 lines), config.ts (782 lines). Count every res.status().json() call you convert. Do NOT touch other route files — they will be migrated in follow-up PRs.
+
+# --- Backend: Error envelope migration (batch 2) ---
+error-envelope-batch2 | architecture | PREREQUISITE: error-envelope-utility PR must be merged first. Using the ApiResponse utility from src/server/utils/apiResponse.ts, migrate these route files: admin.ts (1218 lines), mcp.ts (875 lines), dashboard.ts (541 lines), health.ts (866 lines). Count conversions in your PR description. Maintain exact same HTTP status codes — only change the JSON response shape.
+
+# --- Backend: Error envelope migration (batch 3) ---
+error-envelope-batch3 | architecture | PREREQUISITE: error-envelope-utility PR must be merged. Using ApiResponse utility, migrate remaining route files: importExport.ts, sitemap.ts, enterprise.ts, agents.ts, bots.ts, consolidated.ts, secureConfig.ts, ci.ts, activity.ts, marketplace.ts, guardProfiles.ts, demo.ts, ai-assist.ts, guards.ts, hotReload.ts, letta.ts, personas.ts, specs.ts, integrations.ts, anomaly.ts, cache.ts. This is the final batch — after this PR, every route uses the standard envelope.
+
+# --- Backend: Middleware test suite ---
+middleware-tests | testing | src/middleware/ has 6 files (1491 lines total) with ZERO tests. Write Jest unit tests for EACH file: corsMiddleware.ts (183 lines), errorHandler.ts (308 lines — includes correlation ID middleware), rateLimiter.ts (682 lines), sanitizationMiddleware.ts (90 lines), sessionMiddleware.ts (184 lines), validationMiddleware.ts (44 lines). Create tests/middleware/ directory. Use supertest or mock req/res objects. Target 80%+ line coverage. Do NOT modify the middleware source files.
+
+# --- Backend: Validation test suite ---
+validation-tests | testing | src/validation/ (inputValidator.ts, validateRequest.ts, schemas/) and src/server/routes/validation.ts (1025 lines) have ZERO tests. Write Jest unit tests covering: valid input passes, invalid input rejected with correct error messages, edge cases (empty string, null, oversized payload, unicode, SQL injection strings, XSS payloads). Also test RealTimeValidationService.ts (1003 lines). Create tests/validation/ directory. Target 80%+ coverage. Do NOT modify source files.
+
+# =====================
+# TIER 3: LARGE STRUCTURAL (high impact, higher risk — break into phases)
+# These touch many files. The task description constrains scope to prevent churn.
+# =====================
+
+# --- SchemaManager Phase 1: Extract activity schemas ---
+schema-manager-phase1 | architecture | SchemaManager.ts is 2331 lines managing 106 tables. In this FIRST phase, extract ONLY the activity/logging table schemas (activity_logs, message_logs, bot_audit_logs, bot_error_logs, and related tables) into a new file: src/database/schemas/ActivitySchemas.ts. Create a simple interface ISchemaModule with ensureTable() and getTableNames() methods. Update SchemaManager to delegate to ActivitySchemas for those tables. Do NOT touch any other schemas. SchemaManager should shrink by approximately 200-300 lines.
+
+# --- SchemaManager Phase 2: Extract metrics schemas ---
+schema-manager-phase2 | architecture | PREREQUISITE: schema-manager-phase1 merged. Following the same ISchemaModule interface pattern, extract metrics table schemas (bot_statistics, bot_performance_metrics, bot_monitoring, and related tables) into src/database/schemas/MetricsSchemas.ts. Update SchemaManager to delegate. SchemaManager should now be under 1800 lines.
+
+# --- SchemaManager Phase 3: Extract security schemas ---
+schema-manager-phase3 | architecture | PREREQUISITE: schema-manager-phase2 merged. Extract security table schemas (bot_security_events, bot_rate_limits, user_permissions, and related tables) into src/database/schemas/SecuritySchemas.ts. Update SchemaManager to delegate. Create src/database/schemas/index.ts as a SchemaRegistry that composes all schema modules. SchemaManager should now be under 1500 lines.
+
+# --- admin.ts route split ---
+admin-routes-split | architecture | src/server/routes/admin.ts is 1218 lines with 4 mixed concerns. Split into: src/server/routes/admin/users.ts (user management endpoints), src/server/routes/admin/system.ts (system config), src/server/routes/admin/audit.ts (audit log queries), src/server/routes/admin/bulk.ts (bulk operations). Create src/server/routes/admin/index.ts that mounts sub-routers. Update src/server/server.ts to import from the new index. Verify all /api/admin/* routes still work by running existing tests.
+
+# --- openapi.ts schema extraction ---
+openapi-schema-extraction | architecture | src/server/routes/openapi.ts is 1412 lines. Most of the bulk is inline JSON schema definitions for request/response types. Extract ALL schema objects into src/server/schemas/*.json files (one per resource: bot.schema.json, config.schema.json, mcp.schema.json, etc.). The route file should load schemas with require() and register them. After extraction, openapi.ts should be under 400 lines of pure route handler code.
+
+# --- DI registration expansion ---
+di-completeness | architecture | src/di/registration.ts is 62 lines registering only 5 services. Expand to register these additional services as singletons: DatabaseManager, SchemaManager, BotManager, WebSocketService (from src/server/services/), MCPProviderManager, RealTimeValidationService. For each, add the @injectable() decorator to the class if missing, and register with container.registerSingleton(). Add a validateRegistrations() function that resolves every registration at startup and logs failures. Do NOT refactor the services themselves — only wire them into DI.
+
+# =====================
+# TIER 4: RESILIENCE & TESTING (important but lower urgency)
+# =====================
+
+# --- Provider reconnection ---
+provider-reconnect | reliability | Discord, Slack, and Mattermost providers have ZERO reconnection logic. Create src/providers/ReconnectionManager.ts with: exponential backoff (initial 1s, max 60s, jitter), configurable max retries, connection state tracking (connected/reconnecting/failed), and health status reporting. Integrate into DiscordProvider.ts, SlackProvider.ts, and MattermostProvider.ts. Also address TelegramProvider.ts TODO at line 179 about reload logic. Add unit tests for the ReconnectionManager.
+
+# --- Frontend component unit tests (batch 1: pages 600+ lines) ---
+component-tests-large | testing | Add Vitest unit tests for the 4 largest page components: SystemManagement.tsx (838 lines), PersonasPage.tsx (768 lines), MCPServersPage.tsx (768 lines), BotsPage.tsx (637 lines). Create src/client/src/pages/__tests__/ directory. Each test should cover: renders without crashing with mock API data, shows loading skeleton, shows error state when API fails, handles empty data gracefully. Mock the api service and useWebSocket hook. Do NOT test implementation details.
+
+# --- Frontend component unit tests (batch 2: pages 400-600 lines) ---
+component-tests-medium | testing | Add Vitest unit tests for 6 medium page components: MCPToolsPage.tsx (516 lines), ExportPage.tsx (507 lines), GuardsPage.tsx (494 lines), LLMProvidersPage.tsx (491 lines), ActivityPage.tsx (475 lines), MarketplacePage.tsx (448 lines). Same test patterns as batch 1: render, loading, error, empty states. Create in src/client/src/pages/__tests__/.
+
+# --- Playwright flaky test fixes ---
+playwright-flaky-fixes | testing | Audit ALL .spec.ts files in tests/e2e/ for timing anti-patterns: setTimeout, sleep(), hardcoded delays, page.waitForTimeout(). Replace each with proper Playwright idioms: page.waitForSelector(), locator.waitFor(), expect(locator).toBeVisible(), page.waitForResponse(). List every file changed and the specific anti-pattern fixed in your PR description. Also add retries: 1 to playwright.config.ts for network-dependent tests.
+
+# --- LLM config caching ---
+llm-config-cache | performance | BotConfigurationManager.ts (1247 lines) and MCPProviderManager.ts (882 lines) re-parse config from disk on every request. Add a simple TTLCache class (Map-based, no external deps) in src/utils/TTLCache.ts with get/set/invalidate/clear methods. Integrate into both managers for config lookups. Default TTL: 30 seconds. Invalidate on config write. Add cache-hit/miss counters to Logger output. Add unit tests for TTLCache covering: expiry, invalidation, concurrent access.
+
+# --- Input validation with zod (auth routes) ---
+zod-auth-validation | security | Add zod schema validation to src/server/routes/auth.ts (506 lines). Define schemas for login request body ({username: string, password: string}), register request body, token refresh request body, and any other endpoints that accept user input. Create src/server/schemas/auth.schemas.ts. Use a validate() middleware wrapper that returns 400 with the standard error envelope on validation failure. This is the template for all other route validations.
+
+# --- Input validation with zod (admin routes) ---
+zod-admin-validation | security | PREREQUISITE: zod-auth-validation pattern established. Add zod schemas for src/server/routes/admin.ts (1218 lines). Every POST/PUT/DELETE endpoint should validate its request body. Create src/server/schemas/admin.schemas.ts. Reuse the validate() middleware from the auth PR. Pay special attention to bulk operation endpoints that accept arrays — validate array items too.
+
+# --- MCP guard schema validation ---
+mcp-guard-schemas | security | Expand MCPGuard to validate tool argument schemas against declared JSON schemas before execution. Currently validation is minimal. Add a schema registry in src/mcp/ that stores expected argument shapes per tool. Validate arguments with zod or ajv before forwarding to the tool. Log rejected calls with the tool name, argument summary, and rejection reason. Write integration tests with malformed arguments. MCPProviderManager.ts (882 lines) may need a getToolSchema() method added.
+
+# --- Monitoring health aggregation ---
+monitoring-health | reliability | Implement a /api/health/detailed endpoint in src/server/routes/health.ts (866 lines) that returns structured health for every subsystem: database (connection status, pool stats), message providers (connected/disconnected per provider), LLM providers (reachable/unreachable), MCP servers (running/stopped), WebSocket (connected clients count). Each check should have a timeout of 5 seconds. Return overall status as "healthy", "degraded", or "unhealthy" based on individual checks.

@@ -1,3 +1,4 @@
+import { encryptionService } from '../../../src/database/EncryptionService';
 import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
@@ -8,6 +9,8 @@ import type {
   BotConfigurationVersion,
   IDatabase as Database,
 } from '../../../src/database/types';
+
+const crypto = require('crypto');
 
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   return {
@@ -21,6 +24,15 @@ function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
 }
 
 describe('BotConfigRepositoryBase', () => {
+  let originalKey: any;
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = crypto.randomBytes(32);
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let base: BotConfigRepositoryBase;
   let mockDb: jest.Mocked<Database>;
 
@@ -87,6 +99,15 @@ describe('BotConfigRepositoryBase', () => {
 });
 
 describe('BotConfigVersionRepository', () => {
+  let originalKey: any;
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = crypto.randomBytes(32);
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let repo: BotConfigVersionRepository;
   let mockDb: jest.Mocked<Database>;
   // @ts-ignore - reset encryption service singleton for controlled tests
@@ -249,6 +270,15 @@ describe('BotConfigVersionRepository', () => {
 });
 
 describe('BotConfigAuditRepository', () => {
+  let originalKey: any;
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = crypto.randomBytes(32);
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let repo: BotConfigAuditRepository;
   let mockDb: jest.Mocked<Database>;
 
