@@ -162,22 +162,31 @@ function pickProviderInstance(
     return null;
   }
 
-  // Prefer exact id match.
-  const byId = candidates.find((p) => normalizeRef(p.id) === wanted);
-  if (byId) {
-    return byId;
+  // ⚡ Bolt Optimization: Avoid multiple O(N) sweeps. Iterate once and return early if possible.
+  let matchByName: ProviderInstance | null = null;
+  let matchByType: ProviderInstance | null = null;
+
+  for (const p of candidates) {
+    const pId = normalizeRef(p.id);
+    if (pId === wanted) {
+      return p; // Immediate exact id match
+    }
+
+    if (!matchByName && normalizeRef(p.name) === wanted) {
+      matchByName = p;
+    }
+
+    if (!matchByType && normalizeRef(p.type) === wanted) {
+      matchByType = p;
+    }
   }
 
-  // Then by name (case-insensitive).
-  const byName = candidates.find((p) => normalizeRef(p.name) === wanted);
-  if (byName) {
-    return byName;
+  if (matchByName) {
+    return matchByName;
   }
 
-  // Then by type (first enabled provider of that type).
-  const byType = candidates.find((p) => normalizeRef(p.type) === wanted);
-  if (byType) {
-    return byType;
+  if (matchByType) {
+    return matchByType;
   }
 
   return null;
