@@ -65,7 +65,7 @@ export class ConfigStore {
        
       const scm = (SecureConfigManager as any).getInstanceSync?.();
       if (scm && typeof scm.getDecryptedMainConfigSync === 'function') {
-        const decrypted = scm.getDecryptedMainConfigSync();
+        const decrypted = scm.getDecryptedMainConfigSync(process.env.NODE_ENV || 'default');
         if (decrypted && typeof decrypted === 'object' && key in decrypted) {
           return decrypted[key] as T;
         }
@@ -216,7 +216,7 @@ export class ConfigStore {
        
       const scm = (SecureConfigManager as any).getInstanceSync?.();
       if (scm && typeof scm.getDecryptedMainConfigSync === 'function') {
-        const decrypted = scm.getDecryptedMainConfigSync();
+        const decrypted = scm.getDecryptedMainConfigSync(process.env.NODE_ENV || 'default');
         if (decrypted && typeof decrypted === 'object' && key in decrypted) return 'secure';
       }
     } catch { /* not available */ }
