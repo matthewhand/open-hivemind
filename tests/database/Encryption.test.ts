@@ -3,6 +3,36 @@ import { encryptionService, EncryptionService } from '../../src/database/Encrypt
 import { BotConfigRepository } from '../../src/database/repositories/BotConfigRepository';
 import { IDatabase } from '../../src/database/types';
 
+jest.mock('../../src/config/databaseConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn((key: string) => {
+      if (key === 'ENCRYPTION_KEY') return 'test-encryption-key-32-bytes!!';
+      return undefined;
+    }),
+  },
+}));
+
+jest.mock('../../src/config/databaseConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn((key: string) => {
+      if (key === 'ENCRYPTION_KEY') return 'test-encryption-key-32-bytes!!';
+      return undefined;
+    }),
+  },
+}));
+
+jest.mock('../../src/config/databaseConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn((key: string) => {
+      if (key === 'ENCRYPTION_KEY') return 'test-encryption-key-32-bytes!!';
+      return undefined;
+    }),
+  },
+}));
+
 describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;

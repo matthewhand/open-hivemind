@@ -10,6 +10,16 @@ import type {
   IDatabase as Database,
 } from '../../../src/database/types';
 
+jest.mock('../../../src/config/databaseConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn((key: string) => {
+      if (key === 'ENCRYPTION_KEY') return 'test-encryption-key-32-bytes!!';
+      return undefined;
+    }),
+  },
+}));
+
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   const db: any = {
     run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
