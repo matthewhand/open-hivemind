@@ -479,9 +479,6 @@ router.post(
       if (!isPasswordValid) {
         return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
       }
-      if (!isPasswordValid) {
-        return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
-      }
 
       const success = await authManager.changePassword(authReq.user.id, newPassword);
       if (success) {
