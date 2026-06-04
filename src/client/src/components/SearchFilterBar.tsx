@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import Input from './DaisyUI/Input';
 import Select, { SelectOption } from './DaisyUI/Select';
+import Tooltip from './DaisyUI/Tooltip';
 
 export interface FilterConfig {
   key: string;
@@ -71,13 +72,16 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           size="sm"
           suffix={
             localSearch ? (
-              <button
-                onClick={handleClearSearch}
-                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200"
-                aria-label="Clear search"
-              >
-                <X className="w-3 h-3" />
-              </button>
+              <Tooltip content="Clear search" position="top">
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Tooltip>
             ) : null
           }
         />

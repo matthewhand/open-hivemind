@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useUrlParams from '../../../hooks/useUrlParams';
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { apiService } from '../../../services/api';
 import type { MCPTool, RecentToolUsage, AlertState } from '../types';
+
+interface MCPFavoritesPayload {
+  favorites?: string[];
+  recentlyUsed?: RecentToolUsage[];
+  usageCounts?: Record<string, number>;
+}
 
 interface UseToolRegistryProps {
   setAlert: (alert: AlertState | null) => void;
@@ -47,11 +53,55 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
   const [recentlyUsed, setRecentlyUsed] = useLocalStorage<RecentToolUsage[]>('mcp-tools-recently-used', []);
   const [usageCounts, setUsageCounts] = useLocalStorage<Record<string, number>>('mcp-tools-usage-counts', {});
 
+  // Server-side persistence so favorites / recents / usage-counts survive across
+  // devices and sessions. We hydrate from the server on mount (falling back to
+  // the localStorage values when the request fails) and persist changes back.
+  // `hydratedRef` guards against the initial-state save overwriting server data.
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp: any = await apiService.get('/api/mcp/tools/favorites');
+        const data: MCPFavoritesPayload = resp?.data ?? {};
+        if (cancelled) return;
+        if (Array.isArray(data.favorites)) setFavorites(data.favorites);
+        if (Array.isArray(data.recentlyUsed)) setRecentlyUsed(data.recentlyUsed);
+        if (data.usageCounts && typeof data.usageCounts === 'object') setUsageCounts(data.usageCounts);
+      } catch {
+        // Server unavailable — keep the localStorage-backed values as fallback.
+      } finally {
+        if (!cancelled) hydratedRef.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist registry preferences back to the server whenever they change
+  // (after the initial hydration). Debounced to coalesce rapid updates.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const handle = setTimeout(() => {
+      apiService
+        .put('/api/mcp/tools/favorites', { favorites, recentlyUsed, usageCounts })
+        .catch(() => {
+          // Ignore persistence errors — localStorage still holds the values.
+        });
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [favorites, recentlyUsed, usageCounts]);
+
   useEffect(() => {
     const fetchTools = async () => {
       try {
         const json: any = await apiService.get('/api/mcp/servers');
         const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
+
+        // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside loops
+        const recentUsedMap = new Map(recentlyUsed.map(r => [r.toolId, r.timestamp]));
+
         const allTools: MCPTool[] = [];
         (json.servers || json.data?.servers || []).forEach((server: any) => {
           if (server.tools && Array.isArray(server.tools)) {
@@ -67,7 +117,7 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
                 inputSchema: t.inputSchema,
                 outputSchema: t.outputSchema || t.output_schema || {},
                 usageCount: usageCounts[toolId] || 0,
-                lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
+                lastUsed: recentUsedMap.get(toolId),
                 enabled: prefsJson.data?.[toolId] ? prefsJson.data[toolId].enabled : server.connected
               });
             });
@@ -86,8 +136,16 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
 
   useEffect(() => {
     let filtered = [...tools];
-    if (urlParams.view === 'favorites') filtered = filtered.filter(t => favorites.includes(t.id));
-    else if (urlParams.view === 'recent') filtered = filtered.filter(t => recentlyUsed.map(r => r.toolId).includes(t.id));
+    if (urlParams.view === 'favorites') {
+      // Performance optimization: use Set for O(1) lookups
+      const favoritesSet = new Set(favorites);
+      filtered = filtered.filter(t => favoritesSet.has(t.id));
+    }
+    else if (urlParams.view === 'recent') {
+      // Performance optimization: use Set for O(1) lookups instead of mapping and includes inside filter
+      const recentIdsSet = new Set(recentlyUsed.map(r => r.toolId));
+      filtered = filtered.filter(t => recentIdsSet.has(t.id));
+    }
 
     if (urlParams.search) filtered = filtered.filter(t => t.name.toLowerCase().includes(urlParams.search.toLowerCase()) || t.description.toLowerCase().includes(urlParams.search.toLowerCase()));
     if (urlParams.category !== 'all') filtered = filtered.filter(t => t.category === urlParams.category);
