@@ -7,6 +7,7 @@
  * `test-hash-for-*` hashes) so we control the valid password precisely.
  */
 import { AuthManager } from '../../../src/auth/AuthManager';
+import { generateToken } from '../../../src/auth/TotpService';
 import { AuthenticationError } from '../../../src/types/errorClasses';
 
 type AuthManagerCtor = {
@@ -106,6 +107,36 @@ describe('AuthManager account lockout', () => {
     await expect(mgr.login({ username: 'carol', password: 'x' })).rejects.toBeTruthy();
     await expect(mgr.login({ username: 'carol', password: 'x' })).rejects.toBeTruthy();
     expect(mgr.isLockedOut('carol')).toBe(false);
+  });
+
+  it('counts an invalid TOTP code toward account lockout', async () => {
+    const mgr = makeManager({
+      AUTH_MAX_LOGIN_ATTEMPTS: '3',
+      AUTH_LOCKOUT_DURATION_SECONDS: '900',
+    });
+    const user = await mgr.register({
+      username: 'frank',
+      email: 'frank@example.com',
+      password: PASSWORD,
+    });
+
+    // Enrol and enable 2FA for frank.
+    const { secret } = mgr.startTwoFactorEnrollment(user.id)!;
+    expect(mgr.confirmTwoFactorEnrollment(user.id, generateToken(secret))).toBe(true);
+
+    // A code that is definitely NOT the current valid token.
+    const valid = generateToken(secret);
+    const wrongCode = valid === '000000' ? '111111' : '000000';
+
+    // Correct password but wrong second factor, repeated to the threshold,
+    // must lock the account — otherwise TOTP is brute-forceable.
+    for (let i = 0; i < 3; i++) {
+      await expect(
+        mgr.login({ username: 'frank', password: PASSWORD, totpCode: wrongCode })
+      ).rejects.toBeInstanceOf(AuthenticationError);
+    }
+
+    expect(mgr.isLockedOut('frank')).toBe(true);
   });
 
   it('auto-unlocks once the lockout duration elapses', async () => {

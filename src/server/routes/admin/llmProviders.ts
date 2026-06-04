@@ -340,7 +340,7 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                if (!(await isSafeUrl(config.baseUrl))) {
+                if (!(await isSafeUrl(config.baseUrl)).safe) {
                   testResult = {
                     success: false,
                     message: 'Base URL is blocked for security reasons',
@@ -379,7 +379,7 @@ router.post(
 
             try {
               new URL(config.baseUrl);
-              if (!(await isSafeUrl(config.baseUrl))) {
+              if (!(await isSafeUrl(config.baseUrl)).safe) {
                 testResult = {
                   success: false,
                   message: 'Base URL is blocked for security reasons',
@@ -417,7 +417,7 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                if (!(await isSafeUrl(config.baseUrl))) {
+                if (!(await isSafeUrl(config.baseUrl)).safe) {
                   testResult = {
                     success: false,
                     message: 'Base URL is blocked for security reasons',
