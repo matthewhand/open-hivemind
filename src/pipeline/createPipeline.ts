@@ -16,7 +16,15 @@
  */
 
 import type { MessageBus } from '@src/events/MessageBus';
-import { PipelineTracer, setActiveTracer } from '@src/observability';
+import {
+  ActivityRecorder,
+  BusinessKpiRecorder,
+  PipelineTracer,
+  attachTraceExporters,
+  setActiveTracer,
+} from '@src/observability';
+import { ActivityLogger } from '@src/server/services/ActivityLogger';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import {
   DecisionStrategyAdapter,
   LlmInvokerAdapter,
@@ -25,6 +33,7 @@ import {
   MessageSenderAdapter,
   PromptBuilderAdapter,
 } from '@src/pipeline/adapters';
+import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage } from '@src/pipeline/DecisionStage';
 import { EnrichStage } from '@src/pipeline/EnrichStage';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
@@ -58,13 +67,37 @@ export interface PipelineDependencies {
 // ---------------------------------------------------------------------------
 
 /**
+ * Tracks which {@link MessageBus} instances already have a pipeline wired.
+ *
+ * The pipeline stages subscribe to shared, bus-wide events (`message:incoming`,
+ * `message:validated`, …) that carry no per-service identity. Registering them
+ * again on the same bus — e.g. once per messenger service — would add duplicate
+ * listeners and cause every message to be processed N times (and sent N times).
+ *
+ * A {@link WeakSet} lets registered buses be garbage-collected (and re-registered
+ * after a `bus.reset()` returns a brand-new instance).
+ */
+const registeredBuses = new WeakSet<MessageBus>();
+
+/**
  * Create and register the full 5-stage message pipeline on the given
  * {@link MessageBus}.
  *
  * After calling this function, emitting a `message:incoming` event on
  * the bus will drive the message through all stages automatically.
+ *
+ * Registration is **idempotent per bus instance**: calling this multiple times
+ * with the same bus (for example, once per messenger service) wires the stages
+ * exactly once. Subsequent calls are no-ops and return `false`.
+ *
+ * @returns `true` if the pipeline was registered, `false` if the bus already had one.
  */
-export function createPipeline(bus: MessageBus, deps: PipelineDependencies): void {
+export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boolean {
+  if (registeredBuses.has(bus)) {
+    return false;
+  }
+  registeredBuses.add(bus);
+
   const receive = new ReceiveStage(bus);
 
   const decision = new DecisionStage(
@@ -82,7 +115,9 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): voi
   const send = new SendStage(
     bus,
     new MessageSenderAdapter({ messengerService: deps.messengerService }),
-    new MemoryStorerAdapter()
+    new MemoryStorerAdapter(),
+    new DefaultActivityRecorder(),
+    deps.botId
   );
 
   receive.register();
@@ -96,4 +131,35 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): voi
   const tracer = new PipelineTracer(bus);
   tracer.register();
   setActiveTracer(tracer);
+
+  // Opt-in trace export to external backends (console / NDJSON file / OTLP).
+  // Off by default; enabled via the TRACE_EXPORT env var. No-op when unset.
+  attachTraceExporters(tracer);
+
+  // Record real message activity to the persistent ActivityLogger (JSONL) and
+  // the live WebSocket feed so the dashboard ActivityPage / DashboardService
+  // surface real events — not just demo-mode simulations.
+  const activityLogger = ActivityLogger.getInstance();
+  let flowSink: { recordMessageFlow(event: unknown): void } | undefined;
+  try {
+    flowSink = WebSocketService.getInstance();
+  } catch {
+    // WebSocketService may be unavailable (e.g. HTTP disabled); recording to
+    // the persistent log is sufficient and must not break the pipeline.
+    flowSink = undefined;
+  }
+  const activityRecorder = new ActivityRecorder(
+    bus,
+    activityLogger,
+    flowSink as ConstructorParameters<typeof ActivityRecorder>[2]
+  );
+  activityRecorder.register();
+
+  // Feed the BusinessKpiCollector from real pipeline events so the business KPI
+  // dashboard surfaces live engagement/performance/growth metrics instead of
+  // always-zero defaults. Cost/retention KPIs that the bus cannot supply are
+  // left unfed (see BusinessKpiRecorder.DEFERRED_KPI_IDS).
+  new BusinessKpiRecorder(bus).register();
+
+  return true;
 }

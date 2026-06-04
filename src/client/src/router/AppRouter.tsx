@@ -29,6 +29,8 @@ const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 const DeveloperPage = lazy(() => import('../pages/DeveloperPage'));
 
+const PluginSecurityPage = lazy(() => import('../pages/PluginSecurityPage'));
+
 // Monitoring Dashboard pages
 const MonitoringDashboard = lazy(() => import('../pages/MonitoringDashboard'));
 const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
@@ -225,6 +227,7 @@ const AppRouter: React.FC = () => {
           <Route path="showcase" element={<Navigate to="/admin/developer?tab=showcase" replace />} />
           <Route path="specs" element={<Navigate to="/admin/developer?tab=specs" replace />} />
           <Route path="specs/:id" element={<ErrorBoundary pageName="Spec Detail"><SpecDetailPage /></ErrorBoundary>} />
+          <Route path="plugin-security" element={<ErrorBoundary pageName="Plugin Security"><PluginSecurityPage /></ErrorBoundary>} />
           <Route path="audit" element={<ErrorBoundary pageName="Audit"><AuditPage /></ErrorBoundary>} />
           <Route path="health" element={<ErrorBoundary pageName="Health"><AdminHealthPage /></ErrorBoundary>} />
           <Route path="health/providers" element={<ErrorBoundary pageName="Provider Health"><ProviderHealthPage /></ErrorBoundary>} />

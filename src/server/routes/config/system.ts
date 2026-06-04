@@ -18,12 +18,12 @@ import { ApiResponse } from '../../utils/apiResponse';
 import { configLimiter } from '../../../middleware/rateLimiter';
 import {
   broadcastConfigUpdate,
-  isPathWithinAllowed,
   isSensitiveKey,
   isValidConfigName,
   redactObject,
   deepCloneSchema,
 } from './utils';
+import { PathSecurityUtils } from '../../../utils/PathSecurityUtils';
 import { globalConfigs, schemaSources } from './store';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
@@ -419,10 +419,10 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
       targetFile = `providers/${configName}.json`;
     }
 
-    const targetPath = path.join(configDir, targetFile);
-
-    // Security: Ensure the target path is within the config directory
-    if (!isPathWithinAllowed(targetPath, configDir)) {
+    let targetPath: string;
+    try {
+      targetPath = PathSecurityUtils.getSafePath(configDir, targetFile);
+    } catch (error) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Invalid config path', undefined, 400));
