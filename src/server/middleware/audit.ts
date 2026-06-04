@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { type NextFunction, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { AuditLogger } from '../../common/auditLogger';
+import { getClientIP } from './security';
 
 const debug = Debug('app:auditMiddleware');
 
@@ -25,18 +26,11 @@ export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFu
       user = userObj.username || userObj.email || userObj.id || 'authenticated-user';
     }
 
-    // Extract IP address
-    const reqWithConnection = req as AuditedRequest & {
-      connection?: { remoteAddress?: string };
-      socket?: { remoteAddress?: string };
-    };
-    const ipAddress =
-      req.ip ||
-      reqWithConnection.connection?.remoteAddress ||
-      reqWithConnection.socket?.remoteAddress ||
-      (req.headers['x-forwarded-for'] as string) ||
-      (req.headers['x-real-ip'] as string) ||
-      'unknown';
+    // Extract IP address securely. getClientIP only honours X-Forwarded-For /
+    // X-Real-IP when the direct connection comes from a trusted proxy; otherwise
+    // it uses the real socket address. Trusting those headers directly (as this
+    // did before) lets any client spoof the IP recorded in the audit trail.
+    const ipAddress = getClientIP(req as never) || 'unknown';
 
     // Extract user agent
     const userAgent = (req.headers['user-agent'] as string) || 'unknown';

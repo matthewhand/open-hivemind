@@ -1,6 +1,7 @@
 import { type NextFunction, type Request, type Response } from 'express';
 import { type AuthMiddlewareRequest } from '@src/auth/types';
 import { Logger } from '@src/common/logger';
+import { getClientIP } from './security';
 
 interface ResponseWithAuditFlag extends Response {
   _auditLogged?: boolean;
@@ -324,11 +325,7 @@ export const auditMiddleware = (
             (req as AuthMiddlewareRequest).user?.id ||
             (req as AuthMiddlewareRequest).user?.username ||
             'anonymous',
-          ip:
-            req.ip ||
-            req.connection?.remoteAddress ||
-            (req.headers['x-forwarded-for'] as string) ||
-            'unknown',
+          ip: getClientIP(req) || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
           status: res.statusCode < 400 ? 'success' : 'failure',
           errorMessage:
@@ -382,11 +379,7 @@ export const auditMiddlewareWithChanges = (
             (req as AuthMiddlewareRequest).user?.id ||
             (req as AuthMiddlewareRequest).user?.username ||
             'anonymous',
-          ip:
-            req.ip ||
-            req.connection?.remoteAddress ||
-            (req.headers['x-forwarded-for'] as string) ||
-            'unknown',
+          ip: getClientIP(req) || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
           before: beforeValue,
           after:
@@ -434,11 +427,7 @@ export const logAuditEvent = (
       (req as AuthMiddlewareRequest).user?.id ||
       (req as AuthMiddlewareRequest).user?.username ||
       'anonymous',
-    ip:
-      req.ip ||
-      req.connection?.remoteAddress ||
-      (req.headers['x-forwarded-for'] as string) ||
-      'unknown',
+    ip: getClientIP(req) || 'unknown',
     userAgent: req.get('user-agent') || 'unknown',
     before: options.before,
     after: options.after,

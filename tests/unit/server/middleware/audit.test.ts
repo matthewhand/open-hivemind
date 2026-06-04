@@ -44,4 +44,24 @@ describe('auditMiddleware', () => {
     expect(emptyReq.auditIp).toBe('unknown');
     expect(emptyReq.auditUserAgent).toBe('unknown');
   });
+
+  it('does not let a spoofed X-Forwarded-For header override the real client IP', () => {
+    // Direct connection from a public (non-trusted-proxy) address, with an
+    // attacker-supplied X-Forwarded-For. The audit IP must be the real socket
+    // address, NOT the spoofed header — otherwise audit trails are forgeable.
+    const spoofReq: Partial<AuditedRequest> = {
+      headers: {
+        'user-agent': 'attacker-agent',
+        'x-forwarded-for': '1.2.3.4',
+        'x-real-ip': '5.6.7.8',
+      },
+      socket: { remoteAddress: '203.0.113.5' } as never,
+    };
+
+    auditMiddleware(spoofReq as AuditedRequest, res as Response, next);
+
+    expect(spoofReq.auditIp).toBe('203.0.113.5');
+    expect(spoofReq.auditIp).not.toBe('1.2.3.4');
+    expect(spoofReq.auditIp).not.toBe('5.6.7.8');
+  });
 });
