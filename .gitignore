@@ -25,7 +25,9 @@ config/*
 *secrets*
 
 # Runtime upload artifacts and encrypted exports - never commit (see PR #2961)
-config/uploads/
+# Keep the uploads directory itself (multer dest in importExport.ts) via .gitkeep.
+config/uploads/*
+!config/uploads/.gitkeep
 config/exports/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
