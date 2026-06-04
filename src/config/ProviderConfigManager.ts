@@ -73,6 +73,12 @@ class ProviderConfigManager {
     return obj;
   }
 
+  private initializeProviderMap(): void {
+    this.providerMap.clear();
+    this.store.message.forEach(p => this.providerMap.set(p.id, p));
+    this.store.llm.forEach(p => this.providerMap.set(p.id, p));
+  }
+
   private loadConfig(): void {
     try {
       if (fs.existsSync(this.configPath)) {
@@ -80,30 +86,17 @@ class ProviderConfigManager {
         const parsed = JSON.parse(raw);
         // Interpolate ${ENV_VAR} patterns with actual env values
         this.store = this.interpolateEnvVars(parsed);
+        this.initializeProviderMap();
         debug(`Loaded ${this.store.message.length} message and ${this.store.llm.length} llm providers`);
       } else {
         this.store = { message: [], llm: [] };
+        this.providerMap.clear();
         this.saveConfig();
       }
       this.initialized = true;
     } catch (error) {
       debug('Error loading provider config:', error);
       this.store = { message: [], llm: [] };
-    } finally {
-      this.initializeProviderMap();
-    }
-  }
-
-  /**
-   * Initialize the internal provider map for O(1) lookups.
-   */
-  private initializeProviderMap(): void {
-    this.providerMap.clear();
-    for (const p of this.store.message) {
-      this.providerMap.set(p.id, p);
-    }
-    for (const p of this.store.llm) {
-      this.providerMap.set(p.id, p);
     }
   }
 
@@ -177,8 +170,8 @@ class ProviderConfigManager {
     }
 
     if (changed) {
-      this.saveConfig();
       this.initializeProviderMap();
+      this.saveConfig();
       debug('Migration complete');
     }
   }
@@ -216,13 +209,23 @@ class ProviderConfigManager {
   public updateProvider(id: string, updates: Partial<ProviderInstance>): ProviderInstance | null {
     const target = this.providerMap.get(id);
 
-    if (!target) {
-      return null;
+    if (!target) {return null;}
+
+    // If category changes (unlikely but possible via API), we need to move it between arrays
+    if (updates.category && updates.category !== target.category) {
+      // Remove from old array
+      const oldArr = this.store[target.category];
+      const idx = oldArr.findIndex(p => p.id === id);
+      if (idx !== -1) oldArr.splice(idx, 1);
+
+      // Add to new array
+      this.store[updates.category].push(target);
     }
 
-    // Merge updates but protect immutable fields
-    const { id: _id, category: _category, type: _type, ...safeUpdates } = updates as any;
-    Object.assign(target, safeUpdates);
+    // Merge updates
+    Object.assign(target, updates);
+    // Ensure ID is immutable
+    target.id = id;
 
     this.saveConfig();
     return target;
@@ -230,25 +233,18 @@ class ProviderConfigManager {
 
   public deleteProvider(id: string): boolean {
     const target = this.providerMap.get(id);
-    if (!target) {
-      return false;
+    if (!target) return false;
+
+    const arr = this.store[target.category];
+    const idx = arr.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      arr.splice(idx, 1);
+      this.providerMap.delete(id);
+      this.saveConfig();
+      return true;
     }
 
-    if (target.category === 'message') {
-      const msgIdx = this.store.message.findIndex(p => p.id === id);
-      if (msgIdx !== -1) {
-        this.store.message.splice(msgIdx, 1);
-      }
-    } else {
-      const llmIdx = this.store.llm.findIndex(p => p.id === id);
-      if (llmIdx !== -1) {
-        this.store.llm.splice(llmIdx, 1);
-      }
-    }
-
-    this.providerMap.delete(id);
-    this.saveConfig();
-    return true;
+    return false;
   }
 }
 
