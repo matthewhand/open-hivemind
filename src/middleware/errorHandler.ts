@@ -276,8 +276,10 @@ export function setupGracefulShutdown(): void {
  */
 export function errorRecoveryMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Check if this is a retry request
-  const retryCount = parseInt((req.headers['x-retry-count'] as string) || '0');
-  const maxRetries = parseInt((req.headers['x-max-retries'] as string) || '3');
+  // Always parse with an explicit radix; a NaN (non-numeric header) falls back
+  // to a safe default rather than poisoning the retry comparison below.
+  const retryCount = parseInt((req.headers['x-retry-count'] as string) || '0', 10) || 0;
+  const maxRetries = parseInt((req.headers['x-max-retries'] as string) || '3', 10) || 3;
 
   if (retryCount > 0) {
     debug(`Retry request ${req.method} ${req.path} - Attempt ${retryCount}/${maxRetries}`);
