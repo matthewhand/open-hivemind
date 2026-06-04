@@ -25,6 +25,17 @@ describe('memory provider config schemas', () => {
     expect(Array.isArray(schema!.fields)).toBe(true);
   });
 
+  it('mem0 exposes the live hosted-API connection fields the backend actually reads', () => {
+    // Regression guard: the mem0 UI schema previously omitted these, so the
+    // base URL / org / timeouts that Mem0Provider consumes (request URL,
+    // X-Org-Id header, retry loop) were not configurable from the WebUI.
+    const mem0 = getProviderSchema('mem0')!;
+    const fieldNames = mem0.fields.map((f) => f.name);
+    for (const required of ['apiKey', 'baseUrl', 'orgId', 'timeoutMs', 'maxRetries']) {
+      expect(fieldNames).toContain(required);
+    }
+  });
+
   it('every memory field declares a name, label, and supported type', () => {
     const allowedTypes = new Set([
       'text',
