@@ -268,6 +268,12 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 ### [System Health](/admin/health)
 Monitor real-time service status and infrastructure health.
 
+**Workflow: Monitoring API Status**
+1. Navigate to **System Health** via the sidebar or Command Palette.
+2. Check the **Service Health** cards to see the status of the Database, Memory Providers, etc.
+3. Review the **Infrastructure Health** list for individual ping statuses to APIs and internal processes.
+4. If a service is marked offline or degraded, hover over its status chip for additional error details.
+
 ![System Health Page](screenshots/admin-health-page.png)
 
 *   **Service Health**: View detailed health status, latency, and details for connected services like Database, LLM Providers, Memory Providers, and Message Providers.
