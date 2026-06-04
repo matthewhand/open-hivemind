@@ -1,4 +1,5 @@
 import { Mem0Provider } from './Mem0Provider';
+import { schema } from './schema';
 import { Mem0ApiError } from './types';
 
 // Mock isSafeUrl to avoid real DNS lookups in tests
@@ -36,6 +37,28 @@ function mockFetchSequence(...responses: Array<{ status: number; body: unknown }
 
 beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
+
+describe('schema', () => {
+  // The hosted Mem0 REST API manages LLM/embedder/vector-store/history at the
+  // project level — none are accepted per-request and the provider never
+  // forwards them. They must not be surfaced as configurable fields.
+  it('does not declare OSS-only self-hosted config fields', () => {
+    const allFields = [
+      ...schema.fields.required,
+      ...schema.fields.optional,
+      ...schema.fields.advanced,
+    ].map((f) => f.name);
+    for (const name of [
+      'llmProvider',
+      'llmModel',
+      'embedderModel',
+      'vectorStoreProvider',
+      'historyDbPath',
+    ]) {
+      expect(allFields).not.toContain(name);
+    }
+  });
+});
 
 describe('Mem0Provider constructor', () => {
   it('throws if apiKey is missing', () => {

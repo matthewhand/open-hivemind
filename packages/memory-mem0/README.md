@@ -5,7 +5,7 @@ Memory provider that connects to the [Mem0](https://mem0.ai) REST API (or a self
 ## Exports
 
 - `Mem0Provider` — provider class
-- `Mem0Config` — configuration shape (`apiKey`, `baseUrl`, `userId`, `agentId`, `orgId`, `llmProvider`, `llmModel`, `embedderModel`, `vectorStoreProvider`, `historyDbPath`, `timeoutMs`, `maxRetries`, `circuitBreaker`)
+- `Mem0Config` — configuration shape (`apiKey`, `baseUrl`, `userId`, `agentId`, `orgId`, `timeoutMs`, `maxRetries`, `circuitBreaker`). The hosted Mem0 platform manages the LLM, embedder and vector store at the project level, so those are intentionally not configurable here.
 - Response types: `Mem0Memory`, `Mem0AddResponse`, `Mem0ListResponse`, `Mem0SearchResponse`, `Mem0GetResponse`, `Mem0UpdateResponse`
 - `Mem0ApiError` — thrown on non-2xx responses
 - `schema`, `manifest`

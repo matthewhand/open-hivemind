@@ -30,7 +30,7 @@ export const schema: ProviderSchema = {
         name: 'apiKey',
         type: 'password',
         label: 'API Key',
-        description: 'API key used for LLM fact extraction and embeddings (e.g. OpenAI key)',
+        description: 'Mem0 platform API key (from app.mem0.ai), sent as the Authorization token',
       },
     ],
     optional: [
@@ -40,36 +40,6 @@ export const schema: ProviderSchema = {
         label: 'Base URL',
         description: 'Base URL of the Mem0 REST API (for self-hosted instances)',
         default: 'https://api.mem0.ai/v1',
-      },
-      {
-        name: 'llmProvider',
-        type: 'select',
-        label: 'LLM Provider',
-        description: 'LLM used to extract facts from conversations',
-        default: 'openai',
-        options: ['openai', 'anthropic'],
-      },
-      {
-        name: 'llmModel',
-        type: 'text',
-        label: 'LLM Model',
-        description: 'Model name for fact extraction',
-        default: 'gpt-4o-mini',
-      },
-      {
-        name: 'embedderModel',
-        type: 'text',
-        label: 'Embedder Model',
-        description: 'Model used to generate memory embeddings',
-        default: 'text-embedding-3-small',
-      },
-      {
-        name: 'vectorStoreProvider',
-        type: 'select',
-        label: 'Vector Store',
-        description: 'Where to store memory vectors',
-        default: 'memory',
-        options: ['memory', 'qdrant', 'pinecone'],
       },
       {
         name: 'userId',
@@ -91,12 +61,6 @@ export const schema: ProviderSchema = {
       },
     ],
     advanced: [
-      {
-        name: 'historyDbPath',
-        type: 'text',
-        label: 'History DB Path',
-        description: 'Path to SQLite file for memory change history (optional)',
-      },
       {
         name: 'timeoutMs',
         type: 'number',
