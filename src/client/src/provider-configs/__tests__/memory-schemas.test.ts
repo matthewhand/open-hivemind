@@ -36,6 +36,12 @@ describe('memory provider config schemas', () => {
     }
   });
 
+  it('mem4ai exposes maxRetries (consumed by its retry loop)', () => {
+    const mem4ai = getProviderSchema('mem4ai')!;
+    const fieldNames = mem4ai.fields.map((f) => f.name);
+    expect(fieldNames).toContain('maxRetries');
+  });
+
   it('every memory field declares a name, label, and supported type', () => {
     const allowedTypes = new Set([
       'text',
