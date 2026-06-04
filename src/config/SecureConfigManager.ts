@@ -502,7 +502,17 @@ export class SecureConfigManager {
   private async getOrCreateEncryptionKey(): Promise<Buffer> {
     try {
       await fs.promises.access(this.keyPath);
-      return await fs.promises.readFile(this.keyPath);
+      const key = await fs.promises.readFile(this.keyPath);
+      // Guard against a truncated/corrupt key file: a key shorter than the
+      // AES-256 requirement would otherwise surface as an opaque crypto error
+      // at encrypt/decrypt time. This error has no ENOENT code, so the catch
+      // below re-throws it rather than silently regenerating the key.
+      if (key.length < 32) {
+        throw new Error(
+          `Encryption key at ${this.keyPath} is too short (${key.length} bytes; must be at least 32)`
+        );
+      }
+      return key;
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
 

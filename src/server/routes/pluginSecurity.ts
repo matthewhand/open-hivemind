@@ -66,8 +66,9 @@ if (!isTestEnv) {
  *                 message:
  *                   type: string
  */
-router.get('/security', (req: Request, res: Response) => {
-  try {
+router.get(
+  '/security',
+  asyncErrorHandler(async (req: Request, res: Response) => {
     const plugins = getPluginSecurityStatus();
     debug('Retrieved security status for %d plugins', plugins.length);
 
@@ -76,15 +77,8 @@ router.get('/security', (req: Request, res: Response) => {
       data: { plugins },
       message: 'Plugin security status retrieved successfully',
     });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error retrieving plugin security status:', hivemindError);
-    return res.status(500).json({
-      error: 'Failed to retrieve plugin security status',
-      message: hivemindError.message || 'An error occurred while retrieving plugin security status',
-    });
-  }
-});
+  })
+);
 
 /**
  * @openapi
@@ -140,11 +134,9 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
+      hivemindError.statusCode = 500;
       debug('Error verifying plugin %s:', req.params.name, hivemindError);
-      return res.status(500).json({
-        error: 'Failed to verify plugin',
-        message: hivemindError.message || 'An error occurred while verifying the plugin',
-      });
+      throw hivemindError;
     }
   })
 );
@@ -185,56 +177,57 @@ router.post(
  *       500:
  *         description: Update failed
  */
-router.post('/:name/trust', (req: Request, res: Response) => {
-  try {
-    const { name } = req.params;
-    const { trust, capabilities } = req.body;
+router.post(
+  '/:name/trust',
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    try {
+      const { name } = req.params;
+      const { trust, capabilities } = req.body;
 
-    debug('Updating trust for plugin %s: trust=%s, capabilities=%o', name, trust, capabilities);
+      debug('Updating trust for plugin %s: trust=%s, capabilities=%o', name, trust, capabilities);
 
-    const policy = getSecurityPolicy();
-    const status = policy.getPluginSecurityStatus(name);
+      const policy = getSecurityPolicy();
+      const status = policy.getPluginSecurityStatus(name);
 
-    if (!status) {
-      return res.status(404).json({
-        error: 'Plugin not found',
-        message: `Plugin '${name}' not found in security policy`,
-      });
-    }
-
-    // If trust is false, revoke all capabilities
-    if (trust === false) {
-      // Revoke all granted capabilities
-      for (const cap of status.grantedCapabilities) {
-        policy.revokeCapability(name, cap);
+      if (!status) {
+        return res.status(404).json({
+          error: 'Plugin not found',
+          message: `Plugin '${name}' not found in security policy`,
+        });
       }
-    } else if (capabilities && Array.isArray(capabilities)) {
-      // Grant requested capabilities
-      for (const cap of capabilities) {
-        try {
-          policy.grantCapability(name, cap as any);
-        } catch (err) {
-          debug('Failed to grant capability %s to %s: %s', cap, name, err);
-          throw err;
+
+      // If trust is false, revoke all capabilities
+      if (trust === false) {
+        // Revoke all granted capabilities
+        for (const cap of status.grantedCapabilities) {
+          policy.revokeCapability(name, cap);
+        }
+      } else if (capabilities && Array.isArray(capabilities)) {
+        // Grant requested capabilities
+        for (const cap of capabilities) {
+          try {
+            policy.grantCapability(name, cap as any);
+          } catch (err) {
+            debug('Failed to grant capability %s to %s: %s', cap, name, err);
+            throw err;
+          }
         }
       }
+
+      const updatedStatus = policy.getPluginSecurityStatus(name);
+
+      return res.json({
+        success: true,
+        data: { status: updatedStatus },
+        message: `Plugin '${name}' trust settings updated successfully`,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      hivemindError.statusCode = 500;
+      debug('Error updating trust for plugin %s:', req.params.name, hivemindError);
+      throw hivemindError;
     }
-
-    const updatedStatus = policy.getPluginSecurityStatus(name);
-
-    return res.json({
-      success: true,
-      data: { status: updatedStatus },
-      message: `Plugin '${name}' trust settings updated successfully`,
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error updating trust for plugin %s:', req.params.name, hivemindError);
-    return res.status(500).json({
-      error: 'Failed to update plugin trust',
-      message: hivemindError.message || 'An error occurred while updating plugin trust',
-    });
-  }
-});
+  })
+);
 
 export default router;

@@ -1,0 +1,3 @@
+# Keep this directory tracked so the multer upload destination
+# (config/uploads/, see src/server/routes/importExport.ts) exists on a
+# fresh clone. Uploaded files themselves are gitignored.

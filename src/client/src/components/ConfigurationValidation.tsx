@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, ShieldCheck,
 } from 'lucide-react';
@@ -138,10 +138,13 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
   const clientChecks = runClientChecks(bot);
   const hasClientErrors = clientChecks.some(c => c.status === 'fail');
 
-  // Find this bot's results from the backend validation response
-  const botResult = backendData?.botValidation?.find(
-    (b) => b.name === bot.name
-  );
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() on array
+  const botValidationMap = useMemo(() => {
+    return new Map(backendData?.botValidation?.map(b => [b.name, b]) || []);
+  }, [backendData?.botValidation]);
+
+  // Find this bot's results from the backend validation response using O(1) map lookup
+  const botResult = botValidationMap.get(bot.name);
 
   const overallValid = !hasClientErrors
     && (botResult ? botResult.valid : true)

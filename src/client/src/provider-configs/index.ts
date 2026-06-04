@@ -16,6 +16,8 @@ import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
 import { mem0ProviderSchema } from './schemas/mem0';
 import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { memvaultProviderSchema } from './schemas/memvault';
+import { postgresMemoryProviderSchema } from './schemas/postgres';
 import { mcpToolsSchema } from './schemas/mcp-tools';
 import { customToolsSchema } from './schemas/custom-tools';
 
@@ -43,6 +45,8 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Memory providers
   mem0: mem0ProviderSchema,
   mem4ai: mem4aiProviderSchema,
+  memvault: memvaultProviderSchema,
+  postgres: postgresMemoryProviderSchema,
 };
 
 // Helper functions for working with provider schemas

@@ -26,6 +26,17 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+  // Permissions Policy
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+  // Cross-origin isolation headers (additive, same-origin app).
+  // NOTE: Cross-Origin-Embedder-Policy: require-corp is intentionally omitted —
+  // it would block cross-origin resources (e.g. Google Fonts) that don't send a
+  // CORP header and can break the WebUI.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Origin-Agent-Cluster', '?1');
+
   // Content Security Policy (CSP)
   // SECURITY NOTE: CSP with 'unsafe-eval' and 'unsafe-inline'
   //
