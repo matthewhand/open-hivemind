@@ -65,6 +65,12 @@ describe('SSRF protection', () => {
     mockFetch(200, { ok: true });
     await expect(http.get(SAFE_URL)).resolves.toEqual({ ok: true });
   });
+
+  it('blocks HTTP redirects to prevent SSRF bypass', async () => {
+    mockFetch(302, null);
+    await expect(http.get(SAFE_URL)).rejects.toThrow(HttpError);
+    await expect(http.get(SAFE_URL)).rejects.toMatchObject({ status: 302 });
+  });
 });
 
 describe('http.get', () => {

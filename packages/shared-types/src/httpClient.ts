@@ -69,6 +69,7 @@ async function request<T>(
     method,
     headers: { 'Content-Type': 'application/json', ...headers },
     signal: controller.signal,
+    redirect: 'manual', // Block automatic redirect following to prevent SSRF bypass
   };
 
   if (body !== undefined && method !== 'GET' && method !== 'HEAD') {
@@ -77,6 +78,15 @@ async function request<T>(
 
   try {
     const response = await fetch(fullUrl, init);
+
+    // Block manual redirects explicitly as an SSRF protection
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      throw new HttpError(
+        response.status,
+        null,
+        `SSRF protection: HTTP redirects are blocked (${response.status})`
+      );
+    }
 
     if (!response.ok) {
       let data: unknown;
