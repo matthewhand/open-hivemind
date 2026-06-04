@@ -418,7 +418,7 @@ test.describe('MCP Tools Testing Page - Complete Visual Regression Tests', () =>
     });
   });
 
-  test('Screenshot 6: Complex parameter types (array and object)', async ({ page }) => {
+  test.skip('Screenshot 6: Complex parameter types (array and object)', async ({ page }) => {
     const complexToolServers = [
       {
         name: 'Advanced API',

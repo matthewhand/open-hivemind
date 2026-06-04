@@ -195,6 +195,24 @@ Browse and manage tools available from your connected MCP servers.
 *   **Tool Execution**: Test tools directly via **Form Mode** (based on the tool's schema) and **JSON Mode** for advanced input.
 *   **Enable/Disable**: Toggle individual tools on or off.
 
+### [MCP Tools Testing](/admin/mcp/tools/testing)
+A dedicated, isolated environment to test tools with various inputs, monitor their execution status, and review the detailed results and timings without affecting active bots.
+
+![MCP Tools Testing Initial Load](screenshots/mcp-tools-testing-initial-load.png)
+
+#### Testing Workflow
+1. **Select a Tool**: Choose a tool from the list, organized by their respective MCP servers.
+   ![MCP Tools Testing Multiple Servers](screenshots/mcp-tools-testing-multiple-servers.png)
+2. **Configure Parameters**: Use the intuitive form or JSON editor to configure inputs based on the tool's schema. Supports complex types (arrays, objects) and detailed schema validation.
+   ![MCP Tools Testing Parameter Config](screenshots/mcp-tools-testing-parameter-config.png)
+3. **Execution Progress**: Monitor the test execution in real-time.
+   ![MCP Tools Testing Execution Progress](screenshots/mcp-tools-testing-execution-progress.png)
+4. **Review Results**: View the execution output, status, and precise execution timing.
+   ![MCP Tools Testing Success Result](screenshots/mcp-tools-testing-success-result.png)
+   ![MCP Tools Testing Execution Timing](screenshots/mcp-tools-testing-execution-timing.png)
+   *Error states and edge cases are also clearly reported if the execution fails:*
+   ![MCP Tools Testing Error Result](screenshots/mcp-tools-testing-error-result.png)
+
 ### [Marketplace](/admin/marketplace)
 Browse, install, and manage extensions and packages for your application.
 
