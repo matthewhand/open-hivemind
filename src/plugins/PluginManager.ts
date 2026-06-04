@@ -253,7 +253,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
 
   try {
     debug('Cloning %s → %s', repoUrl, tempPath);
-    exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
+    exec('git', ['clone', '--depth', '1', '--', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = await deriveNameFromPath(tempPath);
     const pluginPath = path.join(PLUGINS_DIR, name);
