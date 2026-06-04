@@ -42,3 +42,7 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+## 2025-05-24 - Missing Authentication on Destructive API Endpoints
+**Vulnerability:** The factory reset endpoint (`/api/admin/system/reset`) relied solely on a hardcoded string `confirm-factory-reset` in the request body for validation.
+**Learning:** While the endpoint was protected by role-based middleware (`requireAdmin`), relying on a hardcoded, static string for a highly destructive action (dropping the entire database) is insufficient defense-in-depth. An attacker who compromised an admin session could easily execute the reset without providing further proof of identity.
+**Prevention:** Destructive endpoints must require dynamic proof of intent. Re-authenticating the user by verifying their current password (`verifyCurrentPassword()`) prevents actions via hijacked sessions.

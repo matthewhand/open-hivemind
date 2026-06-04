@@ -8,6 +8,7 @@ import type {
   BotConfigurationVersion,
   IDatabase as Database,
 } from '../../../src/database/types';
+import { encryptionService } from '../../../src/database/EncryptionService';
 
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   return {
@@ -30,6 +31,11 @@ describe('BotConfigRepositoryBase', () => {
       () => mockDb,
       () => {}
     );
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   describe('encryptField', () => {
@@ -101,6 +107,11 @@ describe('BotConfigVersionRepository', () => {
       () => mockDb,
       () => {}
     );
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   describe('createBotConfigurationVersion', () => {
@@ -263,6 +274,11 @@ describe('BotConfigAuditRepository', () => {
       () => mockDb,
       () => {}
     );
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   describe('createBotConfigurationAudit', () => {

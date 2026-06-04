@@ -9,6 +9,7 @@ import { ConfirmModal } from '../../components/DaisyUI/Modal';
 
 const MaintenanceTab: React.FC = () => {
   const [confirmationPhrase, setConfirmationPhrase] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const successToast = useSuccessToast();
@@ -20,9 +21,14 @@ const MaintenanceTab: React.FC = () => {
       return;
     }
 
+    if (!adminPassword) {
+      errorToast('Validation Error', 'Admin password is required.');
+      return;
+    }
+
     setIsResetting(true);
     try {
-      await apiService.resetSystem(confirmationPhrase);
+      await apiService.resetSystem(confirmationPhrase, adminPassword);
       successToast('Factory Reset', 'System has been successfully reset. Reloading...');
       setTimeout(() => window.location.reload(), 3000);
     } catch (error) {
@@ -61,6 +67,16 @@ const MaintenanceTab: React.FC = () => {
                     placeholder="Type the confirmation phrase here"
                     value={confirmationPhrase}
                     onChange={(e) => setConfirmationPhrase(e.target.value)}
+                    className="input-error mb-2"
+                  />
+                  <label className="label">
+                    <span className="label-text">Admin Password</span>
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Enter admin password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
                     className="input-error"
                   />
                 </div>
@@ -68,7 +84,7 @@ const MaintenanceTab: React.FC = () => {
                 <Button
                   variant="error"
                   className="gap-2"
-                  disabled={confirmationPhrase !== 'confirm-factory-reset' || isResetting}
+                  disabled={confirmationPhrase !== 'confirm-factory-reset' || !adminPassword || isResetting}
                   onClick={() => setShowConfirmModal(true)}
                   loading={isResetting}
                 >

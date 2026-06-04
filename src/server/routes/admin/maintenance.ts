@@ -1,5 +1,7 @@
 /* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
+import { AuthManager } from '../../../auth/AuthManager';
+import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../../database/DatabaseManager';
@@ -478,12 +480,39 @@ router.post(
 // Factory Reset endpoint
 router.post('/system/reset', async (req: Request, res: Response) => {
   try {
-    const { confirmation } = req.body;
+    const { confirmation, adminPassword } = req.body;
+    const authReq = req as AuthMiddlewareRequest;
 
     if (confirmation !== 'confirm-factory-reset') {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Validation error',
         message: 'Incorrect confirmation phrase',
+      });
+    }
+
+    if (!adminPassword) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Validation error',
+        message: 'Admin password is required',
+      });
+    }
+
+    const authManager = AuthManager.getInstance();
+    const userId = authReq.user?.id;
+
+    if (!userId) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Unauthorized',
+        message: 'User not authenticated',
+      });
+    }
+
+    const isValidPassword = await authManager.verifyCurrentPassword(userId, adminPassword);
+
+    if (!isValidPassword) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Unauthorized',
+        message: 'Invalid admin password',
       });
     }
 

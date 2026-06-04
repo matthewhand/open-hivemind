@@ -17,6 +17,11 @@ describe('Database At-Rest Encryption', () => {
     } as any;
 
     repository = new BotConfigRepository(() => mockDb, () => {});
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   it('should encrypt sensitive fields on creation', async () => {
