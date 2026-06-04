@@ -79,12 +79,12 @@ router.get('/personas', async (req: Request, res: Response) => {
  *       200:
  *         description: Created persona
  */
-router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Response) => {
+router.post('/personas', validateRequest(PersonaSchema), async (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
 
     // Save to persistent storage
-    webUIStorage.savePersona({ key, name, systemPrompt });
+    await webUIStorage.savePersona({ key, name, systemPrompt });
 
     return res.json(ApiResponse.success());
   } catch (error: unknown) {
@@ -99,13 +99,13 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
 router.put(
   '/personas/:key',
   validateRequest(UpdatePersonaSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       const { name, systemPrompt } = req.body;
 
       // Save to persistent storage
-      webUIStorage.savePersona({ key, name, systemPrompt });
+      await webUIStorage.savePersona({ key, name, systemPrompt });
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
@@ -121,12 +121,12 @@ router.put(
 router.delete(
   '/personas/:key',
   validateRequest(PersonaKeyParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
 
       // Delete from persistent storage
-      webUIStorage.deletePersona(key);
+      await webUIStorage.deletePersona(key);
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
