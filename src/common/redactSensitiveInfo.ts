@@ -24,6 +24,13 @@ export function redactSensitiveInfo(key: string, value: any): string {
     'secret',
     'token',
     'private_key',
+    'signing_key',
+    'encryption_key',
+    'session_secret',
+    'admin_password',
+    'signature',
+    'salt',
+    'credential',
   ];
   try {
     const lowerKey = key.toLowerCase();

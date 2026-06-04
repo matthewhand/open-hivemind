@@ -85,5 +85,20 @@ describe('security middleware', () => {
       expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
       expect(next).toHaveBeenCalled();
     });
+
+    it('sets the additive cross-origin isolation headers but NOT COEP', () => {
+      const req = {} as Request;
+      const res = { setHeader: jest.fn(), removeHeader: jest.fn() } as unknown as Response;
+      const next = jest.fn() as NextFunction;
+
+      securityHeaders(req, res, next);
+
+      expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Opener-Policy', 'same-origin');
+      expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Resource-Policy', 'same-origin');
+      expect(res.setHeader).toHaveBeenCalledWith('Origin-Agent-Cluster', '?1');
+      // COEP: require-corp is intentionally omitted (would break cross-origin fonts/images).
+      const headerNames = (res.setHeader as jest.Mock).mock.calls.map((c) => c[0]);
+      expect(headerNames).not.toContain('Cross-Origin-Embedder-Policy');
+    });
   });
 });

@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:OutgoingMessageRateLimiter');
 
@@ -59,8 +60,9 @@ export class OutgoingMessageRateLimiter {
     }
 
     const now = Date.now();
-    // Remove old timestamps outside the window
-    const valid = timestamps.filter((t) => now - t < windowMs);
+    // Remove old timestamps outside the window (equivalent to `now - t < windowMs`,
+    // i.e. `t > now - windowMs`), via an early-breaking sliding-window scan.
+    const valid = takeWithinWindow(timestamps, (t) => t, now - windowMs);
     // Also enforce max timestamps per channel to prevent unbounded array growth
     const limited = valid.slice(-this.MAX_TIMESTAMPS_PER_CHANNEL);
     this.byChannel.set(channelId, limited);
