@@ -17,5 +17,9 @@ export async function generateCompletion(prompt: string): Promise<string> {
     }
   );
 
-  return data.choices[0].text;
+  const text = data?.choices?.[0]?.text;
+  if (text == null) {
+    throw new Error('Completion response contained no choices');
+  }
+  return text;
 }

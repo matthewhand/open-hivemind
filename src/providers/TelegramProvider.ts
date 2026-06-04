@@ -362,8 +362,8 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
       const data = await response.json();
 
-      if (!data.ok) {
-        throw new Error(`Telegram API error: ${data.description || 'Unknown error'}`);
+      if (!data.ok || data.result?.message_id == null) {
+        throw new Error(`Telegram API error: ${data.description || 'Unknown or malformed response'}`);
       }
 
       return data.result.message_id.toString();
@@ -454,11 +454,16 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
         const owner = data.result.find(
           (admin: Record<string, unknown>) => admin.status === 'creator'
         );
-        if (owner) {
+        // Guard against admin entries that lack a nested `user` object — a
+        // malformed/partial Telegram response would otherwise throw on
+        // `.user.id` and be reported as an opaque error.
+        if (owner?.user?.id != null) {
           return owner.user.id.toString();
         }
         // Fallback to first admin if no explicit owner
-        return data.result[0].user.id.toString();
+        if (data.result[0]?.user?.id != null) {
+          return data.result[0].user.id.toString();
+        }
       }
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
