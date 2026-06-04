@@ -94,6 +94,22 @@ export class SessionStore {
   }
 
   /**
+   * Check whether a token is currently tracked by the store, regardless of
+   * whether it has expired. Used to distinguish session-issued tokens from
+   * unrelated (e.g. legacy) tokens without mutating state.
+   * @param token Token to look up
+   * @returns True if the store has a session for this token
+   */
+  public hasToken(token: string): boolean {
+    for (const [, session] of this.sessions.entries()) {
+      if (session.token === token) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Invalidate a specific token
    * @param token Token to invalidate
    */

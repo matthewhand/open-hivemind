@@ -4,6 +4,7 @@ import * as path from 'path';
 import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
@@ -614,16 +615,11 @@ export class ConfigurationTemplateService {
    */
   private getSafeTemplatePath(templateId: string): string {
     const fileName = templateId.endsWith('.json') ? templateId : `${templateId}.json`;
-    const targetPath = path.join(this.templatesDir, path.basename(fileName));
-    const resolvedPath = path.resolve(targetPath);
-    const resolvedTemplatesDir = path.resolve(this.templatesDir);
-    if (
-      !resolvedPath.startsWith(resolvedTemplatesDir + path.sep) &&
-      resolvedPath !== resolvedTemplatesDir
-    ) {
+    try {
+      return PathSecurityUtils.getSafePath(this.templatesDir, fileName);
+    } catch (error) {
       throw new Error('Security Error: Path traversal detected');
     }
-    return targetPath;
   }
 
   /**

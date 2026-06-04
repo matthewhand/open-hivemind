@@ -39,7 +39,7 @@ interface BotStatusCardProps {
   onRefresh?: () => void;
 }
 
-const BotStatusCard: React.FC<BotStatusCardProps> = ({
+const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
   bot,
   statusData,
   onRefresh,
@@ -362,6 +362,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
+              aria-label={`View details for ${bot.name}`}
             >
               <Settings className="w-4 h-4" />
               Details
@@ -372,6 +373,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
               disabled={loading} aria-busy={loading}
+              aria-label={`Refresh status for ${bot.name}`}
             >
               {loading ? <LoadingSpinner size="xs" /> : <RotateCcw className="w-4 h-4" />}
               Refresh
@@ -401,5 +403,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     </>
   );
 };
+
+BotStatusCard.displayName = 'BotStatusCard';
 
 export default BotStatusCard;

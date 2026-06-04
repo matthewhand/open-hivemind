@@ -15,7 +15,7 @@ import {
 } from '../../../validation/schemas/healthSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
-import { calculateErrorRate, calculateHealthStatus } from './helpers';
+import { buildSystemChecks, calculateErrorRate, calculateHealthStatus } from './helpers';
 
 const router = Router();
 
@@ -53,11 +53,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const healthData = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
-    checks: {
-      database: { status: 'healthy' },
-      configuration: { status: 'healthy' },
-      services: { status: 'healthy' },
-    },
+    checks: buildSystemChecks(),
     maintenanceMode: isMaintenanceMode,
     uptime: uptime,
     memory: {
@@ -166,7 +162,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check LLM providers
   const llmStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
 
@@ -204,7 +200,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Message providers
   const msgStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
 
     const msgProviders = registry.getMessageProviders?.() || [];
@@ -243,7 +239,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Memory provider
   const memStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
 
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];

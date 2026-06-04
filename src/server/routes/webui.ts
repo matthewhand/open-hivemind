@@ -2,6 +2,7 @@ import os from 'os';
 import process from 'process';
 import { Router } from 'express';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { webUIStorage } from '../../storage/webUIStorage';
@@ -9,6 +10,8 @@ import { WebuiConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
+
+router.use(configLimiter);
 
 // GET /config - Get the WebUI configuration
 router.get(

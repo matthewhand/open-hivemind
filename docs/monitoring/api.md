@@ -6,18 +6,40 @@ Navigation: [Docs Index](../README.md) | [Monitoring Overview](overview.md) | [O
 ## Overview
 The Monitoring API provides endpoints for accessing system metrics, health status, anomalies, and alerts. It integrates with Prometheus for metrics export and supports real-time notifications via WebSocket. This API is crucial for the anomaly detection pipeline, allowing external systems to consume metrics and receive alerts.
 
+Telemetry is produced by in-process collectors:
+- `ProviderMetricsCollector` – per-provider message/LLM counters, exported in Prometheus format.
+- `AnomalyDetectionService` – z-score anomaly detection over rolling metric windows.
+- `IntegrationAnomalyDetector` – integration-level anomaly detection across messengers and LLM providers.
+
 ## Base URL
 All endpoints are relative to the server root (e.g., `http://localhost:3028`).
 
 ## Authentication
-Most endpoints require authentication via JWT tokens. Include `Authorization: Bearer <token>` header.
+The `/api/*` monitoring and anomaly endpoints require authentication via JWT tokens — include the `Authorization: Bearer <token>` header. The `/health/*` probe endpoints are public.
+
+## Endpoint Map (current paths)
+
+| Path | Method | Purpose |
+|------|--------|---------|
+| `/health/metrics` | GET | Live process/runtime metrics (JSON) |
+| `/health/metrics/prometheus` | GET | Prometheus text export incl. provider counters |
+| `/health/alerts` | GET | Active diagnostic alerts |
+| `/api/anomalies` | GET | Active statistical anomalies |
+| `/api/anomalies/history` | GET | Historical anomalies |
+| `/api/anomalies/:id/resolve` | POST | Resolve an anomaly |
+| `/api/monitoring/anomalies` | GET | Integration anomalies (messengers/LLM providers) |
+| `/api/monitoring/costs` | GET | Historical/daily LLM cost analytics |
+
+> The detailed sections below document the JSON shapes. Where an older path was
+> referenced (`/metrics`, `/metrics/json`, `/health/anomalies`) the current path
+> is noted inline.
 
 ## Endpoints
 
 ### 1. Metrics Export (Prometheus Format)
 - **Method**: GET
-- **Path**: `/metrics`
-- **Description**: Exports all collected metrics in the Prometheus exposition format for scraping by Prometheus servers.
+- **Path**: `/health/metrics/prometheus`
+- **Description**: Exports process metrics plus `ProviderMetricsCollector` counters in the Prometheus exposition format for scraping by Prometheus servers.
 - **Response Headers**: `Content-Type: text/plain; charset=utf-8`
 - **Status Codes**:
   - `200`: Success
@@ -38,22 +60,22 @@ Most endpoints require authentication via JWT tokens. Include `Authorization: Be
   ```
 - **Integration Note**: Used by Prometheus for time-series data collection in the anomaly detection pipeline.
 
-### 2. JSON Metrics
+### 2. JSON Metrics (Process/Runtime)
 - **Method**: GET
-- **Path**: `/metrics/json`
-- **Description**: Returns structured metrics data suitable for dashboard consumption.
+- **Path**: `/health/metrics`
+- **Description**: Returns the live process/runtime snapshot suitable for dashboard consumption.
 - **Query Parameters**: None
 - **Response**: `application/json`
 - **Status Codes**: `200`
 - **Schema**:
   ```json
   {
-    "messagesProcessed": 42,
-    "activeConnections": 5,
-    "responseTime": [100, 200, 150],
-    "errors": 3,
+    "timestamp": "2025-09-25T03:33:00.000Z",
     "uptime": 3600,
-    "llmTokenUsage": 1500
+    "memory": { "used": 120, "total": 256, "percentage": 47 },
+    "cpu": { "user": 1200, "system": 300 },
+    "eventLoop": { "delay": 1.2, "utilization": 0.18 },
+    "requests": { "total": 5042, "rate": 1.4 }
   }
   ```
 - **Integration Note**: Feeds data to dashboard components and anomaly detection services.
@@ -119,8 +141,8 @@ Most endpoints require authentication via JWT tokens. Include `Authorization: Be
 
 ### 5. Anomalies
 - **Method**: GET
-- **Path**: `/health/anomalies`
-- **Description**: Retrieves detected anomalies from the statistical detection system.
+- **Path**: `/api/anomalies`
+- **Description**: Retrieves active detected anomalies from the statistical (`AnomalyDetectionService`) detection system. Historical records are available at `GET /api/anomalies/history`.
 - **Query Parameters**: None
 - **Response**: `application/json`
 - **Status Codes**: `200`
@@ -150,7 +172,7 @@ Most endpoints require authentication via JWT tokens. Include `Authorization: Be
 
 ### 6. Resolve Anomaly
 - **Method**: POST
-- **Path**: `/health/anomalies/:id/resolve`
+- **Path**: `/api/anomalies/:id/resolve`
 - **Description**: Marks an anomaly as resolved.
 - **Path Parameters**:
   - `id` (string): Anomaly ID
@@ -166,12 +188,32 @@ Most endpoints require authentication via JWT tokens. Include `Authorization: Be
   ```
 - **Integration Note**: Called by dashboard when user acknowledges an anomaly.
 
-### 7. System Metrics (Detailed)
+### 7. Integration Anomalies
 - **Method**: GET
-- **Path**: `/health/metrics`
-- **Description**: Detailed metrics for system and application layers.
+- **Path**: `/api/monitoring/anomalies`
+- **Description**: Returns integration-level anomalies (Discord, Slack, Mattermost, LLM providers, etc.) detected by `IntegrationAnomalyDetector`, plus a summary.
 - **Query Parameters**:
-  - `limit` (optional, number, default: 100): Number of recent data points.
+  - `integration` (optional, string): Filter to a single integration.
+  - `minutes` (optional, number): When provided, returns anomalies within the last N minutes; otherwise returns currently-active anomalies.
+- **Response**: `application/json`
+- **Schema**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "summary": { },
+      "anomalies": [ ]
+    }
+  }
+  ```
+- **Integration Note**: Fed by `ProviderMetricsCollector`; the detector runs on its own interval and can be disabled with `DISABLE_INTEGRATION_ANOMALY=true`.
+
+### 8. Cost Analytics
+- **Method**: GET
+- **Path**: `/api/monitoring/costs`
+- **Description**: Historical and daily LLM cost analytics.
+- **Query Parameters**:
+  - `days` (optional, number, default: 7): Window size in days.
 - **Response**: `application/json`
 - **Status Codes**: `200`, `500`
 
@@ -222,11 +264,11 @@ For real-time updates, connect to `ws://localhost:3028/webui/socket.io` (or HTTP
   ```
 
 ## Integration with Anomaly Detection Pipeline
-1. **Metrics Collection**: Use `/metrics` for Prometheus scraping or `/metrics/json` for custom monitoring.
-2. **Detection**: Anomalies are computed using z-score on rolling windows of metrics data.
-3. **Alerting**: Detected anomalies trigger `alert_update` WebSocket events and are stored/queryable via `/health/alerts`.
-4. **Dashboard**: Poll `/health` and `/health/anomalies` or subscribe to WebSocket for live updates.
-5. **Resolution**: Use POST `/health/anomalies/:id/resolve` to acknowledge and resolve.
+1. **Metrics Collection**: Use `/health/metrics/prometheus` for Prometheus scraping or `/health/metrics` for the JSON process snapshot.
+2. **Detection**: Statistical anomalies are computed using z-score on rolling windows (`AnomalyDetectionService`); integration anomalies are computed by `IntegrationAnomalyDetector` from live provider metrics.
+3. **Alerting**: Detected anomalies trigger `alert_update` WebSocket events and active alerts are queryable via `/health/alerts`.
+4. **Dashboard**: Poll `/health`, `/api/anomalies`, and `/api/monitoring/anomalies`, or subscribe to WebSocket for live updates.
+5. **Resolution**: Use POST `/api/anomalies/:id/resolve` to acknowledge and resolve.
 
 ## Security Considerations
 - Rate limiting applied to all endpoints.

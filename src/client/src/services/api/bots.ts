@@ -65,12 +65,33 @@ export function botsMixin(api: ApiService) {
       return api.request(`/api/bots/${name}`, { method: 'DELETE' });
     },
 
+    bulkDeleteBots(ids: string[]): Promise<{ success: boolean; message: string }> {
+      return api.request('/api/bots', {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+      });
+    },
+
     startBot(botId: string): Promise<{ success: boolean; message: string }> {
       return api.request(`/api/bots/${botId}/start`, { method: 'POST' });
     },
 
     stopBot(botId: string): Promise<{ success: boolean; message: string }> {
       return api.request(`/api/bots/${botId}/stop`, { method: 'POST' });
+    },
+
+    bulkStartBots(ids: string[]): Promise<{ success: boolean; message: string }> {
+      return api.request('/api/bots/bulk/start', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      });
+    },
+
+    bulkStopBots(ids: string[]): Promise<{ success: boolean; message: string }> {
+      return api.request('/api/bots/bulk/stop', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      });
     },
 
     generateBotConfig(description: string): Promise<any> {

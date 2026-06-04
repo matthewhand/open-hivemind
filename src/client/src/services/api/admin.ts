@@ -53,10 +53,10 @@ export function adminMixin(api: ApiService) {
       return api.getBlob(`/api/import-export/backups/${backupId}/download`);
     },
 
-    resetSystem(confirmation: string): Promise<{ success: boolean; message: string }> {
+    resetSystem(confirmation: string, password?: string): Promise<{ success: boolean; message: string }> {
       return api.request('/api/admin/system/reset', {
         method: 'POST',
-        body: JSON.stringify({ confirmation }),
+        body: JSON.stringify({ confirmation, password }),
       });
     },
   };

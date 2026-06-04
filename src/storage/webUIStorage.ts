@@ -266,6 +266,17 @@ export class WebUIStorage {
   }
 
   /**
+   * Delete multiple agents
+   */
+  public async deleteAgents(agentIds: string[]): Promise<void> {
+    if (!agentIds || agentIds.length === 0) return;
+    const config = await this.loadConfig();
+    const idSet = new Set(agentIds);
+    config.agents = config.agents.filter((a) => !idSet.has(a.id));
+    await this.saveConfig(config);
+  }
+
+  /**
    * Get all personas
    */
   public async getPersonas(): Promise<WebUIPersona[]> {

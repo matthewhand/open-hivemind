@@ -94,7 +94,14 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
     return filtered;
   }, [personas, selectedCategory, searchQuery]);
 
-  const selectedPersona = personas.find(p => p.id === selectedPersonaId) || DEFAULT_PERSONA;
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside components/loops
+  const personasMap = useMemo(() => {
+    const map = new Map<string, Persona>();
+    for (const p of personas) map.set(p.id, p);
+    return map;
+  }, [personas]);
+
+  const selectedPersona = personasMap.get(selectedPersonaId) || DEFAULT_PERSONA;
 
   const handlePersonaClick = (personaId: string) => {
     onPersonaSelect(personaId);

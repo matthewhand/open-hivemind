@@ -152,9 +152,7 @@ export class MonitoringSchemas implements ISchemaModule {
       'CREATE INDEX IF NOT EXISTS idx_bot_resource_usage_resource_type ON bot_resource_usage(resource_type)',
     ];
 
-    for (const indexSql of indexes) {
-      await this.createIndex(db, indexSql);
-    }
+    await Promise.all(indexes.map((indexSql) => this.createIndex(db, indexSql)));
   }
 
   private async createTable(db: Database, sql: string): Promise<void> {

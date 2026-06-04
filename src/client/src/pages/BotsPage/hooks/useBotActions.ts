@@ -21,7 +21,7 @@ export const useBotActions = (
    * Stores the previous order for rollback.
    */
   const previousBotsRef = { current: bots };
-  const handleToggleBotStatus = async (bot: BotConfig) => {
+  const handleToggleBotStatus = useCallback(async (bot: BotConfig) => {
     try {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
       setBots((prev) => prev.map((b) => (b.id === bot.id ? { ...b, status: newStatus } : b)));
@@ -38,9 +38,9 @@ export const useBotActions = (
       }
       toastError(err instanceof Error ? err.message : 'Failed to toggle bot status');
     }
-  };
+  }, [setBots, previewBot, setPreviewBot, toastSuccess, toastError]);
 
-  const handleUpdateBot = async (updatedBot: BotConfig) => {
+  const handleUpdateBot = useCallback(async (updatedBot: BotConfig) => {
     try {
       await apiService.put(`/api/bots/${updatedBot.id}`, updatedBot);
       setBots((prev) => prev.map((b) => (b.id === updatedBot.id ? updatedBot : b)));
@@ -53,9 +53,9 @@ export const useBotActions = (
     } catch (err) {
       toastError(err instanceof Error ? err.message : 'Failed to update bot');
     }
-  };
+  }, [setBots, previewBot, setPreviewBot, toastSuccess, toastError, showStamp, setEditingBot]);
 
-  const handleCreateBot = async (botData: Partial<BotConfig>) => {
+  const handleCreateBot = useCallback(async (botData: Partial<BotConfig>) => {
     try {
       const response = await apiService.post<{ data: BotConfig }>('/api/bots', botData);
       setBots((prev) => [...prev, response.data]);
@@ -68,7 +68,7 @@ export const useBotActions = (
       toastError(err instanceof Error ? err.message : 'Failed to create bot');
       throw err;
     }
-  };
+  }, [setBots, toastSuccess, toastError, showStamp, setIsCreateModalOpen, fetchBots]);
 
   const handleReorder = useCallback(
     async (reordered: BotConfig[]) => {
@@ -87,24 +87,34 @@ export const useBotActions = (
     [setBots, bots, toastError]
   );
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (bulk.selectedCount === 0) return;
+
+    // Snapshot current state for rollback
+    const originalBots = bots;
+    const originalPreviewBot = previewBot;
+    const selectedIds = Array.from(bulk.selectedIds) as string[];
+
+    // Optimistically update UI
+    setBots((prev) => prev.filter((b) => !bulk.selectedIds.has(b.id)));
+    if (previewBot && bulk.selectedIds.has(previewBot.id)) {
+      setPreviewBot(null);
+    }
+    bulk.clearSelection();
+
     setBulkDeleting(true);
     try {
-      const ids = Array.from(bulk.selectedIds);
-      await Promise.allSettled(ids.map((id) => apiService.delete(`/api/bots/${id as string}`)));
-      setBots((prev) => prev.filter((b) => !bulk.selectedIds.has(b.id)));
-      if (previewBot && bulk.selectedIds.has(previewBot.id)) {
-        setPreviewBot(null);
-      }
-      bulk.clearSelection();
+      await apiService.bulkDeleteBots(selectedIds);
       toastSuccess('Selected bots deleted');
     } catch (err) {
+      // Rollback on failure
+      setBots(originalBots);
+      setPreviewBot(originalPreviewBot);
       toastError('Failed to delete some bots');
     } finally {
       setBulkDeleting(false);
     }
-  };
+  }, [bulk, bots, previewBot, setBots, setPreviewBot, toastSuccess, toastError, setBulkDeleting]);
 
   return {
     handleToggleBotStatus,
