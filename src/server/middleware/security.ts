@@ -23,11 +23,19 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
-  // Enable XSS protection
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Permissions Policy
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+  // Cross-origin isolation headers (additive, same-origin app).
+  // NOTE: Cross-Origin-Embedder-Policy: require-corp is intentionally omitted —
+  // it would block cross-origin resources (e.g. Google Fonts) that don't send a
+  // CORP header and can break the WebUI.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Origin-Agent-Cluster', '?1');
 
   // Content Security Policy (CSP)
   // SECURITY NOTE: CSP with 'unsafe-eval' and 'unsafe-inline'
@@ -64,7 +72,6 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "frame-src 'none'",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
-      "prefetch-src 'self'",
     ];
   } else {
     // Strict production CSP: No unsafe-inline or unsafe-eval
@@ -83,7 +90,6 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "frame-src 'none'",
       "worker-src 'none'",
       "manifest-src 'self'",
-      "prefetch-src 'self'",
     ];
   }
 

@@ -84,28 +84,31 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   };
 
   const getAlertIcon = (type: Alert['type']) => {
+    // The icon is purely decorative: the alert type is already conveyed by the
+    // visible text and the surrounding alert styling, so hide it from the
+    // accessibility tree to avoid redundant/meaningless announcements.
     switch (type) {
       case 'error':
         return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <svg aria-hidden="true" focusable="false" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
       case 'warning':
         return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <svg aria-hidden="true" focusable="false" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         );
       case 'success':
         return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <svg aria-hidden="true" focusable="false" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
       default:
         return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <svg aria-hidden="true" focusable="false" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
@@ -182,7 +185,13 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
           </div>
         )}
 
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div
+          className="space-y-3 max-h-96 overflow-y-auto"
+          role="region"
+          aria-label="Alerts list"
+          aria-live="polite"
+          aria-relevant="additions text"
+        >
           {filteredAlerts.length === 0 ? (
             <div className="text-center py-8 text-base-content/80">
               <div className="text-4xl mb-2">🔔</div>
@@ -219,6 +228,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                           className="btn btn-xs btn-ghost"
                           onClick={() => handleAcknowledge(alert.id)}
                           title="Acknowledge"
+                          aria-label={`Acknowledge alert: ${alert.title}`}
                         >
                           ✓
                         </button>
@@ -228,6 +238,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                           className="btn btn-xs btn-ghost"
                           onClick={() => handleResolve(alert.id)}
                           title="Resolve"
+                          aria-label={`Resolve alert: ${alert.title}`}
                         >
                           ✓✓
                         </button>
@@ -236,6 +247,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                         className="btn btn-xs btn-ghost"
                         onClick={() => handleDismiss(alert.id)}
                         title="Dismiss"
+                        aria-label={`Dismiss alert: ${alert.title}`}
                       >
                         ×
                       </button>
@@ -261,6 +273,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                   }
                 });
               }}
+              aria-label="Acknowledge all unacknowledged alerts"
             >
               Acknowledge All
             </button>

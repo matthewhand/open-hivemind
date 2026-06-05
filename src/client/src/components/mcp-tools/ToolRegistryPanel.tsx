@@ -9,10 +9,12 @@ import {
 import { Search } from 'lucide-react';
 import { ToolFilters } from '../tools/ToolFilters';
 
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 // For the filled star, use the same Star icon with fill prop
 const StarSolidIcon = (props: any) => <StarOutlineIcon {...props} fill="currentColor" />;
 import Card from '../DaisyUI/Card';
 import EmptyState from '../DaisyUI/EmptyState';
+import Tooltip from '../DaisyUI/Tooltip';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import { Badge } from '../DaisyUI/Badge';
 import Tabs from '../DaisyUI/Tabs';
@@ -78,10 +80,14 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Pre-compute a Set for O(1) favorite lookups (avoids O(N*M) array scans)
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
+
   // Get recently used tools (last 5)
   const recentTools = useMemo(() => {
     const recentIds = recentlyUsed.slice(0, 5).map(r => r.toolId);
-    return tools.filter(tool => recentIds.includes(tool.id))
+    const recentIdsSet = new Set(recentIds);
+    return tools.filter(tool => recentIdsSet.has(tool.id))
       .sort((a, b) => {
         const aIndex = recentIds.indexOf(a.id);
         const bIndex = recentIds.indexOf(b.id);
@@ -91,8 +97,19 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 
   // Get favorite tools
   const favoriteTools = useMemo(() => {
-    return tools.filter(tool => favorites.includes(tool.id));
-  }, [tools, favorites]);
+    return tools.filter(tool => favoritesSet.has(tool.id));
+  }, [tools, favoritesSet]);
+
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
+  const recentlyUsedMap = useMemo(() => {
+    const map = new Map<string, RecentToolUsage>();
+    for (const r of recentlyUsed) {
+      if (!map.has(r.toolId)) {
+        map.set(r.toolId, r);
+      }
+    }
+    return map;
+  }, [recentlyUsed]);
 
   const shouldVirtualize = filteredTools.length > 50;
   const gridRowVirtualizer = useVirtualizer({
@@ -104,7 +121,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
   });
 
   const renderToolCard = (tool: MCPTool, compact = false) => {
-    const isFavorite = favorites.includes(tool.id);
+    const isFavorite = favoritesSet.has(tool.id);
 
     if (compact) {
       return (
@@ -124,30 +141,37 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                   )}
                 </div>
               </div>
-              <button
-                className="btn btn-xs btn-ghost btn-circle"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(tool.id);
-                }}
-                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              <Tooltip
+                content={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                position="top"
               >
-                {isFavorite ? (
-                  <StarSolidIcon className="w-4 h-4 text-warning" />
-                ) : (
-                  <StarOutlineIcon className="w-4 h-4" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(tool.id);
+                  }}
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? (
+                    <StarSolidIcon className="w-4 h-4 text-warning" />
+                  ) : (
+                    <StarOutlineIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </Tooltip>
             </div>
             <div className="flex gap-2 mt-2">
               <button
-                className="btn btn-xs btn-primary flex-1"
+                type="button"
+                className="btn btn-xs btn-primary flex-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100"
                 onClick={() => {
-                  const lastUsage = recentlyUsed.find(r => r.toolId === tool.id);
+                  const lastUsage = recentlyUsedMap.get(tool.id);
                   onRunTool(tool, lastUsage?.arguments);
                 }}
                 disabled={!tool.enabled}
+                aria-label={`Quick run ${tool.name}`}
               >
                 <RunIcon className="w-3 h-3" />
                 Run
@@ -168,18 +192,23 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
               </Card.Title>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                className="btn btn-sm btn-ghost btn-circle"
-                onClick={() => onToggleFavorite(tool.id)}
-                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              <Tooltip
+                content={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                position="top"
               >
-                {isFavorite ? (
-                  <StarSolidIcon className="w-5 h-5 text-warning" />
-                ) : (
-                  <StarOutlineIcon className="w-5 h-5" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  onClick={() => onToggleFavorite(tool.id)}
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? (
+                    <StarSolidIcon className="w-5 h-5 text-warning" />
+                  ) : (
+                    <StarOutlineIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </Tooltip>
               <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
                 {tool.enabled ? 'Enabled' : 'Disabled'}
               </div>
@@ -213,15 +242,19 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 
           <Card.Actions className="justify-between mt-auto">
             <button
-              className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
+              type="button"
+              className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'} focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100`}
               onClick={() => onToggleTool(tool.id)}
+              aria-label={`${tool.enabled ? 'Disable' : 'Enable'} ${tool.name}`}
             >
               {tool.enabled ? 'Disable' : 'Enable'}
             </button>
             <button
-              className="btn btn-sm btn-primary"
+              type="button"
+              className="btn btn-sm btn-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100"
               onClick={() => onRunTool(tool)}
               disabled={!tool.enabled}
+              aria-label={`Run ${tool.name} tool`}
             >
               <RunIcon className="w-4 h-4 mr-1" />
               Run Tool

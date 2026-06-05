@@ -9,7 +9,8 @@ const debug = Debug('app:AnomalyRepository');
 export class AnomalyRepository {
   constructor(
     private getDb: () => Database | null,
-    private isConnected: () => boolean
+    private isConnected: () => boolean,
+    private isPostgres: () => boolean = () => false
   ) {}
 
   async storeAnomaly(anomaly: Anomaly): Promise<void> {
@@ -20,28 +21,43 @@ export class AnomalyRepository {
     }
 
     try {
-      await db.run(
-        `
+      // SQLite supports `INSERT OR REPLACE`; Postgres does not, so emit an
+      // equivalent `ON CONFLICT (id) DO UPDATE` upsert there. Without this the
+      // statement is a Postgres syntax error and the anomaly is silently lost.
+      const sql = this.isPostgres()
+        ? `
+        INSERT INTO anomalies (
+          id, timestamp, metric, value, expectedMean, standardDeviation,
+          zScore, threshold, severity, explanation, resolved, tenantId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (id) DO UPDATE SET
+          timestamp = EXCLUDED.timestamp, metric = EXCLUDED.metric,
+          value = EXCLUDED.value, expectedMean = EXCLUDED.expectedMean,
+          standardDeviation = EXCLUDED.standardDeviation, zScore = EXCLUDED.zScore,
+          threshold = EXCLUDED.threshold, severity = EXCLUDED.severity,
+          explanation = EXCLUDED.explanation, resolved = EXCLUDED.resolved,
+          tenantId = EXCLUDED.tenantId
+      `
+        : `
         INSERT OR REPLACE INTO anomalies (
           id, timestamp, metric, value, expectedMean, standardDeviation,
           zScore, threshold, severity, explanation, resolved, tenantId
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-        [
-          anomaly.id,
-          anomaly.timestamp,
-          anomaly.metric,
-          anomaly.value,
-          anomaly.expectedMean,
-          anomaly.standardDeviation,
-          anomaly.zScore,
-          anomaly.threshold,
-          anomaly.severity,
-          anomaly.explanation,
-          anomaly.resolved ? 1 : 0,
-          anomaly.tenantId,
-        ]
-      );
+      `;
+      await db.run(sql, [
+        anomaly.id,
+        anomaly.timestamp,
+        anomaly.metric,
+        anomaly.value,
+        anomaly.expectedMean,
+        anomaly.standardDeviation,
+        anomaly.zScore,
+        anomaly.threshold,
+        anomaly.severity,
+        anomaly.explanation,
+        anomaly.resolved ? 1 : 0,
+        anomaly.tenantId,
+      ]);
 
       debug(`Anomaly stored: ${anomaly.id}`);
     } catch (error) {

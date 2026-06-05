@@ -1,6 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
@@ -25,18 +23,6 @@ import { WebSocketService } from '../services/WebSocketService';
 const router = Router();
 const logger = createLogger('dashboardRouter');
 const dashboardService = DashboardService.getInstance();
-
-/**
- * Helper to parse date from query parameters
- */
-
-const parseDate = (d: any): Date | undefined => {
-  if (!d) {
-    return undefined;
-  }
-  const date = new Date(d);
-  return isNaN(date.getTime()) ? undefined : date;
-};
 
 /**
  * GET /api/dashboard/ai/config
@@ -69,8 +55,13 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+    const { from, to } = req.query as any;
 
-    const { from, to } = req.query;
+    const parseDate = (d: any): Date | undefined => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
 
     const stats = await analytics.getStats({
       startTime: parseDate(from),
@@ -102,8 +93,13 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+    const { from, to } = req.query as any;
 
-    const { from, to } = req.query;
+    const parseDate = (d: any): Date | undefined => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
 
     const segments = await analytics.getUserSegments({
       startTime: parseDate(from),
@@ -124,8 +120,13 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+    const { from, to } = req.query as any;
 
-    const { from, to } = req.query;
+    const parseDate = (d: any): Date | undefined => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
 
     const patterns = await analytics.getBehaviorPatterns({
       startTime: parseDate(from),
@@ -146,8 +147,13 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+    const { from, to } = req.query as any;
 
-    const { from, to } = req.query;
+    const parseDate = (d: any): Date | undefined => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
 
     const recommendations = await analytics.getRecommendations({
       startTime: parseDate(from),
@@ -213,23 +219,8 @@ router.get(
       });
     }
 
-    // Serve the ANNOUNCEMENT.md content (if present) as JSON so the client
-    // can render it inline. Previously this endpoint 302-redirected to
-    // github.com/.../releases/latest, which the browser then attempted as a
-    // `fetch` follow — but the CSP `connect-src` does not allow github.com,
-    // so the request hung unresolved and prevented Playwright's `networkidle`
-    // from settling on every page that mounts <AnnouncementBanner>.
-    try {
-      const announcementPath = path.resolve(process.cwd(), 'ANNOUNCEMENT.md');
-      const content = (await fs.readFile(announcementPath, 'utf8')).trim();
-      if (content.length > 0) {
-        return res.json(ApiResponse.success({ hasAnnouncement: true, content }));
-      }
-    } catch (err) {
-      // File missing or unreadable — fall through to "no announcement".
-      logger.debug('No ANNOUNCEMENT.md available', { err: (err as Error).message });
-    }
-    return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
+    const result = await dashboardService.getAnnouncement();
+    return res.json(ApiResponse.success(result));
   })
 );
 
@@ -255,16 +246,20 @@ router.get(
   requireAdmin,
   validateRequest(DashboardActivityQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
-    const { bot, messageProvider, llmProvider, from, to, limit, offset } = req.query;
+    const { bot, messageProvider, llmProvider, from, to, limit, offset } = req.query as any;
+
+    const parseDate = (d: any): Date | undefined => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
 
     const result = await dashboardService.getActivity({
-      bot: Array.isArray(bot) ? (bot as string[]) : (bot as string | undefined)?.split(','),
+      bot: Array.isArray(bot) ? bot : bot?.split(','),
       messageProvider: Array.isArray(messageProvider)
-        ? (messageProvider as string[])
-        : (messageProvider as string | undefined)?.split(','),
-      llmProvider: Array.isArray(llmProvider)
-        ? (llmProvider as string[])
-        : (llmProvider as string | undefined)?.split(','),
+        ? messageProvider
+        : messageProvider?.split(','),
+      llmProvider: Array.isArray(llmProvider) ? llmProvider : llmProvider?.split(','),
       from: parseDate(from),
       to: parseDate(to),
       limit: limit ? parseInt(limit as string, 10) : undefined,

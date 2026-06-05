@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import Debug from 'debug';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:SecureConfigManager');
@@ -88,14 +89,9 @@ export class SecureConfigManager {
       );
     }
 
-    const targetPath = path.join(this.configDir, `${id}.enc`);
-
-    // Resolve both paths to their absolute forms
-    const resolvedConfigDir = path.resolve(this.configDir);
-    const resolvedTargetPath = path.resolve(targetPath);
-
-    // Ensure the resolved target path starts with the resolved config directory
-    if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
+    try {
+      return PathSecurityUtils.getSafePath(this.configDir, `${id}.enc`);
+    } catch (error) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
         'validation',
@@ -103,8 +99,6 @@ export class SecureConfigManager {
         400,
       );
     }
-
-    return targetPath;
   }
 
   /**
@@ -247,7 +241,7 @@ export class SecureConfigManager {
 
   public async getDecryptedMainConfig(env: string): Promise<Record<string, unknown> | null> {
     try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      const configPath = PathSecurityUtils.getSafePath(this.mainConfigDir, `${env}.json.enc`);
       try {
         await fs.promises.access(configPath);
         const encryptedData = await fs.promises.readFile(configPath, 'utf8');
@@ -271,7 +265,7 @@ export class SecureConfigManager {
    */
   public getDecryptedMainConfigSync(env: string): Record<string, unknown> | null {
     try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      const configPath = PathSecurityUtils.getSafePath(this.mainConfigDir, `${env}.json.enc`);
       if (!fs.existsSync(configPath)) {
         return null;
       }
@@ -361,7 +355,7 @@ export class SecureConfigManager {
     try {
       const configs = await fs.promises.readdir(this.configDir);
       const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+      const backupPath = PathSecurityUtils.getSafePath(this.backupDir, `${backupId}.json`);
 
       const configPromises = configs
         .filter(file => file.endsWith('.enc'))
@@ -428,12 +422,10 @@ export class SecureConfigManager {
    */
   public async restoreBackup(backupId: string): Promise<void> {
     try {
-      const backupPath = path.join(this.backupDir, `${backupId}.json`);
-
-      // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupDir = path.resolve(this.backupDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
+      let backupPath: string;
+      try {
+        backupPath = PathSecurityUtils.getSafePath(this.backupDir, `${backupId}.json`);
+      } catch (error) {
         throw ErrorUtils.createError(
           'Invalid backup ID: Path traversal detected',
           'validation',
@@ -510,7 +502,17 @@ export class SecureConfigManager {
   private async getOrCreateEncryptionKey(): Promise<Buffer> {
     try {
       await fs.promises.access(this.keyPath);
-      return await fs.promises.readFile(this.keyPath);
+      const key = await fs.promises.readFile(this.keyPath);
+      // Guard against a truncated/corrupt key file: a key shorter than the
+      // AES-256 requirement would otherwise surface as an opaque crypto error
+      // at encrypt/decrypt time. This error has no ENOENT code, so the catch
+      // below re-throws it rather than silently regenerating the key.
+      if (key.length < 32) {
+        throw new Error(
+          `Encryption key at ${this.keyPath} is too short (${key.length} bytes; must be at least 32)`
+        );
+      }
+      return key;
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
 

@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import TimerRegistry from '@src/utils/TimerRegistry';
 import messageConfig from '@config/messageConfig';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:DuplicateMessageDetector');
 
@@ -60,13 +61,7 @@ export default class DuplicateMessageDetector {
     windowMs: number,
     now: number
   ): MessageRecord[] {
-    const threshold = now - windowMs;
-    let keepCount = 0;
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].timestamp <= threshold) break;
-      keepCount++;
-    }
-    return keepCount === history.length ? history : history.slice(history.length - keepCount);
+    return takeWithinWindow(history, (item) => item.timestamp, now - windowMs);
   }
 
   /**

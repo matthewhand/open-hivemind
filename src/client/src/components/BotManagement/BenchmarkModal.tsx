@@ -80,7 +80,7 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
       size="lg"
     >
       <div className="space-y-6">
-        {loading ? (
+        {loading && !data ? (
           <div className="py-20 text-center space-y-4">
              <div className="relative inline-block">
                 <Cpu className="w-16 h-16 text-primary animate-pulse" />
@@ -92,7 +92,9 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
         ) : error ? (
           <div className="alert alert-error">
              <span>{error}</span>
-             <button onClick={runBenchmark} className="btn btn-xs btn-ghost underline">Retry</button>
+             <button onClick={runBenchmark} className="btn btn-xs btn-ghost underline" disabled={loading}>
+                {loading ? 'Retrying...' : 'Retry'}
+             </button>
           </div>
         ) : data ? (
           <div className="space-y-6 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -141,9 +143,10 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
                    Benchmarks are indicative and based on standardized logic tests.
                 </p>
                 <div className="flex gap-2">
-                   <button onClick={onClose} className="btn btn-sm btn-ghost">Close</button>
-                   <button onClick={runBenchmark} className="btn btn-sm btn-primary gap-2">
-                      <RotateCcw className="w-4 h-4" /> Re-Run
+                   <button onClick={onClose} className="btn btn-sm btn-ghost" aria-label="Close modal">Close</button>
+                   <button onClick={runBenchmark} className="btn btn-sm btn-primary gap-2" disabled={loading}>
+                      <RotateCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                      {loading ? 'Running...' : 'Re-Run'}
                    </button>
                 </div>
              </div>

@@ -10,10 +10,10 @@
  */
 
 import { promises as fs } from 'fs';
-import * as path from 'path';
 import Debug from 'debug';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { Logger } from '@common/logger';
+import { PathSecurityUtils } from '../../../utils/PathSecurityUtils';
 import { SecureConfigManager } from '../../../config/SecureConfigManager';
 import { ErrorUtils } from '../../../types/errors';
 import { ConfigurationTemplateService } from '../ConfigurationTemplateService';
@@ -71,7 +71,10 @@ export class ConfigExporter {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `configurations-export-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       // Fetch requested configurations
       // ⚡ Bolt Optimization: Replace N+1 queries with a single bulk query
@@ -194,7 +197,10 @@ export class ConfigExporter {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       const secureManager = await SecureConfigManager.getInstance();
       const config = await secureManager.getDecryptedMainConfig(env);

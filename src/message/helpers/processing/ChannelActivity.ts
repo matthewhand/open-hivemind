@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:ChannelActivity');
 
@@ -18,7 +19,7 @@ export function recordBotActivity(channelId: string, botId: string): void {
 
   // Prune old entries
   const cutoff = now - ACTIVITY_WINDOW_MS;
-  const pruned = activities.filter((a) => a.timestamp > cutoff);
+  const pruned = takeWithinWindow(activities, (a) => a.timestamp, cutoff);
   recentChannelActivity.set(channelId, pruned);
 
   debug(`Recorded bot activity in ${channelId}:${botId}`);
@@ -37,7 +38,7 @@ export function getRecentChannelActivity(
   since: number
 ): { botId: string; timestamp: number }[] {
   const activities = recentChannelActivity.get(channelId) || [];
-  return activities.filter((a) => a.timestamp > since);
+  return takeWithinWindow(activities, (a) => a.timestamp, since);
 }
 
 // For tests

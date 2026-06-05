@@ -1,27 +1,32 @@
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { apiLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
-router.get(['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'], (req, res) => {
-  let format = String(req.query.format || 'json').toLowerCase();
-  const path = req.path.toLowerCase();
+router.get(
+  ['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'],
+  apiLimiter,
+  (req, res) => {
+    let format = String(req.query.format || 'json').toLowerCase();
+    const path = req.path.toLowerCase();
 
-  if (path.endsWith('.yaml') || path.endsWith('.yml')) {
-    format = 'yaml';
+    if (path.endsWith('.yaml') || path.endsWith('.yml')) {
+      format = 'yaml';
+    }
+
+    const host = req.get('host') ?? 'localhost';
+    const baseUrl = `${req.protocol}://${host}`;
+    const spec = buildSpec(baseUrl);
+
+    if (format === 'yaml' || format === 'yml') {
+      res.type('text/yaml').send(toYaml(spec));
+      return;
+    }
+
+    res.json(ApiResponse.success(spec));
   }
-
-  const host = req.get('host') ?? 'localhost';
-  const baseUrl = `${req.protocol}://${host}`;
-  const spec = buildSpec(baseUrl);
-
-  if (format === 'yaml' || format === 'yml') {
-    res.type('text/yaml').send(toYaml(spec));
-    return;
-  }
-
-  res.json(ApiResponse.success(spec));
-});
+);
 
 function buildSpec(baseUrl: string) {
   return {

@@ -33,6 +33,7 @@ const QuickAddButton: React.FC<QuickAddButtonProps> = ({
   return (
     <Tooltip content={getTooltip()} position="right">
       <button
+        type="button"
         className={`
           btn btn-circle btn-sm btn-primary
           ${disabled ? 'btn-disabled' : 'hover:scale-110'}

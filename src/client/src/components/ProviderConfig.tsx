@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CheckCircle, Eye, EyeOff, Info, Key, Lock, Settings, Shield, ExternalLink, HelpCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Accordion from './DaisyUI/Accordion';
 import { Badge } from './DaisyUI/Badge';
@@ -115,7 +115,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
             )}
             {isEnvOverride && (
               <Tooltip
-                content={`This field is controlled by environment variable: ${Object.keys(envOverrides).find((k) => k.toLowerCase().includes(key.toLowerCase())) || ''}`}
+                content={`This field is controlled by environment variable: ${envVarMapping[key] || ''}`}
               >
                 <Lock className="w-4 h-4 text-info" />
               </Tooltip>
@@ -198,7 +198,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
     );
   };
 
-  const getProviderSections = () => {
+  const getProviderSections = React.useCallback(() => {
     switch (provider) {
       case 'discord':
         return [
@@ -612,10 +612,28 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
       default:
         return [];
     }
-  };
+  }, [provider]);
 
   const sections = getProviderSections();
   const hasEnvOverrides = Object.keys(envOverrides).length > 0;
+
+  // Performance optimization: Pre-compute env var mapping to avoid O(N*M) lookups during render
+  const envVarMapping = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    if (Object.keys(envOverrides).length > 0) {
+      const envKeys = Object.keys(envOverrides);
+      // Determine fields within useMemo to keep dependencies stable
+      getProviderSections().forEach((section) => {
+        section.fields.forEach((field: any) => {
+          const match = envKeys.find((k) => k.toLowerCase().includes(field.key.toLowerCase()));
+          if (match) {
+            mapping[field.key] = match;
+          }
+        });
+      });
+    }
+    return mapping;
+  }, [envOverrides, provider, getProviderSections]);
 
   return (
     <div className="space-y-4">

@@ -264,9 +264,7 @@ export class IntegrationSchemas implements ISchemaModule {
       'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_api_key ON bot_api_keys(api_key)',
     ];
 
-    for (const indexSql of indexes) {
-      await this.createIndex(db, indexSql);
-    }
+    await Promise.all(indexes.map((indexSql) => this.createIndex(db, indexSql)));
   }
 
   private async createTable(db: Database, sql: string): Promise<void> {

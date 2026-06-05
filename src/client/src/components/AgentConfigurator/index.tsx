@@ -494,6 +494,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
             className="btn btn-outline"
             onClick={handleRefresh}
             disabled={isFetching}
+            aria-label={isFetching ? 'Refreshing agent status' : 'Refresh agent status'}
           >
             {isFetching && <LoadingSpinner />}
             {isFetching ? 'Refreshing…' : 'Refresh status'}

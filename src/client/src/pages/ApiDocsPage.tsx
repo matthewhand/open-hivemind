@@ -245,7 +245,6 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
 /** Single route card with expandable details */
 const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
   const [expanded, setExpanded] = useState(false);
-
   return (
     <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
       <input

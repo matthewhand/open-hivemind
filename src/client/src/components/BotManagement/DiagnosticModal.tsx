@@ -77,7 +77,13 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       size="md"
       ariaLabelledBy="diagnostic-modal-title"
     >
-      <div className="space-y-6 p-4 sm:p-6" role="region" aria-label="Diagnostic results">
+      <div
+        className="space-y-6 p-4 sm:p-6"
+        role="region"
+        aria-label="Diagnostic results"
+        aria-live="polite"
+        aria-busy={loading}
+      >
         {loading && !results ? (
           <div className="py-12 text-center space-y-4">
              <LoadingSpinner lg />
@@ -87,7 +93,14 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
           <div className="alert alert-error">
              <XCircle className="w-6 h-6" />
              <span>{error}</span>
-             <button onClick={runDiagnostic} className="btn btn-xs btn-ghost">Retry</button>
+             <button
+               onClick={runDiagnostic}
+               className="btn btn-xs btn-ghost"
+               disabled={loading}
+               aria-label="Retry diagnostic"
+             >
+                {loading ? 'Retrying...' : 'Retry'}
+             </button>
           </div>
         ) : results ? (
           <div className="space-y-6 py-2">
@@ -141,9 +154,9 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
              <div className="pt-4 border-t border-base-300 flex justify-between items-center">
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>
                 <div className="flex gap-2">
-                   <button onClick={onClose} className="btn btn-sm btn-ghost">Close</button>
+                   <button onClick={onClose} className="btn btn-sm btn-ghost" aria-label="Close modal">Close</button>
                    <button onClick={runDiagnostic} className="btn btn-sm btn-primary gap-2" disabled={loading}>
-                      <Activity className="w-4 h-4" /> 
+                      <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                       {loading ? 'Testing...' : 'Run Again'}
                    </button>
                 </div>

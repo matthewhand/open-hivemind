@@ -162,8 +162,14 @@ export class PersonaManager extends EventEmitter {
         const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
         const savedPersonas = JSON.parse(data);
 
+        // Guard against a file that parses to a non-object (string/number/array/
+        // null) — Object.values() on those yields garbage and `p.id` would throw.
+        if (!savedPersonas || typeof savedPersonas !== 'object' || Array.isArray(savedPersonas)) {
+          throw new Error('custom-personas.json must contain a JSON object of personas');
+        }
+
         Object.values(savedPersonas).forEach((p: any) => {
-          if (p.id) this.personas.set(p.id, p);
+          if (p && typeof p === 'object' && p.id) this.personas.set(p.id, p);
         });
         debug(`Loaded ${Object.keys(savedPersonas).length} personas from custom-personas.json`);
       } else {

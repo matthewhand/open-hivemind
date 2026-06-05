@@ -115,30 +115,54 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     let cfg: SlackFileConfig = { slack: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(fileContent) as SlackFileConfig;
-    } catch (e: unknown) {
-      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
-        debug('Failed reading messengers.json', e);
+      // Distinguish a corrupted file (JSON parse error) from a missing one. A
+      // parse error must surface to the operator — silently continuing here
+      // would overwrite the corrupted file with a default and destroy every
+      // existing bot config.
+      try {
+        cfg = JSON.parse(fileContent) as SlackFileConfig;
+      } catch (parseErr: unknown) {
+        const parseMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
+        throw new Error(
+          `messengers.json is corrupted and cannot be parsed: ${parseMessage}. ` +
+            `Please fix or remove ${messengersPath} before adding a new bot.`
+        );
       }
+    } catch (readErr: unknown) {
+      const isEnoent =
+        readErr instanceof Error &&
+        'code' in readErr &&
+        (readErr as NodeJS.ErrnoException).code === 'ENOENT';
+      if (!isEnoent) {
+        throw readErr;
+      }
+      // File doesn't exist yet — start with the default empty structure.
     }
 
-    if (cfg.slack) {
-      cfg.slack.mode = cfg.slack.mode || mode || 'socket';
-      cfg.slack.instances = cfg.slack.instances || [];
-      cfg.slack.instances.push({
-        name,
-        token: botToken,
-        signingSecret,
-        llm,
-        appToken,
-        defaultChannelId,
-        joinChannels,
-      });
-    }
+    // Always ensure the slack section exists, so a config that parsed without a
+    // `slack` key still gets the new instance persisted (previously it was
+    // silently dropped when the key was absent).
+    cfg.slack = cfg.slack || { instances: [] };
+    cfg.slack.mode = cfg.slack.mode || mode || 'socket';
+    cfg.slack.instances = cfg.slack.instances || [];
+    cfg.slack.instances.push({
+      name,
+      token: botToken,
+      signingSecret,
+      llm,
+      appToken,
+      defaultChannelId,
+      joinChannels,
+    });
 
     try {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
-      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      // messengers.json holds bot tokens — restrict to owner read/write (0o600),
+      // matching TelegramProvider, so other OS users can't read the secrets.
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), {
+        encoding: 'utf8',
+        mode: 0o600,
+      });
     } catch (e: unknown) {
       debug('ERROR:', 'Failed writing messengers.json', e);
     }

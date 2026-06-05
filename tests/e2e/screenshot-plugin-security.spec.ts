@@ -121,7 +121,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Wait for stats cards to appear
     await page.waitForSelector('.text-2xl.font-bold', { timeout: 5000 });
@@ -158,7 +158,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Click on "Untrusted" filter
     const untrustedTab = page.locator('.tab:has-text("Untrusted")');
@@ -187,7 +187,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Wait for plugin cards to load
     await page.waitForTimeout(2000);
@@ -216,7 +216,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Wait for plugin cards to load
     await page.waitForTimeout(2000);
@@ -242,7 +242,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Wait for plugin cards to load
     await page.waitForTimeout(2000);
@@ -260,7 +260,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Click on "Verification Failed" filter
     const failedTab = page.locator('.tab:has-text("Verification Failed")');
@@ -282,7 +282,7 @@ test.describe('Plugin Security Dashboard', () => {
     await navigateAndWaitReady(page, '/admin/plugin-security');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Plugin Security Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="plugin-security-page"]', { timeout: 10000 });
 
     // Wait for stats to load
     await page.waitForTimeout(2000);

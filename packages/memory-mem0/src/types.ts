@@ -21,17 +21,12 @@ export interface Mem0Config {
   /** Optional organisation ID header */
   orgId?: string;
 
-  // --- fields surfaced in the UI schema (mem0.ts) ---
-  /** LLM provider used for fact extraction (e.g. 'openai', 'anthropic') */
-  llmProvider?: string;
-  /** Model name for fact extraction */
-  llmModel?: string;
-  /** Model used to generate memory embeddings */
-  embedderModel?: string;
-  /** Vector store backend ('memory' | 'qdrant' | 'pinecone') */
-  vectorStoreProvider?: string;
-  /** Path to SQLite history DB (optional) */
-  historyDbPath?: string;
+  // NOTE: The hosted Mem0 platform REST API (api.mem0.ai) manages the LLM,
+  // embedder, vector store and history DB at the project level — none of these
+  // are accepted per-request. They only apply to the self-hosted OSS `Memory`
+  // class (configured via yaml/env at startup), which this REST client is not.
+  // So they are intentionally NOT part of this config; surfacing them would
+  // mislead users into thinking the values take effect.
 
   // --- operational knobs ---
   /** Request timeout in milliseconds (default: 30 000) */

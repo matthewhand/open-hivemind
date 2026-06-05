@@ -73,7 +73,7 @@ export class IntegrationLoader {
         try {
           return await this.loadIntegrationComponents(integrationId);
         } catch (error) {
-          Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
+          logger.warn(`Failed to load components for integration ${integrationId}:`, error);
           return [];
         }
       });
@@ -132,7 +132,7 @@ export class IntegrationLoader {
                 icon: componentInfo.icon,
               };
             } catch (componentError) {
-              Logger.warn(
+              logger.warn(
                 `Failed to load component ${componentId} for integration ${integrationId}:`,
                 componentError,
               );

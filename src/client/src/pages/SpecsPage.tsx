@@ -3,20 +3,55 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
 import Badge from '../components/DaisyUI/Badge';
 
+import Modal from '../components/DaisyUI/Modal';
 import Pagination from '../components/DaisyUI/Pagination';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { Search, Plus, BookOpen } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import useSpecs from '../hooks/useSpecs';
 import useUrlParams from '../hooks/useUrlParams';
-import { useInfoToast } from '../components/DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { apiService } from '../services/api';
+
+/** Build a filesystem-safe, path-traversal-free id matching the server regex /^[a-zA-Z0-9_-]+$/. */
+export const slugifyTopic = (topic: string): string =>
+  topic
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64) || 'spec';
+
+/**
+ * Produce an id derived from the topic that does not collide with any id in `existingIds`.
+ * Different topics can slugify to the same base (e.g. "My Spec!" and "My___Spec" both -> "my-spec",
+ * and any all-symbol topic -> "spec"), so on collision we append an incrementing suffix.
+ */
+export const buildUniqueSpecId = (topic: string, existingIds: Iterable<string>): string => {
+  const taken = new Set(existingIds);
+  const base = slugifyTopic(topic);
+  if (!taken.has(base)) {
+    return base;
+  }
+  let suffix = 2;
+  // Keep the suffixed id within the same 64-char budget as the base slug.
+  while (taken.has(`${base.slice(0, 64 - `-${suffix}`.length)}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${base.slice(0, 64 - `-${suffix}`.length)}-${suffix}`;
+};
 
 const SpecsPage: React.FC = () => {
-  const infoToast = useInfoToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const navigate = useNavigate();
   const { specs, loading, error, refetch } = useSpecs();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ topic: '', author: '', tags: '', content: '' });
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
     search: { type: 'string', default: '', debounce: 300 },
     page: { type: 'number', default: 1 },
@@ -46,8 +81,66 @@ const SpecsPage: React.FC = () => {
     navigate(`/admin/specs/${id}`);
   };
 
-  const handleNotImplemented = (): void => {
-    infoToast('Coming Soon', 'This feature is currently under development.');
+  const openCreate = (): void => {
+    setForm({ topic: '', author: '', tags: '', content: '' });
+    setIsCreateOpen(true);
+  };
+
+  const closeCreate = (): void => {
+    if (creating) {
+      return;
+    }
+    setIsCreateOpen(false);
+  };
+
+  const handleCreate = async (): Promise<void> => {
+    const topic = form.topic.trim();
+    const content = form.content.trim();
+
+    if (!topic) {
+      errorToast('Topic required', 'Please enter a topic for the specification.');
+      return;
+    }
+    if (!content) {
+      errorToast('Content required', 'Please enter the specification content.');
+      return;
+    }
+
+    const tags = form.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const payload = {
+      id: buildUniqueSpecId(topic, specs.map((s) => s.id)),
+      topic,
+      author: form.author.trim() || 'Unknown',
+      tags,
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      content,
+    };
+
+    setCreating(true);
+    try {
+      const response = await apiService.post<{ success: boolean; error?: string }>(
+        '/api/specs',
+        payload
+      );
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create specification');
+      }
+      setIsCreateOpen(false);
+      successToast('Specification created', `"${topic}" has been saved.`);
+      await refetch();
+    } catch (err) {
+      errorToast(
+        'Failed to create specification',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (loading) {
@@ -91,7 +184,7 @@ const SpecsPage: React.FC = () => {
             data-testid="specs-search-input"
           />
         </div>
-        <Button className="btn-primary" onClick={handleNotImplemented} data-testid="add-spec-button">
+        <Button className="btn-primary" onClick={openCreate} data-testid="add-spec-button">
           <Plus className="w-4 h-4 mr-2" />
           Add Specification
         </Button>
@@ -159,12 +252,76 @@ const SpecsPage: React.FC = () => {
               ? 'Try adjusting your search terms'
               : 'Get started by creating your first specification'}
           </p>
-          <Button className="btn-primary" onClick={handleNotImplemented} data-testid="create-spec-button">
+          <Button className="btn-primary" onClick={openCreate} data-testid="create-spec-button">
             <Plus className="w-4 h-4 mr-2" />
             Create Specification
           </Button>
         </div>
       )}
+
+      {/* Create Specification Modal */}
+      <Modal
+        isOpen={isCreateOpen}
+        onClose={closeCreate}
+        title="Create Specification"
+        closable={!creating}
+        actions={[
+          { label: 'Cancel', onClick: closeCreate, variant: 'ghost', disabled: creating },
+          { label: 'Create', onClick: () => void handleCreate(), variant: 'primary', loading: creating },
+        ]}
+      >
+        <div className="space-y-4" data-testid="create-spec-form">
+          <div>
+            <label className="label" htmlFor="spec-topic">
+              <span className="label-text">Topic</span>
+            </label>
+            <Input
+              id="spec-topic"
+              placeholder="Specification topic"
+              value={form.topic}
+              onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
+              data-testid="spec-topic-input"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="spec-author">
+              <span className="label-text">Author</span>
+            </label>
+            <Input
+              id="spec-author"
+              placeholder="Author (optional)"
+              value={form.author}
+              onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
+              data-testid="spec-author-input"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="spec-tags">
+              <span className="label-text">Tags</span>
+            </label>
+            <Input
+              id="spec-tags"
+              placeholder="Comma-separated tags (optional)"
+              value={form.tags}
+              onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+              data-testid="spec-tags-input"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="spec-content">
+              <span className="label-text">Content (Markdown)</span>
+            </label>
+            <Textarea
+              id="spec-content"
+              className="w-full min-h-32"
+              placeholder="Specification content..."
+              value={form.content}
+              onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+              data-testid="spec-content-input"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

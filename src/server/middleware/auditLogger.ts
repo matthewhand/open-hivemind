@@ -1,6 +1,7 @@
 import { type NextFunction, type Request, type Response } from 'express';
 import { type AuthMiddlewareRequest } from '@src/auth/types';
 import { Logger } from '@src/common/logger';
+import { getClientIP } from './security';
 
 interface ResponseWithAuditFlag extends Response {
   _auditLogged?: boolean;
@@ -54,9 +55,87 @@ export interface AuditLogStats {
   failureRate: number;
 }
 
+/**
+ * Durable backing store for audit events. Abstracts the persistence layer so
+ * the logger can be unit-tested without a live database, while production wires
+ * it to the SQLite/Postgres-backed AuditEventRepository via DatabaseManager.
+ */
+export interface AuditEventStore {
+  insert(entry: AuditLogEntry): Promise<boolean>;
+  query(filters: AuditLogQuery): Promise<AuditLogEntry[]>;
+  getStats(startTime?: string, endTime?: string): Promise<AuditLogStats>;
+  getRecent(limit: number): Promise<AuditLogEntry[]>;
+}
+
+/**
+ * Default store that lazily resolves the DatabaseManager singleton. The require
+ * is deferred to call-time to avoid an import cycle at module load and to keep
+ * the audit path resilient when the database is not configured.
+ */
+const defaultAuditEventStore: AuditEventStore = {
+  async insert(entry: AuditLogEntry): Promise<boolean> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+      const { DatabaseManager } = require('@src/database/DatabaseManager');
+      return await DatabaseManager.getInstance().insertAuditEvent(entry);
+    } catch {
+      return false;
+    }
+  },
+  async query(filters: AuditLogQuery): Promise<AuditLogEntry[]> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+      const { DatabaseManager } = require('@src/database/DatabaseManager');
+      return await DatabaseManager.getInstance().queryAuditEvents(filters);
+    } catch {
+      return [];
+    }
+  },
+  async getStats(startTime?: string, endTime?: string): Promise<AuditLogStats> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+      const { DatabaseManager } = require('@src/database/DatabaseManager');
+      return await DatabaseManager.getInstance().getAuditEventStats(startTime, endTime);
+    } catch {
+      return {
+        total: 0,
+        byAction: {},
+        byResource: {},
+        byStatus: { success: 0, failure: 0 },
+        failureRate: 0,
+      };
+    }
+  },
+  async getRecent(limit: number): Promise<AuditLogEntry[]> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+      const { DatabaseManager } = require('@src/database/DatabaseManager');
+      return await DatabaseManager.getInstance().getRecentAuditEvents(limit);
+    } catch {
+      return [];
+    }
+  },
+};
+
 class AuditLoggerService {
   private logs: AuditLogEntry[] = [];
   private readonly maxLogs: number = 1000;
+  private store: AuditEventStore;
+  private hydrated = false;
+
+  constructor(store: AuditEventStore = defaultAuditEventStore) {
+    this.store = store;
+  }
+
+  /**
+   * Swap the durable backing store (primarily for tests). Resets the hydration
+   * flag so the in-memory cache is reloaded from the new store on next access.
+   */
+  setStore(store: AuditEventStore): void {
+    this.store = store;
+    this.hydrated = false;
+    this.logs = [];
+  }
 
   log(entry: Omit<AuditLogEntry, 'timestamp'>): void {
     const fullEntry: AuditLogEntry = {
@@ -71,8 +150,55 @@ class AuditLoggerService {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
+    // Durable persistence (fire-and-forget; never blocks the request path).
+    void this.store.insert(fullEntry).catch((error) => {
+      Logger.debug(`Audit event persistence failed: ${String(error)}`);
+    });
+
     // Also log to structured logger
     Logger.info('AUDIT', fullEntry);
+  }
+
+  /**
+   * Hydrate the in-memory cache from the durable store. Runs at most once and
+   * only merges events that are not already cached, so volatile recent entries
+   * (logged this process) survive alongside the persisted history after a
+   * restart. Errors are swallowed so reads never fail.
+   */
+  async hydrate(): Promise<void> {
+    if (this.hydrated) return;
+    this.hydrated = true;
+    try {
+      const persisted = await this.store.getRecent(this.maxLogs);
+      if (persisted.length > 0) {
+        const seen = new Set(this.logs.map((l) => `${l.timestamp}|${l.action}|${l.resource}`));
+        // Persisted are newest-first; restore chronological (oldest-first) order.
+        const restored = [...persisted]
+          .reverse()
+          .filter((l) => !seen.has(`${l.timestamp}|${l.action}|${l.resource}`));
+        this.logs = [...restored, ...this.logs].slice(-this.maxLogs);
+      }
+    } catch {
+      // Best-effort hydration; in-memory cache remains the source of truth.
+    }
+  }
+
+  /**
+   * Durable query backed by the persistence layer. Use this for reads that must
+   * survive a restart; falls back to the in-memory cache when the store yields
+   * nothing (e.g. database not configured).
+   */
+  async queryPersisted(filters: AuditLogQuery): Promise<AuditLogEntry[]> {
+    const persisted = await this.store.query(filters);
+    if (persisted.length > 0) return persisted;
+    return this.query(filters);
+  }
+
+  /** Durable stats backed by the persistence layer, falling back to in-memory. */
+  async getStatsPersisted(startTime?: string, endTime?: string): Promise<AuditLogStats> {
+    const stats = await this.store.getStats(startTime, endTime);
+    if (stats.total > 0) return stats;
+    return this.getStats(startTime, endTime);
   }
 
   getLogs(limit = 100): AuditLogEntry[] {
@@ -205,11 +331,7 @@ export const auditMiddleware = (
             (req as AuthMiddlewareRequest).user?.id ||
             (req as AuthMiddlewareRequest).user?.username ||
             'anonymous',
-          ip:
-            req.ip ||
-            req.connection?.remoteAddress ||
-            (req.headers['x-forwarded-for'] as string) ||
-            'unknown',
+          ip: getClientIP(req) || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
           status: res.statusCode < 400 ? 'success' : 'failure',
           errorMessage:
@@ -263,11 +385,7 @@ export const auditMiddlewareWithChanges = (
             (req as AuthMiddlewareRequest).user?.id ||
             (req as AuthMiddlewareRequest).user?.username ||
             'anonymous',
-          ip:
-            req.ip ||
-            req.connection?.remoteAddress ||
-            (req.headers['x-forwarded-for'] as string) ||
-            'unknown',
+          ip: getClientIP(req) || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
           before: beforeValue,
           after:
@@ -315,11 +433,7 @@ export const logAuditEvent = (
       (req as AuthMiddlewareRequest).user?.id ||
       (req as AuthMiddlewareRequest).user?.username ||
       'anonymous',
-    ip:
-      req.ip ||
-      req.connection?.remoteAddress ||
-      (req.headers['x-forwarded-for'] as string) ||
-      'unknown',
+    ip: getClientIP(req) || 'unknown',
     userAgent: req.get('user-agent') || 'unknown',
     before: options.before,
     after: options.after,

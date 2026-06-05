@@ -184,12 +184,18 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph Public["Public Routes (no auth)"]
+    subgraph Public["Public Routes (no session auth)"]
         Health["/health"]
         Sitemap["/"]
         ApiHealth["/api/health"]
         ApiDocs["/api/docs"]
         ApiErrors["/api/errors"]
+    end
+
+    subgraph Ingress["Inbound Webhook Ingress (token + IP whitelist, opt-in via WEBHOOK_ENABLED)"]
+        Webhook["/webhook"]
+        WebhookReceive["/webhook/receive"]
+        WebhookSlack["/webhook/slack"]
     end
 
     subgraph Protected["Protected Routes (authenticateToken)"]
@@ -221,7 +227,7 @@ graph TB
         Backup["/backup"]
         Maintenance["/maintenance"]
         SystemInfo["/system-info"]
-        AuditLog["/audit"]
+        AuditLog["/audit-logs (durable JSONL)"]
         Approvals["/approvals"]
         GuardProfiles["/guard-profiles"]
         MCP["/mcp/*"]
@@ -486,6 +492,35 @@ sequenceDiagram
     Broadcast->>WSServer: emit event
     WSServer->>WSClient: WebSocket message
     WSClient->>Client: update UI state
+```
+
+### Message Processing Pipeline
+
+Inbound platform messages are processed by a 5-stage pipeline (the default path;
+`USE_LEGACY_HANDLER=true` reverts to the monolithic `handleMessage()`). Stages are
+wired onto a `MessageBus` by `createPipeline()` — registration is idempotent per bus.
+
+```mermaid
+graph LR
+    Incoming["message:incoming"]
+    Receive["ReceiveStage"]
+    Decision["DecisionStage"]
+    Enrich["EnrichStage"]
+    Inference["InferenceStage"]
+    Send["SendStage"]
+
+    Incoming --> Receive --> Decision --> Enrich --> Inference --> Send
+
+    Tracer["PipelineTracer<br/>→ /api/health/detailed<br/>→ TraceExporter (console/file/OTLP)"]
+    ActRec["observability/ActivityRecorder<br/>→ ActivityLogger (JSONL)<br/>→ WebSocket feed"]
+    ScoreRec["pipeline/ActivityRecorder<br/>→ fatigue / grace window / idle response"]
+
+    Receive -.-> Tracer
+    Send -.-> Tracer
+    Receive -.-> ActRec
+    Send -.-> ActRec
+    Decision -.-> ScoreRec
+    Send -.-> ScoreRec
 ```
 
 ## Key Statistics

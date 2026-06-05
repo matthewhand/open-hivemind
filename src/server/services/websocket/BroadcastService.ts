@@ -106,26 +106,46 @@ export class BroadcastService {
   private setupMessageBus(): void {
     const bus = MessageBus.getInstance();
 
-    (bus as any).on?.('message_processed', (event: any) => {
+    // A message has finished processing and its response was delivered back to
+    // the platform. The pipeline (SendStage) emits the typed `message:sent`
+    // event at this point; map it onto a message-flow record so the websocket
+    // monitoring dashboard sees outgoing traffic. (The legacy untyped
+    // `message_processed` event this used to listen for was never emitted.)
+    (bus as any).on?.('message:sent', (event: any) => {
+      const botConfig = event?.botConfig ?? {};
+      const startedAt = event?.metadata?.startTime ?? event?.metadata?.receivedAt ?? undefined;
+      const processingTime =
+        typeof startedAt === 'number' ? Math.max(0, Date.now() - startedAt) : undefined;
+
       this.recordMessageFlow({
-        botName: event.botName,
-        provider: event.provider,
-        llmProvider: event.llmProvider,
-        channelId: event.channelId,
-        userId: event.userId,
+        botName: event?.botName,
+        provider: String(event?.platform ?? botConfig.MESSAGE_PROVIDER ?? 'unknown'),
+        llmProvider:
+          (botConfig.LLM_PROVIDER as string | undefined) ??
+          (event?.metadata?.llmProvider as string | undefined),
+        channelId: event?.channelId,
+        userId:
+          (typeof event?.message?.getAuthorId === 'function'
+            ? event.message.getAuthorId()
+            : undefined) ?? '',
         messageType: 'outgoing',
-        contentLength: event.response?.length || 0,
-        processingTime: event.processingTime,
+        contentLength: typeof event?.responseText === 'string' ? event.responseText.length : 0,
+        processingTime,
         status: 'success',
       });
     });
 
-    (bus as any).on?.('error', (error: any) => {
+    // A message failed at some pipeline stage. The pipeline emits the typed
+    // `message:error` event; surface it as an alert on the monitoring feed.
+    (bus as any).on?.('message:error', (event: any) => {
+      const error: Error = event?.error ?? new Error('Unknown pipeline error');
       this.recordAlert({
         level: 'error',
-        title: 'System Error',
+        title: 'Message Processing Error',
         message: error.message,
-        metadata: { stack: error.stack },
+        botName: event?.botName,
+        channelId: event?.channelId,
+        metadata: { stack: error.stack, stage: event?.stage },
       });
     });
   }

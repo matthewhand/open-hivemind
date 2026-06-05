@@ -296,3 +296,79 @@ export function createExporters(): ITraceExporter[] {
 
   return exporters;
 }
+
+/**
+ * Build the set of exporters requested via the `TRACE_EXPORT` env var.
+ *
+ * `TRACE_EXPORT` is a comma-separated list of backends. Supported values:
+ *
+ * - `console` — {@link ConsoleExporter} (debug output)
+ * - `file`    — {@link JsonFileExporter}, path from `TRACE_LOG_FILE`
+ *               (default `logs/traces.ndjson`)
+ * - `otlp`    — {@link OtlpExporter}, endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT`
+ *
+ * Returns an empty array when `TRACE_EXPORT` is unset/empty (export is **off**
+ * by default) or when no valid backend is selected. The `otlp` backend is
+ * skipped (with a debug warning) if `OTEL_EXPORTER_OTLP_ENDPOINT` is not set.
+ *
+ * @param spec Override the env value (primarily for testing).
+ */
+export function createExportersFromEnv(
+  spec: string | undefined = process.env.TRACE_EXPORT
+): ITraceExporter[] {
+  if (!spec || !spec.trim()) {
+    return [];
+  }
+
+  const backends = spec
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const exporters: ITraceExporter[] = [];
+
+  for (const backend of backends) {
+    switch (backend) {
+      case 'console':
+        exporters.push(new ConsoleExporter());
+        break;
+      case 'file':
+        exporters.push(new JsonFileExporter(process.env.TRACE_LOG_FILE || 'logs/traces.ndjson'));
+        break;
+      case 'otlp': {
+        const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+        if (endpoint) {
+          exporters.push(new OtlpExporter(endpoint));
+        } else {
+          debug('TRACE_EXPORT=otlp requested but OTEL_EXPORTER_OTLP_ENDPOINT is unset — skipping');
+        }
+        break;
+      }
+      default:
+        debug('Unknown TRACE_EXPORT backend %s — ignoring', backend);
+    }
+  }
+
+  return exporters;
+}
+
+/**
+ * Wire trace export into the given {@link PipelineTracer} based on the
+ * `TRACE_EXPORT` env var. No-op (returns `undefined`) when export is off.
+ *
+ * This is the production bootstrap entry point — call once after the tracer
+ * is registered.
+ *
+ * @returns the attached {@link TraceExportManager}, or `undefined` if disabled.
+ */
+export function attachTraceExporters(tracer: PipelineTracer): TraceExportManager | undefined {
+  const exporters = createExportersFromEnv();
+  if (exporters.length === 0) {
+    return undefined;
+  }
+
+  const manager = new TraceExportManager(exporters);
+  manager.attach(tracer);
+  debug('Trace export enabled via TRACE_EXPORT=%s', process.env.TRACE_EXPORT);
+  return manager;
+}

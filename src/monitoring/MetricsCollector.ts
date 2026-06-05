@@ -1,12 +1,6 @@
-import crypto from 'crypto';
 import { EventEmitter } from 'events';
+import os from 'os';
 import Logger from '@common/logger';
-
-// Helper to generate random float between 0 and max using crypto
-function getRandomFloat(max: number): number {
-  const randomBytes = crypto.randomBytes(4);
-  return (randomBytes.readUInt32BE() / 0x100000000) * max;
-}
 
 const logger = Logger.withContext('MetricsCollector');
 
@@ -55,6 +49,8 @@ export class MetricsCollector extends EventEmitter {
   private history: MetricData[] = [];
   private isCollecting = false;
   private collectionInterval: NodeJS.Timeout | null = null;
+  private lastCpuUsage: NodeJS.CpuUsage = process.cpuUsage();
+  private lastCpuHrTime: bigint = process.hrtime.bigint();
 
   static getInstance(): MetricsCollector {
     if (!MetricsCollector.instance) {
@@ -101,8 +97,8 @@ export class MetricsCollector extends EventEmitter {
   private collectSystemMetrics(): void {
     const timestamp = new Date().toISOString();
 
-    // Collect CPU usage (placeholder)
-    const cpuUsage = getRandomFloat(100);
+    // Collect real CPU usage (percent of wall-clock time spent on CPU since last sample)
+    const cpuUsage = this.calculateCpuUsage();
     this.recordMetric('cpu_usage', cpuUsage, { timestamp });
 
     // Collect memory usage
@@ -111,6 +107,44 @@ export class MetricsCollector extends EventEmitter {
 
     // Emit collected metrics
     this.emit('metricsCollected', this.getMetricsSummary());
+  }
+
+  /**
+   * Calculate process CPU usage as a percentage based on the delta of
+   * `process.cpuUsage()` over the wall-clock interval since the last sample.
+   * Returns a value clamped to [0, 100].
+   */
+  private calculateCpuUsage(): number {
+    const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
+    const currentHrTime = process.hrtime.bigint();
+    const elapsedHrTime = currentHrTime - this.lastCpuHrTime;
+
+    this.lastCpuUsage = process.cpuUsage();
+    this.lastCpuHrTime = currentHrTime;
+
+    const elapsedMs = Number(elapsedHrTime) / 1_000_000;
+    if (elapsedMs <= 0) {
+      return 0;
+    }
+
+    const userMs = currentCpuUsage.user / 1000;
+    const systemMs = currentCpuUsage.system / 1000;
+    const cpuPercent = (100 * (userMs + systemMs)) / elapsedMs;
+
+    return Math.max(0, Math.min(100, Math.round(cpuPercent * 10) / 10));
+  }
+
+  /**
+   * System memory usage as a percentage of total physical memory.
+   */
+  private getSystemMemoryUsagePercent(): number {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    if (totalMem <= 0) {
+      return 0;
+    }
+    const usedPercent = ((totalMem - freeMem) / totalMem) * 100;
+    return Math.round(usedPercent * 10) / 10;
   }
 
   incrementMessages(): void {
@@ -195,10 +229,15 @@ export class MetricsCollector extends EventEmitter {
         : 0;
 
     const performance: PerformanceMetrics = {
-      cpuUsage: this.getLatestValue('cpu_usage') || 0,
-      memoryUsage: this.getLatestValue('memory_usage') || 0,
-      diskUsage: getRandomFloat(100), // placeholder
-      networkIO: getRandomFloat(1000), // placeholder
+      cpuUsage: this.getLatestValue('cpu_usage') ?? 0,
+      memoryUsage: this.getLatestValue('memory_usage') ?? 0,
+      // System memory utilisation as a percentage of total physical memory.
+      // Node's stdlib does not expose per-process disk or network throughput,
+      // so we report a real, available figure here instead of a random placeholder.
+      diskUsage: this.getSystemMemoryUsagePercent(),
+      // No built-in network-throughput source is available without extra
+      // dependencies; report 0 rather than fabricating a random value.
+      networkIO: 0,
       responseTime: avgResponseTime,
       throughput:
         this.metrics.messagesProcessed / (Math.max(1, Date.now() - this.metrics.uptime) / 1000),
