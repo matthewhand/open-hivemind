@@ -13,10 +13,10 @@ import { Progress } from './DaisyUI/Loading';
 const MEMORY_THRESHOLD_HINT = 'Healthy < 70% · Caution 70-90% · Critical > 90%';
 const LOAD_THRESHOLD_HINT = 'Idle < 1.0 · Busy 1.0-2.0 · Overloaded > 2.0 (per CPU core)';
 
-const getMemoryBand = (usage: number): { label: string; tone: string } => {
-  if (usage > 90) return { label: 'Critical', tone: 'text-error' };
-  if (usage > 70) return { label: 'Caution', tone: 'text-warning' };
-  return { label: 'Healthy', tone: 'text-success' };
+const getMemoryBand = (usage: number): { label: string; tone: string; badge: string } => {
+  if (usage > 90) return { label: 'Critical', tone: 'text-error', badge: 'badge badge-error badge-sm font-semibold' };
+  if (usage > 70) return { label: 'Caution', tone: 'text-warning', badge: 'badge badge-warning badge-sm font-semibold' };
+  return { label: 'Healthy', tone: 'text-success', badge: 'badge badge-success badge-sm font-semibold' };
 };
 
 const getLoadBand = (load: number): { label: string; tone: string } => {
@@ -290,11 +290,11 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
                   </span>
                   <span className="text-xs text-base-content/60 mt-1 block">
                     Current:{' '}
-                    <span className={`font-semibold ${getMemoryBand(metrics?.memory?.usage || 0).tone}`}>
+                    <span className={getMemoryBand(metrics?.memory?.usage || 0).badge}>
                       {getMemoryBand(metrics?.memory?.usage || 0).label}
                     </span>
                     {' · '}
-                    <span className="opacity-80">Healthy &lt; 70% · Caution 70-90% · Critical &gt; 90%</span>
+                    <span>Healthy &lt; 70% · Caution 70-90% · Critical &gt; 90%</span>
                   </span>
                 </Card.Body>
               </Card>

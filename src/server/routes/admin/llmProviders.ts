@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import ApiMonitorService from '../../../services/ApiMonitorService';
@@ -34,7 +36,7 @@ const configRateLimit = isTestEnv
 // GET /llm-providers - Get all LLM providers
 router.get('/llm-providers', async (req: Request, res: Response) => {
   try {
-    const providers = (await webUIStorage.getLlmProviders()).map(redactProvider);
+    const providers = (await webUIStorage.getLlmProviders()).map((p: any) => redactProvider(p));
     return res.json({
       success: true,
       data: { providers },
@@ -507,7 +509,7 @@ router.post(
       const saved = providers.find(
         (p: any) => (p.type || '').toLowerCase() === type && p.isActive !== false
       );
-      const config = saved?.config ? { ...saved.config } : {};
+      const config: Record<string, any> = saved?.config ? { ...saved.config } : {};
       // Legacy data may contain a "sk-***" truncated key from before the
       // sanitization bug was fixed — drop it so the plugin falls back to env.
       if (typeof config.apiKey === 'string' && config.apiKey.endsWith('***')) {
@@ -525,7 +527,7 @@ router.post(
           getText: () => m.content ?? '',
           metadata: {},
         })
-      );
+      ) as unknown as IMessage[];
 
       const response = await provider.generateChatCompletion(message, history, {
         systemPrompt: systemPrompt || undefined,
