@@ -23,4 +23,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run actionlint
-        uses: rhysd/actionlint@v1
+        # pin to latest stable; @v1 floating tag can't be resolved on runners
+        uses: rhysd/actionlint@v1.7.7

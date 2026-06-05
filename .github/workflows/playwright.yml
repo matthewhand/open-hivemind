@@ -36,7 +36,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Install Playwright browsers
-        run: pnpm dlx playwright install --with-deps
+        # Use the locally installed playwright version, not pnpm dlx (which
+        # downloads the latest and expects a different browser revision).
+        run: npx playwright install --with-deps
 
       - name: Build application
         run: pnpm run build
