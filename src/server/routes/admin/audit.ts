@@ -221,8 +221,16 @@ router.post(
 // GET /audit-logs - Return real audit events from the audit logger
 router.get('/audit-logs', async (req, res) => {
   try {
-    const { limit = '100', offset = '0', search, action, resource, user, dateFrom, dateTo } =
-      req.query as Record<string, string | undefined>;
+    const {
+      limit = '100',
+      offset = '0',
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    } = req.query as Record<string, string | undefined>;
 
     const auditLogger = AuditLogger.getInstance();
     const filter = auditLogger.buildFilter({ search, action, resource, user, dateFrom, dateTo });

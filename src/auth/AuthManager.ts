@@ -4,13 +4,12 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import { LoginAttemptTracker } from './LoginAttemptTracker';
 import {
   buildOtpAuthUri,
   generateSecret as generateTotpSecretValue,
   verifyToken as verifyTotpToken,
 } from './TotpService';
-import { LoginAttemptTracker } from './LoginAttemptTracker';
-import { UserRepository } from './UserRepository';
 import type {
   AuthToken,
   JWTPayload,
@@ -19,6 +18,7 @@ import type {
   User,
   UserRole,
 } from './types';
+import { UserRepository } from './UserRepository';
 
 const debug = Debug('app:AuthManager');
 

@@ -17,7 +17,7 @@
 import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import { type ActivityRecorder, DefaultActivityRecorder } from './ActivityRecorder';
+import { DefaultActivityRecorder, type ActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:send');
 
@@ -110,14 +110,9 @@ export class SendStage {
       // Mirrors the legacy `outputProcessor.ts` recordings so these signals are
       // live in pipeline mode. Best-effort: never block delivery.
       try {
-        const serviceName = String(
-          ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic'
-        );
+        const serviceName = String(ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic');
         const botId =
-          this.botId ||
-          (ctx.botConfig.BOT_ID as string) ||
-          (ctx.botConfig.botId as string) ||
-          '';
+          this.botId || (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
         this.recorder.recordBotResponse(serviceName, ctx.channelId, botId);
       } catch (recordErr) {
         debug('SendStage: failed to record bot activity (non-fatal): %O', recordErr);

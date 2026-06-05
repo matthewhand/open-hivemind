@@ -10,12 +10,12 @@ import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
+import databaseConfig from '../config/databaseConfig';
 import { MCPProviderManager } from '../config/MCPProviderManager';
 import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { ConnectionManager as DbConnectionManager } from '../database/ConnectionManager';
-import databaseConfig from '../config/databaseConfig';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';

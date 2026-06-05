@@ -363,7 +363,9 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       const data = await response.json();
 
       if (!data.ok || data.result?.message_id == null) {
-        throw new Error(`Telegram API error: ${data.description || 'Unknown or malformed response'}`);
+        throw new Error(
+          `Telegram API error: ${data.description || 'Unknown or malformed response'}`
+        );
       }
 
       return data.result.message_id.toString();

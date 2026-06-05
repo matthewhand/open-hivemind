@@ -1,5 +1,5 @@
-import os from 'os';
 import { EventEmitter } from 'events';
+import os from 'os';
 import Logger from '@common/logger';
 
 const logger = Logger.withContext('MetricsCollector');

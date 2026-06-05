@@ -204,7 +204,7 @@ export class AuditEventRepository {
     if (filters.search) {
       const term = `%${filters.search.toLowerCase()}%`;
       clauses.push(
-        '(LOWER(action) LIKE ? OR LOWER(resource) LIKE ? OR LOWER(COALESCE(resource_id, \'\')) LIKE ? OR LOWER(COALESCE(user_id, \'\')) LIKE ? OR LOWER(COALESCE(error_message, \'\')) LIKE ?)'
+        "(LOWER(action) LIKE ? OR LOWER(resource) LIKE ? OR LOWER(COALESCE(resource_id, '')) LIKE ? OR LOWER(COALESCE(user_id, '')) LIKE ? OR LOWER(COALESCE(error_message, '')) LIKE ?)"
       );
       params.push(term, term, term, term, term);
     }

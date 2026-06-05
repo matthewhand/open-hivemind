@@ -333,9 +333,7 @@ export function createExportersFromEnv(
         exporters.push(new ConsoleExporter());
         break;
       case 'file':
-        exporters.push(
-          new JsonFileExporter(process.env.TRACE_LOG_FILE || 'logs/traces.ndjson')
-        );
+        exporters.push(new JsonFileExporter(process.env.TRACE_LOG_FILE || 'logs/traces.ndjson'));
         break;
       case 'otlp': {
         const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;

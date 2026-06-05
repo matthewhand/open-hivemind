@@ -1,8 +1,8 @@
 import { AuditLogger } from '@src/common/auditLogger';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import {
-  ProviderMetricsCollector,
   normalizeMessageProviderType,
+  ProviderMetricsCollector,
 } from '@src/monitoring/ProviderMetricsCollector';
 import { MemoryManager } from '@src/services/MemoryManager';
 import type { ContentFilterConfig } from '@src/types/config';

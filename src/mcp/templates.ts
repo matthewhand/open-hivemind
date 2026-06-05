@@ -117,7 +117,7 @@ export function toMCPProviderTemplate(template: MCPTemplate): MCPProviderTemplat
  * registry with the server-side `getTemplates()` source.
  */
 export function toMCPProviderTemplates(
-  templates: MCPTemplate[] = MCP_TEMPLATES,
+  templates: MCPTemplate[] = MCP_TEMPLATES
 ): MCPProviderTemplate[] {
   return templates.map(toMCPProviderTemplate);
 }

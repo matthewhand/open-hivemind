@@ -1,9 +1,9 @@
 import { Router, type Request, type Response } from 'express';
+import { BusinessKpiCollector } from '@src/monitoring/BusinessKpiCollector';
 import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
+import { DEFERRED_KPI_IDS } from '@src/observability/BusinessKpiRecorder';
 import Logger from '@common/logger';
 import { CostAnalyticsService } from '../services/CostAnalyticsService';
-import { BusinessKpiCollector } from '@src/monitoring/BusinessKpiCollector';
-import { DEFERRED_KPI_IDS } from '@src/observability/BusinessKpiRecorder';
 
 const logger = Logger.withContext('routes:monitoring');
 const router = Router();

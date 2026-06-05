@@ -113,8 +113,7 @@ export class BroadcastService {
     // `message_processed` event this used to listen for was never emitted.)
     (bus as any).on?.('message:sent', (event: any) => {
       const botConfig = event?.botConfig ?? {};
-      const startedAt =
-        event?.metadata?.startTime ?? event?.metadata?.receivedAt ?? undefined;
+      const startedAt = event?.metadata?.startTime ?? event?.metadata?.receivedAt ?? undefined;
       const processingTime =
         typeof startedAt === 'number' ? Math.max(0, Date.now() - startedAt) : undefined;
 
@@ -130,8 +129,7 @@ export class BroadcastService {
             ? event.message.getAuthorId()
             : undefined) ?? '',
         messageType: 'outgoing',
-        contentLength:
-          typeof event?.responseText === 'string' ? event.responseText.length : 0,
+        contentLength: typeof event?.responseText === 'string' ? event.responseText.length : 0,
         processingTime,
         status: 'success',
       });
