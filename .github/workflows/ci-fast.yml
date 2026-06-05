@@ -47,7 +47,7 @@ jobs:
 
       - name: Audit dependencies (PR)
         if: github.event_name == 'pull_request'
-        run: pnpm audit --audit-level=moderate
+        run: pnpm audit --audit-level=high --production
 
       - name: Audit dependencies (main)
         if: github.event_name == 'push'
