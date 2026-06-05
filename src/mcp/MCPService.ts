@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SlackMessageProvider } from '@hivemind/message-slack';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 

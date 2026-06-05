@@ -192,9 +192,7 @@ export function convertToCSV(data: any): string {
 
   const rows = [headers.map(escapeCsvField).join(',')];
   for (const config of configs) {
-    const row = headers.map((header) =>
-      escapeCsvField(encodeCsvValue((config ?? {})[header]))
-    );
+    const row = headers.map((header) => escapeCsvField(encodeCsvValue((config ?? {})[header])));
     rows.push(row.join(','));
   }
 
@@ -388,7 +386,8 @@ function parseBlock(lines: YamlLine[], start: number, end: number): unknown {
         childLines.push(lines[k]);
         k++;
       }
-      obj[String(key)] = childLines.length > 0 ? parseBlock(childLines, 0, childLines.length) : null;
+      obj[String(key)] =
+        childLines.length > 0 ? parseBlock(childLines, 0, childLines.length) : null;
       j = k;
     }
   }

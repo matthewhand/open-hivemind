@@ -1,5 +1,5 @@
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import Database, { type Database as BetterSqliteDatabase } from 'better-sqlite3';
 import Debug from 'debug';
 import databaseConfig from '@config/databaseConfig';

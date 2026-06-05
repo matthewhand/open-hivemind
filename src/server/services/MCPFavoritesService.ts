@@ -133,7 +133,9 @@ export class MCPFavoritesService {
    * unchanged, so the WebUI can persist just the slice that changed.
    * Saves immediately (awaitable) so callers/tests can rely on durability.
    */
-  public async setAll(patch: Partial<Omit<MCPFavoritesData, 'lastUpdated'>>): Promise<MCPFavoritesData> {
+  public async setAll(
+    patch: Partial<Omit<MCPFavoritesData, 'lastUpdated'>>
+  ): Promise<MCPFavoritesData> {
     if (Array.isArray(patch.favorites)) {
       // De-duplicate while preserving insertion order.
       this.data.favorites = Array.from(new Set(patch.favorites));

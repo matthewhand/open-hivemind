@@ -4,8 +4,8 @@ import { UserConfigStore } from '@src/config/UserConfigStore';
 import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import {
-  ProviderMetricsCollector,
   normalizeMessageProviderType,
+  ProviderMetricsCollector,
 } from '@src/monitoring/ProviderMetricsCollector';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import type { ContentFilterConfig } from '@src/types/config';

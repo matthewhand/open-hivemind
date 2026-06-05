@@ -229,10 +229,7 @@ export class MemoryRepository {
       if (sets.length === 0) return false;
 
       params.push(id);
-      const result = await db.run(
-        `UPDATE memories SET ${sets.join(', ')} WHERE id = ?`,
-        params
-      );
+      const result = await db.run(`UPDATE memories SET ${sets.join(', ')} WHERE id = ?`, params);
       return (result.changes ?? 0) > 0;
     } catch (error) {
       debug('Error updating memory:', error);
@@ -356,10 +353,10 @@ export class MemoryRepository {
           [...params, maxCount as number]
         );
         if (cutoffRow && cutoffRow.id != null) {
-          const result = await db.run(
-            `DELETE FROM memories WHERE id <= ?${clause}`,
-            [cutoffRow.id, ...params]
-          );
+          const result = await db.run(`DELETE FROM memories WHERE id <= ?${clause}`, [
+            cutoffRow.id,
+            ...params,
+          ]);
           deleted += result.changes ?? 0;
         }
       }

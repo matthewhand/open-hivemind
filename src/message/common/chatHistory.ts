@@ -75,11 +75,7 @@ export class ChatHistory {
     const threshold = Date.now() - cutoffTime;
     const initialLength = this.history.length;
 
-    this.history = takeWithinWindow(
-      this.history,
-      (msg) => msg.getTimestamp().getTime(),
-      threshold
-    );
+    this.history = takeWithinWindow(this.history, (msg) => msg.getTimestamp().getTime(), threshold);
 
     const clearedMessages = initialLength - this.history.length;
     logger.debug('Old messages cleared', {

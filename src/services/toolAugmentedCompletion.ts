@@ -146,11 +146,7 @@ async function callLLMWithTools(
   // Preferred path: route through the provider abstraction when supported.
   if (typeof llmProvider.generateChatCompletionWithTools === 'function') {
     try {
-      const result = await llmProvider.generateChatCompletionWithTools(
-        messages,
-        tools,
-        metadata
-      );
+      const result = await llmProvider.generateChatCompletionWithTools(messages, tools, metadata);
       return {
         role: 'assistant',
         content: result.content ?? null,

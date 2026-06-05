@@ -22,8 +22,8 @@ import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents, ReplyDecision } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { type ActivityRecorder, DefaultActivityRecorder } from './ActivityRecorder';
 import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
+import { DefaultActivityRecorder, type ActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:decision');
 
@@ -145,7 +145,6 @@ export class DecisionStage {
           ctx = await debuggerService.pause('validated', ctx);
           debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
         }
-
       } catch {
         // Ignore DI errors
       }

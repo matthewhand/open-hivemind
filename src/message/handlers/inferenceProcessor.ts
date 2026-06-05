@@ -1,10 +1,10 @@
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
+import {
+  normalizeLlmProviderType,
+  ProviderMetricsCollector,
+} from '@src/monitoring/ProviderMetricsCollector';
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
-import {
-  ProviderMetricsCollector,
-  normalizeLlmProviderType,
-} from '@src/monitoring/ProviderMetricsCollector';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
@@ -195,7 +195,10 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
 function recordLlmMetric(
   provider: ReturnType<typeof normalizeLlmProviderType>,
   latencyMs: number,
-  usage: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number } | null | undefined,
+  usage:
+    | { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number }
+    | null
+    | undefined,
   success: boolean
 ): void {
   if (!provider) return;

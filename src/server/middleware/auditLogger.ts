@@ -97,7 +97,13 @@ const defaultAuditEventStore: AuditEventStore = {
       const { DatabaseManager } = require('@src/database/DatabaseManager');
       return await DatabaseManager.getInstance().getAuditEventStats(startTime, endTime);
     } catch {
-      return { total: 0, byAction: {}, byResource: {}, byStatus: { success: 0, failure: 0 }, failureRate: 0 };
+      return {
+        total: 0,
+        byAction: {},
+        byResource: {},
+        byStatus: { success: 0, failure: 0 },
+        failureRate: 0,
+      };
     }
   },
   async getRecent(limit: number): Promise<AuditLogEntry[]> {

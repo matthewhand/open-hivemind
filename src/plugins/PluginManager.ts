@@ -3,9 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
-import { executeCommandSafe } from '../utils/utils';
 import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { isSafeUrl } from '../utils/ssrfGuard';
+import { executeCommandSafe } from '../utils/utils';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,

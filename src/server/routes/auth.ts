@@ -2,8 +2,8 @@ import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { verifyToken as verifyTotpToken } from '../../auth/TotpService';
 import { SessionManager } from '../../auth/SessionManager';
+import { verifyToken as verifyTotpToken } from '../../auth/TotpService';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
@@ -335,7 +335,6 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-
     } catch {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)

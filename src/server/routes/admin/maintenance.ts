@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
+import { AuthManager } from '../../../auth/AuthManager';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
-import { AuthManager } from '../../../auth/AuthManager';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MCPService } from '../../../mcp/MCPService';
 import { webUIStorage } from '../../../storage/webUIStorage';

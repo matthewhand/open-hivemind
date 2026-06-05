@@ -125,8 +125,7 @@ router.get(
 
     const stats = await dbManager.getStats();
 
-    const timeRangeStart =
-      startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const timeRangeStart = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const timeRangeEnd = endDate || new Date().toISOString();
 
     // Derive response-time, error-rate, per-agent and per-LLM-provider metrics
@@ -148,8 +147,7 @@ router.get(
         messagesByAgent[event.botName] = (messagesByAgent[event.botName] || 0) + 1;
       }
       if (event.llmProvider) {
-        llmUsageByProvider[event.llmProvider] =
-          (llmUsageByProvider[event.llmProvider] || 0) + 1;
+        llmUsageByProvider[event.llmProvider] = (llmUsageByProvider[event.llmProvider] || 0) + 1;
       }
       if (typeof event.processingTime === 'number') {
         processingTimeTotal += event.processingTime;
@@ -161,9 +159,7 @@ router.get(
     }
 
     const averageResponseTime =
-      processingTimeSamples > 0
-        ? Math.round(processingTimeTotal / processingTimeSamples)
-        : 0;
+      processingTimeSamples > 0 ? Math.round(processingTimeTotal / processingTimeSamples) : 0;
     const errorRate = events.length > 0 ? errorCount / events.length : 0;
 
     const summary: ActivitySummary = {

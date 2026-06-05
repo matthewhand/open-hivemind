@@ -87,9 +87,7 @@ export class ConversationSummaryService {
     }
 
     // getMessages returns newest-first; render oldest-first for readability.
-    const chronological = [...recent].sort(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-    );
+    const chronological = [...recent].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     const transcript = chronological
       .map((m) => `${m.authorName || m.authorId}: ${m.content}`)

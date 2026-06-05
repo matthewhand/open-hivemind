@@ -18,13 +18,12 @@
 import type { MessageBus } from '@src/events/MessageBus';
 import {
   ActivityRecorder,
+  attachTraceExporters,
   BusinessKpiRecorder,
   PipelineTracer,
-  attachTraceExporters,
   setActiveTracer,
 } from '@src/observability';
-import { ActivityLogger } from '@src/server/services/ActivityLogger';
-import { WebSocketService } from '@src/server/services/WebSocketService';
+import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import {
   DecisionStrategyAdapter,
   LlmInvokerAdapter,
@@ -33,12 +32,13 @@ import {
   MessageSenderAdapter,
   PromptBuilderAdapter,
 } from '@src/pipeline/adapters';
-import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage } from '@src/pipeline/DecisionStage';
 import { EnrichStage } from '@src/pipeline/EnrichStage';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
 import { ReceiveStage } from '@src/pipeline/ReceiveStage';
 import { SendStage } from '@src/pipeline/SendStage';
+import { ActivityLogger } from '@src/server/services/ActivityLogger';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 // ---------------------------------------------------------------------------

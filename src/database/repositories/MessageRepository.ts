@@ -266,18 +266,15 @@ export class MessageRepository {
           averageResponseTime, lastActivity, provider, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `;
-      await db.run(
-        sql,
-        [
-          metrics.botName,
-          metrics.messagesSent,
-          metrics.messagesReceived,
-          metrics.conversationsHandled,
-          metrics.averageResponseTime,
-          metrics.lastActivity.toISOString(),
-          metrics.provider,
-        ]
-      );
+      await db.run(sql, [
+        metrics.botName,
+        metrics.messagesSent,
+        metrics.messagesReceived,
+        metrics.conversationsHandled,
+        metrics.averageResponseTime,
+        metrics.lastActivity.toISOString(),
+        metrics.provider,
+      ]);
 
       debug(`Bot metrics updated for: ${metrics.botName}`);
     } catch (error) {

@@ -9,6 +9,7 @@ import debug from 'debug';
 import { loadLlmProfiles } from '@src/config/llmProfiles';
 import { loadMemoryProfiles } from '@src/config/memoryProfiles';
 import { loadToolProfiles } from '@src/config/toolProfiles';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
@@ -29,7 +30,6 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
-import { UserConfigStore } from '@src/config/UserConfigStore';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
 import { reloadGlobalConfigs } from './routes/config';
@@ -382,9 +382,8 @@ export async function initServices(
   // starting it feeds it the relevant signals. Skip in test runs to avoid
   // leaking timers. Results are exposed via GET /api/monitoring/anomalies.
   if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_INTEGRATION_ANOMALY !== 'true') {
-    const { IntegrationAnomalyDetector } = await import(
-      '@src/monitoring/IntegrationAnomalyDetector'
-    );
+    const { IntegrationAnomalyDetector } =
+      await import('@src/monitoring/IntegrationAnomalyDetector');
     const integrationDetector = IntegrationAnomalyDetector.getInstance();
     integrationDetector.startDetection();
     shutdownCoordinator.registerService({
