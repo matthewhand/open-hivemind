@@ -25,6 +25,7 @@ const CONFIG_DIR = path.join(process.cwd(), 'config');
 const PROFILES_FILE = path.join(CONFIG_DIR, 'mcp-server-profiles.json');
 
 let profilesCache: McpServerProfile[] | null = null;
+let profilesMap: Map<string, McpServerProfile> | null = null;
 
 function ensureConfigDir(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
@@ -49,6 +50,7 @@ function loadProfiles(): McpServerProfile[] {
     profilesCache = [];
   }
 
+  profilesMap = new Map(profilesCache.map(p => [p.key, p]));
   return profilesCache;
 }
 
@@ -57,6 +59,7 @@ function saveProfiles(profiles: McpServerProfile[]): void {
   const data: McpServerProfilesData = { profiles };
   fs.writeFileSync(PROFILES_FILE, JSON.stringify(data, null, 2), 'utf-8');
   profilesCache = profiles;
+  profilesMap = new Map(profiles.map(p => [p.key, p]));
   debug(`Saved ${profiles.length} MCP server profiles`);
 }
 
@@ -65,15 +68,18 @@ export function getMcpServerProfiles(): McpServerProfile[] {
 }
 
 export function getMcpServerProfileByKey(key: string): McpServerProfile | undefined {
-  return loadProfiles().find(p => p.key === key);
+  loadProfiles();
+  return profilesMap?.get(key);
 }
 
 export function createMcpServerProfile(profile: McpServerProfile): McpServerProfile {
-  const profiles = loadProfiles();
+  loadProfiles();
 
-  if (profiles.some(p => p.key === profile.key)) {
+  if (profilesMap?.has(profile.key)) {
     throw new Error(`Profile with key "${profile.key}" already exists`);
   }
+
+  const profiles = profilesCache!;
 
   const newProfile: McpServerProfile = {
     key: profile.key.trim().toLowerCase().replace(/\s+/g, '-'),
@@ -88,12 +94,13 @@ export function createMcpServerProfile(profile: McpServerProfile): McpServerProf
 }
 
 export function updateMcpServerProfile(key: string, updates: Partial<McpServerProfile>): McpServerProfile | null {
-  const profiles = loadProfiles();
+  loadProfiles();
+  const existing = profilesMap?.get(key);
+
+  if (!existing) {return null;}
+
+  const profiles = profilesCache!;
   const index = profiles.findIndex(p => p.key === key);
-
-  if (index === -1) {return null;}
-
-  const existing = profiles[index];
   const updated: McpServerProfile = {
     ...existing,
     name: updates.name?.trim() || existing.name,
@@ -107,11 +114,12 @@ export function updateMcpServerProfile(key: string, updates: Partial<McpServerPr
 }
 
 export function deleteMcpServerProfile(key: string): boolean {
-  const profiles = loadProfiles();
-  const index = profiles.findIndex(p => p.key === key);
+  loadProfiles();
+  const index = profilesCache!.findIndex(p => p.key === key);
 
   if (index === -1) {return false;}
 
+  const profiles = profilesCache!;
   profiles.splice(index, 1);
   saveProfiles(profiles);
   return true;
@@ -119,5 +127,6 @@ export function deleteMcpServerProfile(key: string): boolean {
 
 export function reloadMcpServerProfiles(): void {
   profilesCache = null;
+  profilesMap = null;
   loadProfiles();
 }
