@@ -93,13 +93,13 @@ const Drawer: React.FC<DrawerProps> = ({
   const renderNavItem = (item: DrawerNavItem, depth = 0) => {
     if (item.divider) {
       return (
-        <div key={item.id} className="pt-4 pb-2 px-4 mt-2">
+        <li key={item.id} className="pt-4 pb-2 px-4 mt-2 list-none">
           {item.label && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
+            <span className="text-xs font-semibold uppercase tracking-wider text-base-content/80">
               {item.label}
             </span>
           )}
-        </div>
+        </li>
       );
     }
 
@@ -178,7 +178,7 @@ const Drawer: React.FC<DrawerProps> = ({
         </div>
         <div>
           <div className="font-semibold text-base">Hivemind</div>
-          <div className="text-xs text-base-content/60">
+          <div className="text-xs text-base-content/80">
             Admin Dashboard
           </div>
         </div>
@@ -195,7 +195,7 @@ const Drawer: React.FC<DrawerProps> = ({
       </nav>
 
       {/* Footer */}
-      <div className="py-3 px-4 border-t border-base-content/10 text-xs text-base-content/60 flex items-center justify-between">
+      <div className="py-3 px-4 border-t border-base-content/10 text-xs text-base-content/80 flex items-center justify-between">
         <span>v1.0.0</span>
 
         {/* Theme Toggle */}
@@ -215,7 +215,7 @@ const Drawer: React.FC<DrawerProps> = ({
           <span className="text-xs">Theme</span>
         </button>
 
-        <span className="flex items-center gap-1.5 text-success" role="status" aria-label="Connection status: Online">
+        <span className="flex items-center gap-1.5 font-medium" role="status" aria-label="Connection status: Online">
           <span className="w-1.5 h-1.5 bg-success rounded-full" aria-hidden="true"></span>
           Online
         </span>

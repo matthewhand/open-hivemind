@@ -933,6 +933,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('all')}
               onChange={() => toggleEventType('all')}
+              aria-label="Show all event types"
             />
             <span className="text-base-content/70">All</span>
           </label>
@@ -941,6 +942,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('incoming') || eventTypes.has('all')}
               onChange={() => toggleEventType('incoming')}
+              aria-label="Show incoming events"
             />
             <Badge variant="primary" size="xs">📥 Incoming</Badge>
           </label>
@@ -948,6 +950,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('outgoing') || eventTypes.has('all')}
               onChange={() => toggleEventType('outgoing')}
+              aria-label="Show outgoing events"
             />
             <Badge variant="secondary" size="xs">📤 Outgoing</Badge>
           </label>
@@ -955,6 +958,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('timeout') || eventTypes.has('all')}
               onChange={() => toggleEventType('timeout')}
+              aria-label="Show timeout events"
             />
             <Badge variant="warning" size="xs">⏱️ Timeout</Badge>
           </label>
@@ -962,6 +966,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('error') || eventTypes.has('all')}
               onChange={() => toggleEventType('error')}
+              aria-label="Show error events"
             />
             <Badge variant="error" size="xs">❌ Error</Badge>
           </label>

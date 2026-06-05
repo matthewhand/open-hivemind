@@ -7,7 +7,7 @@ const APP_VERSION = '1.0.0';
 
 const AppFooter: React.FC = () => {
   return (
-    <Footer center className="py-4 px-6 text-base-content/50 text-xs border-t border-base-content/5">
+    <Footer center className="py-4 px-6 text-base-content/80 text-xs border-t border-base-content/5">
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
         <span>Powered by Open Hivemind v{APP_VERSION}</span>
         <span className="hidden sm:inline opacity-30">|</span>
