@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -35,8 +36,9 @@ export default defineConfig({
       '@src': './src',
       '@config': '../config',
       '@webui': './webui/src',
-      // shared-types has no built dist; resolve it to source for vite/frontend
-      '@hivemind/shared-types': '../../packages/shared-types/src/index.ts',
+      // shared-types has no built dist; point to the src directory so Vite
+      // resolves it via TypeScript rather than pre-bundling through esbuild.
+      '@hivemind/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
     },
   },
   build: {
@@ -57,7 +59,7 @@ export default defineConfig({
     include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
     // onnxruntime-web ships its own WASM bundles and breaks if Vite tries to
     // pre-bundle it. See Supertonic's own web/vite.config.js for the same advice.
-    exclude: ['onnxruntime-web'],
+    exclude: ['onnxruntime-web', '@hivemind/shared-types'],
   },
   // @ts-expect-error - Vitest config
   test: {

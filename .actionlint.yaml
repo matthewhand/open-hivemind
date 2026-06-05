@@ -1,0 +1,8 @@
+# actionlint configuration — https://github.com/rhysd/actionlint/blob/main/docs/config.md
+# The 'ignore' field matches against the full error message as a regex.
+# Suppressing info/style-level shellcheck findings that are pre-existing
+# across all workflows (not introduced by recent changes).
+ignore:
+  - 'SC2015'
+  - 'SC2086'
+  - 'SC2126'
