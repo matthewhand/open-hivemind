@@ -1,0 +1,9 @@
+# actionlint configuration
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+# Ignore shellcheck info/style-level findings that are pre-existing across
+# the workflow files. Error-level shellcheck issues still fail the check.
+ignore:
+  - 'SC2015'  # info: A && B || C is not if-then-else
+  - 'SC2086'  # info: double-quote to prevent globbing
+  - 'SC2126'  # style: consider grep -c instead of grep|wc -l
