@@ -292,7 +292,7 @@ const EventStream: React.FC<EventStreamProps> = ({
           className="space-y-2 max-h-96 overflow-y-auto bg-base-200 rounded-lg p-4"
         >
           {filteredEvents.length === 0 ? (
-            <div className="text-center py-8 text-neutral-content/50">
+            <div className="text-center py-8 text-base-content/80">
               <div className="text-4xl mb-2">📡</div>
               <p>No events to display</p>
               {isPaused && <p className="text-sm mt-2">Stream is paused</p>}
@@ -314,8 +314,8 @@ const EventStream: React.FC<EventStreamProps> = ({
                       {event.level}
                     </span>
                   </div>
-                  <p className="text-xs text-neutral-content/80 mb-1">{event.message}</p>
-                  <div className="flex items-center gap-2 text-xs text-neutral-content/60">
+                  <p className="text-xs text-base-content/80 mb-1">{event.message}</p>
+                  <div className="flex items-center gap-2 text-xs text-base-content/80">
                     <span>{event.source}</span>
                     <span>•</span>
                     <span>{formatTimestamp(event.timestamp)}</span>
@@ -328,7 +328,7 @@ const EventStream: React.FC<EventStreamProps> = ({
         </div>
 
         {events.length > 0 && (
-          <div className="mt-4 flex justify-between items-center text-xs text-neutral-content/60">
+          <div className="mt-4 flex justify-between items-center text-xs text-base-content/80">
             <span>Showing {filteredEvents.length} of {events.length} events</span>
             {isPaused && <span className="text-warning">Stream paused</span>}
           </div>

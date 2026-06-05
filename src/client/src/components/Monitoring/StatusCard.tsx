@@ -119,7 +119,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
             <div>
               <h2 className={`card-title ${compact ? 'text-lg' : 'text-xl'}`}>{title}</h2>
               {subtitle && (
-                <p className="text-sm text-neutral-content/70">{subtitle}</p>
+                <p className="text-sm text-base-content/80">{subtitle}</p>
               )}
             </div>
           </div>
@@ -138,14 +138,14 @@ const StatusCard: React.FC<StatusCardProps> = ({
             <div key={index} className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 {metric.icon && <span className="text-lg">{metric.icon}</span>}
-                <span className="text-sm text-neutral-content/80">{metric.label}</span>
+                <span className="text-sm text-base-content/80">{metric.label}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`font-semibold ${compact ? 'text-base' : 'text-lg'}`}>
                   {metric.value}
                 </span>
                 {metric.unit && (
-                  <span className="text-xs text-neutral-content/70">{metric.unit}</span>
+                  <span className="text-xs text-base-content/80">{metric.unit}</span>
                 )}
                 {metric.trend && (
                   <div className="flex items-center gap-1">

@@ -234,7 +234,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false
                     className={`text-3xl font-bold ${getStatColor(stat.color)}`}
                   />
                 ) : (
-                  <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
+                  <p className={`text-3xl font-bold ${getStatColor(stat.color)} ${getIconBg(stat.color)} inline-block px-3 py-0.5 rounded-lg`}>
                     {stat.value}
                   </p>
                 )}

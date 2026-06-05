@@ -261,7 +261,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
 
         {alerts.length > 0 && (
           <div className="mt-4 flex justify-between items-center">
-            <span className="text-sm text-neutral-content/70">
+            <span className="text-sm text-base-content/80">
               Showing {filteredAlerts.length} of {alerts.length} alerts
             </span>
             <button
