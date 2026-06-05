@@ -23,7 +23,7 @@ export function redactProviderConfig<T extends Record<string, unknown> | undefin
   if (!config || typeof config !== 'object') return config;
   const out: Record<string, unknown> = { ...(config as Record<string, unknown>) };
   for (const key of SECRET_KEYS) {
-    if (key in out && out[key] != null && out[key] !== '') {
+    if (key in out && out[key] !== null && out[key] !== undefined && out[key] !== '') {
       out[key] = redactValue(out[key]);
     }
   }

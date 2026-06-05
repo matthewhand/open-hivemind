@@ -17,7 +17,9 @@ const router = Router();
 // GET /messenger-providers - Get all messenger providers
 router.get('/messenger-providers', async (req: Request, res: Response) => {
   try {
-    const providers = (await webUIStorage.getMessengerProviders()).map(redactProvider);
+    const providers = (await webUIStorage.getMessengerProviders()).map((p: any) =>
+      redactProvider(p)
+    );
     return res.json({
       success: true,
       data: { providers },
