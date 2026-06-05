@@ -87,7 +87,7 @@ export class DatabaseMaintenanceService {
     if (!dbManager.isConnected()) return;
 
     try {
-      // @ts-ignore - accessing internal db for a raw ping
+      // @ts-expect-error TS2341: DatabaseManager.db is private; accessed here for a raw keep-alive ping without a public API
       const db = dbManager.db;
       if (db) {
         await db.get('SELECT 1');

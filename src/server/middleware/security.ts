@@ -56,7 +56,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   //   - src/common/security/inputSanitizer.ts
   let cspDirectives: string[];
 
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http://localhost:* https://localhost:*",

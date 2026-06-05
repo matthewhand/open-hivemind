@@ -36,7 +36,6 @@ const SystemSettings: React.FC = () => {
   // Read via try/catch so non-Vite test runtimes don't blow up.
   let experimentalEnabled = false;
   try {
-    // @ts-expect-error import.meta is Vite-only
     experimentalEnabled = import.meta.env?.VITE_ENABLE_EXPERIMENTAL === 'true';
   } catch { /* default false */ }
 

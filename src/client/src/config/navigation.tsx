@@ -192,7 +192,6 @@ export const hivemindNavItems: NavItem[] = [
 const experimentalEnabled = (): boolean => {
   // Vite exposes import.meta.env.* at build time. Guard for non-Vite runtimes (tests).
   try {
-    // @ts-expect-error import.meta is present in Vite/ESM
     return import.meta.env?.VITE_ENABLE_EXPERIMENTAL === 'true';
   } catch {
     return false;

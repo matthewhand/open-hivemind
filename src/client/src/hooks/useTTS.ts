@@ -151,7 +151,6 @@ export function useTTS(): UseTTSReturn {
     try {
       const eng = getSupertonicEngine();
       const baseUrl =
-        // @ts-expect-error import.meta is Vite-only
         (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TTS_MODEL_BASE_URL) || '/tts';
       await eng.init({ baseUrl, onProgress: handleProgress });
       setEngineStatus('ready');
