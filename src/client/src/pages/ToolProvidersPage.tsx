@@ -199,7 +199,7 @@ const ToolProvidersPage: React.FC = () => {
                     <div>
                       <h2 className="font-bold text-lg flex items-center gap-2">
                         {profile.name}
-                        <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
+                        <span className="text-xs font-normal opacity-80 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h2>
                       <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
                     </div>

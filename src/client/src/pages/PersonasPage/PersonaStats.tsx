@@ -56,7 +56,7 @@ export const PersonaStats: React.FC<PersonaStatsProps> = ({ personas }) => {
         <Stat
           key={stat.id}
           className="bg-base-100 shadow rounded-box"
-          title={<span className="text-xs font-bold uppercase opacity-50">{stat.title}</span>}
+          title={<span className="text-xs font-bold uppercase opacity-80">{stat.title}</span>}
           value={stat.value}
           valueClassName={colorTextClass[stat.color] ?? ''}
           figure={stat.icon}

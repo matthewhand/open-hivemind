@@ -1495,3 +1495,16 @@ body.robot-ui-enabled .btn-accent {
 .fab-mobile-right {
   right: calc(1.5rem * var(--density-scale, 1));
 }
+
+/* ============================================
+   Accessibility: WCAG 2.0 AA contrast adjustments
+   ============================================ */
+
+/* DaisyUI defaults inactive `.tab` text to opacity-50, which fails
+ * AA contrast on light themes. Raise to 0.75 — still visually
+ * de-emphasised vs the active tab but readable for screen readers
+ * relying on visible text + sighted users on low-contrast displays. */
+.tabs > .tab:not(.tab-active):not(.tab-disabled),
+.tab:not(.tab-active):not(.tab-disabled) {
+  opacity: 0.85;
+}

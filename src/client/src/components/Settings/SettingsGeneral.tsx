@@ -345,7 +345,7 @@ const SettingsGeneral: React.FC = () => {
               }}
               size="sm"
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               When enabled, shows the Getting Started tab on the Overview page with setup guides and tips.
             </p>
           </div>
@@ -374,7 +374,7 @@ const SettingsGeneral: React.FC = () => {
               data-testid="settings-density-select"
             />
           </FormField>
-          <p className="text-xs text-base-content/50 pl-1 -mt-2 mb-3">
+          <p className="text-xs text-base-content/80 pl-1 -mt-2 mb-3">
             {densityDescription}
           </p>
 
@@ -388,7 +388,7 @@ const SettingsGeneral: React.FC = () => {
               size="sm"
               data-testid="settings-compact-density-toggle"
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               Further tightens spacing on top of the selected density. Useful for
               power users who want maximum information per screen.
             </p>
@@ -534,7 +534,7 @@ const SettingsGeneral: React.FC = () => {
                 />
               )}
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               When enabled, the system will be in maintenance mode. New messages will not be processed.
             </p>
           </div>

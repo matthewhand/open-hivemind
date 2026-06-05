@@ -435,7 +435,7 @@ const Dashboard: React.FC = () => {
             <h1 className="text-4xl font-black tracking-tight text-base-content mb-1">
                Hivemind Dashboard
             </h1>
-            <p className="text-sm opacity-50 uppercase tracking-widest font-bold">
+            <p className="text-sm opacity-80 uppercase tracking-widest font-bold">
                Autonomous Multi-Agent System
             </p>
          </div>

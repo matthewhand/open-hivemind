@@ -276,7 +276,7 @@ const ResponseProfilesPage: React.FC = () => {
                     <h2 className="font-bold text-lg flex items-center gap-2">
                       {profile.name}
                       {profile.isBuiltIn && <Badge variant="secondary" size="xs">Built-in</Badge>}
-                      <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
+                      <span className="text-xs font-normal opacity-80 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-sm opacity-60">{profile.description || 'No description provided'}</p>

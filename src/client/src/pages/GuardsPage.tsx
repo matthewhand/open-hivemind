@@ -630,7 +630,7 @@ const GuardsPage: React.FC = () => {
                         <span className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
                         </span>
-                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
+                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error' : 'badge-ghost'}`}>
                           {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
                         </div>
                       </div>

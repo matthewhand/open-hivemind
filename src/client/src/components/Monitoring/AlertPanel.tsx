@@ -184,7 +184,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
 
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {filteredAlerts.length === 0 ? (
-            <div className="text-center py-8 text-neutral-content/50">
+            <div className="text-center py-8 text-base-content/80">
               <div className="text-4xl mb-2">🔔</div>
               <p>No alerts found</p>
             </div>
