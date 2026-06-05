@@ -3,8 +3,8 @@ import type {
   LlmChatMessage,
   LlmToolCompletionResult,
   LlmToolDefinition,
-} from '@src/llm/interfaces/ILlmProvider';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+} from '@hivemind/shared-types';
+import type { IMessage } from '@hivemind/shared-types';
 
 // --- Mock ToolManager so the tool loop is fully controllable -----------------
 

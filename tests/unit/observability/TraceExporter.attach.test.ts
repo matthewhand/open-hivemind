@@ -20,7 +20,7 @@ import { PipelineTracer } from '../../../src/observability/PipelineTracer';
 import type { Trace } from '../../../src/observability/PipelineTracer';
 import { MessageBus } from '../../../src/events/MessageBus';
 import type { MessageContext, MessageEvents } from '../../../src/events/types';
-import type { IMessage } from '../../../src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 function makeMessage(): IMessage {
   return {

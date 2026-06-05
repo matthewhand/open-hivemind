@@ -15,9 +15,9 @@
 
 import Debug from 'debug';
 import { container } from 'tsyringe';
+import type { IMessage } from '@hivemind/shared-types';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { PanicModeService } from '../server/services/PanicModeService';
 
 const debug = Debug('app:pipeline:receive');

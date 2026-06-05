@@ -1,11 +1,11 @@
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import AdaptiveHistoryTuner from '../helpers/processing/AdaptiveHistoryTuner';

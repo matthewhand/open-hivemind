@@ -1,4 +1,4 @@
-import type { IMessage } from './IMessage';
+import { type IMessage } from '@hivemind/shared-types';
 
 /**
  * Interface for low-level message transport providers.

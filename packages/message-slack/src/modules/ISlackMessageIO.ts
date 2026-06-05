@@ -1,9 +1,9 @@
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import type { KnownBlock } from '@slack/web-api';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
-import type { IMessage } from '@message/interfaces/IMessage';
 import type { SlackBotManager } from '../SlackBotManager';
 import SlackMessage from '../SlackMessage';
 

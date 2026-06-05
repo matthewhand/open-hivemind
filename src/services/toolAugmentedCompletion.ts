@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { ILlmProvider } from '../llm/interfaces/ILlmProvider';
-import type { IMessage } from '../message/interfaces/IMessage';
+import type { ILlmProvider, IMessage } from '@hivemind/shared-types';
 import { ToolManager, type OpenAITool, type ToolResult } from './ToolManager';
 
 const debug = Debug('app:toolAugmentedCompletion');

@@ -13,7 +13,7 @@
 
 import Debug from 'debug';
 import express from 'express';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessengerService } from '@hivemind/shared-types';
 
 const log = Debug('app:webhookService');
 

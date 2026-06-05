@@ -1,4 +1,4 @@
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import { Logger } from '@common/logger';
 import DiscordMessage from '../DiscordMessage';
 import { Discord } from '../DiscordService';

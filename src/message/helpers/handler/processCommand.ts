@@ -1,6 +1,6 @@
 import Debug from 'debug'; // ✅ Added missing import
 
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import { handleStatusCommand } from '../commands/statusCommand';
 
 const debug = Debug('app:processCommand'); // ✅ Initialize Debug instance

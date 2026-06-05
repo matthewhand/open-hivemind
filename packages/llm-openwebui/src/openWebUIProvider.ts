@@ -1,7 +1,5 @@
 import Debug from 'debug';
-import { http, isHttpError } from '@hivemind/shared-types';
-import type { IMessage } from '@src/message/interfaces/IMessage';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { http, isHttpError, type ILlmProvider, type IMessage } from '@hivemind/shared-types';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 

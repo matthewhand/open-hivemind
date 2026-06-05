@@ -16,8 +16,8 @@
 import { MessageBus } from '@src/events/MessageBus';
 import { createPipeline } from '@src/pipeline/createPipeline';
 import { ReceiveStage } from '@src/pipeline/ReceiveStage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@hivemind/shared-types';
+import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stubs

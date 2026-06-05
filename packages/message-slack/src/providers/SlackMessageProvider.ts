@@ -1,4 +1,4 @@
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 import { Logger } from '@common/logger';
 import { SlackService } from '../SlackService';

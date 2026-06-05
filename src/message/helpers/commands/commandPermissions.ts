@@ -1,4 +1,4 @@
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 export interface PermissionConfig {
   authorizedUsers?: string[];

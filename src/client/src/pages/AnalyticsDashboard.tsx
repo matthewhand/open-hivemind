@@ -12,8 +12,26 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { 
   BarChart3, RefreshCw, MessageSquare, Users, Bot, 
-  Activity, Clock, ArrowDown, ArrowUp, CheckCircle2, XCircle 
+  Activity, Clock, ArrowDown, ArrowUp, CheckCircle2, XCircle,
+  AlertOctagon, TrendingUp, ExternalLink
 } from 'lucide-react';
+import Indicator from '../components/DaisyUI/Indicator';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+
+interface Anomaly {
+  id: string;
+  timestamp: string;
+  metric: string;
+  value: number;
+  expectedMean: number;
+  standardDeviation: number;
+  zScore: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  explanation: string;
+  resolved: boolean;
+  traceId?: string;
+}
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -21,6 +39,7 @@ const AnalyticsDashboard: React.FC = () => {
   const [costData, setCostData] = useState<{ date: string, cost: number }[]>([]);
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const errorToast = useErrorToast();
 
   // Filter message flow for valid timestamps
@@ -45,6 +64,11 @@ const AnalyticsDashboard: React.FC = () => {
 
       setActivityData(activity);
       setCostData(costs.data?.daily || []);
+      
+      const anomalyResponse = await apiService.getAnomalies();
+      if (anomalyResponse.success) {
+        setAnomalies(anomalyResponse.data.anomalies || []);
+      }
     } catch (_error) {
       errorToast('Analytics Error', 'Failed to fetch analytics data');
     } finally {
@@ -293,6 +317,51 @@ const AnalyticsDashboard: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* Anomalies List */}
+      <Card className="mt-8">
+        <Card.Title tag="h3" className="flex items-center gap-2">
+          <AlertOctagon className="w-5 h-5 text-error" /> Detected Anomalies
+        </Card.Title>
+        {anomalies.length === 0 ? (
+          <div className="py-12 text-center">
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-4 opacity-20" />
+            <p className="text-base-content/50">No system anomalies detected in the current window.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {anomalies.map(anomaly => (
+              <div 
+                key={anomaly.id}
+                className="relative p-4 rounded-xl border border-base-300 bg-base-100 hover:border-primary/30 transition-colors"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant={anomaly.severity === 'critical' || anomaly.severity === 'high' ? 'error' : 'warning'} size="xs">
+                    {anomaly.severity.toUpperCase()}
+                  </Badge>
+                  <span className="text-[10px] opacity-40 font-mono">{new Date(anomaly.timestamp).toLocaleString()}</span>
+                </div>
+                
+                <div className="mb-3">
+                  <p className="text-sm font-bold">{anomaly.metric} Spike</p>
+                  <p className="text-xs opacity-70">{anomaly.explanation}</p>
+                </div>
+
+                {anomaly.traceId && (
+                  <Button 
+                    variant="primary" 
+                    size="xs" 
+                    className="gap-1"
+                    onClick={() => (window as any).location.href = `/admin/monitoring?trace=${anomaly.traceId}`}
+                  >
+                    <ExternalLink className="w-3 h-3" /> Trace
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 };

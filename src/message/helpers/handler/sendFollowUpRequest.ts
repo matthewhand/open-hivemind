@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import discordConfig from '@config/discordConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 const debug = Debug('app:sendFollowUpRequest');

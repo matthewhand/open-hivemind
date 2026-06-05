@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import { http } from '@hivemind/shared-types';
-import type { IMessage } from '@message/interfaces/IMessage';
+import { http, type IMessage } from '@hivemind/shared-types';
 
 const debug = Debug('app:openWebUI:direct');
 

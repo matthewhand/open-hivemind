@@ -1,7 +1,7 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { Collection, TextChannel, type GuildMember, type Message, type User } from 'discord.js';
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 const debug = Debug('app:DiscordMessage');
 

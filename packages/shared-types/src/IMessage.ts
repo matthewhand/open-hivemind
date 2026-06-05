@@ -1,17 +1,3 @@
-/**
- * Abstract base class representing a message in the messaging system.
- *
- * This class provides a common interface for messages across different platforms
- * (Discord, Slack, etc.) and message types (user messages, bot responses, system messages).
- *
- * @abstract
- * @example
- * ```typescript
- * class DiscordMessage extends IMessage {
- *   // Implementation for Discord-specific messages
- * }
- * ```
- */
 export abstract class IMessage {
   /**
    * The text content of the message.
@@ -35,14 +21,14 @@ export abstract class IMessage {
 
   /**
    * The role of the message sender.
-   * Common values: "user", "assistant", "system", "tool"
+   * Common values: \"user\", \"assistant\", \"system\", \"tool\"
    * @type {string}
    */
   public role: string;
 
   /**
    * The platform this message originated from.
-   * Common values: "discord", "slack", "telegram", "mattermost"
+   * Common values: \"discord\", \"slack\", \"telegram\", \"mattermost\"
    * @type {string}
    */
   public platform: string = '';
@@ -56,7 +42,7 @@ export abstract class IMessage {
   public metadata?: any;
 
   /**
-   * Required for "tool" role messages.
+   * Required for \"tool\" role messages.
    * Links this message to a specific tool call ID.
    * @type {string}
    * @optional
@@ -64,7 +50,7 @@ export abstract class IMessage {
   public tool_call_id?: string;
 
   /**
-   * Optional for "assistant" role messages.
+   * Optional for \"assistant\" role messages.
    * Contains tool invocation requests made by the assistant.
    * @type {any[]}
    * @optional
@@ -104,7 +90,7 @@ export abstract class IMessage {
   /**
    * Retrieves the text content or tool response content of the message.
    *
-   * For "tool" role messages, returns the content field.
+   * For \"tool\" role messages, returns the content field.
    * Implementations may override this method for custom behavior.
    *
    * @returns {string} The text content of the message

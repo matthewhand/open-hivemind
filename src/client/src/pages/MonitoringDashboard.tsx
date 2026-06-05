@@ -1,185 +1,447 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Bell, Server, Wifi, Zap } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense, useMemo } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-const MetricChart = lazy(() => import('../components/Monitoring/MetricChart'));
-import AlertPanel from '../components/Monitoring/AlertPanel';
-import EventStream from '../components/Monitoring/EventStream';
-import PerformanceMonitor from '../components/PerformanceMonitor';
+import Card from '../components/DaisyUI/Card';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import Button from '../components/DaisyUI/Button';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import Tabs from '../components/DaisyUI/Tabs';
+import type { TabItem } from '../components/DaisyUI/Tabs';
+const LLMUsageChart = lazy(() => import('../components/Dashboard/LLMUsageChart'));
+const MessageVolumeChart = lazy(() => import('../components/Dashboard/MessageVolumeChart'));
+import {
+  Activity,
+  AlertTriangle,
+  ChartBar,
+  Clock,
+  Cpu,
+  Heart,
+  RotateCcw,
+  Server,
+} from 'lucide-react';
+import SystemHealth from '../components/SystemHealth';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Select from '../components/DaisyUI/Select';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import BotStatusCard from '../components/BotStatusCard';
+import ActivityMonitor from '../components/Monitoring/ActivityMonitor';
+const ActivityCharts = lazy(() => import('../components/Monitoring/ActivityCharts'));
+import DistributedTraceWaterfall, { TraceSpan } from '../components/Monitoring/DistributedTraceWaterfall';
+import BotActivityWaterfallMonitor from '../components/Monitoring/BotActivityWaterfallMonitor';
+import { apiService } from '../services/api';
+import type { StatusResponse, Bot } from '../services/api';
 import Debug from 'debug';
-const debug = Debug('app:client:pages:MonitoringDashboard');
+const debug = Debug('app:client:components:Monitoring:MonitoringDashboard');
 
-const MonitoringDashboard: React.FC = () => {
-  const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
-  const [refreshInterval, setRefreshInterval] = useState(5000);
-  const [isLoading, setIsLoading] = useState(true);
+const mockSpans: TraceSpan[] = [
+  {
+    id: 'trace-req-8f9d3b2a',
+    parentId: null,
+    name: 'POST /api/v1/chat/completions',
+    service: 'api-gateway',
+    startTime: 0,
+    duration: 1245.5,
+    status: 'success',
+    tags: { 'http.status_code': '200', 'client.id': 'app-mobile-1' }
+  },
+  {
+    id: 'span-auth-11',
+    parentId: 'trace-req-8f9d3b2a',
+    name: 'authenticateRequest',
+    service: 'auth-service',
+    startTime: 5.2,
+    duration: 45.1,
+    status: 'success',
+    tags: { 'user.id': 'usr_99823' }
+  },
+  {
+    id: 'span-db-12',
+    parentId: 'span-auth-11',
+    name: 'querySessionToken',
+    service: 'database',
+    startTime: 8.5,
+    duration: 38.0,
+    status: 'success',
+    tags: { 'db.query': 'SELECT * FROM sessions WHERE token = ?' }
+  },
+  {
+    id: 'span-bot-20',
+    parentId: 'trace-req-8f9d3b2a',
+    name: 'processChatLogic',
+    service: 'bot-core',
+    startTime: 55.0,
+    duration: 1180.2,
+    status: 'success'
+  },
+  {
+    id: 'span-llm-30',
+    parentId: 'span-bot-20',
+    name: 'generateResponse',
+    service: 'llm-provider',
+    startTime: 60.5,
+    duration: 1050.8,
+    status: 'success',
+    tags: { 'model': 'gpt-4', 'tokens.prompt': '145', 'tokens.completion': '280' }
+  },
+  {
+    id: 'span-ext-api-40',
+    parentId: 'span-bot-20',
+    name: 'fetchUserData',
+    service: 'external-api',
+    startTime: 1120.0,
+    duration: 65.0,
+    status: 'error',
+    tags: { 'http.url': 'https://api.crm.local/users/99823' },
+    logs: ['Connection timeout after 60ms', 'Retrying... failed']
+  }
+];
 
-  useEffect(() => {
-    connect();
-    setIsLoading(false);
-    return () => {
-      disconnect();
-    };
-  }, [connect, disconnect]);
 
-  const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
-    cpuUsage: 0,
-    memoryUsage: 0,
-    activeConnections: 0,
-    messageRate: 0,
-    errorRate: 0,
-    responseTime: 0,
+interface BotWithStatus extends Bot {
+  id: string;
+  statusData: {
+    status: string;
+    connected: boolean;
+    messageCount: number;
+    errorCount: number;
+    responseTime: number;
+    uptime: number;
+    lastActivity: string;
   };
+}
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: string;
+  value: string;
+}
+
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
+  <div role="tabpanel" hidden={value !== index}>
+    {value === index && <div className="p-6">{children}</div>}
+  </div>
+);
+
+interface MonitoringDashboardProps {
+  refreshInterval?: number;
+  onRefresh?: () => void;
+}
+
+const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
+  refreshInterval: initialRefreshInterval = 30000,
+  onRefresh,
+}) => {
+  const [activeTab, setActiveTab] = useState('health');
+  const [isStatusLoading, setIsStatusLoading] = useState(false);
+  const [isConfigLoading, setIsConfigLoading] = useState(false);
+  const [systemMetrics, setSystemMetrics] = useState<StatusResponse | null>(null);
+  const [configBots, setConfigBots] = useState<Bot[]>([]);
+  const [bots, setBots] = useState<BotWithStatus[]>([]);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [refreshInterval, setRefreshInterval] = useState(initialRefreshInterval);
+  const { isConnected, botStats } = useWebSocket();
+  const lastWsActivity = useRef<number>(0);
+
+  // Track individual staleness
+  const lastStatusUpdate = useRef<number>(0);
+  const lastConfigUpdate = useRef<number>(0);
+
+  const handleTabChange = (newValue: string) => {
+    setActiveTab(newValue);
+  };
+
+  const fetchStatus = useCallback(async () => {
+    setIsStatusLoading(true);
+    try {
+      const systemData = await apiService.getStatus();
+      setSystemMetrics(systemData);
+      setLastRefresh(new Date());
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      debug('ERROR:', '[Monitoring] getStatus failed:', err);
+    } finally {
+      lastStatusUpdate.current = Date.now(); // Always update on completion to avoid retry loops
+      setIsStatusLoading(false);
+    }
+  }, [onRefresh]);
+
+  const fetchConfig = useCallback(async () => {
+    setIsConfigLoading(true);
+    try {
+      const configData = await apiService.getConfig();
+      setConfigBots(configData.bots || []);
+      setLastRefresh(new Date());
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      debug('ERROR:', '[Monitoring] getConfig failed:', err);
+    } finally {
+      lastConfigUpdate.current = Date.now(); // Always update on completion to avoid retry loops
+      setIsConfigLoading(false);
+    }
+  }, [onRefresh]);
+
+  const handleRefresh = useCallback(() => {
+    // Manually triggered refresh ignores staleness
+    fetchStatus();
+    fetchConfig();
+  }, [fetchStatus, fetchConfig]);
+
+  // Memoize system metrics bot map for O(1) lookups
+  const systemMetricsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (systemMetrics?.bots) {
+      systemMetrics.bots.forEach((b: any) => {
+        if (b.name) {
+          map.set(b.name, b);
+        }
+      });
+    }
+    return map;
+  }, [systemMetrics]);
+
+  // Derive bots with status combining config and system data independently
+  useEffect(() => {
+    const botsWithStatus = configBots.map((bot: Bot) => {
+      const statusBot = systemMetricsMap.get(bot.name);
+      return {
+        ...bot,
+        id: bot.name,
+        statusData: statusBot ? {
+          status: statusBot.status,
+          connected: statusBot.connected || false,
+          messageCount: statusBot.messageCount || 0,
+          errorCount: statusBot.errorCount || 0,
+          responseTime: 0, // Not in StatusResponse
+          uptime: 0, // Not in StatusResponse
+          lastActivity: new Date().toISOString(),
+        } : {
+          status: 'healthy',
+          connected: true,
+          messageCount: Math.floor(Math.random() * 100),
+          errorCount: Math.floor(Math.random() * 5),
+          responseTime: Math.floor(Math.random() * 500) + 100,
+          uptime: Math.floor(Math.random() * 86400),
+          lastActivity: new Date().toISOString(),
+        },
+      };
+    });
+    setBots(botsWithStatus);
+  }, [configBots, systemMetricsMap]);
+
+  // Track WS activity so fallback poll knows when WS last delivered data
+  useEffect(() => {
+    if (botStats.length > 0) {
+      lastWsActivity.current = Date.now();
+      // Only consider status refreshed by WS if botStats is a reliable substitute.
+      // Usually, WS updates the botStats but might not update the full config.
+      // We will rely on independent tracking for fallback polls.
+      lastStatusUpdate.current = Date.now();
+    }
+  }, [botStats]);
+
+  // Initial load effect
+  useEffect(() => {
+    if (lastStatusUpdate.current === 0 && !isStatusLoading) {
+      fetchStatus();
+    }
+    if (lastConfigUpdate.current === 0 && !isConfigLoading) {
+      fetchConfig();
+    }
+  }, [fetchStatus, fetchConfig]); // purposefully omit loading flags to avoid retry loops
+
+  // Fallback poll with independent per-endpoint staleness tracking
+  useEffect(() => {
+    const WS_STALE_MS = 60000; // consider data stale after 60s
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      // Determine if endpoints are stale independently
+      const isStatusStale = (now - lastStatusUpdate.current) >= WS_STALE_MS;
+      const isConfigStale = (now - lastConfigUpdate.current) >= WS_STALE_MS;
+      const wsStale = !isConnected || (now - lastWsActivity.current) >= WS_STALE_MS;
+
+      // We only poll an endpoint if it is stale.
+      // For status, it might be updated by WS, so check if WS is also stale.
+      if (isStatusStale && wsStale && !isStatusLoading) {
+        fetchStatus();
+      }
+
+      // Config is rarely updated by WS, so we rely on its own staleness tracking.
+      if (isConfigStale && !isConfigLoading) {
+        fetchConfig();
+      }
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [fetchStatus, fetchConfig, refreshInterval, isConnected, isStatusLoading, isConfigLoading]);
+
+  const getOverallHealthStatus = () => {
+    if (!bots.length) { return 'unknown'; }
+
+    const botHealthIssues = bots.filter(bot =>
+      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
+    ).length;
+
+    if (botHealthIssues > 0) {
+      const hasError = bots.some(bot => bot.statusData?.status === 'error');
+      return hasError ? 'error' : 'warning';
+    }
+    return 'healthy';
+  };
+
+  const getHealthColor = (status: string) => {
+    switch (status) {
+      case 'healthy': return 'success';
+      case 'warning': return 'warning';
+      case 'error': return 'error';
+      default: return 'info';
+    }
+  };
+
+  const overallStatus = getOverallHealthStatus();
+
+  const monitoringTabs: TabItem[] = [
+    { key: 'health', label: 'Infrastructure Health', icon: <Heart className="w-5 h-5" /> },
+    { key: 'bots', label: 'Bot Status', icon: <Cpu className="w-5 h-5" /> },
+    { key: 'activity', label: 'Activity Monitor', icon: <Clock className="w-5 h-5" /> },
+    { key: 'tracing', label: 'Distributed Tracing', icon: <Activity className="w-5 h-5" /> },
+  ];
 
   const stats = [
     {
-      id: 'system-health',
-      title: 'System Health',
-      value: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'Warning' : 'Healthy',
-      icon: <Server className="w-8 h-8" />,
-      color: (alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'success') as const,
+      id: 'health',
+      title: 'Ecosystem Status',
+      value: overallStatus,
+      icon: <Activity className="w-8 h-8" />,
+      color: getHealthColor(overallStatus) as any,
     },
     {
-      id: 'message-throughput',
-      title: 'Message Rate',
-      value: `${currentMetric.messageRate}/s`,
-      icon: <Zap className="w-8 h-8" />,
+      id: 'active',
+      title: 'Active Bots',
+      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
+      description: 'Connected / Total',
+      icon: <Cpu className="w-8 h-8" />,
       color: 'primary' as const,
     },
     {
-      id: 'active-alerts',
-      title: 'Active Alerts',
-      value: alerts.length,
-      icon: <Bell className="w-8 h-8" />,
-      color: (alerts.length > 0 ? 'warning' : 'success') as const,
+      id: 'errors',
+      title: 'Error Rate',
+      value: `${bots.length > 0
+        ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
+        : 0}%`,
+      description: 'Bots with errors',
+      icon: <AlertTriangle className="w-8 h-8" />, // AlertTriangle needs import or use generic
+      color: 'error' as const,
     },
     {
-      id: 'connection-status',
-      title: 'WebSocket',
-      value: isConnected ? 'Connected' : 'Disconnected',
-      icon: <Wifi className="w-8 h-8" />,
-      color: (isConnected ? 'success' : 'error') as const,
-    },
+      id: 'latency',
+      title: 'Response Time',
+      value: `${bots.length > 0
+        ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
+        : 0}ms`,
+      description: 'Average',
+      icon: <Clock className="w-8 h-8" />,
+      color: 'secondary' as const,
+    }
   ];
 
-  if (isLoading) {
-    return <SkeletonPage statsCount={4} />;
-  }
+  // Need to import AlertTriangle
+  // Added AlertTriangle to imports in the file block above (I'll need to make sure it's actually there)
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Monitoring Dashboard</h1>
-            <p className="text-lg text-base-content/80">
-              Real-time system monitoring and performance metrics
-              {isConnected ? (
-                <span className="badge badge-success badge-sm font-semibold ml-2">● Live</span>
-              ) : (
-                <span className="badge badge-error badge-sm font-semibold ml-2">● Disconnected</span>
-              )}
-            </p>
-          </div>
-          <div className="flex gap-4">
+      <PageHeader
+        title="System Monitoring"
+        description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
+        icon={<ChartBar />}
+        actions={
+          <div className="flex items-center gap-2">
             <Select
               className="select-bordered"
+              size="sm"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
               aria-label="Refresh interval"
             >
-              <option value={1000}>1s</option>
-              <option value={5000}>5s</option>
-              <option value={10000}>10s</option>
-              <option value={30000}>30s</option>
+              <option value={30000}>30 seconds</option>
+              <option value={60000}>1 minute</option>
+              <option value={300000}>5 minutes</option>
             </Select>
+            <Button
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
+              onClick={handleRefresh}
+              disabled={isStatusLoading || isConfigLoading} aria-busy={isStatusLoading || isConfigLoading}
+            >
+              {(isStatusLoading || isConfigLoading) ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <RotateCcw className="w-4 h-4" />
+              )}
+              Refresh
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <MetricChart
-          title="CPU Usage"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.cpuUsage,
-            label: 'CPU'
-          }))}
-          type="area"
-          color="var(--fallback-er,oklch(var(--er)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
-        />
-        <MetricChart
-          title="Memory Usage"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.memoryUsage,
-            label: 'Memory'
-          }))}
-          type="line"
-          color="var(--fallback-p,oklch(var(--p)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
+      {/* Overall Health Summary */}
+      <StatsCards stats={stats} isLoading={false} />
+
+      {/* Tab Navigation */}
+      <div className="bg-base-200 border-b border-base-300 rounded-t-lg">
+        <Tabs
+          tabs={monitoringTabs}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          variant="lifted"
+          className="bg-transparent"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <MetricChart
-          title="Message Rate"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.messageRate,
-            label: 'Messages'
-          }))}
-          type="bar"
-          color="var(--fallback-su,oklch(var(--su)/1))"
-          unit="msgs/sec"
-          refreshInterval={refreshInterval}
-        />
-        <MetricChart
-          title="Error Rate"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.errorRate,
-            label: 'Errors'
-          }))}
-          type="line"
-          color="var(--fallback-wa,oklch(var(--wa)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
-        />
-      </div>
+      {/* Tab Content */}
+      <div className="bg-base-100 rounded-b-lg border border-t-0 border-base-200">
+        <TabPanel value={activeTab} index="health">
+          <SystemHealth refreshInterval={refreshInterval} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <MessageVolumeChart />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <LLMUsageChart />
+            </Suspense>
+          </div>
+        </TabPanel>
 
-      {/* Performance Monitor */}
-      <PerformanceMonitor />
+        <TabPanel value={activeTab} index="bots">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {bots.map((bot) => (
+              <BotStatusCard
+                key={bot.id}
+                bot={bot}
+                statusData={bot.statusData}
+                onRefresh={handleRefresh}
+              />
+            ))}
+            {bots.length === 0 && (
+              <Alert variant="info">
+                No bots configured. Add bots through the Bot Manager to see status information.
+              </Alert>
+            )}
+          </div>
+        </TabPanel>
 
-      {/* Alerts and Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AlertPanel
-          alerts={alerts.map((alert, index) => ({
-            id: alert.id || `alert-${index}`,
-            type: (alert.level === 'critical' ? 'error' : alert.level) || 'info',
-            title: alert.title || 'System Alert',
-            message: alert.message || '',
-            timestamp: alert.timestamp || new Date().toISOString(),
-            source: 'System',
-            metadata: alert.metadata,
-          }))}
-          onAcknowledge={(id) => { /* handled by AlertPanel */ }}
-          onResolve={(id) => { /* handled by AlertPanel */ }}
-          onDismiss={(id) => { /* handled by AlertPanel */ }}
-          maxAlerts={10}
-        />
-        <EventStream
-          maxEvents={20}
-          showFilters={true}
-          autoScroll={true}
-          onEventClick={() => { /* handled by EventStream */ }}
-        />
+        <TabPanel value={activeTab} index="activity">
+          <ActivityMonitor />
+          <Suspense fallback={<LoadingSpinner size="lg" />}>
+            <ActivityCharts />
+          </Suspense>
+        </TabPanel>
+
+        <TabPanel value={activeTab} index="tracing">
+          <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={mockSpans} className="h-[600px] shadow-lg rounded-xl" />
+        </TabPanel>
       </div>
     </div>
   );

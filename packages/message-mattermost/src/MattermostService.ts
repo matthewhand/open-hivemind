@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import type { Application } from 'express';
+import type { IMessage, IMessengerService } from '@hivemind/shared-types';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
@@ -13,8 +14,6 @@ import {
 import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
 import messageConfig from '@config/messageConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import MattermostClient from './mattermostClient';
 import { MattermostMessage, type MattermostPost } from './MattermostMessage';

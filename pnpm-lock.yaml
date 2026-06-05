@@ -917,10 +917,22 @@ importers:
 
   packages/shared-types:
     dependencies:
+      dompurify:
+        specifier: ^3.4.0
+        version: 3.4.0
       ipaddr.js:
         specifier: ^1.9.1
         version: 1.9.1
+      jsdom:
+        specifier: ^28.1.0
+        version: 28.1.0(@noble/hashes@1.8.0)
     devDependencies:
+      '@types/dompurify':
+        specifier: ^3.2.0
+        version: 3.2.0
+      '@types/jsdom':
+        specifier: ^28.0.0
+        version: 28.0.1
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

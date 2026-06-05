@@ -2,7 +2,7 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import ApiMonitorService from '../../../services/ApiMonitorService';

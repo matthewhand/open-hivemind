@@ -1,10 +1,10 @@
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import { RTMClient } from '@slack/rtm-api';
 import { SocketModeClient } from '@slack/socket-mode';
 import { WebClient } from '@slack/web-api';
 import { ApiError, BaseHivemindError, NetworkError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
-import type { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from './SlackMessage';
 
 const debug = Debug('app:SlackBotManager');

@@ -1,7 +1,6 @@
 import Debug from 'debug';
+import type { ILlmProvider, IMessage } from '@hivemind/shared-types';
 import Letta from '@letta-ai/letta-client';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:lettaProvider');
 

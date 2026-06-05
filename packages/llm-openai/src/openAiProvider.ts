@@ -1,6 +1,14 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
-import { isSafeUrl } from '@hivemind/shared-types';
+import {
+  isSafeUrl,
+  type ILlmProvider,
+  type IMessage,
+  type LlmChatMessage,
+  type LlmToolCall,
+  type LlmToolCompletionResult,
+  type LlmToolDefinition,
+} from '@hivemind/shared-types';
 import type { OpenAIConfig } from '@src/types/config';
 import {
   ApiError,
@@ -10,14 +18,6 @@ import {
   TimeoutError,
 } from '@src/types/errorClasses';
 import openaiConfig from '@config/openaiConfig';
-import type {
-  ILlmProvider,
-  LlmChatMessage,
-  LlmToolCall,
-  LlmToolCompletionResult,
-  LlmToolDefinition,
-} from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
 import { withTimeout } from '@common/withTimeout';
 

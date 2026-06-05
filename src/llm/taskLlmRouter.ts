@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import type { ILlmProvider, IMessage } from '@hivemind/shared-types';
 import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager, { type ProviderInstance } from '@src/config/ProviderConfigManager';
 import { UserConfigStore } from '@src/config/UserConfigStore';
@@ -8,8 +9,6 @@ import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import { getLlmProvider } from '@llm/getLlmProvider';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:taskLlmRouter');
 

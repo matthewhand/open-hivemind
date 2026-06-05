@@ -23,7 +23,7 @@ import {
   getLastBotActivity,
 } from '@src/message/helpers/processing/ChannelActivity';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stub message

@@ -15,6 +15,7 @@
  * @module pipeline/createPipeline
  */
 
+import type { IMessengerService } from '@hivemind/shared-types';
 import type { MessageBus } from '@src/events/MessageBus';
 import {
   ActivityRecorder,
@@ -39,7 +40,6 @@ import { ReceiveStage } from '@src/pipeline/ReceiveStage';
 import { SendStage } from '@src/pipeline/SendStage';
 import { ActivityLogger } from '@src/server/services/ActivityLogger';
 import { WebSocketService } from '@src/server/services/WebSocketService';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 // ---------------------------------------------------------------------------
 // Pipeline dependencies

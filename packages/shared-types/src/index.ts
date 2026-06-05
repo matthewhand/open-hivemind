@@ -28,7 +28,13 @@ export type {
   GetLlmProvidersFn,
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
-export type { ILlmProvider } from './ILlmProvider';
+export type {
+  ILlmProvider,
+  LlmToolCall,
+  LlmChatMessage,
+  LlmToolDefinition,
+  LlmToolCompletionResult,
+} from './ILlmProvider';
 export type {
   IMemoryProvider,
   MemoryEntry,
@@ -56,3 +62,11 @@ export { http, createHttpClient, HttpError, isHttpError } from './httpClient';
 export type { RequestOptions, HttpClientInstance } from './httpClient';
 export { randomId, randomUuid, cryptoJitter } from './randomId';
 export { SwarmClaim } from './ISwarmClaim';
+export { logger, SharedLogger, type LoggerInstance } from './logger';
+export {
+  sanitizeHTML,
+  sanitizeText,
+  sanitizeURL,
+  sanitizeObject,
+  SANITIZE_CONFIG,
+} from './xssSanitizer';

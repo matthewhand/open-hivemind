@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import { http } from '@hivemind/shared-types';
-import type { IMessage } from '@message/interfaces/IMessage';
+import { http, type IMessage } from '@hivemind/shared-types';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';

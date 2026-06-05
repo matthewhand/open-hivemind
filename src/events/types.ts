@@ -8,7 +8,7 @@
  * @module events/types
  */
 
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 /**
  * The outcome of a reply-decision evaluation.

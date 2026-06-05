@@ -1,5 +1,5 @@
+import type { IMessage } from '@hivemind/shared-types';
 import messageConfig from '@config/messageConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 const debugLogger = require('debug')('app:message:shouldProcessMessage');
 

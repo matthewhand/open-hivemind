@@ -1,5 +1,5 @@
 import { ChatHistory } from '../../src/message/common/chatHistory';
-import type { IMessage } from '../../src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 /**
  * Minimal IMessage stub: ChatHistory only reads getTimestamp() and getMessageId().

@@ -20,7 +20,7 @@ import type { MessageEvents } from '@src/events/types';
 import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
 import type { ActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 type DecisionEvent = MessageEvents['pipeline:decision'];
 
