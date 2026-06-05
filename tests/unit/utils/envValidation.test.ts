@@ -6,9 +6,46 @@ jest.mock('../../../src/common/logger');
 describe('validateRequiredEnvVars', () => {
   const originalEnv = process.env;
 
+  // Every env var the validator inspects. We clear these before each test so the
+  // suite is hermetic: it must not depend on values that leak in from preceding
+  // test files (process.env is global and other suites mutate it). Without this,
+  // the same assertions pass in isolation but can fail when run in the combined
+  // `tests/unit` batch if an earlier test leaves one of these set.
+  const VALIDATED_ENV_VARS = [
+    'NODE_ENV',
+    'PORT',
+    'HTTP_ENABLED',
+    'SKIP_MESSENGERS',
+    'SESSION_SECRET',
+    'JWT_SECRET',
+    'JWT_REFRESH_SECRET',
+    'DISCORD_BOT_TOKEN',
+    'SLACK_BOT_TOKEN',
+    'MATTERMOST_TOKEN',
+    'HIVEMIND_PLUGIN_SIGNING_KEY',
+    'ADMIN_PASSWORD',
+    'OPENAI_API_KEY',
+  ];
+
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    // Start from a known-clean slate so leaked values can't change behavior.
+    for (const key of VALIDATED_ENV_VARS) {
+      delete process.env[key];
+    }
+    // Dynamic per-bot tokens (BOTS_*_{DISCORD,SLACK,MATTERMOST}_BOT_TOKEN) are also
+    // honored by the validator via passthrough(); clear any that leaked in.
+    for (const key of Object.keys(process.env)) {
+      if (
+        key.startsWith('BOTS_') &&
+        (key.endsWith('_DISCORD_BOT_TOKEN') ||
+          key.endsWith('_SLACK_BOT_TOKEN') ||
+          key.endsWith('_MATTERMOST_TOKEN'))
+      ) {
+        delete process.env[key];
+      }
+    }
   });
 
   afterEach(() => {
