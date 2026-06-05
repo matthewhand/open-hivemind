@@ -110,6 +110,9 @@ export default defineConfig({
     url: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PORT || '3028'}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
+    env: {
+      JWT_SECRET: process.env.JWT_SECRET || 'e2e-test-secret-mock'
+    }
   },
 
   /* Metadata for test organization */

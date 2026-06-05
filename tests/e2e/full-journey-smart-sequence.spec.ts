@@ -10,7 +10,7 @@ test.describe('Full Journey: Smart Sequence', () => {
     // 1. Auth Setup
     await setupTestWithErrorDetection(page);
 
-    const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
+    const jwtSecret = process.env.JWT_SECRET || 'e2e-test-secret-mock';
     const fakeToken = require('jsonwebtoken').sign(
       {
         exp: Math.floor(Date.now() / 1000) + 3600,
