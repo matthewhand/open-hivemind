@@ -85,7 +85,7 @@ jobs:
       - name: Code Quality Gate
         run: |
           # Check for TODO/FIXME comments in critical files
-          TODO_COUNT=$(find src -name "*.ts" -exec grep -l "TODO\|FIXME\|HACK\|XXX" {} \; | wc -l)
+          TODO_COUNT=$(find src -name "*.ts" -exec grep -l "TODO\|FIXME\|HACK\|XXX" {} \; | grep -c .)
           if [ "$TODO_COUNT" -gt 5 ]; then
             echo "⚠️ Warning: $TODO_COUNT files with TODO/FIXME comments found"
           fi

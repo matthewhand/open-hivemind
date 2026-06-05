@@ -44,7 +44,7 @@ jobs:
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --passWithNoTests --forceExit --maxWorkers=2 --testPathPattern=tests/unit 2>&1 | tee unit-test-output.txt
           # Extract passing unit test count from output
           UNIT_PASSING_TESTS=$(grep "Tests:" unit-test-output.txt | grep -o "[0-9]\+ passed" | grep -o "[0-9]\+")
-          echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT
+          echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> "$GITHUB_OUTPUT"
           echo "Found $UNIT_PASSING_TESTS passing unit tests"
 
       - name: Install Playwright browsers
@@ -82,5 +82,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update test count badge: ${{ steps.unit-test.outputs.unit_passing_tests }} passing tests"
-          git push
+          if ! git diff --quiet || ! git diff --staged --quiet; then
+            git commit -m "Update test count badge: ${{ steps.unit-test.outputs.unit_passing_tests }} passing tests"
+            git push
+          fi
