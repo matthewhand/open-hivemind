@@ -73,7 +73,11 @@ export class AuthMiddleware {
           origin === 'https://[::1]' ||
           origin.startsWith('https://[::1]:'));
 
-      // SECURITY: Must strictly be a localhost IP.
+      // SECURITY: Must strictly be a localhost IP AND have matching headers if provided.
+      // This prevents Authorization Bypass via Host Header Spoofing where an external
+      // request could spoof `Host: localhost` or `Origin: localhost` and bypass auth.
+      // We use strict AND logic rather than OR logic across these validation dimensions.
+
       if (!isLocalhostIp) {
         debug('SECURITY: Non-localhost IP attempted bypass: %s', clientIP);
         return false;
