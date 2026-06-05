@@ -74,12 +74,12 @@ const MonitoringDashboard: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold mb-2">Monitoring Dashboard</h1>
-            <p className="text-lg text-neutral-content/70">
+            <p className="text-lg text-base-content/80">
               Real-time system monitoring and performance metrics
               {isConnected ? (
-                <span className="text-success ml-2">● Live</span>
+                <span className="badge badge-success badge-sm font-semibold ml-2">● Live</span>
               ) : (
-                <span className="text-error ml-2">● Disconnected</span>
+                <span className="badge badge-error badge-sm font-semibold ml-2">● Disconnected</span>
               )}
             </p>
           </div>

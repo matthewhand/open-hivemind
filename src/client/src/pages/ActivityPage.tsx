@@ -977,7 +977,7 @@ const ActivityPage: React.FC = () => {
       <Card title="Live Orchestration Log" icon={<RefreshCw className={`w-5 h-5 ${orchestrationLogs.length > 0 ? 'animate-spin-slow' : ''}`} />}>
         <div className="max-h-60 overflow-y-auto bg-base-300 rounded-lg p-4 font-mono text-xs space-y-1">
           {orchestrationLogs.length === 0 ? (
-            <div className="text-base-content/30 italic">Waiting for orchestration events...</div>
+            <div className="text-base-content/80 italic">Waiting for orchestration events...</div>
           ) : (
             orchestrationLogs.map((log, i) => (
               <div key={i} className="flex gap-4 border-b border-base-100/10 pb-1">

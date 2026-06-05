@@ -209,7 +209,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
           <div className="mt-4 flex justify-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }}></div>
-              <span className="text-sm text-neutral-content/70">{title}</span>
+              <span className="text-sm text-base-content/80">{title}</span>
             </div>
           </div>
         )}

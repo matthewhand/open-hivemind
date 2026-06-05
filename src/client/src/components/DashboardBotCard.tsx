@@ -4,7 +4,6 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Tooltip from './DaisyUI/Tooltip';
 import Button from './DaisyUI/Button';
-import Tooltip from './DaisyUI/Tooltip';
 import type { Bot, StatusResponse } from '../services/api';
 import { Activity, Sparkles, History, Trophy } from 'lucide-react';
 import DiagnosticModal from './BotManagement/DiagnosticModal';

@@ -1500,11 +1500,13 @@ body.robot-ui-enabled .btn-accent {
    Accessibility: WCAG 2.0 AA contrast adjustments
    ============================================ */
 
-/* DaisyUI defaults inactive `.tab` text to opacity-50, which fails
- * AA contrast on light themes. Raise to 0.75 — still visually
- * de-emphasised vs the active tab but readable for screen readers
- * relying on visible text + sighted users on low-contrast displays. */
+/* DaisyUI defaults inactive `.tab` to a color with built-in alpha
+ * (oklab(... / 0.5)) — bumping opacity isn't enough because the
+ * color itself is half-transparent. Force the full base-content
+ * color on inactive tabs and keep them visually de-emphasised via
+ * a single opacity multiplier. */
 .tabs > .tab:not(.tab-active):not(.tab-disabled),
 .tab:not(.tab-active):not(.tab-disabled) {
+  color: var(--color-base-content);
   opacity: 0.85;
 }

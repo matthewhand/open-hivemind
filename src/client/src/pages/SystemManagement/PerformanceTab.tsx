@@ -191,7 +191,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
 
       <div>
         <h4 className="font-bold mb-4">Environment Configuration (Read-Only)</h4>
-        <p className="text-sm text-neutral-content/70 mb-4">
+        <p className="text-sm text-base-content/80 mb-4">
           These settings are loaded from environment variables and take precedence over database configuration.
           To change them, update your `.env` file and restart the server.
         </p>
