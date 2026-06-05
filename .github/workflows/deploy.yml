@@ -91,7 +91,7 @@ jobs:
           fi
 
           # Check for any remaining 'any' types in critical files
-          ANY_COUNT=$(grep -r ":\s*any" src/ --include="*.ts" | grep -v node_modules | wc -l)
+          ANY_COUNT=$(grep -rc ":\s*any" src/ --include="*.ts" | grep -v node_modules | grep -c .)
           if [ "$ANY_COUNT" -gt 10 ]; then
             echo "⚠️ Warning: $ANY_COUNT instances of 'any' type found"
           fi
