@@ -47,7 +47,7 @@ const MSG_PROVIDER_NAME = 'Golden-Discord';
 const LLM_PROVIDER_NAME = 'Golden-OpenAI';
 
 function authHeaders(): Record<string, string> {
-  const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
+  const jwtSecret = process.env.JWT_SECRET || 'e2e-test-secret-mock';
   const jwt = require('jsonwebtoken');
   const token = jwt.sign(
     {
