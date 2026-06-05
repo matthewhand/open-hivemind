@@ -145,7 +145,7 @@ const CommunityTab: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
                 <span>v{pkg.version}</span>
-                <span className="uppercase badge badge-sm badge-outline">message</span>
+                <span className="uppercase badge badge-sm badge-ghost">message</span>
               </div>
 
               {/* Rating & Feedback */}
@@ -181,7 +181,7 @@ const CommunityTab: React.FC = () => {
                   </Button>
                 )}
                 {pkg.status === 'built-in' && (
-                  <span className="text-xs text-base-content/50 italic w-full text-center">
+                  <span className="text-xs text-base-content/80 italic w-full text-center">
                     Included with open-hivemind
                   </span>
                 )}

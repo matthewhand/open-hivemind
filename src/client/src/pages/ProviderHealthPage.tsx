@@ -135,7 +135,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
           <StatusIcon className={`w-4 h-4 flex-shrink-0 ${statusCfg.color}`} />
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">{provider.name}</p>
-            <p className="text-xs text-base-content/50 font-mono">{provider.type}</p>
+            <p className="text-xs text-base-content/80 font-mono">{provider.type}</p>
           </div>
         </div>
         <Badge variant={statusCfg.badge} size="sm">
@@ -145,16 +145,16 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
 
       {/* Latency */}
       <div>
-        <p className="text-xs text-base-content/60 mb-1">Latency</p>
+        <p className="text-xs text-base-content/80 mb-1">Latency</p>
         <div className="flex gap-3 text-xs font-mono">
           <span>
-            p50 <span className="text-base-content/50">{formatLatency(provider.latency.p50)}</span>
+            p50 <span className="text-base-content/80">{formatLatency(provider.latency.p50)}</span>
           </span>
           <span>
-            p95 <span className="text-base-content/50">{formatLatency(provider.latency.p95)}</span>
+            p95 <span className="text-base-content/80">{formatLatency(provider.latency.p95)}</span>
           </span>
           <span>
-            p99 <span className="text-base-content/50">{formatLatency(provider.latency.p99)}</span>
+            p99 <span className="text-base-content/80">{formatLatency(provider.latency.p99)}</span>
           </span>
         </div>
       </div>
@@ -162,31 +162,31 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
       {/* Error rate + uptime row */}
       <div className="flex gap-4 text-xs">
         <div>
-          <p className="text-base-content/60">Error rate</p>
+          <p className="text-base-content/80">Error rate</p>
           <p className="font-mono">{(provider.errorRate * 100).toFixed(2)} %</p>
         </div>
         <div>
-          <p className="text-base-content/60">Uptime (24 h)</p>
+          <p className="text-base-content/80">Uptime (24 h)</p>
           <p className="font-mono">{formatUptime(provider.uptime)}</p>
         </div>
       </div>
 
       {/* Circuit breaker */}
       <div className="flex items-center justify-between text-xs">
-        <span className="text-base-content/60">Circuit breaker</span>
+        <span className="text-base-content/80">Circuit breaker</span>
         <Badge variant={cbCfg.badge} size="sm">{cbCfg.label}</Badge>
       </div>
 
       {/* Last check */}
       <div className="flex items-center justify-between text-xs">
-        <span className="text-base-content/60">Last check</span>
+        <span className="text-base-content/80">Last check</span>
         <span className="font-mono">{formatTimestamp(provider.lastCheck)}</span>
       </div>
 
       {/* Fallback suggestion */}
       {provider.suggestedFallback && provider.suggestedFallback !== 'None configured' && (
-        <div className="text-xs text-base-content/60 border-t border-base-content/10 pt-2">
-          <span className="text-base-content/50">Fallback: </span>
+        <div className="text-xs text-base-content/80 border-t border-base-content/10 pt-2">
+          <span className="text-base-content/80">Fallback: </span>
           <span>{provider.suggestedFallback}</span>
         </div>
       )}
@@ -269,7 +269,7 @@ const ProviderHealthPage: React.FC = () => {
 
       {/* Controls bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-base-content/60">
+        <div className="flex items-center gap-2 text-sm text-base-content/80">
           <Activity className="w-4 h-4" />
           <span>
             {data
@@ -280,7 +280,7 @@ const ProviderHealthPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           {lastRefresh && (
-            <span className="text-xs text-base-content/50">
+            <span className="text-xs text-base-content/80">
               Last updated: {lastRefresh.toLocaleTimeString()}
             </span>
           )}
