@@ -13,15 +13,18 @@ function FieldInput({
   value,
   onChange,
   disabled,
+  inputId,
 }: {
   field: ProviderField;
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  inputId: string;
 }) {
   if (field.type === 'boolean') {
     return (
       <input
+        id={inputId}
         type="checkbox"
         className="checkbox checkbox-primary checkbox-sm"
         checked={value === 'true'}
@@ -34,6 +37,7 @@ function FieldInput({
   if (field.type === 'select' && field.options) {
     return (
       <select
+        id={inputId}
         className="select select-bordered select-sm w-full"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -50,6 +54,7 @@ function FieldInput({
 
   return (
     <input
+      id={inputId}
       type={
         field.type === 'password'
           ? 'password'
@@ -77,9 +82,11 @@ function FieldRow({
   onChange: (name: string, v: string) => void;
   disabled?: boolean;
 }) {
+  const reactId = React.useId();
+  const inputId = `field-${field.name}-${reactId}`;
   return (
     <div className="form-control w-full mb-2">
-      <label className="label py-0.5">
+      <label className="label py-0.5" htmlFor={inputId}>
         <span className="label-text font-medium">{field.label}</span>
       </label>
       <FieldInput
@@ -87,9 +94,10 @@ function FieldRow({
         value={value}
         onChange={(v) => onChange(field.name, v)}
         disabled={disabled}
+        inputId={inputId}
       />
       {field.description && (
-        <label className="label py-0">
+        <label className="label py-0" htmlFor={inputId}>
           <span className="label-text-alt text-base-content/60">{field.description}</span>
         </label>
       )}

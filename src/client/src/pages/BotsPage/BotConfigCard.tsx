@@ -68,9 +68,9 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
               <div className="p-1.5 rounded bg-primary/10 shrink-0">
                 <Bot className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>
+              <h2 className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>
                 {bot.name}
-              </h3>
+              </h2>
               <Badge variant={badgeVariant} size="sm" className="whitespace-nowrap shrink-0">
                 {statusLabel}
               </Badge>
@@ -120,7 +120,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
         {/* Provider Info */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="bg-base-200/50 p-2 rounded-lg">
-            <label className="text-xs font-bold uppercase opacity-50 block mb-1">Message</label>
+            <label className="text-xs font-bold uppercase opacity-80 block mb-1">Message</label>
             <div className="flex items-center gap-1.5">
               <Globe className="w-3 h-3 text-primary shrink-0" />
               <span className="text-xs font-medium uppercase truncate">
@@ -129,7 +129,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             </div>
           </div>
           <div className="bg-base-200/50 p-2 rounded-lg">
-            <label className="text-xs font-bold uppercase opacity-50 block mb-1">LLM</label>
+            <label className="text-xs font-bold uppercase opacity-80 block mb-1">LLM</label>
             <div className="flex items-center gap-1.5">
               <Cpu className="w-3 h-3 text-secondary shrink-0" />
               <span className="text-xs font-medium truncate">
@@ -144,13 +144,13 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
           <div className="grid grid-cols-2 gap-2 mb-4 text-center">
             <div className="bg-base-200/50 p-2 rounded-lg">
               <div className="text-lg font-bold text-primary">{bot.messageCount ?? 0}</div>
-              <div className="text-xs uppercase font-bold opacity-50">Messages</div>
+              <div className="text-xs uppercase font-bold opacity-80">Messages</div>
             </div>
             <div className="bg-base-200/50 p-2 rounded-lg">
               <div className={`text-lg font-bold ${(bot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
                 {bot.errorCount ?? 0}
               </div>
-              <div className="text-xs uppercase font-bold opacity-50">Errors</div>
+              <div className="text-xs uppercase font-bold opacity-80">Errors</div>
             </div>
           </div>
         )}

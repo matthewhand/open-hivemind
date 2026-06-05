@@ -272,6 +272,7 @@ const EventStream: React.FC<EventStreamProps> = ({
                   { label: 'Critical', value: 'critical' },
                 ]}
                 className="w-auto"
+                aria-label="Filter events by level"
               />
 
               <Input
@@ -280,6 +281,7 @@ const EventStream: React.FC<EventStreamProps> = ({
                 className="w-auto"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search events"
               />
             </div>
           </div>

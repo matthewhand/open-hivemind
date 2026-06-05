@@ -7,7 +7,23 @@ import { Alert } from './DaisyUI/Alert';
 import Collapse from './DaisyUI/Collapse';
 import Indicator from './DaisyUI/Indicator';
 import Stack from './DaisyUI/Stack';
+import Tooltip from './DaisyUI/Tooltip';
 import { Progress } from './DaisyUI/Loading';
+
+const MEMORY_THRESHOLD_HINT = 'Healthy < 70% · Caution 70-90% · Critical > 90%';
+const LOAD_THRESHOLD_HINT = 'Idle < 1.0 · Busy 1.0-2.0 · Overloaded > 2.0 (per CPU core)';
+
+const getMemoryBand = (usage: number): { label: string; tone: string } => {
+  if (usage > 90) return { label: 'Critical', tone: 'text-error' };
+  if (usage > 70) return { label: 'Caution', tone: 'text-warning' };
+  return { label: 'Healthy', tone: 'text-success' };
+};
+
+const getLoadBand = (load: number): { label: string; tone: string } => {
+  if (load > 2) return { label: 'Overloaded', tone: 'text-error' };
+  if (load > 1) return { label: 'Busy', tone: 'text-warning' };
+  return { label: 'Idle', tone: 'text-success' };
+};
 import {
   CheckCircle,
   AlertTriangle,
@@ -228,52 +244,62 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Memory Usage with Indicator */}
-          <Indicator
-            item={
-              <Badge
-                variant={
-                  (metrics?.memory?.usage || 0) > 90
-                    ? 'error'
-                    : (metrics?.memory?.usage || 0) > 70
-                      ? 'warning'
-                      : 'success'
-                }
-                size="xs"
-              />
-            }
-            className="w-full"
-          >
-            <Card className="border border-base-200 w-full">
-              <Card.Body className="p-4">
-                <div className="flex items-center mb-2">
-                  <Bolt className="w-5 h-5 mr-2 text-warning" />
-                  <span className="font-medium">Memory Usage</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Progress
-                      value={metrics?.memory?.usage || 0}
-                      max={100}
-                      variant={
-                        (metrics?.memory?.usage || 0) > 90
-                          ? 'error'
-                          : (metrics?.memory?.usage || 0) > 70
-                            ? 'warning'
-                            : 'success'
-                      }
-                    />
+          <Tooltip content={MEMORY_THRESHOLD_HINT} position="top" className="w-full block">
+            <Indicator
+              item={
+                <Badge
+                  variant={
+                    (metrics?.memory?.usage || 0) > 90
+                      ? 'error'
+                      : (metrics?.memory?.usage || 0) > 70
+                        ? 'warning'
+                        : 'success'
+                  }
+                  size="xs"
+                />
+              }
+              className="w-full"
+            >
+              <Card className="border border-base-200 w-full">
+                <Card.Body className="p-4">
+                  <div className="flex items-center mb-2">
+                    <Bolt className="w-5 h-5 mr-2 text-warning" />
+                    <span className="font-medium">Memory Usage</span>
                   </div>
-                  <span className="text-sm font-mono w-12 text-right">
-                    {(metrics?.memory?.usage || 0).toFixed(0)}%
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Progress
+                        value={metrics?.memory?.usage || 0}
+                        max={100}
+                        variant={
+                          (metrics?.memory?.usage || 0) > 90
+                            ? 'error'
+                            : (metrics?.memory?.usage || 0) > 70
+                              ? 'warning'
+                              : 'success'
+                        }
+                      />
+                    </div>
+                    <span className="text-sm font-mono w-12 text-right">
+                      {(metrics?.memory?.usage || 0).toFixed(0)}%
+                    </span>
+                  </div>
+                  <span className="text-xs text-base-content/70 mt-1 block">
+                    {formatBytes((metrics?.memory?.used || 0) * 1024 * 1024)} /{' '}
+                    {formatBytes((metrics?.memory?.total || 0) * 1024 * 1024)}
                   </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes((metrics?.memory?.used || 0) * 1024 * 1024)} /{' '}
-                  {formatBytes((metrics?.memory?.total || 0) * 1024 * 1024)}
-                </span>
-              </Card.Body>
-            </Card>
-          </Indicator>
+                  <span className="text-xs text-base-content/60 mt-1 block">
+                    Current:{' '}
+                    <span className={`font-semibold ${getMemoryBand(metrics?.memory?.usage || 0).tone}`}>
+                      {getMemoryBand(metrics?.memory?.usage || 0).label}
+                    </span>
+                    {' · '}
+                    <span className="opacity-80">Healthy &lt; 70% · Caution 70-90% · Critical &gt; 90%</span>
+                  </span>
+                </Card.Body>
+              </Card>
+            </Indicator>
+          </Tooltip>
 
           {/* Load Average */}
           <Card className="border border-base-200">
@@ -284,20 +310,29 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
               </div>
               <div className="flex gap-2 justify-between items-center h-full pt-2">
                 <Stack className="w-full">
-                  {(metrics?.system?.loadAverage || []).map((load, index) => (
-                    <div key={index} className="grid grid-cols-2 bg-base-100 border border-base-300 p-2 items-center rounded-lg shadow-sm">
-                      <span className="text-xs font-bold opacity-60 px-2">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
-                      <Badge
-                        variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'neutral'}
-                        size="md"
-                        className="font-mono"
-                      >
-                        {load.toFixed(2)}
-                      </Badge>
-                    </div>
-                  ))}
+                  {(metrics?.system?.loadAverage || []).map((load, index) => {
+                    const band = getLoadBand(load);
+                    return (
+                      <div key={index} className="grid grid-cols-[auto_1fr_auto] gap-2 bg-base-100 border border-base-300 p-2 items-center rounded-lg shadow-sm">
+                        <span className="text-xs font-bold opacity-60 px-2">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
+                        <Tooltip content={LOAD_THRESHOLD_HINT} position="top">
+                          <Badge
+                            variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'neutral'}
+                            size="md"
+                            className="font-mono"
+                          >
+                            {load.toFixed(2)}
+                          </Badge>
+                        </Tooltip>
+                        <span className={`text-xs font-semibold ${band.tone} pr-1`}>{band.label}</span>
+                      </div>
+                    );
+                  })}
                 </Stack>
               </div>
+              <span className="text-xs text-base-content/60 mt-2 block">
+                Idle &lt; 1.0 · Busy 1.0-2.0 · Overloaded &gt; 2.0 (per CPU core)
+              </span>
             </Card.Body>
           </Card>
 

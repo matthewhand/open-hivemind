@@ -400,6 +400,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                     className={`flex-1 ${!formData.messageProvider ? 'select-error' : ''}`}
                                     value={formData.messageProvider}
                                     onChange={e => setFormData({ ...formData, messageProvider: e.target.value })}
+                                    aria-label="Message provider"
                                     options={[
                                         { label: 'Select Provider', value: '', disabled: true },
                                         { label: 'Discord', value: 'discord' },
@@ -421,6 +422,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 className={`${!defaultLlmConfigured && !formData.llmProvider ? 'select-error' : ''}`}
                                 value={formData.llmProvider}
                                 onChange={e => setFormData({ ...formData, llmProvider: e.target.value })}
+                                aria-label="LLM provider"
                                 options={[
                                     { label: 'Use System Default', value: '' },
                                     ...fetchedLlmProfiles.map(p => ({

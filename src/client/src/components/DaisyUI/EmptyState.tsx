@@ -115,9 +115,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           {React.isValidElement(Icon) ? Icon : React.createElement(Icon as any, { className: "w-12 h-12", strokeWidth: 1.5 })}
         </div>
 
-        <h3 className="text-xl font-semibold mb-2 text-base-content">
+        <h2 className="text-xl font-semibold mb-2 text-base-content">
           {title}
-        </h3>
+        </h2>
 
         <p className="text-base-content/60 max-w-md mb-8">
           {description}

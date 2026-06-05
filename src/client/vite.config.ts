@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  cacheDir: process.env.VITE_CACHE_DIR || 'node_modules/.vite',
   plugins: [
     react({
       jsxRuntime: 'automatic',
@@ -52,6 +53,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
+    // onnxruntime-web ships its own WASM bundles and breaks if Vite tries to
+    // pre-bundle it. See Supertonic's own web/vite.config.js for the same advice.
+    exclude: ['onnxruntime-web'],
   },
   // @ts-expect-error - Vitest config
   test: {

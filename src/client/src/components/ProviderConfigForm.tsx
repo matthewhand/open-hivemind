@@ -288,6 +288,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             max={field.validation?.max}
             step={field.validation?.max !== undefined && field.validation.max <= 2 ? '0.01' : '1'}
             className={inputClasses}
+            aria-label={field.label}
           />
         );
 
@@ -300,6 +301,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder}
               className={inputClasses}
+              aria-label={field.label}
             />
             {field.healthCheck && healthStatus[field.name] !== undefined && (
               <span className={`badge badge-sm ${healthStatus[field.name] === null ? 'badge-ghost' : healthStatus[field.name] ? 'badge-success' : 'badge-error'}`}>
@@ -315,6 +317,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
+            aria-label={field.label}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,
@@ -333,6 +336,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
+            aria-label={field.label}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,

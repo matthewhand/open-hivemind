@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import Mockup from '../DaisyUI/Mockup';
 import Badge from '../DaisyUI/Badge';
-import { Terminal, Activity, Zap, ShieldAlert, Bot } from 'lucide-react';
+import { Terminal, Activity, Zap, ShieldAlert, Bot, Radio } from 'lucide-react';
 
 interface SystemEvent {
   id: string;
@@ -48,6 +48,8 @@ const CommandCenterStream: React.FC = () => {
     }
   };
 
+  const isIdle = events.length === 0;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center px-2">
@@ -58,22 +60,31 @@ const CommandCenterStream: React.FC = () => {
         <Badge variant="outline" size="sm" className="font-mono">LIVE</Badge>
       </div>
 
-      <Mockup 
-        type="code" 
-        className="bg-neutral text-neutral-content border-none shadow-2xl h-[400px]"
-        ariaLabel="Real-time system events"
-        content={
-          <div 
-            ref={scrollRef}
-            className="flex flex-col gap-1 overflow-y-auto h-full pr-2 custom-scrollbar"
-          >
-            {events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full opacity-30 gap-2">
-                <Activity className="w-8 h-8 animate-pulse" />
-                <p className="text-xs italic">Waiting for system events...</p>
-              </div>
-            ) : (
-              events.map((event) => (
+      {isIdle ? (
+        <div
+          className="bg-neutral text-neutral-content border-none shadow-lg rounded-lg h-[110px] flex items-center justify-center gap-3 px-6"
+          role="status"
+          aria-label="Command Center Stream is idle"
+        >
+          <Radio className="w-5 h-5 text-primary animate-pulse" />
+          <div className="text-left">
+            <p className="text-sm font-semibold">Command Center Stream is idle</p>
+            <p className="text-xs opacity-60">
+              Live events will stream here when bots are running.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <Mockup
+          type="code"
+          className="bg-neutral text-neutral-content border-none shadow-2xl h-[400px]"
+          ariaLabel="Real-time system events"
+          content={
+            <div
+              ref={scrollRef}
+              className="flex flex-col gap-1 overflow-y-auto h-full pr-2 custom-scrollbar"
+            >
+              {events.map((event) => (
                 <div key={event.id} className="flex gap-3 text-[11px] leading-relaxed group hover:bg-white/5 p-1 rounded transition-colors">
                   <span className="opacity-30 select-none font-mono">
                     [{new Date(event.timestamp).toLocaleTimeString([], { hour12: false })}]
@@ -91,11 +102,11 @@ const CommandCenterStream: React.FC = () => {
                     </span>
                   )}
                 </div>
-              ))
-            )}
-          </div>
-        }
-      />
+              ))}
+            </div>
+          }
+        />
+      )}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;

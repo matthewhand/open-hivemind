@@ -1,5 +1,4 @@
 import React from 'react';
-import Breadcrumbs from './Breadcrumbs';
 
 interface PageHeaderProps {
   title: string;
@@ -76,9 +75,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </div>
           )}
         </div>
-      </div>
-      <div className="mt-4 px-2">
-        <Breadcrumbs />
       </div>
     </div>
   );

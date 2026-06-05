@@ -175,6 +175,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
             <div className="form-control">
               <Input
                 type="text"
+                aria-label="Search alerts"
                 placeholder="Search alerts..."
                 size="sm"
                 value={searchTerm}
@@ -192,7 +193,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
           aria-relevant="additions text"
         >
           {filteredAlerts.length === 0 ? (
-            <div className="text-center py-8 text-neutral-content/50">
+            <div className="text-center py-8 text-base-content/80">
               <div className="text-4xl mb-2">🔔</div>
               <p>No alerts found</p>
             </div>

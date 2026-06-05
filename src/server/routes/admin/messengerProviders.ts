@@ -10,13 +10,14 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { redactProvider } from '../../utils/redactProviderSecrets';
 
 const router = Router();
 
 // GET /messenger-providers - Get all messenger providers
-router.get('/messenger-providers', (req: Request, res: Response) => {
+router.get('/messenger-providers', async (req: Request, res: Response) => {
   try {
-    const providers = webUIStorage.getMessengerProviders();
+    const providers = (await webUIStorage.getMessengerProviders()).map(redactProvider);
     return res.json({
       success: true,
       data: { providers },
@@ -59,23 +60,14 @@ router.post(
     try {
       const { name, type, config } = req.body;
 
-      // Sanitize sensitive data
-      const sanitizedConfig = { ...config };
-      if (sanitizedConfig.token) {
-        sanitizedConfig.token = sanitizedConfig.token.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.botToken) {
-        sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.signingSecret) {
-        sanitizedConfig.signingSecret = sanitizedConfig.signingSecret.substring(0, 3) + '***';
-      }
-
+      // Store the raw config — webUIStorage encrypts at rest. Pre-truncating
+      // the token here used to silently break the saved adapter config; the
+      // canonical behavior is to redact only on the response.
       const newProvider = {
         id: `messenger${Date.now()}`,
         name,
         type,
-        config: sanitizedConfig,
+        config,
         isActive: true,
       };
 
@@ -84,7 +76,7 @@ router.post(
 
       return res.json({
         success: true,
-        data: { provider: newProvider },
+        data: { provider: redactProvider(newProvider) },
         message: 'Messenger provider created successfully',
       });
     } catch (error: unknown) {
@@ -119,23 +111,11 @@ router.put(
 
       const existingProvider = providers.find((p: any) => p.id === id);
 
-      // Sanitize sensitive data
-      const sanitizedConfig = { ...config };
-      if (sanitizedConfig.token) {
-        sanitizedConfig.token = sanitizedConfig.token.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.botToken) {
-        sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.signingSecret) {
-        sanitizedConfig.signingSecret = sanitizedConfig.signingSecret.substring(0, 3) + '***';
-      }
-
       const updatedProvider = {
         id,
         name,
         type,
-        config: sanitizedConfig,
+        config,
         isActive: existingProvider ? existingProvider.isActive : true,
       };
 
@@ -144,7 +124,7 @@ router.put(
 
       return res.json({
         success: true,
-        data: { provider: updatedProvider },
+        data: { provider: redactProvider(updatedProvider) },
         message: 'Messenger provider updated successfully',
       });
     } catch (error: unknown) {

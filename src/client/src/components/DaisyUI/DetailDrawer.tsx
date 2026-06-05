@@ -78,12 +78,15 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
+        aria-hidden={!isOpen}
         aria-label={typeof title === 'string' ? title : 'Detail panel'}
         className={[
-          'fixed top-0 right-0 z-50 h-full bg-base-100 shadow-2xl flex flex-col',
-          'transition-transform duration-300 ease-in-out',
+          'fixed top-0 z-50 h-full bg-base-100 shadow-2xl flex flex-col',
+          'transition-[right,opacity] duration-300 ease-in-out',
           'w-full md:max-w-[420px]',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
+          isOpen
+            ? 'right-0 opacity-100 visible pointer-events-auto'
+            : 'right-[-100vw] md:right-[-440px] opacity-0 invisible pointer-events-none',
           className,
         ].join(' ')}
       >

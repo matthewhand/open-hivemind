@@ -15,6 +15,7 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { redactProvider } from '../../utils/redactProviderSecrets';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -31,9 +32,9 @@ const configRateLimit = isTestEnv
     });
 
 // GET /llm-providers - Get all LLM providers
-router.get('/llm-providers', (req: Request, res: Response) => {
+router.get('/llm-providers', async (req: Request, res: Response) => {
   try {
-    const providers = webUIStorage.getLlmProviders();
+    const providers = (await webUIStorage.getLlmProviders()).map(redactProvider);
     return res.json({
       success: true,
       data: { providers },
@@ -77,20 +78,15 @@ router.post(
     try {
       const { name, type, config } = req.body;
 
-      // Sanitize sensitive data
-      const sanitizedConfig = { ...config };
-      if (sanitizedConfig.apiKey) {
-        sanitizedConfig.apiKey = sanitizedConfig.apiKey.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.botToken) {
-        sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
-      }
-
+      // Store the raw config — webUIStorage encrypts the whole blob at rest
+      // via SecureConfigManager. Do NOT pre-truncate the apiKey here: the
+      // stored copy is what downstream callers (test-stream, ApiMonitor,
+      // provider plugins) actually use. Redaction belongs on the response.
       const newProvider = {
         id: `llm${Date.now()}`,
         name,
         type,
-        config: sanitizedConfig,
+        config,
         isActive: true,
       };
 
@@ -102,7 +98,7 @@ router.post(
 
       return res.json({
         success: true,
-        data: { provider: newProvider },
+        data: { provider: redactProvider(newProvider) },
         message: 'LLM provider created successfully',
       });
     } catch (error: unknown) {
@@ -145,7 +141,7 @@ router.put(
 
       return res.json({
         success: true,
-        data: { provider: updatedProvider },
+        data: { provider: redactProvider(updatedProvider) },
         message: 'LLM provider updated successfully',
       });
     } catch (error: unknown) {
@@ -470,6 +466,83 @@ router.post(
         error: 'Failed to test connection',
         message: hivemindError.message || 'An error occurred while testing connection',
       });
+    }
+  })
+);
+
+// POST /llm-providers/providers/:type/test-stream — SSE bridge for BotTestDriveTab.
+// Calls the real provider's generateChatCompletion and emits the response as a
+// single SSE chunk + done event, matching the {type:'chunk'|'done'|'error'} shape
+// the BotTestDriveTab consumer already parses. A true token-by-token stream is
+// a follow-up — the plugin interface doesn't expose streaming yet.
+router.post(
+  '/llm-providers/providers/:type/test-stream',
+  asyncErrorHandler(async (req, res) => {
+    const type = String(req.params.type || '').toLowerCase();
+    const { message, systemPrompt, conversationHistory } = req.body ?? {};
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    (res as any).flushHeaders?.();
+
+    const send = (event: object) => {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    };
+
+    if (!message || typeof message !== 'string') {
+      send({ type: 'error', error: 'message field is required' });
+      return res.end();
+    }
+
+    const validTypes = ['openai', 'flowise', 'openwebui', 'letta'];
+    if (!validTypes.includes(type)) {
+      send({ type: 'error', error: `Unsupported provider type: ${type}` });
+      return res.end();
+    }
+
+    try {
+      // Pick the first active provider config of this type for model/baseUrl etc.
+      const providers = await webUIStorage.getLlmProviders();
+      const saved = providers.find(
+        (p: any) => (p.type || '').toLowerCase() === type && p.isActive !== false
+      );
+      const config = saved?.config ? { ...saved.config } : {};
+      // Legacy data may contain a "sk-***" truncated key from before the
+      // sanitization bug was fixed — drop it so the plugin falls back to env.
+      if (typeof config.apiKey === 'string' && config.apiKey.endsWith('***')) {
+        delete config.apiKey;
+      }
+
+      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
+      const mod = await loadPlugin(`llm-${type}`);
+      const provider = instantiateLlmProvider(mod, config);
+
+      // Adapt plain {role,content} history into the IMessage shape providers expect.
+      const history = (Array.isArray(conversationHistory) ? conversationHistory : []).map(
+        (m: any) => ({
+          role: m.role,
+          getText: () => m.content ?? '',
+          metadata: {},
+        })
+      );
+
+      const response = await provider.generateChatCompletion(message, history, {
+        systemPrompt: systemPrompt || undefined,
+      });
+
+      send({ type: 'chunk', content: response });
+      send({
+        type: 'done',
+        model: config.model || 'unknown',
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      });
+      return res.end();
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug(`test-stream error for ${type}: ${hivemindError.message}`);
+      send({ type: 'error', error: hivemindError.message || 'test-stream failed' });
+      return res.end();
     }
   })
 );

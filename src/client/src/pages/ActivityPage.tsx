@@ -806,6 +806,7 @@ const ActivityPage: React.FC = () => {
               size="sm"
               onClick={fetchActivity}
               disabled={loading} aria-busy={loading}
+              aria-label="Refresh activity"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -898,6 +899,7 @@ const ActivityPage: React.FC = () => {
             onChange={(e) => setStartDate(e.target.value)}
             className="input-sm w-auto"
             placeholder="Start Date"
+            aria-label="Start date"
           />
           <span className="text-base-content/50">-</span>
           <Input
@@ -906,6 +908,7 @@ const ActivityPage: React.FC = () => {
             onChange={(e) => setEndDate(e.target.value)}
             className="input-sm w-auto"
             placeholder="End Date"
+            aria-label="End date"
           />
           {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
              <Button
@@ -930,6 +933,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('all')}
               onChange={() => toggleEventType('all')}
+              aria-label="Show all event types"
             />
             <span className="text-base-content/70">All</span>
           </label>
@@ -938,6 +942,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('incoming') || eventTypes.has('all')}
               onChange={() => toggleEventType('incoming')}
+              aria-label="Show incoming events"
             />
             <Badge variant="primary" size="xs">📥 Incoming</Badge>
           </label>
@@ -945,6 +950,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('outgoing') || eventTypes.has('all')}
               onChange={() => toggleEventType('outgoing')}
+              aria-label="Show outgoing events"
             />
             <Badge variant="secondary" size="xs">📤 Outgoing</Badge>
           </label>
@@ -952,6 +958,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('timeout') || eventTypes.has('all')}
               onChange={() => toggleEventType('timeout')}
+              aria-label="Show timeout events"
             />
             <Badge variant="warning" size="xs">⏱️ Timeout</Badge>
           </label>
@@ -959,6 +966,7 @@ const ActivityPage: React.FC = () => {
             <Checkbox
               checked={eventTypes.has('error') || eventTypes.has('all')}
               onChange={() => toggleEventType('error')}
+              aria-label="Show error events"
             />
             <Badge variant="error" size="xs">❌ Error</Badge>
           </label>

@@ -95,8 +95,8 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
               <Icon className={`w-5 h-5 text-${color}`} />
             </div>
             <div>
-              <h3 className="font-semibold">{pkg.displayName}</h3>
-              <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
+              <h2 className="font-semibold">{pkg.displayName}</h2>
+              <p className="text-xs text-base-content/80 font-mono">{pkg.name}</p>
             </div>
           </div>
           <Badge variant={statusBadge.color} size="sm">
@@ -108,9 +108,9 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
           {pkg.description}
         </p>
 
-        <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
+        <div className="flex items-center justify-between text-xs text-base-content/80 mb-3">
           <span>v{pkg.version}</span>
-          <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
+          <span className="uppercase badge badge-sm badge-ghost">{pkg.type}</span>
         </div>
 
         {/* Star Rating & Feedback */}
@@ -204,7 +204,7 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
             </Button>
           )}
           {pkg.status === 'built-in' && (
-            <span className="text-xs text-base-content/50 italic w-full text-center">
+            <span className="text-xs text-base-content/80 italic w-full text-center">
               Included with open-hivemind
             </span>
           )}

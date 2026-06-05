@@ -185,6 +185,8 @@ playwright-report/
 test-results/archive/
 # Note: test-results/archive/ is different from repo archive/
 *.archive
+# Ephemeral Playwright test outputs (specs write here at runtime)
+tests/e2e/screenshots/
 
 # Local scratch files and notes
 .domain
@@ -272,3 +274,9 @@ parseFull.js
 .pinokio-terminal.json
 monitoring/
 .ci/eslint-report.json
+
+# TTS model assets (downloaded via npm run tts:download — see ROADMAP.md)
+src/client/public/tts/
+
+# Codex CLI local state
+.codex

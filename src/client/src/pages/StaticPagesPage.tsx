@@ -77,7 +77,7 @@ const StaticPagesPage: React.FC = () => {
               <div className={`p-4 rounded-xl ${page.bgClass} ${page.colorClass} mb-4`}>
                 {page.icon}
               </div>
-              <h3 className="font-semibold text-lg mb-1">{page.title}</h3>
+              <h2 className="font-semibold text-lg mb-1">{page.title}</h2>
               <p className="text-sm text-base-content/70 mb-2">{page.description}</p>
               <code className="text-xs text-base-content/50 bg-base-200 px-2 py-1 rounded mb-4">
                 {page.url}

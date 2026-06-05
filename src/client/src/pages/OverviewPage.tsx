@@ -55,8 +55,7 @@ const OverviewPage: React.FC = () => {
 
       {activeTab === 'overview' && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Overview</h3>
+          <div className="flex items-center justify-end mb-4">
             <div className="flex items-center gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm">
               <span className="text-sm font-medium opacity-80">Static</span>
               <Toggle
@@ -81,7 +80,6 @@ const OverviewPage: React.FC = () => {
           <div className="divider" />
 
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60 mb-4">System Health</h3>
             <Suspense fallback={<SuspenseFallback />}>
               <SystemHealth refreshInterval={30000} />
             </Suspense>

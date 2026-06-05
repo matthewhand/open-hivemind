@@ -132,6 +132,13 @@ const PersonasPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Personas"
+        description="Define and manage persona presets for your bots."
+        icon={Users}
+        gradient="primary"
+      />
+
       {displayError && <Alert type="error" message={displayError} onClose={() => setError(null)} />}
 
       <Tabs

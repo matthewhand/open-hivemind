@@ -11,10 +11,16 @@
 // - Use "Resources" for secondary links (Developer, About)
 // - Section dividers use capitalized labels (System, Resources)
 //
+// TIERING (see /ROADMAP.md):
+// - 'mvp'          → no badge, always visible
+// - 'beta'         → [Beta] chip, always visible
+// - 'experimental' → [Experimental] chip, hidden unless VITE_ENABLE_EXPERIMENTAL=true
+//
 // When adding a new nav item, ensure:
 // 1. The label matches the page title and domain language
 // 2. The path exists in AppRouter.tsx (or has a redirect)
-// 3. A screenshot is added to the PR for visual review
+// 3. A `tier` is assigned (default 'mvp')
+// 4. A screenshot is added to the PR for visual review
 //
 import {
   LayoutDashboard, Bot,
@@ -23,6 +29,8 @@ import {
   FileDown, HeartPulse, HelpCircle, FileCode, Info, Activity,
 } from 'lucide-react';
 import React from 'react';
+
+export type NavItemTier = 'mvp' | 'beta' | 'experimental';
 
 export interface NavItem {
   id: string;
@@ -35,6 +43,7 @@ export interface NavItem {
   divider?: boolean;
   visible?: boolean;
   requiredRole?: string;
+  tier?: NavItemTier;
 }
 
 // Icon wrapper for consistent sizing
@@ -50,6 +59,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><LayoutDashboard className="w-4 h-4" /></NavIcon>,
     path: '/admin/overview',
     visible: true,
+    tier: 'mvp',
   },
 
   // === CORE ===
@@ -59,6 +69,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Bot className="w-4 h-4" /></NavIcon>,
     path: '/admin/bots',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'message',
@@ -66,6 +77,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
     path: '/admin/message',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'llm',
@@ -73,6 +85,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
     path: '/admin/llm',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'memory',
@@ -80,6 +93,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Component className="w-4 h-4" /></NavIcon>,
     path: '/admin/memory',
     visible: true,
+    tier: 'beta',
   },
   {
     id: 'tool',
@@ -87,6 +101,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Cog className="w-4 h-4" /></NavIcon>,
     path: '/admin/tool',
     visible: true,
+    tier: 'beta',
   },
   {
     id: 'personas',
@@ -94,6 +109,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><ClipboardList className="w-4 h-4" /></NavIcon>,
     path: '/admin/personas',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'response-profiles',
@@ -101,6 +117,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
     path: '/admin/config/response-profiles',
     visible: true,
+    tier: 'beta',
   },
   {
     id: 'guards',
@@ -108,6 +125,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><HeartPulse className="w-4 h-4" /></NavIcon>,
     path: '/admin/guards',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'community',
@@ -115,6 +133,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Store className="w-4 h-4" /></NavIcon>,
     path: '/admin/marketplace',
     visible: true,
+    tier: 'experimental',
   },
 
   // === SYSTEM ===
@@ -131,6 +150,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Settings className="w-4 h-4" /></NavIcon>,
     path: '/admin/settings',
     visible: true,
+    tier: 'mvp',
   },
   {
     id: 'provider-health',
@@ -138,6 +158,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
     path: '/admin/health/providers',
     visible: true,
+    tier: 'beta',
   },
 
   // === RESOURCES ===
@@ -154,6 +175,7 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><FileCode className="w-4 h-4" /></NavIcon>,
     path: '/admin/developer',
     visible: true,
+    tier: 'experimental',
   },
   {
     id: 'about',
@@ -161,12 +183,44 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Info className="w-4 h-4" /></NavIcon>,
     path: '/admin/about',
     visible: true,
+    tier: 'mvp',
   },
 ];
 
-// Filter navigation items based on user role
+// Whether the experimental tier is enabled for this client build.
+// Pulls from Vite env at compile time so it's tree-shakable in prod.
+const experimentalEnabled = (): boolean => {
+  // Vite exposes import.meta.env.* at build time. Guard for non-Vite runtimes (tests).
+  try {
+    // @ts-expect-error import.meta is present in Vite/ESM
+    return import.meta.env?.VITE_ENABLE_EXPERIMENTAL === 'true';
+  } catch {
+    return false;
+  }
+};
+
+// Decorate a nav item with a tier-derived badge and visibility flag.
+// Items already declaring a badge keep theirs (explicit beats derived).
+function applyTier(item: NavItem, experimental: boolean): NavItem | null {
+  if (item.divider) return item;
+  const tier = item.tier ?? 'mvp';
+  if (tier === 'experimental' && !experimental) return null;
+
+  let badge = item.badge;
+  if (badge == null) {
+    if (tier === 'beta') badge = 'Beta';
+    else if (tier === 'experimental') badge = 'Experimental';
+  }
+
+  return { ...item, badge };
+}
+
+// Filter navigation items based on user role AND tier visibility.
 export function filterNavItemsByRole(items: NavItem[], userRole?: string): NavItem[] {
+  const experimental = experimentalEnabled();
   return items
+    .map(item => applyTier(item, experimental))
+    .filter((item): item is NavItem => item !== null)
     .filter(item => {
       if (!item.visible) { return false; }
       if (item.requiredRole && userRole !== item.requiredRole && userRole !== 'owner') {

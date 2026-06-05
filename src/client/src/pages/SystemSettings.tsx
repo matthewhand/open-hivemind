@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
+import SettingsVoice from '../components/Settings/SettingsVoice';
 import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -31,9 +32,20 @@ const SystemSettings: React.FC = () => {
   // LLM and Messaging settings live in their respective provider pages
   // (LLM > Settings, Messaging > Settings) to avoid duplication.
   // Settings page only covers cross-cutting concerns.
+  // Voice tab is gated behind the Experimental flag (see ROADMAP.md tier rules).
+  // Read via try/catch so non-Vite test runtimes don't blow up.
+  let experimentalEnabled = false;
+  try {
+    // @ts-expect-error import.meta is Vite-only
+    experimentalEnabled = import.meta.env?.VITE_ENABLE_EXPERIMENTAL === 'true';
+  } catch { /* default false */ }
+
   const tabs = [
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'security', label: 'Security', component: <SettingsSecurity /> },
+    ...(experimentalEnabled
+      ? [{ id: 'voice', label: 'Voice [Experimental]', component: <SettingsVoice /> }]
+      : []),
   ];
 
   // Determine active tab index, default to 0 (General) if not found or not specified

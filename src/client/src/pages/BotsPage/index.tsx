@@ -246,6 +246,7 @@ const BotsPage: React.FC = () => {
               size="sm"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
+              aria-label="Filter bots by status"
             >
               <option value="all">All Status</option>
               <option value="active">Active Only</option>

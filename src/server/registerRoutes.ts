@@ -208,6 +208,19 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 
+  // Unmatched API route guard — return 404 immediately so requests don't fall
+  // through to the Vite dev middleware (which would hang forever trying to
+  // resolve them as static assets). Without this, any typo or stale endpoint
+  // call from the frontend (e.g. `/api/performance` instead of
+  // `/api/enterprise/performance`) leaves the fetch pending indefinitely,
+  // blocking Playwright's `networkidle` and producing browser request hangs.
+  app.all(/^\/api(\/.*)?$/, (req: Request, res: Response) => {
+    httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
+    return res
+      .status(404)
+      .json({ error: 'Endpoint not found', path: req.path, method: req.method });
+  });
+
   // React Router catch-all handler (must be AFTER all API routes)
   // Serve index.html for all non-API, non-asset routes so React Router handles them
   app.get('*', (req: Request, res: Response, next: NextFunction) => {

@@ -525,6 +525,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             placeholder="Enter a descriptive name for this provider"
             value={formData.name || ''}
             onChange={(e) => handleFieldChange('name', e.target.value)}
+            aria-label="Provider Name"
           />
           {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
         </div>
@@ -540,6 +541,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className={`select select-bordered w-full ${errors.modelType ? 'select-error' : ''}`}
               value={formData.modelType || 'chat'}
               onChange={(e) => handleFieldChange('modelType', e.target.value)}
+              aria-label="Model Type"
             >
               <option value="chat">Chat</option>
               <option value="embedding">Embedding</option>

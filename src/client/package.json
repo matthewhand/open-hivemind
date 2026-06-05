@@ -25,6 +25,7 @@
     "dompurify": "^3.4.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.460.0",
+    "onnxruntime-web": "^1.26.0",
     "prop-types": "^15.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

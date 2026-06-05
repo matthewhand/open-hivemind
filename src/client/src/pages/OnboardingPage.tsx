@@ -75,7 +75,7 @@ const WelcomeStep: React.FC = () => (
         <MessageSquare className="w-16 h-16 text-accent" />
       </div>
     </div>
-    <h2 className="text-3xl font-bold">Welcome to Open-Hivemind</h2>
+    <h1 className="text-3xl font-bold">Welcome to Open-Hivemind</h1>
     <p className="text-lg text-base-content/70 max-w-xl mx-auto">
       Open-Hivemind is a multi-agent AI platform that lets you create intelligent bots
       and connect them to messaging platforms like Discord, Slack, and Mattermost.
@@ -83,17 +83,17 @@ const WelcomeStep: React.FC = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
       <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
         <Cpu className="w-8 h-8 mx-auto text-primary" />
-        <h4 className="font-semibold text-sm">LLM Providers</h4>
+        <h2 className="font-semibold text-sm">LLM Providers</h2>
         <p className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</p>
       </div>
       <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
         <Bot className="w-8 h-8 mx-auto text-secondary" />
-        <h4 className="font-semibold text-sm">AI Bots</h4>
+        <h2 className="font-semibold text-sm">AI Bots</h2>
         <p className="text-xs text-base-content/60">Create specialized agents</p>
       </div>
       <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
         <MessageSquare className="w-8 h-8 mx-auto text-accent" />
-        <h4 className="font-semibold text-sm">Messengers</h4>
+        <h2 className="font-semibold text-sm">Messengers</h2>
         <p className="text-xs text-base-content/60">Discord, Slack, Mattermost</p>
       </div>
     </div>
@@ -132,7 +132,7 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-xl font-bold">Configure LLM Provider</h3>
+        <h1 className="text-xl font-bold">Configure LLM Provider</h1>
         <p className="text-base-content/70 text-sm">
           {llmProfiles.length > 0
             ? 'Select one of your installed LLM providers.'
@@ -222,7 +222,7 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider, person
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-xl font-bold">Create Your First Bot</h3>
+        <h1 className="text-xl font-bold">Create Your First Bot</h1>
         <p className="text-base-content/70 text-sm">
           Pick an existing persona or create a custom one.
         </p>
@@ -327,7 +327,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-xl font-bold">Connect a Messenger</h3>
+        <h1 className="text-xl font-bold">Connect a Messenger</h1>
         <p className="text-base-content/70 text-sm">
           {messageProfiles.length > 0
             ? 'Select one of your installed messenger providers.'
@@ -392,7 +392,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
       {messenger && (
         <>
           <Card bgVariant="ghost" className="bg-base-200" compact>
-            <h4 className="font-semibold mb-2 capitalize">Setup Instructions for {messenger}</h4>
+            <h2 className="font-semibold mb-2 capitalize">Setup Instructions for {messenger}</h2>
             {instructions[messenger]}
           </Card>
 
@@ -435,13 +435,13 @@ const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) 
           <CheckCircle2 className="w-16 h-16 text-success" />
         </div>
       </div>
-      <h2 className="text-3xl font-bold">You are All Set!</h2>
+      <h1 className="text-3xl font-bold">You are All Set!</h1>
       <p className="text-lg text-base-content/70 max-w-lg mx-auto">
         Your Open-Hivemind instance is configured and ready to go.
       </p>
 
       <Card bgVariant="ghost" className="bg-base-200 max-w-md mx-auto">
-          <h4 className="font-bold mb-3">Configuration Summary</h4>
+          <h2 className="font-bold mb-3">Configuration Summary</h2>
           <div className="space-y-2 text-left text-sm">
             <div className="flex justify-between">
               <span className="text-base-content/60">LLM Provider:</span>

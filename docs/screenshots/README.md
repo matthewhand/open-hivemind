@@ -11,6 +11,27 @@ To add a new screenshot:
 
 ---
 
+## Golden Journey
+
+The canonical end-to-end walkthrough — adding providers, wiring a bot, sending a message — as automated by `tests/e2e/golden-journey.spec.ts`.
+
+Run `npm run test:journey` to regenerate these screenshots; the spec is the source of truth for "MVP works." See [ROADMAP.md](/ROADMAP.md).
+
+| Step | Screenshot | What / Why / How |
+|---|---|---|
+| **01 — Onboarding** | ![journey-01-onboarding](journey-01-onboarding.png) | **What:** the admin dashboard after first sign-in. **Why:** proves the user can reach the admin surface. **How:** with `ALLOW_LOCALHOST_ADMIN=true` the trusted-network bypass auto-authenticates; otherwise the spec clicks the "Login as Admin (Trusted Network)" button. |
+| **02 — Add Discord** | ![journey-02-discord-add](journey-02-discord-add.png) | **What:** the Message Providers page after creating a Discord profile. **Why:** the first messenger adapter is the entry point for receiving messages. **How:** `POST /api/admin/messenger-providers` with `type=discord` and a token; the page then lists the new profile. |
+| **03 — Add OpenAI** | ![journey-03-openai-add](journey-03-openai-add.png) | **What:** the LLM Providers page after creating an OpenAI profile. **Why:** the LLM adapter handles inference for the bot's replies. **How:** `POST /api/admin/llm-providers` with `type=openai` and an `apiKey`. Mocked mode uses the sentinel key `sk-test-mock`. |
+| **04 — Create Bot** | ![journey-04-bot-create](journey-04-bot-create.png) | **What:** the Bots page after wiring a bot to Discord + OpenAI. **Why:** the bot is the runtime object that ties messenger and LLM together. **How:** `POST /api/bots` with `messageProvider=discord` and `llmProvider=openai`. |
+| **05 — Bot Chat** | ![journey-05-bot-chat](journey-05-bot-chat.png) | **What:** the bot detail drawer open on the Test Drive tab after exchanging a message. **Why:** validates the full request→LLM→response pipeline in the browser. **How:** click the bot card on `/admin/bots` to open the side drawer, switch to the Test Drive tab, type "Hello, bot.", click Send. In mocked mode the SSE handler at `**/api/admin/llm-providers/providers/**/test-stream` returns a canned chunk + done event. |
+| **06 — Activity Log** | ![journey-06-activity](journey-06-activity.png) | **What:** the Activity page rendering after the exchange. **Why:** closes the loop — what the bot did is observable. **How:** navigate to `/admin/activity`; the page renders without error. Deeper assertions (a row referencing the test bot) are a follow-up. |
+
+### Smart mocks (no real keys needed)
+
+The spec auto-detects sentinel API keys (`/^(test\|dummy\|mock\|fake\|sk-test)-/i`). With sentinels it installs a `page.route()` handler that returns a canned LLM reply. With real keys (`npm run test:journey:integration`), no handler installs — the spec becomes an integration test against the real provider.
+
+---
+
 ## Activity & Monitoring
 
 | Screenshot | Description |
@@ -161,6 +182,12 @@ To add a new screenshot:
 | ![button-loading-real-app](button-loading-real-app.png) | Button loading state in production context |
 | ![pagination](pagination.png) | Pagination component |
 | ![pagination-accessible](pagination-accessible.png) | Pagination with accessibility enhancements |
+## Voice Readout (Supertonic)
+
+| Screenshot | Description |
+|---|---|
+| ![tts-supertonic-ready](tts-supertonic-ready.png) | **What:** the Voice [Experimental] settings tab with the Supertonic engine loaded and ready (WASM backend shown). **Why:** proves the browser-side ONNX TTS engine initializes against same-origin model files at `/tts/` — no third-party CDN, no CORS bypass. **How:** `npm run tts:download` (one-time, vendors ~400 MB of model weights), then enable the toggle, pick "Supertonic" in the Engine dropdown. The hook loads 4 ONNX models (duration predictor, text encoder, vector estimator, vocoder) and one voice preset (default F1). Test with `npm run test:tts`. |
+
 ## Demo Mode & Onboarding
 | Screenshot | Description |
 |---|---|

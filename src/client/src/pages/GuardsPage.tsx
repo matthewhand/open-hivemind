@@ -675,7 +675,7 @@ const GuardsPage: React.FC = () => {
           {profiles.length === 0 ? (
             <div className="text-center py-16 bg-base-200 rounded-box">
               <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-              <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
+              <h2 className="text-xl font-bold mb-2">No Guard Profiles</h2>
               <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
               <Button variant="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Profile
@@ -692,7 +692,7 @@ const GuardsPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-bold">{profile.name}</h3>
+                        <h2 className="text-lg font-bold">{profile.name}</h2>
                         <p className="text-sm text-base-content/70 line-clamp-2 min-h-[2.5rem] mt-1">
                           {profile.description || 'No description'}
                         </p>
@@ -722,7 +722,7 @@ const GuardsPage: React.FC = () => {
                         <span className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
                         </span>
-                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
+                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error' : 'badge-ghost'}`}>
                           {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
                         </div>
                       </div>

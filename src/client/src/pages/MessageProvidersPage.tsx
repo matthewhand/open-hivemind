@@ -132,7 +132,7 @@ const CommunityTab: React.FC = () => {
                     <MessageIcon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{pkg.displayName}</h3>
+                    <h2 className="font-semibold">{pkg.displayName}</h2>
                     <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ const CommunityTab: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
                 <span>v{pkg.version}</span>
-                <span className="uppercase badge badge-sm badge-outline">message</span>
+                <span className="uppercase badge badge-sm badge-ghost">message</span>
               </div>
 
               {/* Rating & Feedback */}
@@ -181,7 +181,7 @@ const CommunityTab: React.FC = () => {
                   </Button>
                 )}
                 {pkg.status === 'built-in' && (
-                  <span className="text-xs text-base-content/50 italic w-full text-center">
+                  <span className="text-xs text-base-content/80 italic w-full text-center">
                     Included with open-hivemind
                   </span>
                 )}
@@ -333,10 +333,10 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       {getProviderIcon(profile.provider)}
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg flex items-center gap-2">
+                      <h2 className="font-bold text-lg flex items-center gap-2">
                         {profile.name}
-                        <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                      </h3>
+                        <span className="text-xs font-normal opacity-80 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
+                      </h2>
                       <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
                     </div>
                   </div>

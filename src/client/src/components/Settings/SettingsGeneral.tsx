@@ -255,7 +255,7 @@ const SettingsGeneral: React.FC = () => {
       <div className="flex items-center gap-3 mb-4">
         <SettingsIcon className="w-5 h-5 text-primary" />
         <div>
-          <h5 className="text-lg font-bold">General Settings</h5>
+          <h2 className="text-lg font-bold">General Settings</h2>
           <p className="text-sm text-base-content/70">Configure basic instance settings and preferences</p>
         </div>
       </div>
@@ -271,21 +271,23 @@ const SettingsGeneral: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Instance Information */}
         <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
-          </h6>
+          </h3>
 
-          <FormField label="Instance Name" error={errors.instanceName} required>
+          <FormField label="Instance Name" error={errors.instanceName} required htmlFor="settings-instance-name">
             <Input
+              id="settings-instance-name"
               {...register('instanceName')}
               placeholder="Display name for this Open-Hivemind instance"
               size="sm"
             />
           </FormField>
 
-          <FormField label="Description" error={errors.description}>
+          <FormField label="Description" error={errors.description} htmlFor="settings-description">
             <Textarea
+              id="settings-description"
               className="w-full"
               size="sm"
               {...register('description')}
@@ -297,21 +299,23 @@ const SettingsGeneral: React.FC = () => {
 
         {/* Localization */}
         <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-secondary rounded-full"></span>
             Localization & Appearance
-          </h6>
+          </h3>
 
-          <FormField label="Timezone" error={errors.timezone}>
+          <FormField label="Timezone" error={errors.timezone} htmlFor="settings-timezone">
             <Select
+              id="settings-timezone"
               {...register('timezone')}
               size="sm"
               options={timezoneOptions}
             />
           </FormField>
 
-          <FormField label="Theme" error={errors.theme}>
+          <FormField label="Theme" error={errors.theme} htmlFor="settings-theme">
             <Select
+              id="settings-theme"
               {...register('theme')}
               size="sm"
               options={[
@@ -325,10 +329,10 @@ const SettingsGeneral: React.FC = () => {
 
         {/* Aesthetic Preferences */}
         <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-info rounded-full"></span>
             Aesthetic Preferences
-          </h6>
+          </h3>
 
           <div className="space-y-3">
             <Toggle
@@ -341,7 +345,7 @@ const SettingsGeneral: React.FC = () => {
               }}
               size="sm"
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               When enabled, shows the Getting Started tab on the Overview page with setup guides and tips.
             </p>
           </div>
@@ -352,13 +356,14 @@ const SettingsGeneral: React.FC = () => {
           className="bg-base-100 border border-base-300 shadow-sm p-4 h-full"
           data-testid="settings-density-card"
         >
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-success rounded-full"></span>
             Display Density
-          </h6>
+          </h3>
 
-          <FormField label="UI Density">
+          <FormField label="UI Density" htmlFor="settings-density">
             <Select
+              id="settings-density"
               size="sm"
               value={density}
               onChange={(e) => setDensity(e.target.value as UIState['density'])}
@@ -369,7 +374,7 @@ const SettingsGeneral: React.FC = () => {
               data-testid="settings-density-select"
             />
           </FormField>
-          <p className="text-xs text-base-content/50 pl-1 -mt-2 mb-3">
+          <p className="text-xs text-base-content/80 pl-1 -mt-2 mb-3">
             {densityDescription}
           </p>
 
@@ -383,7 +388,7 @@ const SettingsGeneral: React.FC = () => {
               size="sm"
               data-testid="settings-compact-density-toggle"
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               Further tightens spacing on top of the selected density. Useful for
               power users who want maximum information per screen.
             </p>
@@ -392,13 +397,14 @@ const SettingsGeneral: React.FC = () => {
 
         {/* Logging */}
         <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-accent rounded-full"></span>
             Logging & Notifications
-          </h6>
+          </h3>
 
-          <FormField label="Log Level" error={errors.logLevel}>
+          <FormField label="Log Level" error={errors.logLevel} htmlFor="settings-log-level">
             <Select
+              id="settings-log-level"
               {...register('logLevel')}
               size="sm"
               options={[
@@ -446,21 +452,23 @@ const SettingsGeneral: React.FC = () => {
 
         {/* System Limits */}
         <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-warning rounded-full"></span>
             System Limits & Health
-          </h6>
+          </h3>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <FormField label="Max Bots" error={errors.maxConcurrentBots}>
+            <FormField label="Max Bots" error={errors.maxConcurrentBots} htmlFor="settings-max-bots">
               <Input
+                id="settings-max-bots"
                 type="number"
                 {...register('maxConcurrentBots')}
                 size="sm"
               />
             </FormField>
-            <FormField label="Timeout (s)" error={errors.defaultResponseTimeout}>
+            <FormField label="Timeout (s)" error={errors.defaultResponseTimeout} htmlFor="settings-default-timeout">
               <Input
+                id="settings-default-timeout"
                 type="number"
                 {...register('defaultResponseTimeout')}
                 size="sm"
@@ -486,8 +494,9 @@ const SettingsGeneral: React.FC = () => {
             />
             {enableHealthChecks && (
               <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
-                <FormField label="Interval (seconds)" error={errors.healthCheckInterval}>
+                <FormField label="Interval (seconds)" error={errors.healthCheckInterval} htmlFor="settings-health-interval">
                   <Input
+                    id="settings-health-interval"
                     type="number"
                     {...register('healthCheckInterval')}
                     size="xs"
@@ -525,7 +534,7 @@ const SettingsGeneral: React.FC = () => {
                 />
               )}
             />
-            <p className="text-xs text-base-content/50 pl-1">
+            <p className="text-xs text-base-content/80 pl-1">
               When enabled, the system will be in maintenance mode. New messages will not be processed.
             </p>
           </div>

@@ -279,6 +279,7 @@ const AuditPage: React.FC = () => {
         <div className="form-control">
           <input
             type="text"
+            aria-label="Search user or resource"
             placeholder="Search user, resource..."
             className="input input-sm input-bordered"
             value={searchTerm}
@@ -286,6 +287,7 @@ const AuditPage: React.FC = () => {
           />
         </div>
         <select
+          aria-label="Filter by action"
           className="select select-sm select-bordered"
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
@@ -298,6 +300,7 @@ const AuditPage: React.FC = () => {
           ))}
         </select>
         <select
+          aria-label="Filter by result"
           className="select select-sm select-bordered"
           value={resultFilter}
           onChange={(e) => setResultFilter(e.target.value)}
