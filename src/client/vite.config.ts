@@ -35,6 +35,8 @@ export default defineConfig({
       '@src': './src',
       '@config': '../config',
       '@webui': './webui/src',
+      // shared-types has no built dist; resolve it to source for vite/frontend
+      '@hivemind/shared-types': '../../packages/shared-types/src/index.ts',
     },
   },
   build: {
