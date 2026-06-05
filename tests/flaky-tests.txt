@@ -3,4 +3,4 @@
 # Format:
 # testPath | owner=@team-or-user | expires=YYYY-MM-DD | reason=short note
 
-tests/integration/MonitoringPipeline.test.ts | owner=@platform-ci | expires=2026-05-15 | reason=intermittent timing variance under CI load
+# (entry removed 2026-06-05: MonitoringPipeline.test.ts was deleted; quarantine expired 2026-05-15)

@@ -94,19 +94,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm run build
-
-      - name: Run quick smoke tests
+      - name: Run startup smoke test
+        # dist/ is not maintained (tsx runs the app directly via npm run dev).
+        # Verify the server starts cleanly instead of requiring a prod build.
+        env:
+          SKIP_MESSENGERS: 'true'
+          HTTP_ENABLED: 'true'
+          NODE_ENV: development
         run: |
-          # Quick smoke test to make sure basic imports work
-          NODE_ENV=production node -e "
-            try {
-              require('./dist/src/index.js');
-              console.log('✅ Build successful - basic imports work');
-              process.exit(0);
-            } catch (error) {
-              console.error('❌ Build failed - import error:', error.message);
-              process.exit(1);
-            }
-          "
+          timeout 30 npm run start:dev:headless 2>&1 | tee /tmp/smoke.log || true
+          if grep -q "Server startup complete" /tmp/smoke.log; then
+            echo "✅ Server starts cleanly"
+          else
+            echo "❌ Server did not reach startup complete"
+            cat /tmp/smoke.log
+            exit 1
+          fi
