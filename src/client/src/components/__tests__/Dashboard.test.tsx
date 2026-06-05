@@ -1,7 +1,6 @@
 import { expect, vi } from 'vitest';
-// Jest provides describe, it, expect, beforeEach as globals
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
@@ -16,93 +15,126 @@ vi.mock('../../services/api', () => ({
     getPersonas: vi.fn(),
     getLlmProfiles: vi.fn(),
     createBot: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
-// Mock DaisyUI components - provide minimal implementations for testing
-vi.mock('../DaisyUI', () => ({
-  Alert: ({ children }: { children: React.ReactNode }) => <div className="alert">{children}</div>,
-  Badge: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
-  Button: ({ children, onClick, disabled, className }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) => (
-    <button onClick={onClick} disabled={disabled} className={className}>{children}</button>
+// Mock DaisyUI components
+vi.mock('../DaisyUI/Alert', () => ({
+  Alert: ({ children, message }: { children?: React.ReactNode; message?: string }) => (
+    <div className="alert">{message ?? children}</div>
   ),
-  Card: ({ children, className, ...props }: { children: React.ReactNode; className?: string;[key: string]: unknown }) => (
-    <div className={`card ${className || ''}`} {...props}>{children}</div>
+}));
+
+vi.mock('../DaisyUI/Button', () => ({
+  default: ({ children, onClick, disabled, className, loading }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    className?: string;
+    loading?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled ?? loading} className={className} aria-busy={String(!!loading)}>
+      {children}
+    </button>
   ),
-  DataTable: () => <div data-testid="data-table">DataTable</div>,
-  Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen?: boolean }) => (
-    isOpen ? <div role="dialog">{children}</div> : null
+}));
+
+vi.mock('../DaisyUI/Card', () => ({
+  default: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={`card ${className || ''}`}>{children}</div>
   ),
-  ProgressBar: () => <div className="progress-bar">Progress</div>,
-  StatsCards: (props: any) => (
-    <div className="stats-cards" data-testid="stats-cards">
-      {JSON.stringify(props.stats)}
+}));
+
+vi.mock('../DaisyUI/Hero', () => ({
+  default: ({ children }: { children: React.ReactNode }) => <div className="hero">{children}</div>,
+}));
+
+vi.mock('../DaisyUI/RadialProgress', () => ({
+  default: ({ children }: { children?: React.ReactNode }) => <div className="radial-progress">{children}</div>,
+}));
+
+vi.mock('../DaisyUI/Skeleton', () => ({
+  SkeletonCard: () => <div className="skeleton-card" />,
+}));
+
+vi.mock('../DaisyUI/Stat', () => ({
+  Stat: ({ title, value, description, children }: {
+    title?: React.ReactNode;
+    value?: React.ReactNode;
+    description?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
+    <div className="stat">
+      {title && <div className="stat-title">{title}</div>}
+      {value !== undefined && <div className="stat-value">{value}</div>}
+      {description && <div className="stat-desc">{description}</div>}
+      {children}
     </div>
   ),
-  LoadingSpinner: () => <div className="loading-spinner">Loading...</div>,
-}));
-
-vi.mock('../DaisyUI/ToastNotification', () => {
-  return {
-    __esModule: true,
-    useSuccessToast: vi.fn(() => vi.fn()),
-    useErrorToast: vi.fn(() => vi.fn()),
-    useToast: vi.fn(() => ({ addToast: vi.fn(), removeToast: vi.fn() })),
-  };
-});
-
-vi.mock('../../hooks/useProviders', () => ({
-  useProviders: () => ({
-    llmProviders: [
-      { key: 'openai', label: 'OpenAI' },
-      { key: 'anthropic', label: 'Anthropic' },
-    ],
-    messageProviders: [
-      { key: 'discord', label: 'Discord' },
-      { key: 'slack', label: 'Slack' },
-    ],
-    loading: false,
-    error: null,
-  }),
-}));
-
-vi.mock('../../hooks/useHiddenFeature', () => ({
-  useHiddenFeature: () => ({ isEnabled: false }),
-}));
-
-vi.mock('../DaisyUI/StatsCards', () => ({
-  __esModule: true,
-  default: (props: any) => (
-    <div className="stats-cards" data-testid="stats-cards">
-      {JSON.stringify(props.stats)}
-    </div>
+  Stats: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={`stats ${className || ''}`}>{children}</div>
   ),
 }));
 
-// Mock CreateBotWizard
-vi.mock('../BotManagement/CreateBotWizard', () => ({
-  CreateBotWizard: () => <div data-testid="create-bot-wizard">Create Bot Wizard</div>,
+vi.mock('../DaisyUI/Badge', () => ({
+  default: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
 }));
 
-describe.skip('Dashboard', () => {
+vi.mock('../DashboardBotCard', () => ({
+  default: ({ bot }: { bot: { name: string } }) => (
+    <div data-testid={`bot-card-${bot.name}`}>{bot.name}</div>
+  ),
+}));
+
+vi.mock('../Dashboard/AgentGrid', () => ({
+  default: () => <div data-testid="agent-grid">AgentGrid</div>,
+}));
+
+vi.mock('../Monitoring/CommandCenterStream', () => ({
+  default: () => <div data-testid="command-center-stream">CommandCenterStream</div>,
+}));
+
+vi.mock('../DaisyUI/ToastNotification', () => ({
+  useSuccessToast: vi.fn(() => vi.fn()),
+  useErrorToast: vi.fn(() => vi.fn()),
+  useToast: vi.fn(() => ({ addToast: vi.fn(), removeToast: vi.fn() })),
+}));
+
+// Mock lucide-react icons
+vi.mock('lucide-react', () => ({
+  ArrowUp: () => <span>up</span>,
+  ArrowDown: () => <span>down</span>,
+  RefreshCw: () => <span>refresh</span>,
+  Save: () => <span>save</span>,
+  Settings2: () => <span>settings</span>,
+  Plus: () => <span>plus</span>,
+  Bot: () => <span>bot-icon</span>,
+}));
+
+function setupDefaultMocks() {
+  (apiService.get as any).mockImplementation((url: string) => {
+    if (url === '/api/webui/config') return Promise.resolve({ success: false });
+    if (url === '/api/health') return Promise.resolve(null);
+    return Promise.resolve(null);
+  });
+  (apiService.post as any).mockResolvedValue({ success: true });
+}
+
+describe('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock HTMLDialogElement methods
-    if (typeof HTMLDialogElement !== 'undefined') {
-        HTMLDialogElement.prototype.showModal = vi.fn();
-        HTMLDialogElement.prototype.close = vi.fn();
-    }
+    setupDefaultMocks();
   });
 
-  it('renders "Getting Started" tab by default when no bots are configured', async () => {
+  it('renders the Dashboard header after data loads', async () => {
     (apiService.getConfig as any).mockResolvedValue({
       bots: [],
       warnings: [],
       environment: 'development',
     });
     (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -111,27 +143,42 @@ describe.skip('Dashboard', () => {
     );
 
     await waitFor(() => {
-      const gettingStartedTab = screen.getByTestId('getting-started-tab');
-      expect(gettingStartedTab).toHaveClass('tab-active');
+      expect(screen.getByText('Hivemind Dashboard')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('Welcome to Open Hivemind')).toBeInTheDocument();
-    expect(screen.getByText('No valid configuration found')).toBeInTheDocument();
   });
 
-  it('renders "Status" tab by default when bots are configured', async () => {
-    const mockBots = [{ name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai' }];
+  it('shows "No agents yet" when no bots are configured', async () => {
+    (apiService.getConfig as any).mockResolvedValue({
+      bots: [],
+      warnings: [],
+      environment: 'development',
+    });
+    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No agents yet')).toBeInTheDocument();
+    });
+  });
+
+  it('shows bot cards when bots are configured', async () => {
+    const mockBots = [
+      { name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai' },
+    ];
     (apiService.getConfig as any).mockResolvedValue({
       bots: mockBots,
       warnings: [],
       environment: 'development',
     });
     (apiService.getStatus as any).mockResolvedValue({
-      bots: [{ name: 'TestBot', status: 'active', connected: true }],
+      bots: [{ id: undefined, name: 'TestBot', status: 'active', connected: true }],
       uptime: 100,
     });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -140,54 +187,8 @@ describe.skip('Dashboard', () => {
     );
 
     await waitFor(() => {
-      const statusTab = screen.getByTestId('status-tab');
-      expect(statusTab).toHaveClass('tab-active');
+      expect(screen.getByTestId('bot-card-TestBot')).toBeInTheDocument();
     });
-
-    // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
-    // should be hidden because the active tab is 'status'.
-    // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
-    const welcomeText = screen.queryByText('Welcome to Open Hivemind');
-    if (welcomeText) expect(welcomeText).not.toBeVisible();
-
-    // Wait for the data to be loaded
-    await waitFor(() => {
-      const statusPanel = screen.queryByRole('tabpanel', { name: /status/i });
-      if (statusPanel) {
-        expect(statusPanel).not.toHaveClass('hidden');
-      }
-    });
-  });
-
-  it('allows switching tabs', async () => {
-    (apiService.getConfig as any).mockResolvedValue({
-      bots: [],
-      warnings: [],
-      environment: 'development',
-    });
-    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
-
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    );
-
-    // Initial state: Getting Started
-    await waitFor(() => {
-      expect(screen.getByTestId('getting-started-tab')).toHaveClass('tab-active');
-    });
-
-    // Switch to Status
-    fireEvent.click(screen.getByTestId('status-tab'));
-    expect(screen.getByTestId('status-tab')).toHaveClass('tab-active');
-    expect(screen.getByTestId('getting-started-tab')).not.toHaveClass('tab-active');
-
-    // Switch to Performance
-    fireEvent.click(screen.getByTestId('performance-tab'));
-    expect(screen.getByTestId('performance-tab')).toHaveClass('tab-active');
   });
 
   it('correctly calculates derived statistics from status bots', async () => {
@@ -201,7 +202,7 @@ describe.skip('Dashboard', () => {
       environment: 'development',
     });
 
-    // Status mock returns 2 active bots, 1 connected, 150 messages total, 5 errors total
+    // Status mock: 2 active bots, 150 total messages
     (apiService.getStatus as any).mockResolvedValue({
       bots: [
         { name: 'Bot1', status: 'active', connected: true, messageCount: 100, errorCount: 2 },
@@ -210,8 +211,6 @@ describe.skip('Dashboard', () => {
       ],
       uptime: 100,
     });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -219,34 +218,16 @@ describe.skip('Dashboard', () => {
       </BrowserRouter>
     );
 
-    // Switch to status tab first
+    // Wait for loading to complete
     await waitFor(() => {
-      const statusTab = screen.getByTestId('status-tab');
-      expect(statusTab).toHaveClass('tab-active');
+      expect(screen.getByText('Hivemind Dashboard')).toBeInTheDocument();
     });
 
-    // Wait for the StatsCards component to render the stats props
-    await waitFor(() => {
-      const statsCards = screen.getByTestId('stats-cards');
-      expect(statsCards.textContent).toContain('Active Bots');
-    });
+    // Active count: 2 (Bot1 and Bot2 are 'active')
+    const activeStatValues = screen.getAllByText('2');
+    expect(activeStatValues.length).toBeGreaterThan(0);
 
-    const statsText = screen.getByTestId('stats-cards').textContent || '';
-    const statsData = JSON.parse(statsText);
-
-    // Check if the parsed statsData contains the objects we expect
-    const activeBots = statsData.find((s: any) => s.title === 'Active Bots');
-    expect(activeBots).toBeDefined();
-    expect(activeBots.value).toBe(2);
-
-    const totalMessages = statsData.find((s: any) => s.title === 'Total Messages' || s.title === 'Messages' || s.title === 'Messages Today');
-    expect(totalMessages).toBeDefined();
-    expect(totalMessages.value).toBe(150);
-
-    // Dashboard uses raw Errors count now instead of Error Rate
-    const errorCount = statsData.find((s: any) => s.title === 'Errors');
-    expect(errorCount).toBeDefined();
-    expect(errorCount.value).toBe(5);
+    // Message volume: 150 (100 + 50)
+    expect(screen.getByText('150')).toBeInTheDocument();
   });
-
 });

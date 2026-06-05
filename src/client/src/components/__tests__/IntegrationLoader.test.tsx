@@ -19,9 +19,9 @@ describe('IntegrationLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loader = IntegrationLoader.getInstance();
-    // @ts-ignore - access private member for testing
+    // @ts-expect-error TS2341: manifestCache is private; direct access needed to reset state in tests
     loader.manifestCache.clear();
-    // @ts-ignore - access private member for testing
+    // @ts-expect-error TS2341: loadedIntegrations is private; direct access needed to reset state in tests
     loader.loadedIntegrations.clear();
   });
 
@@ -38,7 +38,7 @@ describe('IntegrationLoader', () => {
       throw new Error('Component not found');
     });
 
-    // @ts-ignore - access private member
+    // @ts-expect-error TS2341: autoDiscoverComponents is private; called directly to test its behavior in isolation
     const components = await loader.autoDiscoverComponents(integrationId);
 
     // Should have found the Dashboard component

@@ -30,9 +30,8 @@ describe('Input Component', () => {
     expect(input).toBeDisabled(); // Loading state disables input
   });
 
-  // Tests for new props (expected to fail initially)
+  // Tests for label/error/helperText props (implemented in Input.tsx)
   it('renders with label', () => {
-    // @ts-expect-error - testing new prop before implementation
     render(<Input label="Test Label" id="test-input" />);
     const label = screen.getByText('Test Label');
     expect(label).toBeInTheDocument();
@@ -46,7 +45,6 @@ describe('Input Component', () => {
   });
 
   it('associates label with input', () => {
-    // @ts-expect-error - testing new prop before implementation
     render(<Input label="Test Label" />);
     // This should find the input by its label
     const input = screen.getByLabelText('Test Label');
@@ -54,7 +52,6 @@ describe('Input Component', () => {
   });
 
   it('renders error message', () => {
-    // @ts-expect-error - testing new prop before implementation
     render(<Input error="This is an error" />);
     const error = screen.getByText('This is an error');
     expect(error).toBeInTheDocument();
@@ -62,7 +59,6 @@ describe('Input Component', () => {
   });
 
   it('renders helper text', () => {
-    // @ts-expect-error - testing new prop before implementation
     render(<Input helperText="This is helper text" />);
     const helper = screen.getByText('This is helper text');
     expect(helper).toBeInTheDocument();

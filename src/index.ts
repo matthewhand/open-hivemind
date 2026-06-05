@@ -116,7 +116,6 @@ async function main(): Promise<void> {
     const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
     const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
     if (isDevOrTest && enableViteDev) {
-      // @ts-ignore - Vite is a dev dependency using dynamic import
       const viteModule = await new Function('return import("vite")')();
       const createViteServer = viteModule.createServer;
       appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');

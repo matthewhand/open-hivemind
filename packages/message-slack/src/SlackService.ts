@@ -1185,7 +1185,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
       // As a last resort in unit tests, return a minimal mocked manager instance
       try {
         // Prefer constructing via mocked SlackBotManager if available
-        // @ts-ignore constructor signature is mocked in tests
         const mgr = new (SlackBotManager as any)(
           [{ token: 'xoxb-test', signingSecret: '', name: 'MockBot' }],
           'socket'

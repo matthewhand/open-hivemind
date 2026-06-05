@@ -402,7 +402,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       </Modal>
     </>
   );
-};
+});
 
 BotStatusCard.displayName = 'BotStatusCard';
 

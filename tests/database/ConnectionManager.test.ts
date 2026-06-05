@@ -3,24 +3,29 @@ import { ConnectionManager } from '../../src/database/ConnectionManager';
 
 jest.mock('../../src/common/logger');
 
+// better-sqlite3 is mapped to tests/mocks/sqlite3.ts by moduleNameMapper.
+// Wrap it in a jest.fn() constructor so tests can use mockImplementationOnce
+// to simulate constructor errors while all other tests get a working mock.
+jest.mock('better-sqlite3', () => {
+  const actual = jest.requireActual('better-sqlite3');
+  const ctor = jest.fn().mockImplementation((...args: any[]) => new actual(...args));
+  // Preserve static properties (verbose, etc.) from the original mock.
+  Object.assign(ctor, actual);
+  return ctor;
+});
+
 describe('ConnectionManager', () => {
   let connectionManager: ConnectionManager;
   const dbPath = ':memory:';
 
-  // Spies on the mocked Database
-  let runSpy: jest.SpyInstance;
-  let allSpy: jest.SpyInstance;
-  let closeSpy: jest.SpyInstance;
-
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // @ts-ignore - Database is mocked and has these methods on prototype
-    runSpy = jest.spyOn(Database.prototype, 'prepare');
-    // @ts-ignore
-    allSpy = jest.spyOn(Database.prototype, 'prepare');
-    // @ts-ignore
-    closeSpy = jest.spyOn(Database.prototype, 'close');
+    // Restore the default (working) implementation so that mockImplementationOnce
+    // in the error-path test does not bleed into subsequent tests.
+    (Database as jest.MockedFunction<any>).mockImplementation((...args: any[]) => {
+      return new (jest.requireActual('better-sqlite3'))(...args);
+    });
 
     connectionManager = new ConnectionManager({ databasePath: dbPath });
   });
@@ -42,15 +47,12 @@ describe('ConnectionManager', () => {
       expect((connectionManager as any).db).toBe(dbBefore);
     });
 
-    it.skip('should handle connection errors', async () => {
+    it('should handle connection errors', async () => {
       const error = new Error('Connection failed');
-      // Mocking the constructor to throw
-      const DatabaseMock = Database as jest.MockedClass<any>;
-      DatabaseMock.mockImplementationOnce(() => {
+      (Database as jest.MockedFunction<any>).mockImplementationOnce(() => {
         throw error;
       });
 
-      const emitSpy = jest.spyOn(connectionManager, 'emit');
       await expect(connectionManager.connect()).rejects.toThrow('Connection failed');
       expect(connectionManager.isConnectedToDatabase()).toBe(false);
     });
