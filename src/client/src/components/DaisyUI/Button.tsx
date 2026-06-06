@@ -69,7 +69,7 @@ export const Button = memo(({
     }
   };
 
-  const baseClasses = 'btn';
+  const baseClasses = 'btn focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none';
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
   const disabledClass = disabled || loading ? 'btn-disabled' : '';

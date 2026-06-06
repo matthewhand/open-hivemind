@@ -502,15 +502,16 @@ const DataTable = <T extends Record<string, any>>({
       <div className={`space-y-4 ${className}`}>
         {toolbar}
         {columnFilterBar}
-        <div className="space-y-3">
+        <ul className="space-y-3" aria-label="Data list">
           {paginatedData.map((row, idx) => (
-            <div
+            <li
               key={resolveKey(row, idx)}
               className={`card bg-base-100 shadow-sm border border-base-200 ${onRowClick ? 'cursor-pointer active:bg-base-200' : ''}`}
               onClick={() => onRowClick?.(row, idx)}
               onKeyDown={(e) => { if (onRowClick && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onRowClick(row, idx); } }}
               tabIndex={onRowClick ? 0 : undefined}
-              role={onRowClick ? 'button' : undefined}
+              role={onRowClick ? 'button' : 'article'}
+              aria-label={`Row ${idx + 1}`}
             >
               <div className="card-body p-4 gap-2">
                 {/* Prominent fields */}
@@ -521,14 +522,16 @@ const DataTable = <T extends Record<string, any>>({
                 ))}
 
                 {/* Detail fields with labels */}
-                {detailCols.map(col => (
-                  <div key={String(col.key)} className="flex justify-between items-center gap-2 text-sm">
-                    <span className="text-base-content/60 font-medium shrink-0">{col.title}</span>
-                    <span className="text-right truncate">
-                      {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
-                    </span>
-                  </div>
-                ))}
+                <dl className="space-y-1">
+                  {detailCols.map(col => (
+                    <div key={String(col.key)} className="flex justify-between items-center gap-2 text-sm">
+                      <dt className="text-base-content/60 font-medium shrink-0">{col.title}</dt>
+                      <dd className="text-right truncate">
+                        {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
 
                 {/* Actions as button group */}
                 {actions && actions.length > 0 && (
@@ -537,9 +540,9 @@ const DataTable = <T extends Record<string, any>>({
                   </div>
                 )}
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
 
         {isInfiniteScroll && currentPage < totalPages && (
           <div ref={loadMoreRef} className="py-8 flex justify-center">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
+import Button from '../DaisyUI/Button';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import Timeline from '../DaisyUI/Timeline';
 import Badge from '../DaisyUI/Badge';
@@ -85,8 +86,8 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         aria-busy={loading}
       >
         {loading && !results ? (
-          <div className="py-12 text-center space-y-4">
-             <LoadingSpinner lg />
+          <div className="py-12 text-center space-y-4" role="status">
+             <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
         ) : error ? (
@@ -154,11 +155,17 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
              <div className="pt-4 border-t border-base-300 flex justify-between items-center">
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>
                 <div className="flex gap-2">
-                   <button onClick={onClose} className="btn btn-sm btn-ghost" aria-label="Close modal">Close</button>
-                   <button onClick={runDiagnostic} className="btn btn-sm btn-primary gap-2" disabled={loading}>
-                      <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                      {loading ? 'Testing...' : 'Run Again'}
-                   </button>
+                   <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close modal">Close</Button>
+                   <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={runDiagnostic}
+                      loading={loading}
+                      icon={<Activity className="w-4 h-4" />}
+                      aria-label="Run diagnostic again"
+                   >
+                      Run Again
+                   </Button>
                 </div>
              </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
+import Button from '../DaisyUI/Button';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Sparkles, XCircle, RefreshCw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -56,7 +57,7 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
         aria-busy={loading}
       >
         {loading && !insights ? (
-          <div className="py-20 text-center space-y-4">
+          <div className="py-20 text-center space-y-4" role="status">
             <div className="flex justify-center">
               <Sparkles className="w-12 h-12 text-primary animate-pulse" />
             </div>
@@ -87,14 +88,17 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
             <ReactMarkdown>{insights}</ReactMarkdown>
             <div className="mt-8 pt-4 border-t border-base-300 flex justify-between items-center text-[10px] opacity-40 uppercase tracking-widest font-bold">
               <span>Powered by Open Hivemind Intelligence</span>
-              <button 
+              <Button
+                variant="ghost"
+                size="xs"
                 onClick={fetchInsights}
-                className="hover:opacity-100 transition-opacity flex items-center gap-1"
-                disabled={loading}
+                loading={loading}
+                className="hover:opacity-100 transition-opacity"
+                icon={<RefreshCw className="w-3 h-3" />}
+                aria-label="Regenerate insights"
               >
-                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Regenerating...' : 'Regenerate'}
-              </button>
+                Regenerate
+              </Button>
             </div>
           </div>
         ) : (

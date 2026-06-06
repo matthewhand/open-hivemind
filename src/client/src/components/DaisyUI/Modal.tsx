@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LoadingSpinner } from './Loading';
 
 export interface ModalAction {
@@ -47,7 +48,11 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   className = '',
 }) => {
-  const modalRef = useRef<HTMLDialogElement>(null);
+  const modalRef = useFocusTrap<HTMLDialogElement>({
+    active: isOpen,
+    onClose,
+    autoFocus: true,
+  });
 
   useEffect(() => {
     const modal = modalRef.current;
@@ -371,9 +376,6 @@ export interface DetailDrawerProps {
   width?: string;
 }
 
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   isOpen,
   onClose,
@@ -381,54 +383,10 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   children,
   width = 'max-w-xl',
 }) => {
-  const drawerRef = React.useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
-  const previousFocusRef = React.useRef<HTMLElement | null>(null);
-
-  // Capture the element that had focus before opening; restore on close.
-  React.useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement | null;
-      requestAnimationFrame(() => closeButtonRef.current?.focus());
-    } else if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
-
-  // ESC closes; Tab/Shift+Tab cycles within the drawer (focus trap).
-  React.useEffect(() => {
-    if (!isOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab' || !drawerRef.current) return;
-
-      const focusable = Array.from(
-        drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-
-      if (e.shiftKey && active === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    active: isOpen,
+    onClose,
+  });
 
   return (
     <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true">
