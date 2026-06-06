@@ -75,11 +75,7 @@ describe('slidingWindow', () => {
     });
 
     it('works with a custom timestamp extractor (Date-based entries)', () => {
-      const items = [
-        { when: new Date(1000) },
-        { when: new Date(2000) },
-        { when: new Date(3000) },
-      ];
+      const items = [{ when: new Date(1000) }, { when: new Date(2000) }, { when: new Date(3000) }];
       const result = takeWithinWindow(items, (x) => x.when.getTime(), 1500);
       expect(result.map((x) => x.when.getTime())).toEqual([2000, 3000]);
     });

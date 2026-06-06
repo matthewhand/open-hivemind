@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { SlackProvider } from '../../../src/providers/SlackProvider';
 import { DiscordProvider } from '../../../src/providers/DiscordProvider';
+import { SlackProvider } from '../../../src/providers/SlackProvider';
 
 /**
  * addBot() persists to config/providers/messengers.json. If that file exists

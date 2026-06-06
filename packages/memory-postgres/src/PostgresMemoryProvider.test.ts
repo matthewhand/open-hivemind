@@ -164,10 +164,7 @@ describe('PostgresMemoryProvider (Mocked)', () => {
       ...deps,
       getLlmProviders: () => [openai, openwebui] as any,
     };
-    const localProvider = new PostgresMemoryProvider(
-      { embeddingProfile: 'openwebui' },
-      localDeps
-    );
+    const localProvider = new PostgresMemoryProvider({ embeddingProfile: 'openwebui' }, localDeps);
 
     await localProvider.addMemory('hi');
 
@@ -182,9 +179,9 @@ describe('PostgresMemoryProvider (Mocked)', () => {
       getLlmProviders: () => [chatOnly] as any,
     };
 
-    expect(
-      () => new PostgresMemoryProvider({ embeddingProfile: 'flowise' }, localDeps)
-    ).toThrow(/does not support embeddings/);
+    expect(() => new PostgresMemoryProvider({ embeddingProfile: 'flowise' }, localDeps)).toThrow(
+      /does not support embeddings/
+    );
   });
 
   it('should throw a clear error when the configured profile is missing', () => {

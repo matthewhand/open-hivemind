@@ -10,7 +10,10 @@ import { expect, test } from '@playwright/test';
  * protected page.  Server-side API calls work because the webServer is started
  * with ALLOW_TEST_BYPASS=true / ALLOW_LOCALHOST_ADMIN=true.
  */
-async function injectAuthAndNavigate(page: import('@playwright/test').Page, targetPath: string): Promise<void> {
+async function injectAuthAndNavigate(
+  page: import('@playwright/test').Page,
+  targetPath: string
+): Promise<void> {
   // A JWT whose payload has a far-future expiry and a fake (but parseable) signature.
   // AuthContext only checks the `exp` field client-side; it never verifies the
   // signature in the browser.

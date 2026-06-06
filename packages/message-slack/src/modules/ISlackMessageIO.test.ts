@@ -53,9 +53,7 @@ describe('SlackMessageIO.sendNativeTypingStatus', () => {
 
     await io.sendNativeTypingStatus!('C123', '1700000000.0001');
 
-    expect(setStatus).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'thinking…' })
-    );
+    expect(setStatus).toHaveBeenCalledWith(expect.objectContaining({ status: 'thinking…' }));
   });
 
   it('returns false without a thread (assistant status is thread-scoped)', async () => {

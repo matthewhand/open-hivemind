@@ -10,6 +10,9 @@
 
 import express from 'express';
 import request from 'supertest';
+import { globalErrorHandler } from '@src/middleware/errorHandler';
+// Import the router AFTER the mocks are registered.
+import botsRouter from '@src/server/routes/bots';
 
 // --- Mock BotManager so the route uses a controllable in-memory manager ---
 const getBot = jest.fn();
@@ -36,10 +39,6 @@ jest.mock('@src/server/services/WebSocketService', () => ({
     }),
   },
 }));
-
-// Import the router AFTER the mocks are registered.
-import botsRouter from '@src/server/routes/bots';
-import { globalErrorHandler } from '@src/middleware/errorHandler';
 
 function createApp(): express.Application {
   const app = express();

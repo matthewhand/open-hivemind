@@ -324,7 +324,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
 export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
   message: string;
   details?: React.ReactNode;
-  icon?: string;
+  icon?: React.ReactNode;
 }> = ({
   isOpen,
   onClose,
@@ -408,7 +408,6 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
                   </h2>
                   <div className="ml-3 flex h-7 items-center">
                     <button
-                      ref={closeButtonRef}
                       type="button"
                       className="btn btn-sm btn-circle btn-ghost"
                       onClick={onClose}

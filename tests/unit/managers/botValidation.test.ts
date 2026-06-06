@@ -1,10 +1,10 @@
+import { BotInstance, CreateBotRequest } from '../../../src/managers/botTypes';
 import {
   isValidBotInstance,
   sanitizeConfig,
   validateBotConfig,
   validateCreateBotRequest,
 } from '../../../src/managers/botValidation';
-import { BotInstance, CreateBotRequest } from '../../../src/managers/botTypes';
 
 describe('botValidation', () => {
   describe('isValidBotInstance', () => {
@@ -66,7 +66,9 @@ describe('botValidation', () => {
         name: 'Bot',
         messageProvider: 'invalid',
       };
-      expect(() => validateCreateBotRequest(invalidRequest)).toThrow('Valid message provider is required');
+      expect(() => validateCreateBotRequest(invalidRequest)).toThrow(
+        'Valid message provider is required'
+      );
     });
   });
 

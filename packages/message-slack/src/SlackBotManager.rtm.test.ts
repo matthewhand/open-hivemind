@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { SlackBotManager } from './SlackBotManager';
 
 // --- Mock the Slack SDK clients so no network calls happen ---
 
@@ -44,8 +45,6 @@ jest.mock('@slack/socket-mode', () => ({
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation((token: string) => new MockWebClient(token)),
 }));
-
-import { SlackBotManager } from './SlackBotManager';
 
 describe('SlackBotManager RTM receive (primary bot)', () => {
   beforeEach(() => {

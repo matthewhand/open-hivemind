@@ -44,10 +44,12 @@ const Tooltip: React.FC<TooltipProps> = ({
     .filter(Boolean)
     .join(' ');
 
+  const safeTip = typeof content === 'string' || typeof content === 'number' ? String(content) : undefined;
+
   return (
     <div
       className={classes}
-      data-tip={content}
+      data-tip={safeTip}
       role="tooltip"
       aria-live="polite"
     >

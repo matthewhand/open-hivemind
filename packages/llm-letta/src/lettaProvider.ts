@@ -254,7 +254,9 @@ export class LettaProvider implements ILlmProvider {
    * is returned as the completion text.
    */
   async generateCompletion(prompt: string): Promise<string> {
-    debug('generateCompletion is not natively supported; mapping to a single-turn chat completion.');
+    debug(
+      'generateCompletion is not natively supported; mapping to a single-turn chat completion.'
+    );
     return this.generateChatCompletion(prompt, []);
   }
 }

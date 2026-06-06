@@ -11,10 +11,9 @@
 
 import express from 'express';
 import request from 'supertest';
-
 import { AuditLogger, type AuditEvent } from '@src/common/auditLogger';
-import enterpriseRouter from '@src/server/routes/enterprise';
 import adminAuditRouter from '@src/server/routes/admin/audit';
+import enterpriseRouter from '@src/server/routes/enterprise';
 
 const SAMPLE_EVENTS: AuditEvent[] = [
   {
@@ -43,9 +42,7 @@ describe('Audit log endpoints', () => {
   beforeEach(() => {
     const instance = AuditLogger.getInstance();
     // buildFilter is exercised for real (pure); only the file read is stubbed.
-    getAuditEventsSpy = jest
-      .spyOn(instance, 'getAuditEvents')
-      .mockResolvedValue(SAMPLE_EVENTS);
+    getAuditEventsSpy = jest.spyOn(instance, 'getAuditEvents').mockResolvedValue(SAMPLE_EVENTS);
   });
 
   afterEach(() => {

@@ -37,9 +37,7 @@ export const DEFAULT_RECENCY_HALF_LIFE_MS = 7 * 24 * 60 * 60 * 1000;
  */
 export function cosineSimilarity(a: readonly number[], b: readonly number[]): number {
   if (a.length !== b.length) {
-    throw new RangeError(
-      `cosineSimilarity: vector length mismatch (${a.length} !== ${b.length})`
-    );
+    throw new RangeError(`cosineSimilarity: vector length mismatch (${a.length} !== ${b.length})`);
   }
   if (a.length === 0) {
     return 0;

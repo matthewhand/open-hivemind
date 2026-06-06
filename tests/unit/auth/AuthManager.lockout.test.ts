@@ -40,11 +40,7 @@ function makeManager(env: Record<string, string | undefined>): AuthManager {
   }
 }
 
-async function registerUser(
-  mgr: AuthManager,
-  username: string,
-  password: string
-): Promise<void> {
+async function registerUser(mgr: AuthManager, username: string, password: string): Promise<void> {
   await mgr.register({
     username,
     email: `${username}@example.com`,
@@ -64,17 +60,17 @@ describe('AuthManager account lockout', () => {
 
     // 3 failures reaches the threshold and locks the account.
     for (let i = 0; i < 3; i++) {
-      await expect(
-        mgr.login({ username: 'alice', password: 'wrong' })
-      ).rejects.toBeInstanceOf(AuthenticationError);
+      await expect(mgr.login({ username: 'alice', password: 'wrong' })).rejects.toBeInstanceOf(
+        AuthenticationError
+      );
     }
 
     expect(mgr.isLockedOut('alice')).toBe(true);
 
     // Even the CORRECT password is now rejected while locked.
-    await expect(
-      mgr.login({ username: 'alice', password: PASSWORD })
-    ).rejects.toMatchObject({ provider: 'ACCOUNT_LOCKED' });
+    await expect(mgr.login({ username: 'alice', password: PASSWORD })).rejects.toMatchObject({
+      provider: 'ACCOUNT_LOCKED',
+    });
   });
 
   it('does not lock before reaching the threshold and a success still works', async () => {
@@ -205,9 +201,9 @@ describe('AuthManager account lockout', () => {
     const mgr = makeManager({ AUTH_MAX_LOGIN_ATTEMPTS: '3' });
 
     for (let i = 0; i < 3; i++) {
-      await expect(
-        mgr.login({ username: 'ghost', password: 'x' })
-      ).rejects.toBeInstanceOf(AuthenticationError);
+      await expect(mgr.login({ username: 'ghost', password: 'x' })).rejects.toBeInstanceOf(
+        AuthenticationError
+      );
     }
     expect(mgr.isLockedOut('ghost')).toBe(true);
 

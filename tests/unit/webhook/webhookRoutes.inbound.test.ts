@@ -1,3 +1,9 @@
+import express from 'express';
+import request from 'supertest';
+import { WebhookService } from '@hivemind/message-webhook';
+import type { IMessengerService } from '@hivemind/shared-types';
+import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+
 /**
  * Tests that inbound webhook ingress is wired to the messenger service's
  * handleIncomingWebhook method.
@@ -19,12 +25,6 @@ jest.mock('@webhook/security/webhookSecurity', () => ({
   verifyIpWhitelist: (_req: unknown, _res: unknown, next: () => void) => next(),
   verifySlackSignature: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
-
-import express from 'express';
-import request from 'supertest';
-import type { IMessengerService } from '@hivemind/shared-types';
-import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
-import { WebhookService } from '@hivemind/message-webhook';
 
 function buildApp(messageService: IMessengerService, targetChannel?: string) {
   const app = express();

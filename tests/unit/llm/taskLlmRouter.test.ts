@@ -9,8 +9,8 @@
  * default provider. These now resolve through the shared plugin loader.
  */
 
-import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import type { ILlmProvider } from '@hivemind/shared-types';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 
 // --- Mocks for collaborators ----------------------------------------------
 

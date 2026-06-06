@@ -1,5 +1,5 @@
-import { validateRequiredEnvVars } from '../../../src/utils/envValidation';
 import Logger from '../../../src/common/logger';
+import { validateRequiredEnvVars } from '../../../src/utils/envValidation';
 
 jest.mock('../../../src/common/logger');
 

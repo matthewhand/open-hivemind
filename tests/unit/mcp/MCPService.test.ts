@@ -1,3 +1,5 @@
+import { MCPService } from '../../../src/mcp/MCPService';
+
 /**
  * Regression test for the MCP SDK import bug (audit #5/#6/#9).
  *
@@ -25,8 +27,6 @@ const ClientCtor = jest.fn().mockImplementation(() => ({
 
 const StreamableHTTPCtor = jest.fn().mockImplementation((url: URL) => ({ __kind: 'http', url }));
 const StdioCtor = jest.fn().mockImplementation((opts: unknown) => ({ __kind: 'stdio', opts }));
-
-import { MCPService } from '../../../src/mcp/MCPService';
 
 describe('MCPService SDK client construction', () => {
   let service: MCPService;
@@ -65,9 +65,7 @@ describe('MCPService SDK client construction', () => {
     expect(ClientCtor).toHaveBeenCalledTimes(1);
     // A real transport instance was passed to connect() (not a {url,apiKey}
     // object, which the old code wrongly used).
-    expect(mockConnect).toHaveBeenCalledWith(
-      expect.objectContaining({ __kind: 'http' })
-    );
+    expect(mockConnect).toHaveBeenCalledWith(expect.objectContaining({ __kind: 'http' }));
     expect(service.getConnectedServers()).toContain('remote');
   });
 
@@ -94,9 +92,7 @@ describe('MCPService SDK client construction', () => {
     });
 
     expect(StdioCtor).toHaveBeenCalledWith({ command: 'my-mcp-binary', args: [] });
-    expect(mockConnect).toHaveBeenCalledWith(
-      expect.objectContaining({ __kind: 'stdio' })
-    );
+    expect(mockConnect).toHaveBeenCalledWith(expect.objectContaining({ __kind: 'stdio' }));
   });
 
   it('testConnection builds a client and returns discovered tools', async () => {

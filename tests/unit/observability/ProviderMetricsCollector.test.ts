@@ -1,7 +1,7 @@
 import {
-  ProviderMetricsCollector,
   normalizeLlmProviderType,
   normalizeMessageProviderType,
+  ProviderMetricsCollector,
 } from '@src/monitoring/ProviderMetricsCollector';
 
 describe('ProviderMetricsCollector', () => {
@@ -67,7 +67,13 @@ describe('ProviderMetricsCollector', () => {
 
   describe('recordLlmRequest', () => {
     it('records successful requests with tokens and latency', () => {
-      collector.recordLlmRequest('openai', 250, { prompt: 10, completion: 20, total: 30 }, 0.01, true);
+      collector.recordLlmRequest(
+        'openai',
+        250,
+        { prompt: 10, completion: 20, total: 30 },
+        0.01,
+        true
+      );
 
       const metrics = collector.getLlmMetrics('openai');
       expect(metrics).toBeDefined();

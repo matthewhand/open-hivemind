@@ -2,8 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import metricsRouter from '@src/server/routes/health/metrics';
 import {
-  requestCounterMiddleware,
   __resetRuntimeMetricsForTests,
+  requestCounterMiddleware,
 } from '@src/server/routes/health/runtimeMetrics';
 
 /**

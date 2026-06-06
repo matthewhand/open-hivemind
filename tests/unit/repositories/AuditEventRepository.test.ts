@@ -111,10 +111,18 @@ function makeFakeDb(): { db: IDatabase; rows: StoredRow[] } {
     async all(sql: string, params: any[] = []) {
       if (sql.includes('GROUP BY action, resource, status')) {
         const { matched } = applyWhere(sql, params);
-        const groups = new Map<string, { action: string; resource: string; status: string; count: number }>();
+        const groups = new Map<
+          string,
+          { action: string; resource: string; status: string; count: number }
+        >();
         for (const r of matched) {
           const key = `${r.action}|${r.resource}|${r.status}`;
-          const g = groups.get(key) || { action: r.action, resource: r.resource, status: r.status, count: 0 };
+          const g = groups.get(key) || {
+            action: r.action,
+            resource: r.resource,
+            status: r.status,
+            count: 0,
+          };
           g.count++;
           groups.set(key, g);
         }
@@ -199,9 +207,7 @@ describe('AuditEventRepository', () => {
   it('orders results newest-first and paginates', async () => {
     const { repo } = makeRepo();
     for (let i = 1; i <= 5; i++) {
-      await repo.insert(
-        event({ timestamp: `2024-01-0${i}T00:00:00.000Z`, resourceId: String(i) })
-      );
+      await repo.insert(event({ timestamp: `2024-01-0${i}T00:00:00.000Z`, resourceId: String(i) }));
     }
     const firstPage = await repo.query({ limit: 2 });
     expect(firstPage.map((e) => e.resourceId)).toEqual(['5', '4']);
@@ -212,11 +218,25 @@ describe('AuditEventRepository', () => {
 
   it('filters by time window, action, resource and status', async () => {
     const { repo } = makeRepo();
-    await repo.insert(event({ timestamp: '2024-01-01T00:00:00.000Z', action: 'CREATE', resource: 'bot' }));
-    await repo.insert(event({ timestamp: '2024-02-01T00:00:00.000Z', action: 'DELETE', resource: 'user', status: 'failure' }));
-    await repo.insert(event({ timestamp: '2024-03-01T00:00:00.000Z', action: 'UPDATE', resource: 'bot' }));
+    await repo.insert(
+      event({ timestamp: '2024-01-01T00:00:00.000Z', action: 'CREATE', resource: 'bot' })
+    );
+    await repo.insert(
+      event({
+        timestamp: '2024-02-01T00:00:00.000Z',
+        action: 'DELETE',
+        resource: 'user',
+        status: 'failure',
+      })
+    );
+    await repo.insert(
+      event({ timestamp: '2024-03-01T00:00:00.000Z', action: 'UPDATE', resource: 'bot' })
+    );
 
-    const byTime = await repo.query({ startTime: '2024-01-15T00:00:00.000Z', endTime: '2024-02-15T00:00:00.000Z' });
+    const byTime = await repo.query({
+      startTime: '2024-01-15T00:00:00.000Z',
+      endTime: '2024-02-15T00:00:00.000Z',
+    });
     expect(byTime.map((e) => e.action)).toEqual(['DELETE']);
 
     const byAction = await repo.query({ actions: ['CREATE', 'UPDATE'] });
@@ -232,7 +252,14 @@ describe('AuditEventRepository', () => {
   it('supports free-text search across fields', async () => {
     const { repo } = makeRepo();
     await repo.insert(event({ timestamp: '2024-01-01T00:00:00.000Z', userId: 'alice' }));
-    await repo.insert(event({ timestamp: '2024-01-02T00:00:00.000Z', userId: 'bob', errorMessage: 'permission denied', status: 'failure' }));
+    await repo.insert(
+      event({
+        timestamp: '2024-01-02T00:00:00.000Z',
+        userId: 'bob',
+        errorMessage: 'permission denied',
+        status: 'failure',
+      })
+    );
 
     const byUser = await repo.query({ search: 'ALICE' });
     expect(byUser).toHaveLength(1);
@@ -245,9 +272,20 @@ describe('AuditEventRepository', () => {
 
   it('computes aggregate stats over a window', async () => {
     const { repo } = makeRepo();
-    await repo.insert(event({ timestamp: '2024-01-01T00:00:00.000Z', action: 'CREATE', resource: 'bot' }));
-    await repo.insert(event({ timestamp: '2024-01-02T00:00:00.000Z', action: 'CREATE', resource: 'bot' }));
-    await repo.insert(event({ timestamp: '2024-01-03T00:00:00.000Z', action: 'DELETE', resource: 'user', status: 'failure' }));
+    await repo.insert(
+      event({ timestamp: '2024-01-01T00:00:00.000Z', action: 'CREATE', resource: 'bot' })
+    );
+    await repo.insert(
+      event({ timestamp: '2024-01-02T00:00:00.000Z', action: 'CREATE', resource: 'bot' })
+    );
+    await repo.insert(
+      event({
+        timestamp: '2024-01-03T00:00:00.000Z',
+        action: 'DELETE',
+        resource: 'user',
+        status: 'failure',
+      })
+    );
 
     const stats = await repo.getStats();
     expect(stats.total).toBe(3);

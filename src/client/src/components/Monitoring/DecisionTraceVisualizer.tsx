@@ -161,7 +161,7 @@ const DecisionTraceVisualizer: React.FC = () => {
                                 <Collapse 
                                   title="Metadata" 
                                   className="bg-base-200/50 rounded-lg text-xs" 
-                                  size="sm"
+
                                   defaultOpen={idx === 1 || idx === 3} // Auto-open Decision and Inference
                                 >
                                    <Mockup 

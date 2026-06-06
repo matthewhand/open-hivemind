@@ -1,6 +1,6 @@
 import type { IServiceDependencies } from '@hivemind/shared-types';
-import { MemVaultProvider } from './MemVaultProvider';
 import { InMemoryMemVaultStore } from './InMemoryMemVaultStore';
+import { MemVaultProvider } from './MemVaultProvider';
 
 /**
  * Deterministic fake embedding: maps known phrases to fixed unit vectors so we
@@ -18,8 +18,7 @@ function makeDeps(generateEmbedding?: jest.Mock): {
   embed: jest.Mock;
 } {
   const embed =
-    generateEmbedding ??
-    jest.fn(async (text: string) => VECTORS[text] ?? [0.5, 0.5, 0.5]);
+    generateEmbedding ?? jest.fn(async (text: string) => VECTORS[text] ?? [0.5, 0.5, 0.5]);
   const deps = {
     logger: console as unknown,
     errorTypes: {},

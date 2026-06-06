@@ -15,6 +15,9 @@
 
 import express from 'express';
 import request from 'supertest';
+import { globalErrorHandler } from '@src/middleware/errorHandler';
+// Import the router AFTER the mocks are registered.
+import botConfigRouter from '@src/server/routes/botConfig';
 
 // --- Stub the heavy config singletons constructed at module import time ---
 jest.mock('@src/config/BotConfigurationManager', () => ({
@@ -81,10 +84,6 @@ jest.mock('@src/database/DatabaseManager', () => ({
     })),
   },
 }));
-
-// Import the router AFTER the mocks are registered.
-import botConfigRouter from '@src/server/routes/botConfig';
-import { globalErrorHandler } from '@src/middleware/errorHandler';
 
 function createApp(): express.Application {
   const app = express();

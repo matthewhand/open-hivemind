@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { auditLogger, auditMiddleware } from '../../../../src/server/middleware/auditLogger';
 
 describe('server/middleware/auditLogger', () => {
@@ -18,15 +18,15 @@ describe('server/middleware/auditLogger', () => {
     });
 
     it('should query logs correctly', () => {
-        const logs = auditLogger.query({ actions: ['TEST'] });
-        expect(logs.length).toBeGreaterThan(0);
-        expect(logs[0].action).toBe('TEST');
+      const logs = auditLogger.query({ actions: ['TEST'] });
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs[0].action).toBe('TEST');
     });
 
     it('should return stats', () => {
-        const stats = auditLogger.getStats();
-        expect(stats.total).toBeGreaterThan(0);
-        expect(stats.byAction['TEST']).toBeGreaterThan(0);
+      const stats = auditLogger.getStats();
+      expect(stats.total).toBeGreaterThan(0);
+      expect(stats.byAction['TEST']).toBeGreaterThan(0);
     });
   });
 

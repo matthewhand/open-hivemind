@@ -41,9 +41,9 @@ describe('SchemaManager (alternate modular schema system)', () => {
       expect(typeof db!.get).toBe('function');
 
       // run() must resolve to the { lastID, changes } shape, not throw.
-      await expect(
-        db!.run('INSERT INTO messages (messageId) VALUES (?)', ['m1'])
-      ).resolves.toEqual(expect.objectContaining({ changes: expect.any(Number) }));
+      await expect(db!.run('INSERT INTO messages (messageId) VALUES (?)', ['m1'])).resolves.toEqual(
+        expect.objectContaining({ changes: expect.any(Number) })
+      );
     });
 
     it('getDatabase() remains backwards-compatible and returns the adapter', async () => {

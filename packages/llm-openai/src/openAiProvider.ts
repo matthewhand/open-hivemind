@@ -361,8 +361,7 @@ export class OpenAiProvider implements ILlmProvider {
       }
 
       const response = await withTimeout(
-        (signal) =>
-          openai.chat.completions.create(requestBody as any, { signal }),
+        (signal) => openai.chat.completions.create(requestBody as any, { signal }),
         llmTimeoutMs,
         'OpenAI tool-aware chat completion'
       );

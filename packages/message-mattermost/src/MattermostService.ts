@@ -183,9 +183,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         const user = post.user_id ? await client?.getUser(post.user_id) : null;
         if (user) {
           username =
-            `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-            user.username ||
-            'Unknown';
+            `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Unknown';
           isBot = Boolean(user.is_bot);
         }
       } catch (err: any) {

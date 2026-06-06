@@ -1,3 +1,5 @@
+import MattermostClient from './mattermostClient';
+
 /**
  * Regression test for audit (mattermost-typing):
  * MattermostClient.sendTyping() must POST the Mattermost typing endpoint
@@ -12,8 +14,6 @@ jest.mock('@src/config/BotConfigurationManager', () => ({
     getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }),
   },
 }));
-
-import MattermostClient from './mattermostClient';
 
 describe('MattermostClient.sendTyping', () => {
   const build = () => {

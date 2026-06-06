@@ -1,7 +1,7 @@
-import { ActivityRecorder } from '../../../src/observability/ActivityRecorder';
+import type { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '../../../src/events/MessageBus';
 import type { MessageContext } from '../../../src/events/types';
-import type { IMessage } from '@hivemind/shared-types';
+import { ActivityRecorder } from '../../../src/observability/ActivityRecorder';
 
 function makeMessage(text: string, opts: { channelId?: string; authorId?: string } = {}): IMessage {
   return {

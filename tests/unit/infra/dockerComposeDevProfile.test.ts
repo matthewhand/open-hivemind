@@ -142,7 +142,9 @@ describe('docker-compose.yml dev profile (hivemind-dev)', () => {
     const dev = services['hivemind-dev'];
     const mounts = dev.lines.map((l) => l.trim());
     // src + packages are the hot-reload essentials.
-    expect(mounts).toEqual(expect.arrayContaining(['- ./src:/app/src', '- ./packages:/app/packages']));
+    expect(mounts).toEqual(
+      expect.arrayContaining(['- ./src:/app/src', '- ./packages:/app/packages'])
+    );
   });
 
   it('keeps the container node_modules via an anonymous volume', () => {

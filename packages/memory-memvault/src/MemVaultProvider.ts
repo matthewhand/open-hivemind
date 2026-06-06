@@ -1,5 +1,5 @@
-import Debug from 'debug';
 import { randomUUID } from 'crypto';
+import Debug from 'debug';
 import type {
   IMemoryProvider,
   IServiceDependencies,
@@ -73,9 +73,7 @@ export class MemVaultProvider implements IMemoryProvider {
       this.embeddingProvider = providers.find((p) => p.name === this.config.embeddingProfile);
     }
     if (!this.embeddingProvider) {
-      this.embeddingProvider = providers.find(
-        (p) => typeof p.generateEmbedding === 'function'
-      );
+      this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
     }
   }
 
@@ -197,8 +195,7 @@ export class MemVaultProvider implements IMemoryProvider {
       const ready = this.store.isReady();
       this.resolveEmbeddingProvider();
       const hasEmbedding =
-        !!this.embeddingProvider &&
-        typeof this.embeddingProvider.generateEmbedding === 'function';
+        !!this.embeddingProvider && typeof this.embeddingProvider.generateEmbedding === 'function';
       if (ready && hasEmbedding) {
         return { status: 'ok', details: { store: this.store.constructor.name } };
       }
@@ -243,7 +240,10 @@ function toEntry(record: StoredMemory, score?: number): MemoryEntry {
 /**
  * Plugin factory — PluginLoader-compatible entry point.
  */
-export function create(config: MemVaultConfig, dependencies: IServiceDependencies): MemVaultProvider {
+export function create(
+  config: MemVaultConfig,
+  dependencies: IServiceDependencies
+): MemVaultProvider {
   return new MemVaultProvider(config, dependencies);
 }
 

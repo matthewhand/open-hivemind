@@ -36,6 +36,8 @@ const Collapse: React.FC<CollapseProps> = ({
     }
   };
 
+  const safeAriaLabel = typeof title === 'string' ? `Toggle ${title}` : 'Toggle content';
+
   return (
     <div className={`collapse bg-base-200 ${getVariantClasses()} ${className}`}>
       <input
@@ -43,7 +45,7 @@ const Collapse: React.FC<CollapseProps> = ({
         checked={isOpen}
         onChange={(e) => setIsOpen(e.target.checked)}
         className="collapse-checkbox"
-        aria-label={ariaLabel || `Toggle ${title}`}
+        aria-label={ariaLabel || safeAriaLabel}
       />
       <div className="collapse-title text-xl font-medium flex items-center gap-2">
         {icon && <span>{icon}</span>}

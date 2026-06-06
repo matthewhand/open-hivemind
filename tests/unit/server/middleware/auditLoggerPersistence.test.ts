@@ -142,8 +142,22 @@ describe('AuditLoggerService durable persistence', () => {
   it('getStatsPersisted aggregates from the durable store', async () => {
     const fake = makeFakeStore();
     fake.setSeed([
-      { timestamp: '2024-03-01T00:00:00.000Z', action: 'CREATE', resource: 'bot', ip: '', userAgent: '', status: 'success' },
-      { timestamp: '2024-03-02T00:00:00.000Z', action: 'DELETE', resource: 'bot', ip: '', userAgent: '', status: 'failure' },
+      {
+        timestamp: '2024-03-01T00:00:00.000Z',
+        action: 'CREATE',
+        resource: 'bot',
+        ip: '',
+        userAgent: '',
+        status: 'success',
+      },
+      {
+        timestamp: '2024-03-02T00:00:00.000Z',
+        action: 'DELETE',
+        resource: 'bot',
+        ip: '',
+        userAgent: '',
+        status: 'failure',
+      },
     ]);
     auditLogger.setStore(fake.store);
 

@@ -206,7 +206,11 @@ export class SlackBotManager {
             return;
           }
 
-          if (!event.text || event.subtype === 'bot_message' || allBotUserIds.includes(event.user)) {
+          if (
+            !event.text ||
+            event.subtype === 'bot_message' ||
+            allBotUserIds.includes(event.user)
+          ) {
             debug('Message event filtered out: no text, bot message, or self-message');
             return;
           }

@@ -1,8 +1,8 @@
-import { BusinessKpiRecorder } from '../../../src/observability/BusinessKpiRecorder';
-import { BusinessKpiCollector } from '../../../src/monitoring/BusinessKpiCollector';
+import type { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '../../../src/events/MessageBus';
 import type { MessageContext } from '../../../src/events/types';
-import type { IMessage } from '@hivemind/shared-types';
+import { BusinessKpiCollector } from '../../../src/monitoring/BusinessKpiCollector';
+import { BusinessKpiRecorder } from '../../../src/observability/BusinessKpiRecorder';
 
 function makeMessage(authorId: string): IMessage {
   return {
@@ -101,6 +101,6 @@ describe('BusinessKpiRecorder', () => {
     new BusinessKpiRecorder(bus, throwing).register();
 
     expect(() => bus.emit('message:incoming', makeContext('user-1'))).not.toThrow();
-    expect((throwing.recordKpiValue as jest.Mock)).toHaveBeenCalled();
+    expect(throwing.recordKpiValue as jest.Mock).toHaveBeenCalled();
   });
 });

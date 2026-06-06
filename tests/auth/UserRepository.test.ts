@@ -1,8 +1,8 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
-import { UserRepository } from '../../src/auth/UserRepository';
 import type { User } from '../../src/auth/types';
+import { UserRepository } from '../../src/auth/UserRepository';
 
 // The global jest config maps `better-sqlite3` to a hand-written mock that only
 // understands a fixed set of table names. These persistence tests need real SQL

@@ -39,7 +39,11 @@ const anomaly = {
 describe('AnomalyRepository.storeAnomaly dialect upsert', () => {
   it('emits ON CONFLICT (id) DO UPDATE on Postgres', async () => {
     const { db, run } = mockDb();
-    const repo = new AnomalyRepository(() => db, () => true, () => true);
+    const repo = new AnomalyRepository(
+      () => db,
+      () => true,
+      () => true
+    );
     await repo.storeAnomaly(anomaly);
     const sql = run.mock.calls[0][0] as string;
     expect(sql).toContain('INSERT INTO anomalies');
@@ -49,7 +53,11 @@ describe('AnomalyRepository.storeAnomaly dialect upsert', () => {
 
   it('keeps INSERT OR REPLACE on SQLite', async () => {
     const { db, run } = mockDb();
-    const repo = new AnomalyRepository(() => db, () => true, () => false);
+    const repo = new AnomalyRepository(
+      () => db,
+      () => true,
+      () => false
+    );
     await repo.storeAnomaly(anomaly);
     const sql = run.mock.calls[0][0] as string;
     expect(sql).toContain('INSERT OR REPLACE INTO anomalies');
@@ -70,7 +78,12 @@ const metrics = {
 describe('MessageRepository.updateBotMetrics dialect upsert', () => {
   it('emits ON CONFLICT (botName) DO UPDATE on Postgres', async () => {
     const { db, run } = mockDb();
-    const repo = new MessageRepository(() => db, () => true, () => {}, () => true);
+    const repo = new MessageRepository(
+      () => db,
+      () => true,
+      () => {},
+      () => true
+    );
     await repo.updateBotMetrics(metrics);
     const sql = run.mock.calls[0][0] as string;
     expect(sql).toContain('INSERT INTO bot_metrics');
@@ -80,7 +93,12 @@ describe('MessageRepository.updateBotMetrics dialect upsert', () => {
 
   it('keeps INSERT OR REPLACE on SQLite', async () => {
     const { db, run } = mockDb();
-    const repo = new MessageRepository(() => db, () => true, () => {}, () => false);
+    const repo = new MessageRepository(
+      () => db,
+      () => true,
+      () => {},
+      () => false
+    );
     await repo.updateBotMetrics(metrics);
     const sql = run.mock.calls[0][0] as string;
     expect(sql).toContain('INSERT OR REPLACE INTO bot_metrics');

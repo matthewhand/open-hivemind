@@ -98,9 +98,7 @@ describe('webhookEvents routes contract', () => {
       payload: { detail: 'value' },
     });
 
-    const res = await request(app)
-      .get(`/api/webhooks/events/${recorded.id}`)
-      .expect(200);
+    const res = await request(app).get(`/api/webhooks/events/${recorded.id}`).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.id).toBe(recorded.id);
@@ -108,9 +106,7 @@ describe('webhookEvents routes contract', () => {
   });
 
   it('GET /events/:id returns 404 for an unknown id', async () => {
-    const res = await request(app)
-      .get('/api/webhooks/events/does-not-exist')
-      .expect(404);
+    const res = await request(app).get('/api/webhooks/events/does-not-exist').expect(404);
     expect(res.body.success).toBe(false);
   });
 
@@ -146,10 +142,7 @@ describe('webhookEvents routes contract', () => {
       payload: {},
     });
 
-    const res = await request(app)
-      .post(`/api/webhooks/events/${ok.id}/retry`)
-      .send({})
-      .expect(400);
+    const res = await request(app).post(`/api/webhooks/events/${ok.id}/retry`).send({}).expect(400);
 
     expect(res.body.success).toBe(false);
   });
