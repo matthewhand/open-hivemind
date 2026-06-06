@@ -1,28 +1,16 @@
-/**
- * Unit tests for the POST /api/bots/:id/toggle route handler.
- *
- * Regression coverage for the bots-toggle-route bug: the BotsPage enable/disable
- * toggle (useBotActions.ts) POSTs to /api/bots/:id/toggle, but the router only
- * defined /start and /stop — so the toggle was dead (404). These tests assert
- * the route exists, flips the bot's active state via the existing start/stop
- * logic, and returns the new state.
- */
-
 import express from 'express';
 import request from 'supertest';
 import { globalErrorHandler } from '@src/middleware/errorHandler';
-// Import the router AFTER the mocks are registered.
-import botsRouter from '@src/server/routes/bots';
 
-// --- Mock BotManager so the route uses a controllable in-memory manager ---
-const getBot = jest.fn();
-const startBot = jest.fn();
-const stopBot = jest.fn();
+// Define mocks before the router import
+const mockGetBot = jest.fn();
+const mockStartBot = jest.fn();
+const mockStopBot = jest.fn();
 
 const mockManager = {
-  getBot,
-  startBot,
-  stopBot,
+  getBot: mockGetBot,
+  startBot: mockStartBot,
+  stopBot: mockStopBot,
 };
 
 jest.mock('@src/managers/BotManager', () => ({
@@ -39,6 +27,9 @@ jest.mock('@src/server/services/WebSocketService', () => ({
     }),
   },
 }));
+
+// NOW import the router
+import botsRouter from '@src/server/routes/bots';
 
 function createApp(): express.Application {
   const app = express();
@@ -57,14 +48,14 @@ describe('POST /api/bots/:id/toggle', () => {
   });
 
   it('starts an inactive bot and returns the new active state', async () => {
-    getBot.mockResolvedValue({ id: 'bot-1', name: 'Bot One', isActive: false });
-    startBot.mockResolvedValue(true);
+    mockGetBot.mockResolvedValue({ id: 'bot-1', name: 'Bot One', isActive: false });
+    mockStartBot.mockResolvedValue(true);
 
     const res = await request(app).post('/api/bots/bot-1/toggle').send({});
 
     expect(res.status).toBe(200);
-    expect(startBot).toHaveBeenCalledWith('bot-1');
-    expect(stopBot).not.toHaveBeenCalled();
+    expect(mockStartBot).toHaveBeenCalledWith('bot-1');
+    expect(mockStopBot).not.toHaveBeenCalled();
     expect(res.body).toMatchObject({
       success: true,
       data: { id: 'bot-1', isActive: true, status: 'active' },
@@ -72,14 +63,14 @@ describe('POST /api/bots/:id/toggle', () => {
   });
 
   it('stops an active bot and returns the new inactive state', async () => {
-    getBot.mockResolvedValue({ id: 'bot-2', name: 'Bot Two', isActive: true });
-    stopBot.mockResolvedValue(true);
+    mockGetBot.mockResolvedValue({ id: 'bot-2', name: 'Bot Two', isActive: true });
+    mockStopBot.mockResolvedValue(true);
 
     const res = await request(app).post('/api/bots/bot-2/toggle').send({});
 
     expect(res.status).toBe(200);
-    expect(stopBot).toHaveBeenCalledWith('bot-2');
-    expect(startBot).not.toHaveBeenCalled();
+    expect(mockStopBot).toHaveBeenCalledWith('bot-2');
+    expect(mockStartBot).not.toHaveBeenCalled();
     expect(res.body).toMatchObject({
       success: true,
       data: { id: 'bot-2', isActive: false, status: 'disabled' },
@@ -87,12 +78,12 @@ describe('POST /api/bots/:id/toggle', () => {
   });
 
   it('returns 404 when the bot does not exist', async () => {
-    getBot.mockResolvedValue(null);
+    mockGetBot.mockResolvedValue(null);
 
     const res = await request(app).post('/api/bots/missing/toggle').send({});
 
     expect(res.status).toBe(404);
-    expect(startBot).not.toHaveBeenCalled();
-    expect(stopBot).not.toHaveBeenCalled();
+    expect(mockStartBot).not.toHaveBeenCalled();
+    expect(mockStopBot).not.toHaveBeenCalled();
   });
 });
