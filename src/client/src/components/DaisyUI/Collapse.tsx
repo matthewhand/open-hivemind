@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 
 interface CollapseProps {
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
   className?: string;

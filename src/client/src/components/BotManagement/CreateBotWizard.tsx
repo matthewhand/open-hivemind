@@ -5,6 +5,7 @@ import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
 import StepWizard, { Step } from '../DaisyUI/StepWizard';
 import Modal from '../DaisyUI/Modal';
+import Collapse from '../DaisyUI/Collapse';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { Alert } from '../DaisyUI/Alert';
@@ -736,7 +737,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
 
-                        <Collapse title="View System Instructions" className="bg-base-200" size="sm">
+                        <Collapse title="View System Instructions" className="bg-base-200">
                             <Mockup 
                                 type="code" 
                                 content={aiGeneratedResult.systemInstruction} 

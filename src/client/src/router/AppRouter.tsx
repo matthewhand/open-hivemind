@@ -22,6 +22,7 @@ const BotsPage = lazy(() => import('../pages/BotsPage'));
 const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
+const ChatPage = lazy(() => import('../pages/ChatPage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
@@ -131,6 +132,7 @@ const AppRouter: React.FC = () => {
           {/* Bot Management Routes */}
           <Route path="bots" element={<ErrorBoundary pageName="Bots"><BotsPage /></ErrorBoundary>} />
           <Route path="bots/create" element={<ErrorBoundary pageName="Create Bot"><BotCreatePage /></ErrorBoundary>} />
+          <Route path="chat" element={<ErrorBoundary pageName="Chat"><ChatPage /></ErrorBoundary>} />
           <Route path="bots/templates" element={<ErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></ErrorBoundary>} />
 
           {/* Each provider type gets its own top-level page with tabs */}
