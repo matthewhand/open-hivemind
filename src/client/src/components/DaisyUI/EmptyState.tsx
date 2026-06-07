@@ -88,6 +88,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div
       data-testid="empty-state"
+      role="status"
+      aria-live="polite"
       className={`
         group relative overflow-hidden rounded-2xl py-16 px-8
         bg-gradient-to-br ${styles.gradient}
