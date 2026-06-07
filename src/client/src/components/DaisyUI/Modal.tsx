@@ -118,7 +118,7 @@ const Modal: React.FC<ModalProps> = ({
       // Do NOT set open={isOpen} — showModal() manages the open attribute.
       // Setting both causes double backdrop and layout shift.
     >
-      <div className={getSizeClass()} role="document">
+      <div className={getSizeClass()}>
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between mb-4">

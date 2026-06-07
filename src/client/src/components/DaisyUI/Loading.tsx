@@ -215,7 +215,7 @@ export const LoadingSpinnerWithMessage: React.FC<LoadingSpinnerWithMessageProps>
   fullScreen = false,
 }) => {
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4 p-6">
+    <div className="flex flex-col items-center justify-center gap-4 p-6" role="status" aria-live="polite">
       <LoadingSpinner color="primary" size={size} />
       {message && (
         <p className="text-sm text-base-content/70">
