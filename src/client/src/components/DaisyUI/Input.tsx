@@ -67,7 +67,7 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
     const appliedVariant = error ? 'error' : variant;
 
     const inputClasses = twMerge(
-      'input w-full',
+      'input w-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none',
       bordered && 'input-bordered',
       ghost && 'input-ghost',
       appliedVariant && variantClasses[appliedVariant],

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { LoadingSpinner } from './Loading';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export interface ModalAction {
   label: string;
@@ -48,6 +49,9 @@ const Modal: React.FC<ModalProps> = ({
   className = '',
 }) => {
   const modalRef = useRef<HTMLDialogElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  useFocusTrap(isOpen, modalRef, closeBtnRef);
 
   useEffect(() => {
     const modal = modalRef.current;
@@ -125,6 +129,7 @@ const Modal: React.FC<ModalProps> = ({
             {title && <h3 id="modal-dialog-title" className="font-bold text-lg">{title}</h3>}
             {showCloseButton && closable && (
               <button
+                ref={closeBtnRef}
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={onClose}
                 aria-label="Close modal"
@@ -371,9 +376,6 @@ export interface DetailDrawerProps {
   width?: string;
 }
 
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   isOpen,
   onClose,
@@ -383,20 +385,10 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
 }) => {
   const drawerRef = React.useRef<HTMLDivElement | null>(null);
   const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
-  const previousFocusRef = React.useRef<HTMLElement | null>(null);
 
-  // Capture the element that had focus before opening; restore on close.
-  React.useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement | null;
-      requestAnimationFrame(() => closeButtonRef.current?.focus());
-    } else if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
+  useFocusTrap(isOpen, drawerRef, closeButtonRef);
 
-  // ESC closes; Tab/Shift+Tab cycles within the drawer (focus trap).
+  // ESC closes drawer.
   React.useEffect(() => {
     if (!isOpen) return;
 
@@ -405,24 +397,6 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
         e.preventDefault();
         onClose();
         return;
-      }
-      if (e.key !== 'Tab' || !drawerRef.current) return;
-
-      const focusable = Array.from(
-        drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-
-      if (e.shiftKey && active === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
       }
     };
 
