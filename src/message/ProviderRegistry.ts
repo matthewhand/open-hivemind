@@ -1,41 +1,24 @@
 /**
- * Dynamic Provider Registry for Messenger Service Loading
+ * Messenger service lookup by provider name.
  *
- * Providers are discovered at runtime by scanning the integrations directory.
- * Convention: Each integration folder should export a service implementing IMessengerService
- * with a static getInstance() method.
+ * Resolution order:
+ *  1. Live instance registered in the SyncProviderRegistry at startup.
+ *  2. Lazy load via the PluginLoader (`@hivemind/message-<name>` workspace
+ *     packages or community plugins), cached after first successful load.
  *
- * Discovery patterns:
- * - src/integrations/{name}/{Name}Service.ts (e.g., discord/DiscordService.ts)
- * - The exported class should have a static getInstance() method
- *
- * Type Guards ensure only valid IMessengerService implementations are loaded.
+ * A type guard ensures only valid IMessengerService implementations are
+ * returned.
  */
-import fs from 'fs';
-import path from 'path';
 import Debug from 'debug';
 import type { IMessengerService } from '@hivemind/shared-types';
+import { instantiateMessageService, loadPlugin } from '@src/plugins/PluginLoader';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
+import { getServiceDependencies } from '@src/utils/serviceDependencies';
 
 const debug = Debug('app:ProviderRegistry');
 
-// Cache of loaded providers
+// Cache of lazily loaded providers (keyed by normalized provider name)
 const loadedProviders = new Map<string, IMessengerService>();
-
-// Discovered provider metadata
-const discoveredProviders = new Map<string, { modulePath: string; serviceExport: string }>();
-
-let initialized = false;
-
-/**
- * Type guard to check if a module export is a valid IMessengerService factory.
- */
-function isValidServiceFactory(obj: unknown): obj is { getInstance: () => IMessengerService } {
-  return (
-    typeof obj === 'function' &&
-    'getInstance' in (obj as unknown as Record<string, unknown>) &&
-    typeof (obj as any).getInstance === 'function'
-  );
-}
 
 /**
  * Type guard to check if an instance implements IMessengerService.
@@ -54,120 +37,41 @@ function isMessengerService(obj: unknown): obj is IMessengerService {
 }
 
 /**
- * Discover available providers by scanning the integrations directory.
- * This is called lazily on first access.
- */
-// Promise to track async initialization
-let initializationPromise: Promise<void> | null = null;
-
-async function discoverProviders(): Promise<void> {
-  if (initialized) {
-    return;
-  }
-
-  // If initialization is already in progress, wait for it
-  if (initializationPromise) {
-    return initializationPromise;
-  }
-
-  // Start initialization
-
-  initializationPromise = (async () => {
-    initialized = true;
-
-    const integrationsDir = path.join(__dirname, '..', 'integrations');
-
-    try {
-      await fs.promises.access(integrationsDir, fs.constants.F_OK);
-    } catch (err: unknown) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        debug('Integrations directory not found');
-        return;
-      }
-      throw err;
-    }
-
-    const entries = await fs.promises.readdir(integrationsDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) {
-        continue;
-      }
-
-      const providerName = entry.name.toLowerCase();
-      const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
-      const serviceFileName = `${pascalName}Service`;
-      const providerDir = path.join(integrationsDir, entry.name);
-
-      // Look for {Name}Service.ts or {Name}Service.js
-      const possiblePaths = [
-        path.join(providerDir, `${serviceFileName}.ts`),
-        path.join(providerDir, `${serviceFileName}.js`),
-      ];
-
-      for (const filePath of possiblePaths) {
-        try {
-          await fs.promises.access(filePath, fs.constants.F_OK);
-          discoveredProviders.set(providerName, {
-            modulePath: path.relative(__dirname, filePath).replace(/\.(ts|js)$/, ''),
-            serviceExport: serviceFileName,
-          });
-          debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
-          break;
-        } catch {
-          // File doesn't exist, try next path
-          continue;
-        }
-      }
-    }
-
-    debug(`Provider discovery complete: ${discoveredProviders.size} providers found`);
-  })();
-
-  return initializationPromise;
-}
-
-/**
- * Dynamically load and get a messenger service by provider name.
- * Returns null if not found, disabled, or fails validation.
+ * Get a messenger service by provider name (e.g. 'discord', 'slack').
+ * Returns null if no plugin exists for the provider or it fails validation.
  */
 export async function getMessengerServiceByProvider(
   providerName: string
 ): Promise<IMessengerService | null> {
-  await discoverProviders();
-
   const normalizedName = providerName.toLowerCase();
 
-  // Check cache first
+  // 1. Prefer the live instance registered at startup
+  const registry = SyncProviderRegistry.getInstance();
+  if (registry.isInitialized()) {
+    const live = registry.getMessengerService(normalizedName);
+    if (live) {
+      return live;
+    }
+  }
+
+  // 2. Cache from a previous lazy load
   const cachedProvider = loadedProviders.get(normalizedName);
   if (cachedProvider) {
     return cachedProvider;
   }
 
-  const providerMeta = discoveredProviders.get(normalizedName);
-  if (!providerMeta) {
-    debug(`Provider "${providerName}" was not discovered.`);
-    return null;
-  }
-
+  // 3. Lazy load via the PluginLoader
   try {
-    debug(`Loading provider: ${providerName}`);
+    debug(`Loading provider plugin: message-${normalizedName}`);
+    const mod = await loadPlugin(`message-${normalizedName}`);
+    const service = instantiateMessageService(
+      mod,
+      undefined,
+      getServiceDependencies('ProviderRegistry')
+    );
 
-    // Dynamic import
-    const module = await import(providerMeta.modulePath);
-    const ServiceClass = module[providerMeta.serviceExport] as unknown;
-
-    // Validate factory pattern
-    if (!isValidServiceFactory(ServiceClass)) {
-      debug(`Provider "${providerName}" does not have a valid getInstance() factory`);
-      return null;
-    }
-
-    const service = ServiceClass.getInstance();
-
-    // Validate IMessengerService interface
     if (!isMessengerService(service)) {
-      debug(`Provider "${providerName}" does not implement IMessengerService correctly`);
+      debug(`Plugin "message-${normalizedName}" does not implement IMessengerService correctly`);
       return null;
     }
 
@@ -183,45 +87,11 @@ export async function getMessengerServiceByProvider(
 }
 
 /**
- * Get list of all discovered provider names.
- */
-export async function getRegisteredProviders(): Promise<string[]> {
-  await discoverProviders();
-  return Array.from(discoveredProviders.keys());
-}
-
-/**
- * Check if a provider is discovered.
- */
-export async function isProviderRegistered(providerName: string): Promise<boolean> {
-  await discoverProviders();
-  return discoveredProviders.has(providerName.toLowerCase());
-}
-
-/**
- * Get list of currently loaded (active) providers.
- */
-export function getLoadedProviders(): string[] {
-  return Array.from(loadedProviders.keys());
-}
-
-/**
- * Unload a provider from cache (e.g. when disabling).
+ * Unload a provider from the lazy-load cache (e.g. when disabling).
  */
 export function unloadProvider(providerName: string): void {
   const normalizedName = providerName.toLowerCase();
-  if (loadedProviders.has(normalizedName)) {
-    loadedProviders.delete(normalizedName);
+  if (loadedProviders.delete(normalizedName)) {
     debug(`Unloaded provider: ${providerName}`);
   }
-}
-
-/**
- * Force re-discovery of providers (useful after adding new integrations).
- */
-export async function refreshProviders(): Promise<void> {
-  initialized = false;
-  initializationPromise = null;
-  discoveredProviders.clear();
-  await discoverProviders();
 }
