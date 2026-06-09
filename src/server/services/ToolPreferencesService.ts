@@ -23,15 +23,16 @@ export class ToolPreferencesService {
   private dataFile: string;
   private data: ToolPreferencesData;
   private saveTimeout: NodeJS.Timeout | null = null;
+  private initialized: Promise<void>;
 
-  private constructor() {
+  private constructor(dataFile?: string) {
     const dataDir = path.join(process.cwd(), 'data');
-    this.dataFile = path.join(dataDir, 'tool-preferences.json');
+    this.dataFile = dataFile ?? path.join(dataDir, 'tool-preferences.json');
     this.data = {
       preferences: {},
       lastUpdated: new Date().toISOString(),
     };
-    this.initializeData();
+    this.initialized = this.initializeData();
   }
 
   public static getInstance(): ToolPreferencesService {
@@ -39,6 +40,19 @@ export class ToolPreferencesService {
       ToolPreferencesService.instance = new ToolPreferencesService();
     }
     return ToolPreferencesService.instance;
+  }
+
+  /**
+   * Test helper: build an isolated instance backed by a specific file so unit
+   * tests do not touch the shared singleton or the real `data/` directory.
+   */
+  public static createForTesting(dataFile: string): ToolPreferencesService {
+    return new ToolPreferencesService(dataFile);
+  }
+
+  /** Resolves once the backing file has been read (or created). */
+  public async ready(): Promise<void> {
+    return this.initialized;
   }
 
   private async initializeData(): Promise<void> {

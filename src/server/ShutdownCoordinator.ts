@@ -533,6 +533,18 @@ export class ShutdownCoordinator {
       debug('Error shutting down MCPFavoritesService:', error);
     }
 
+    // Stop MCPToolHistoryService
+    try {
+      const { MCPToolHistoryService } = require('@server/services/MCPToolHistoryService');
+      const mcpToolHistory = MCPToolHistoryService.getInstance();
+      if (mcpToolHistory && typeof mcpToolHistory.shutdown === 'function') {
+        await mcpToolHistory.shutdown();
+        debug('MCPToolHistoryService shut down');
+      }
+    } catch (error) {
+      debug('Error shutting down MCPToolHistoryService:', error);
+    }
+
     // Stop PerformanceProfiler
     try {
       const { PerformanceProfiler } = require('@utils/PerformanceProfiler');
