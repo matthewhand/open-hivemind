@@ -80,6 +80,7 @@ export default class MattermostClient {
 
   private webSocketFactory?: WebSocketFactory;
   private ws: MinimalWebSocket | null = null;
+  private wsOpen = false;
   private wsSeq = 1;
   private postHandlers: Set<PostEventHandler> = new Set();
   private wsClosedByUser = false;
@@ -168,6 +169,7 @@ export default class MattermostClient {
             data: { token: this.token },
           })
         );
+        this.wsOpen = true;
         logger.info('Mattermost WebSocket connected', { url: wsUrl });
       } catch (error: unknown) {
         logger.error('Failed to authenticate Mattermost WebSocket', {
@@ -194,6 +196,7 @@ export default class MattermostClient {
 
     ws.onclose = () => {
       this.ws = null;
+      this.wsOpen = false;
       if (!this.wsClosedByUser) {
         logger.info('Mattermost WebSocket closed');
       }
@@ -410,13 +413,43 @@ export default class MattermostClient {
     return this.me?.username || null;
   }
 
+  /** Whether the realtime WebSocket is currently open (and authenticated). */
+  isWebSocketOpen(): boolean {
+    return Boolean(this.ws && this.wsOpen);
+  }
+
   /**
-   * Best-effort typing indicator (requires server support for /users/{id}/typing).
+   * Best-effort typing indicator.
+   *
+   * Prefers the realtime WebSocket channel (Mattermost `user_typing` action),
+   * which renders the native typing indicator. Falls back to the REST endpoint
+   * `/users/{id}/typing` when the WebSocket is not open (or the send fails).
    */
   async sendTyping(channelId: string, parentId?: string): Promise<void> {
     if (!this.connected) {
       return;
     }
+
+    if (this.isWebSocketOpen()) {
+      try {
+        this.ws!.send(
+          JSON.stringify({
+            action: 'user_typing',
+            seq: this.wsSeq++,
+            data: {
+              channel_id: channelId,
+              parent_id: parentId || '',
+            },
+          })
+        );
+        return;
+      } catch (error: unknown) {
+        logger.debug('Mattermost WebSocket typing send failed; falling back to REST', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     const userId = this.getCurrentUserId();
     if (!userId) {
       return;
