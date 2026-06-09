@@ -24,7 +24,7 @@ describe('SearchFilterBar', () => {
       />
     );
 
-    const clearButton = screen.getByLabelText('Clear search');
+    const clearButton = screen.getByRole('button', { name: 'Clear search' });
     expect(clearButton).toBeInTheDocument();
   });
 
@@ -36,7 +36,7 @@ describe('SearchFilterBar', () => {
       />
     );
 
-    const clearButton = screen.queryByLabelText('Clear search');
+    const clearButton = screen.queryByRole('button', { name: 'Clear search' });
     expect(clearButton).not.toBeInTheDocument();
   });
 
@@ -49,7 +49,7 @@ describe('SearchFilterBar', () => {
       />
     );
 
-    const clearButton = screen.getByLabelText('Clear search');
+    const clearButton = screen.getByRole('button', { name: 'Clear search' });
     fireEvent.click(clearButton);
 
     expect(mockOnSearchChange).toHaveBeenCalledWith('');
@@ -63,7 +63,7 @@ describe('SearchFilterBar', () => {
       />
     );
 
-    const clearButton = screen.getByLabelText('Clear search');
+    const clearButton = screen.getByRole('button', { name: 'Clear search' });
     expect(clearButton).toHaveClass('pointer-events-auto');
     expect(clearButton).toHaveClass('relative');
     expect(clearButton).toHaveClass('z-10');

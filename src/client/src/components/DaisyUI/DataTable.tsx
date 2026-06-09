@@ -251,7 +251,15 @@ const DataTable = <T extends Record<string, any>>({
     if (visible.length === 0) return null;
 
     return (
-      <div className={asGroup ? 'btn-group flex flex-wrap gap-1' : 'flex gap-1 justify-end'}>
+      <div
+        className={asGroup ? 'btn-group flex flex-wrap gap-1' : 'flex gap-1 justify-end'}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
+        }}
+      >
         {visible.map((action, i) => (
           <button
             key={i}
