@@ -21,8 +21,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [ ] **Monitoring wiring**
   - [x] Start `AnomalyDetectionService` periodic loop (instantiated but `.start()` never called — `initServices.ts`)
   - [x] Bridge `pipeline:decision` bus events to the `pipeline_decision` WS event (ActivityPage listener never fires — `BroadcastService`)
-  - [ ] Call `shouldPause()` from Enrich/Inference/Send stages (pipeline debugger only pauses in DecisionStage)
-  - [ ] Wire `MetricsCollector.incrementMessages/recordResponseTime` from the real pipeline (currently only the demo simulator feeds it)
+  - [x] Call `shouldPause()` from Enrich/Inference/Send stages (pipeline debugger only pauses in DecisionStage)
+  - [x] Wire `MetricsCollector.incrementMessages/recordResponseTime` from the real pipeline (currently only the demo simulator feeds it)
 - [ ] **WebUI honesty**
   - [x] Remove fake `hivemind-plugin-weather` sample from marketplace route (leaks into real provider pages)
   - [x] Gate or implement Provider Health page (currently 100% fabricated SLO numbers in primary nav)

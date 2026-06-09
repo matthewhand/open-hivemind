@@ -21,6 +21,7 @@ import {
   ActivityRecorder,
   attachTraceExporters,
   BusinessKpiRecorder,
+  MetricsRecorder,
   PipelineTracer,
   setActiveTracer,
 } from '@src/observability';
@@ -160,6 +161,11 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
   // always-zero defaults. Cost/retention KPIs that the bus cannot supply are
   // left unfed (see BusinessKpiRecorder.DEFERRED_KPI_IDS).
   new BusinessKpiRecorder(bus).register();
+
+  // Feed the global MetricsCollector from real pipeline events so the
+  // Prometheus / health metrics (messages processed, response time) reflect
+  // live traffic instead of only demo-simulator data.
+  new MetricsRecorder(bus).register();
 
   return true;
 }

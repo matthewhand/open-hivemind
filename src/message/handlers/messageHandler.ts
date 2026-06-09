@@ -3,6 +3,7 @@ import type { IMessage } from '@hivemind/shared-types';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
@@ -86,6 +87,14 @@ export async function handleMessage(
         if (await checkMaintenanceMode(ctx)) return null;
         pipelineMetrics.startStage('receive');
 
+        // Count the received message in the global MetricsCollector (mirrors
+        // the staged pipeline's MetricsRecorder on `message:incoming`).
+        try {
+          MetricsCollector.getInstance().incrementMessages();
+        } catch {
+          // Metrics must never break message handling.
+        }
+
         // 2. Initial Audit Log
         const text = message.getText();
         if (text) {
@@ -122,10 +131,31 @@ export async function handleMessage(
         if (!(await determineReplyEligibility(ctx))) return null;
 
         // 8. Inference
+        const inferenceStart = Date.now();
         if (!(await processInference(ctx))) return null;
 
+        // Record the inference latency in the global MetricsCollector (mirrors
+        // the staged pipeline's MetricsRecorder on `message:response`).
+        try {
+          MetricsCollector.getInstance().recordResponseTime(Date.now() - inferenceStart);
+        } catch {
+          // Metrics must never break message handling.
+        }
+
         // 9. Output Processing
-        return await processOutput(ctx);
+        const response = await processOutput(ctx);
+
+        // Count the delivered reply (mirrors the staged pipeline's
+        // MetricsRecorder on `message:sent`).
+        if (response !== null) {
+          try {
+            MetricsCollector.getInstance().incrementMessages();
+          } catch {
+            // Metrics must never break message handling.
+          }
+        }
+
+        return response;
       } catch (error: unknown) {
         ErrorHandler.handle(error, 'messageHandler.handleMessage');
         const modelInfo = botConfig
