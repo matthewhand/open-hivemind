@@ -96,6 +96,58 @@ export class MattermostService extends EventEmitter implements IMessengerService
     return MattermostService.instance;
   }
 
+  /**
+   * Hot-adds a bot to the running service.
+   *
+   * Mirrors the per-bot setup performed by the constructor + initialize():
+   * registers the client/config maps, connects the client (which opens its
+   * WebSocket once a post handler is attached), refreshes the resolved
+   * identity, and subscribes the bot to the global message handler if one is
+   * already registered.
+   *
+   * Idempotent per bot name: calling it again for an existing bot simply
+   * re-connects that bot's client, so it is safe to use as a
+   * ReconnectionManager connect function.
+   *
+   * @param botConfig - Bot configuration in the same shape used by
+   *   BotConfigurationManager entries (`{ name, mattermost: { serverUrl, token, ... } }`).
+   */
+  public async addBot(botConfig: any): Promise<void> {
+    const botName = String(botConfig?.name || '').trim();
+    if (!botName) {
+      throw new ValidationError(
+        'Bot name is required to add a Mattermost bot',
+        'name',
+        botConfig?.name
+      );
+    }
+
+    if (!this.clients.has(botName)) {
+      this.initializeBotInstance(botConfig);
+      if (!this.clients.has(botName)) {
+        throw new ConfigurationError(
+          `Invalid Mattermost configuration for bot ${botName}: serverUrl and token are required`,
+          'mattermost'
+        );
+      }
+    }
+
+    const client = this.clients.get(botName)!;
+    await client.connect();
+
+    const cfg = this.botConfigs.get(botName) || {};
+    this.botConfigs.set(botName, {
+      ...cfg,
+      userId: client.getCurrentUserId?.() || cfg.userId,
+      username: client.getCurrentUsername?.() || cfg.username,
+    });
+
+    // Wire incoming posts through the global handler if one is registered;
+    // otherwise setMessageHandler() will pick this bot up later.
+    this.subscribeBot(botName);
+    debug(`Hot-added Mattermost bot: ${botName}`);
+  }
+
   public async initialize(): Promise<void> {
     debug('Initializing Mattermost connections...');
 

@@ -139,10 +139,16 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     const reconManager = new ReconnectionManager(
       `mattermost-${name}`,
       async () => {
-        // MattermostService.initialize() connects every configured client.
-        // It is idempotent enough for our needs: calling connect() simply
-        // re-validates the token against /users/me.
-        await mattermost.initialize();
+        // Hot-add the bot into the running service: creates the client,
+        // connects it (opening its WebSocket), and subscribes it to the
+        // global message handler. Idempotent — on reconnect it simply
+        // re-connects the existing client.
+        await mattermost.addBot({
+          name,
+          messageProvider: 'mattermost',
+          mattermost: { serverUrl, token, channel, userId, username },
+          llmProvider: llm,
+        });
       },
       {
         healthCheckFn: async () => {
@@ -271,9 +277,8 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
         const reconManager = new ReconnectionManager(
           `mattermost-${nameToUse}`,
           async () => {
-            // Initialize bot instance
-            // eslint-disable-next-line unused-imports/no-unused-vars
-            const botConfig = {
+            // Hot-add the bot instance into the running service.
+            await mattermost.addBot({
               name: nameToUse,
               messageProvider: 'mattermost',
               mattermost: {
@@ -284,10 +289,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
                 username: inst.username || '',
               },
               llmProvider: inst.llm,
-            };
-
-            // Re-initialize the service with the new bot
-            await mattermost.initialize();
+            });
           },
           {
             healthCheckFn: async () => {

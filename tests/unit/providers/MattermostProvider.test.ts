@@ -4,11 +4,11 @@ import path from 'path';
 import { MattermostProvider } from '../../../src/providers/MattermostProvider';
 
 /**
- * These tests cover the previously-unimplemented connection path in
- * MattermostProvider.addBot (which used to throw "Method not implemented.").
- * The key guarantee is that addBot wires a real connection via the injected
- * MattermostService without ever throwing synchronously on connection failure,
- * so bot startup and other providers are never broken.
+ * These tests cover the connection path in MattermostProvider.addBot.
+ * The key guarantees are that addBot hot-adds the bot into the running
+ * MattermostService (service.addBot, not a full re-initialize) and never
+ * throws synchronously on connection failure, so bot startup and other
+ * providers are never broken.
  */
 describe('MattermostProvider.addBot', () => {
   let tmpDir: string;
@@ -21,7 +21,7 @@ describe('MattermostProvider.addBot', () => {
     process.env.NODE_CONFIG_DIR = tmpDir;
 
     mockService = {
-      initialize: jest.fn().mockResolvedValue(undefined),
+      addBot: jest.fn().mockResolvedValue(undefined),
       getBotNames: jest.fn().mockReturnValue([]),
       getBotConfig: jest.fn().mockReturnValue({}),
       getClientId: jest.fn().mockReturnValue('client-id'),
@@ -56,8 +56,18 @@ describe('MattermostProvider.addBot', () => {
     // Let the async ReconnectionManager.start() microtasks settle.
     await new Promise((r) => setImmediate(r));
 
-    // The provider wired a real connection through the existing service.
-    expect(mockService.initialize).toHaveBeenCalled();
+    // The provider hot-added the bot into the running service.
+    expect(mockService.addBot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'bot1',
+        messageProvider: 'mattermost',
+        mattermost: expect.objectContaining({
+          serverUrl: 'https://mm.example.com',
+          token: 'secret-token',
+          channel: 'town-square',
+        }),
+      })
+    );
   });
 
   it('persists the instance to messengers.json', async () => {
@@ -107,11 +117,11 @@ describe('MattermostProvider.addBot', () => {
     await expect(provider.addBot({ name: 'incomplete' })).rejects.toThrow(
       'name, serverUrl, and token are required'
     );
-    expect(mockService.initialize).not.toHaveBeenCalled();
+    expect(mockService.addBot).not.toHaveBeenCalled();
   });
 
   it('does not reject even if the underlying connection fails', async () => {
-    mockService.initialize = jest.fn().mockRejectedValue(new Error('boom'));
+    mockService.addBot = jest.fn().mockRejectedValue(new Error('boom'));
     const provider = new MattermostProvider(mockService);
 
     // addBot must resolve cleanly even though the connection attempt fails,
@@ -125,6 +135,6 @@ describe('MattermostProvider.addBot', () => {
     ).resolves.toBeUndefined();
 
     await new Promise((r) => setImmediate(r));
-    expect(mockService.initialize).toHaveBeenCalled();
+    expect(mockService.addBot).toHaveBeenCalled();
   });
 });
