@@ -209,6 +209,12 @@ test-results/
 !README.md
 !ANNOUNCEMENT.md
 !TIPS.md
+!SECURITY.md
+!ROADMAP.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!CLAUDE.md
+!TEST_STRATEGY.md
 !docs/**
 !docs/README.md
 !docs/ARCHITECTURE.md

@@ -92,13 +92,13 @@ For developers who want to modify the code or run locally without Docker.
     nvm use 22
     ```
 
-2.  **Install dependencies:**
+3.  **Install dependencies:**
     This project uses pnpm for package management.
     ```bash
     pnpm install
     ```
 
-3.  **Start the development server:**
+4.  **Start the development server:**
     ```bash
     pnpm run dev
     ```
@@ -109,7 +109,7 @@ Access the WebUI at `http://localhost:3028`.
 
 Once the application is running, open your browser to `http://localhost:3028`.
 
-1.  **Configure LLM Provider**: Navigate to **Configuration > LLM Providers** to set up your API keys (e.g., OpenAI, Anthropic).
+1.  **Configure LLM Provider**: Navigate to **Configuration > LLM Providers** to set up your API keys (e.g., OpenAI, OpenWebUI, Flowise, Letta).
 2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
 3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
 
