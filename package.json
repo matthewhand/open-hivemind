@@ -36,7 +36,6 @@
     "build:frontend": "bash scripts/build-frontend.sh",
     "build:netlify": "bash scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
-    "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'",
     "start": "NODE_ENV=production bash scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash scripts/start-runtime.sh",
     "start:dev:headless": "NODE_ENV=development HTTP_ENABLED=false node --import tsx src/index.ts",

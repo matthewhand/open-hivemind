@@ -207,14 +207,11 @@ test-results/
 *.md
 # Keep important documentation files tracked
 !README.md
-!ANNOUNCEMENT.md
-!TIPS.md
 !SECURITY.md
 !ROADMAP.md
 !CONTRIBUTING.md
 !CHANGELOG.md
 !CLAUDE.md
-!TEST_STRATEGY.md
 !docs/**
 !docs/README.md
 !docs/ARCHITECTURE.md
