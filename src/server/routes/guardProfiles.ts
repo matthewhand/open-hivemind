@@ -7,6 +7,7 @@ import {
   loadGuardrailProfiles,
   saveGuardrailProfiles,
   type GuardrailProfile,
+  type SemanticGuardrailConfig,
 } from '../../config/guardrailProfiles';
 import {
   loadGuardSettings,
@@ -115,6 +116,16 @@ router.get(
   })
 );
 
+interface SemanticGuardBody {
+  enabled?: boolean;
+  llmProviderKey?: string;
+  prompt?: string;
+  responseSchema?: {
+    type: string;
+    description?: string;
+  };
+}
+
 interface GuardBody {
   name: string;
   description?: string;
@@ -135,8 +146,42 @@ interface GuardBody {
       strictness: string;
       blockedTerms?: string[];
     };
+    semanticInputGuard?: SemanticGuardBody;
+    semanticOutputGuard?: SemanticGuardBody;
   };
 }
+
+/**
+ * Sanitize a semantic guard payload (input or output) consistently with the
+ * other guard sanitizers above: coerce `enabled` to a boolean, only keep
+ * string `llmProviderKey`/`prompt` values, and only keep a `responseSchema`
+ * whose `type` is the literal `'boolean'`. Missing/invalid payloads fall back
+ * to a disabled guard.
+ */
+const sanitizeSemanticGuard = (guard: SemanticGuardBody | undefined): SemanticGuardrailConfig => {
+  if (!guard || typeof guard !== 'object') {
+    return { enabled: false };
+  }
+  return {
+    enabled: Boolean(guard.enabled),
+    ...(typeof guard.llmProviderKey === 'string' && guard.llmProviderKey
+      ? { llmProviderKey: guard.llmProviderKey }
+      : {}),
+    ...(typeof guard.prompt === 'string' && guard.prompt ? { prompt: guard.prompt } : {}),
+    ...(guard.responseSchema &&
+    typeof guard.responseSchema === 'object' &&
+    guard.responseSchema.type === 'boolean'
+      ? {
+          responseSchema: {
+            type: 'boolean' as const,
+            ...(typeof guard.responseSchema.description === 'string'
+              ? { description: guard.responseSchema.description }
+              : {}),
+          },
+        }
+      : {}),
+  };
+};
 
 // POST / - Create a new profile
 router.post(
@@ -195,6 +240,8 @@ router.post(
                     : {}),
                 }
               : { enabled: false, strictness: 'low' },
+          semanticInputGuard: sanitizeSemanticGuard(guards.semanticInputGuard),
+          semanticOutputGuard: sanitizeSemanticGuard(guards.semanticOutputGuard),
         },
       };
 
@@ -226,7 +273,11 @@ router.put(
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Profile not found'));
       }
 
-      // Merge updates with validation to prevent prototype pollution
+      // Merge updates with validation to prevent prototype pollution.
+      // The accumulator is seeded with the existing guards so that guard
+      // sections omitted from the request body (e.g. semanticInputGuard /
+      // semanticOutputGuard when the UI only edits the basic guards) are
+      // preserved instead of being silently dropped on every edit.
       const safeGuards =
         guards && typeof guards === 'object'
           ? (Object.keys(guards) as Array<keyof typeof guards>)
@@ -251,7 +302,7 @@ router.put(
                   }
                   return acc;
                 },
-                {} as Record<string, unknown>
+                { ...profiles[profileIndex].guards } as Record<string, unknown>
               )
           : profiles[profileIndex].guards;
 
@@ -358,6 +409,12 @@ router.post(
               contentFilter: profile.guards.contentFilter
                 ? { ...profile.guards.contentFilter, enabled }
                 : profile.guards.contentFilter,
+              semanticInputGuard: profile.guards.semanticInputGuard
+                ? { ...profile.guards.semanticInputGuard, enabled }
+                : profile.guards.semanticInputGuard,
+              semanticOutputGuard: profile.guards.semanticOutputGuard
+                ? { ...profile.guards.semanticOutputGuard, enabled }
+                : profile.guards.semanticOutputGuard,
             },
           };
         }
