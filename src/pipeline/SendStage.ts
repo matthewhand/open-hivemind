@@ -15,8 +15,10 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 import { DefaultActivityRecorder, type ActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:send');
@@ -84,6 +86,18 @@ export class SendStage {
    * Process a single response context: format, split, send, store, emit.
    */
   async process(ctx: MessageContext & { responseText: string }): Promise<void> {
+    // --- Pipeline Debugger Breakpoint Check ---
+    try {
+      const debuggerService = container.resolve(PipelineDebuggerService);
+      if (debuggerService.shouldPause('response')) {
+        debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'response'`);
+        ctx = await debuggerService.pause('response', ctx);
+        debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+      }
+    } catch {
+      // Ignore DI errors
+    }
+
     const trimmed = ctx.responseText.trim();
 
     // Empty response after trim -- nothing to send.

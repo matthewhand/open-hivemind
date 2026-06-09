@@ -15,8 +15,10 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 
 const debug = Debug('app:pipeline:enrich');
 
@@ -78,6 +80,18 @@ export class EnrichStage {
    * Enrich a single accepted message context with memories and a system prompt.
    */
   async process(ctx: MessageContext & { decision: ReplyDecision }): Promise<void> {
+    // --- Pipeline Debugger Breakpoint Check ---
+    try {
+      const debuggerService = container.resolve(PipelineDebuggerService);
+      if (debuggerService.shouldPause('accepted')) {
+        debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'accepted'`);
+        ctx = await debuggerService.pause('accepted', ctx);
+        debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+      }
+    } catch {
+      // Ignore DI errors
+    }
+
     const startTime = Date.now();
     let memories: string[] = [];
 

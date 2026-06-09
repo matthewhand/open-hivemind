@@ -17,6 +17,7 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import type { IMessage } from '@hivemind/shared-types';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
@@ -24,6 +25,7 @@ import { DatabaseManager } from '../database/DatabaseManager';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';
 import { PersonaManager } from '../managers/PersonaManager';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 import { TokenBudgetService } from '../server/services/TokenBudgetService';
 
 const debug = Debug('app:pipeline:inference');
@@ -92,6 +94,18 @@ export class InferenceStage {
    * other pipeline stages that need an imperative (non-event) code path.
    */
   async process(ctx: MessageContext & { memories: string[]; systemPrompt: string }): Promise<void> {
+    // --- Pipeline Debugger Breakpoint Check ---
+    try {
+      const debuggerService = container.resolve(PipelineDebuggerService);
+      if (debuggerService.shouldPause('enriched')) {
+        debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'enriched'`);
+        ctx = await debuggerService.pause('enriched', ctx);
+        debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+      }
+    } catch {
+      // Ignore DI errors
+    }
+
     const startTime = Date.now();
     const userMessage =
       typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
