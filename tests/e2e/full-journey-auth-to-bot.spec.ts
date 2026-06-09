@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { completeCreateBotWizard } from './helpers';
 import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 /**
@@ -55,6 +56,27 @@ test.describe('Full Journey: Auth to Bot Creation', () => {
       })
     );
 
+    // LLM status (wizard requires a configured default LLM to pass step 1)
+    await page.route('**/api/config/llm-status', (route: any) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
+      })
+    );
+
+    // Personas (wizard step 2 requires selecting a persona)
+    await page.route('**/api/personas', (route: any) =>
+      route.fulfill({
+        status: 200,
+        json: [{ id: 'default', name: 'Default Assistant', description: 'A helpful assistant' }],
+      })
+    );
+
     // Admin data
     await page.route('**/api/admin/guard-profiles', (route: any) =>
       route.fulfill({
@@ -76,15 +98,20 @@ test.describe('Full Journey: Auth to Bot Creation', () => {
         return route.fulfill({ status: 200, json: { data: { bots: [] } } });
       }
       if (method === 'POST') {
+        // Real API wraps responses in an ApiResponse envelope ({ success, data });
+        // BotsPage reads response.data after creating, so the mock must match.
         return route.fulfill({
           status: 201,
           json: {
-            id: 'e2e-new-bot',
-            name: 'E2E Auth Test Bot',
-            messageProvider: 'discord',
-            llmProvider: 'openai',
-            createdBy: 'e2e-user',
-            createdAt: new Date().toISOString(),
+            success: true,
+            data: {
+              id: 'e2e-new-bot',
+              name: 'E2E Auth Test Bot',
+              messageProvider: 'discord',
+              llmProvider: 'openai',
+              createdBy: 'e2e-user',
+              createdAt: new Date().toISOString(),
+            },
           },
         });
       }
@@ -103,19 +130,12 @@ test.describe('Full Journey: Auth to Bot Creation', () => {
     await navigateAndWaitReady(page, '/admin/bots');
 
     // Step 3: Create a bot
-    const createBtn = page.locator('button:has-text("Create")').first();
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await expect(createBtn).toBeVisible({ timeout: 10000 });
     await createBtn.click();
 
-    // Step 4: Fill bot creation form
-    await page.locator('input[name="name"]').fill('E2E Auth Test Bot');
-    await page.locator('select[name="messageProvider"]').selectOption('discord');
-    await page.locator('select[name="llmProvider"]').selectOption('openai');
-
-    // Step 5: Submit form
-    const submitBtn = page.locator('button:has-text("Save")').first();
-    await submitBtn.click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    // Steps 4-5: Walk the creation wizard and submit
+    await completeCreateBotWizard(page, 'E2E Auth Test Bot');
 
     // Step 6: Reload page and verify bot is listed
     await page.reload();
@@ -144,14 +164,11 @@ test.describe('Full Journey: Auth to Bot Creation', () => {
     // Verify bots page loads
     await expect(page).toHaveURL(/bots/);
 
-    // Create bot
-    const createBtn = page.locator('button:has-text("Create")').first();
-    if ((await createBtn.count()) > 0) {
-      await createBtn.click();
-      await page.locator('input[name="name"]').fill('Dashboard Test Bot');
-      await page.locator('button:has-text("Save")').first().click();
-      await page.waitForTimeout(1000); // Wait for save to complete
-    }
+    // Create bot via the wizard
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
+    await createBtn.click();
+    await completeCreateBotWizard(page, 'Dashboard Test Bot');
 
     console.log('✅ Dashboard to bot management journey completed');
   });

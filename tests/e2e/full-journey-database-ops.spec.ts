@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { completeCreateBotWizard } from './helpers';
 import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 /**
@@ -50,7 +51,9 @@ test.describe('Full Journey: Database Operations', () => {
         const body = JSON.parse(route.request().postData() || '{}');
         const newBot = { ...body, id: `bot-${Date.now()}` };
         botsStore.push(newBot);
-        return route.fulfill({ status: 201, json: newBot });
+        // Real API wraps responses in an ApiResponse envelope ({ success, data });
+        // BotsPage reads response.data after creating, so the mock must match.
+        return route.fulfill({ status: 201, json: { success: true, data: newBot } });
       }
       return route.continue();
     });
@@ -104,6 +107,19 @@ test.describe('Full Journey: Database Operations', () => {
       return route.continue();
     });
 
+    // LLM status (Create Bot wizard requires a configured default LLM)
+    await page.route('**/api/config/llm-status', (route: any) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
+      })
+    );
+
     // Standard mocks
     await page.route('**/api/health', (route: any) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
@@ -135,17 +151,19 @@ test.describe('Full Journey: Database Operations', () => {
   test('Create bot and verify persistence after reload', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await mockDatabaseAPIs(page);
+    // Wizard step 2 requires a persona to select
+    personasStore.push({
+      id: 'default',
+      name: 'Default Assistant',
+      description: 'A helpful assistant',
+    });
 
     await navigateAndWaitReady(page, '/admin/bots');
 
-    // Create bot
-    const createBtn = page.locator('button:has-text("Create")').first();
+    // Create bot via the wizard
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await createBtn.click();
-    await page.locator('input[name="name"]').fill('Persistence Test Bot');
-    await page.locator('select[name="messageProvider"]').selectOption('discord');
-    await page.locator('select[name="llmProvider"]').selectOption('openai');
-    await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    await completeCreateBotWizard(page, 'Persistence Test Bot');
 
     // Verify bot is in store
     expect(botsStore.length).toBe(1);
@@ -161,16 +179,19 @@ test.describe('Full Journey: Database Operations', () => {
   test('Create → Update → Verify changes saved', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await mockDatabaseAPIs(page);
+    // Wizard step 2 requires a persona to select
+    personasStore.push({
+      id: 'default',
+      name: 'Default Assistant',
+      description: 'A helpful assistant',
+    });
 
     await navigateAndWaitReady(page, '/admin/bots');
 
-    // Create bot
-    const createBtn = page.locator('button:has-text("Create")').first();
+    // Create bot via the wizard
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await createBtn.click();
-    await page.locator('input[name="name"]').fill('Update Test Bot');
-    await page.locator('select[name="messageProvider"]').selectOption('slack');
-    await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    await completeCreateBotWizard(page, 'Update Test Bot', { messageProvider: 'slack' });
 
     const botId = botsStore[0].id;
     expect(botsStore[0].name).toBe('Update Test Bot');

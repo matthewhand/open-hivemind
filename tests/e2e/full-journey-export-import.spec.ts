@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { expect, test } from '@playwright/test';
+import { completeCreateBotWizard } from './helpers';
 import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 /**
@@ -68,6 +69,19 @@ test.describe('Full Journey: Export and Import Configuration', () => {
       })
     );
 
+    // LLM status (Create Bot wizard requires a configured default LLM)
+    await page.route('**/api/config/llm-status', (route: any) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
+      })
+    );
+
     // Bots CRUD
     await page.route('**/api/bots', (route: any) => {
       const method = route.request().method();
@@ -78,13 +92,15 @@ test.describe('Full Journey: Export and Import Configuration', () => {
         const body = JSON.parse(route.request().postData() || '{}');
         const newBot = { ...body, id: `bot-${Date.now()}` };
         botsStore.push(newBot);
-        return route.fulfill({ status: 201, json: newBot });
+        // Real API wraps responses in an ApiResponse envelope ({ success, data });
+        // BotsPage reads response.data after creating, so the mock must match.
+        return route.fulfill({ status: 201, json: { success: true, data: newBot } });
       }
       return route.continue();
     });
 
-    // Export endpoint
-    await page.route('**/api/admin/export', (route: any) => {
+    // Export endpoint (the Export Config button downloads GET /api/config/export)
+    await page.route('**/api/config/export**', (route: any) => {
       exportedData = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
@@ -94,27 +110,31 @@ test.describe('Full Journey: Export and Import Configuration', () => {
       };
       return route.fulfill({
         status: 200,
-        json: exportedData,
-        headers: { 'Content-Type': 'application/json' },
+        contentType: 'application/json',
+        body: JSON.stringify(exportedData),
       });
     });
 
-    // Import endpoint
-    await page.route('**/api/admin/import', (route: any) => {
-      if (exportedData) {
-        // Simulate importing the exported data
-        const importedData = JSON.parse(route.request().postData() || '{}');
-        botsStore = importedData.bots || [];
-        personasStore = importedData.personas || [];
-        return route.fulfill({
-          status: 200,
-          json: {
-            success: true,
-            imported: { bots: botsStore.length, personas: personasStore.length },
-          },
-        });
+    // Import endpoint (ImportBotsModal posts the uploaded bundle here)
+    await page.route('**/api/bots/import', (route: any) => {
+      const bundle = JSON.parse(route.request().postData() || '{}');
+      const imported = bundle.bots || [];
+      const updated: string[] = [];
+      const created: string[] = [];
+      for (const bot of imported) {
+        const idx = botsStore.findIndex((b) => b.name === bot.name);
+        if (idx >= 0) {
+          botsStore[idx] = { ...botsStore[idx], ...bot };
+          updated.push(bot.name);
+        } else {
+          botsStore.push({ ...bot, id: `bot-${Date.now()}-${created.length}` });
+          created.push(bot.name);
+        }
       }
-      return route.fulfill({ status: 400, json: { error: 'No data to import' } });
+      return route.fulfill({
+        status: 200,
+        json: { report: { created, updated, errors: [] } },
+      });
     });
 
     // Personas CRUD
@@ -143,41 +163,39 @@ test.describe('Full Journey: Export and Import Configuration', () => {
   test('Complete export and import flow', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await mockExportImportAPIs(page);
+    // Wizard step 2 requires a persona to select
+    personasStore.push({
+      id: 'default',
+      name: 'Default Assistant',
+      description: 'A helpful assistant',
+    });
 
     await navigateAndWaitReady(page, '/admin/export');
 
     // Step 1: Create test data (bots)
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const createBtn = page.locator('button:has-text("Create")').first();
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await createBtn.click();
-    await page.locator('input[name="name"]').fill('Export Test Bot 1');
-    await page.locator('select[name="messageProvider"]').selectOption('discord');
-    await page.locator('select[name="llmProvider"]').selectOption('openai');
-    await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    await completeCreateBotWizard(page, 'Export Test Bot 1');
 
     expect(botsStore.length).toBe(1);
 
     // Create second bot
     await createBtn.click();
-    await page.locator('input[name="name"]').fill('Export Test Bot 2');
-    await page.locator('select[name="messageProvider"]').selectOption('slack');
-    await page.locator('select[name="llmProvider"]').selectOption('anthropic');
-    await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    await completeCreateBotWizard(page, 'Export Test Bot 2', { messageProvider: 'slack' });
 
     expect(botsStore.length).toBe(2);
 
     // Step 2: Navigate to export page and trigger export
     await navigateAndWaitReady(page, '/admin/export');
 
-    // Find and click export button
-    const exportBtn = page.locator('button:has-text("Export")').first();
-    if ((await exportBtn.count()) > 0) {
-      await exportBtn.click();
-      await page.waitForResponse('**/api/admin/export', { timeout: 10000 });
-    }
+    // Find and click export button (downloads GET /api/config/export)
+    const exportBtn = page.getByRole('button', { name: 'Export Config' });
+    await expect(exportBtn).toBeVisible({ timeout: 10000 });
+    const exportResponse = page.waitForResponse('**/api/config/export**', { timeout: 10000 });
+    await exportBtn.click();
+    await exportResponse;
 
     // Verify export data was created
     expect(exportedData).not.toBeNull();
@@ -185,64 +203,60 @@ test.describe('Full Journey: Export and Import Configuration', () => {
     expect(exportedData.bots[0].name).toBe('Export Test Bot 1');
     expect(exportedData.bots[1].name).toBe('Export Test Bot 2');
 
-    // Step 3: Clear current data (simulate reset)
-    botsStore = [];
-    expect(botsStore.length).toBe(0);
+    // Step 3: Import the exported bundle back through the UI.
+    // The Import action lives in the bots-page bulk action bar (visible once
+    // at least one bot is selected) and accepts a .json file upload.
+    await navigateAndWaitReady(page, '/admin/bots');
+    await page.getByRole('checkbox', { name: 'Select all bots' }).check();
+    await page.getByRole('button', { name: 'Import' }).click();
 
-    // Step 4: Navigate to import page
-    await navigateAndWaitReady(page, '/admin/export');
-
-    // Step 5: Trigger import with exported data
-    // In a real scenario, user would upload a file, but we mock the API call
-    await page.route('**/api/admin/import', (route: any) => {
-      // Re-import our exported data
-      botsStore = [...(exportedData?.bots || [])];
-      personasStore = [...(exportedData?.personas || [])];
-      return route.fulfill({
-        status: 200,
-        json: {
-          success: true,
-          imported: { bots: botsStore.length, personas: personasStore.length },
-        },
-      });
+    const importDialog = page.getByRole('dialog', { name: 'Import Bot Configurations' });
+    await expect(importDialog).toBeVisible({ timeout: 10000 });
+    await page.locator('#file-upload-input').setInputFiles({
+      name: 'config-export.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(exportedData)),
     });
 
-    const importBtn = page.locator('button:has-text("Import")').first();
-    if ((await importBtn.count()) > 0) {
-      await importBtn.click();
-      await page.waitForResponse('**/api/admin/import', { timeout: 10000 });
-    }
+    // Preview step shows the bots from the bundle; confirm the import
+    const importResponse = page.waitForResponse(
+      (r) => r.url().includes('/api/bots/import') && r.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+    await importDialog.getByRole('button', { name: 'Confirm Import' }).click();
+    await importResponse;
 
-    // Step 6: Verify data was restored
-    await navigateAndWaitReady(page, '/admin/bots');
+    // Step 4: Verify data was restored (existing bots updated from the bundle)
     expect(botsStore.length).toBe(2);
     expect(botsStore[0].name).toBe('Export Test Bot 1');
     expect(botsStore[1].name).toBe('Export Test Bot 2');
 
-    console.log('✅ Full export/import journey completed: 2 bots exported and restored');
+    console.log('✅ Full export/import journey completed: 2 bots exported and re-imported');
   });
 
   test('Export with personas and verify completeness', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await mockExportImportAPIs(page);
+    // Wizard step 2 requires a persona to select
+    personasStore.push({
+      id: 'default',
+      name: 'Default Assistant',
+      description: 'A helpful assistant',
+    });
 
     // Create bot
     await navigateAndWaitReady(page, '/admin/bots');
-    const createBtn = page.locator('button:has-text("Create")').first();
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await createBtn.click();
-    await page.locator('input[name="name"]').fill('Persona Export Bot');
-    await page.locator('select[name="messageProvider"]').selectOption('discord');
-    await page.locator('select[name="llmProvider"]').selectOption('openai');
-    await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
+    await completeCreateBotWizard(page, 'Persona Export Bot');
 
     // Export
     await navigateAndWaitReady(page, '/admin/export');
-    const exportBtn = page.locator('button:has-text("Export")').first();
-    if ((await exportBtn.count()) > 0) {
-      await exportBtn.click();
-      await page.waitForResponse('**/api/admin/export', { timeout: 10000 });
-    }
+    const exportBtn = page.getByRole('button', { name: 'Export Config' });
+    await expect(exportBtn).toBeVisible({ timeout: 10000 });
+    const exportResponse = page.waitForResponse('**/api/config/export**', { timeout: 10000 });
+    await exportBtn.click();
+    await exportResponse;
 
     // Verify exported data structure
     expect(exportedData).toHaveProperty('version');
