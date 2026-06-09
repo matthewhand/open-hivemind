@@ -153,6 +153,14 @@ export const hivemindNavItems: NavItem[] = [
     tier: 'mvp',
   },
   {
+    id: 'webhook-events',
+    label: 'Webhook Events',
+    icon: <NavIcon><Webhook className="w-4 h-4" /></NavIcon>,
+    path: '/admin/webhooks',
+    visible: true,
+    tier: 'beta',
+  },
+  {
     id: 'provider-health',
     label: 'Provider Health',
     icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
