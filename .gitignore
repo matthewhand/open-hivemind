@@ -207,6 +207,8 @@ test-results/
 *.md
 # Keep important documentation files tracked
 !README.md
+!CODE_OF_CONDUCT.md
+!.github/**
 !SECURITY.md
 !ROADMAP.md
 !CONTRIBUTING.md
