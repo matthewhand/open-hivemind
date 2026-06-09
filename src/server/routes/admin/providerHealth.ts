@@ -191,10 +191,23 @@ function getMockProviderHealth(): ProviderHealthResponse {
 /**
  * GET /api/admin/provider-health
  *
- * Returns mock health data for all configured providers.
+ * Returns mock health data for all configured providers — there is no real
+ * metrics pipeline yet, so every number is simulated. To avoid presenting
+ * fabricated SLO figures as real, the endpoint is gated behind
+ * ENABLE_MOCK_PROVIDER_HEALTH (default: disabled → 501).
  * Replace mock data with real metrics once a collection pipeline exists.
  */
 router.get('/provider-health', (_req: Request, res: Response) => {
+  if (process.env.ENABLE_MOCK_PROVIDER_HEALTH !== 'true') {
+    return res.status(HTTP_STATUS.NOT_IMPLEMENTED).json({
+      success: false,
+      error: 'Provider health reporting is not implemented',
+      code: 'PROVIDER_HEALTH_NOT_IMPLEMENTED',
+      message:
+        'Provider health metrics are not collected yet; this endpoint only serves simulated demo data. ' +
+        'Set ENABLE_MOCK_PROVIDER_HEALTH=true to expose the mock data for demos.',
+    });
+  }
   try {
     const data = getMockProviderHealth();
     debug('Returning provider health data');

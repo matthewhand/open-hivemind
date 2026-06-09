@@ -158,7 +158,11 @@ export const hivemindNavItems: NavItem[] = [
     icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
     path: '/admin/health/providers',
     visible: true,
-    tier: 'beta',
+    // The backing endpoint (/api/admin/provider-health) serves simulated data
+    // and is gated behind ENABLE_MOCK_PROVIDER_HEALTH on the server (501 when
+    // unset). Hidden from primary nav via the experimental tier until a real
+    // metrics pipeline exists; the page itself remains routable directly.
+    tier: 'experimental',
   },
 
   // === RESOURCES ===

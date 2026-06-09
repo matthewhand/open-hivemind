@@ -19,6 +19,7 @@
 | `ENABLE_WELCOME_MESSAGE` | `false` | Send a welcome message to the default channel on bot startup |
 | `WELCOME_MESSAGE_TEXT` | `''` | Text of the startup welcome message (requires `ENABLE_WELCOME_MESSAGE=true`) |
 | `DATABASE_PATH` | `data/hivemind.db` | Path to the SQLite database file |
+| `ENABLE_MOCK_PROVIDER_HEALTH` | `false` | Serve simulated data from `/api/admin/provider-health` (demo only). When unset the endpoint returns 501 and the Provider Health nav entry is hidden (experimental tier). |
 
 ## Session & Auth Env Vars
 
