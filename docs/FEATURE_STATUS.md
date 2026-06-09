@@ -5,16 +5,16 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Domain | ✅ Complete | 🟡 Partial | 🔲 Stub | 📋 Planned | ❌ Broken |
 |---|---|---|---|---|---|
 | **messaging** | 36 | 10 | 6 | 0 | 0 |
-| **llm-providers** | 15 | 9 | 2 | 0 | 2 |
+| **llm-providers** | 17 | 9 | 2 | 0 | 0 |
 | **memory** | 18 | 4 | 1 | 1 | 0 |
-| **mcp-tools** | 10 | 10 | 2 | 0 | 3 |
-| **bots-config** | 32 | 5 | 0 | 0 | 1 |
+| **mcp-tools** | 13 | 10 | 2 | 0 | 0 |
+| **bots-config** | 33 | 5 | 0 | 0 | 0 |
 | **pipeline** | 19 | 3 | 0 | 0 | 0 |
 | **monitoring** | 14 | 8 | 2 | 1 | 0 |
 | **auth-security** | 18 | 7 | 2 | 3 | 0 |
-| **persistence** | 27 | 5 | 3 | 0 | 1 |
-| **webui-infra** | 20 | 3 | 2 | 0 | 2 |
-| **TOTAL** | **209** | **64** | **20** | **5** | **9** |
+| **persistence** | 28 | 5 | 3 | 0 | 0 |
+| **webui-infra** | 22 | 3 | 2 | 0 | 0 |
+| **TOTAL** | **218** | **64** | **20** | **5** | **0** |
 
 
 ## messaging
@@ -104,8 +104,8 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Vision (image input) support | 🔲 stub | Only static metadata flags supportsVision in src/server/data/llmModels.ts:41 etc. No provider constructs image content parts or passes images to any chat API — all message mapping uses plain text (e.g. openAiProvider.ts:121-126 content: getText()). UI-displayed capability is faked by the static cata |
 | Function/tool calling (provider-native) | ✅ complete | The ILlmProvider abstraction now exposes an optional generateChatCompletionWithTools; OpenAI implements it (openAiProvider.ts:300 accepts LlmToolDefinition[] and returns tool_calls, line 377). src/services/toolAugmentedCompletion.ts routes through it when available (line 147-149), and the live pipeline calls toolAugmentedCompletion from inferenceProcessor.ts:132. Real native tool-calling round-trip for OpenAI. |
 | Streaming chat completion (generateStreamingChatCompletion) | 🟡 partial | OpenAI now implements generateStreamingChatCompletion (openAiProvider.ts:198) — requests a stream from the SDK and invokes the per-chunk callback, returning the full assembled response (covered by openAiProvider.test.ts:65-78). Other providers still do not implement it (Flowise SDK explicitly sets streaming:false, flowiseSdkClient.ts:28), so streaming is OpenAI-only. |
-| Letta per-bot config isolation | ❌ broken | packages/llm-letta/src/lettaProvider.ts:30-35 + index.ts:9-11 — create() returns LettaProvider.getInstance(config); singleton only honors the FIRST config. Auth uses process.env.LETTA_SERVER_PASSWORD only (line 26). A second bot/profile with different agentId/config silently reuses the first instanc |
-| OpenSwarm config wiring | ❌ broken | packages/llm-openswarm/src/OpenSwarmProvider.ts:15-18 constructor takes NO args and reads only OPENSWARM_BASE_URL/OPENSWARM_API_KEY env vars; index.ts:9-11 create(_config) ignores config. So bot/profile-level OpenSwarm config (baseUrl/apiKey) cannot be applied — only env vars work. |
+| Letta per-bot config isolation | ✅ complete | packages/llm-letta/src/index.ts:17-26 create() returns a fresh provider per call (no singleton), honoring both plain (apiKey/baseUrl) and schema env-var (LETTA_API_KEY/LETTA_BASE_URL) key shapes; lettaProvider.ts:59-66 constructor passes config.apiKey ?? LETTA_SERVER_PASSWORD and config.baseUrl ?? LETTA_BASE_URL to the Letta client, so per-bot auth/baseUrl overrides work with env fallback. Covered by lettaProvider.test.ts. |
+| OpenSwarm config wiring | ✅ complete | Fixed in 854d29e27 (#2827): packages/llm-openswarm/src/OpenSwarmProvider.ts:24-28 constructor takes OpenSwarmConfig (baseUrl/apiKey/team) with env fallback; index.ts:16-25 create() wires config through, honoring raw schema env-var keys too. |
 
 ## memory
 
@@ -159,11 +159,11 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | /api/mcp-tools routes (mcpTools.ts) | 🔲 stub | src/server/routes/mcpTools.ts:15-25 — GET /list returns hardcoded {tools:[],count:0}; GET /test returns {status:'ok'}. Pure placeholder. Mounted at /api/mcp-tools (registerRoutes.ts:145). |
 | MCPService remote-server connection (SDK Client) | ✅ complete | src/mcp/MCPService.ts now loads the MCP SDK via dynamic import() of its real subpath entry points (loadSdk at line 53-68 imports @modelcontextprotocol/sdk/client/index.js, /streamableHttp.js and /stdio.js) instead of the broken root require. Client + StreamableHTTP/Stdio transports resolve correctly, so connectToServer can establish real MCP connections. |
 | MCPService.executeTool + guard enforcement | ✅ complete | assertGuardAllowsExecution is sound (requires botName, resolves owner via Slack/Discord providers, calls MCPGuard.isUserAllowed). executeTool reads this.clients.get(serverName); clients are now populated by connectToServer (line 210) which works after the dynamic-import SDK fix, so tool execution is functional end-to-end. |
-| MCPProviderManager start: spawn error handling | ❌ broken | src/config/mcp/serverLifecycle.ts:194 registers providerProcess.on('configuration', ...) — ChildProcess emits no 'configuration' event; the correct event is 'error'. Spawn failures (e.g. ENOENT, command not found) are never caught/rejected and instead fall through to the timeout path (208-214), prod |
+| MCPProviderManager start: spawn error handling | ✅ complete | Fixed in 21cdcfa34 (#2826): src/config/mcp/serverLifecycle.ts:194 now registers a providerProcess.on('error', ...) listener, so spawn failures (e.g. ENOENT) reject immediately instead of falling through to the timeout path. |
 | MCP provider test (executeProviderTest) | ✅ complete | src/config/mcp/toolRegistry.ts now performs a real MCP handshake: it spawns the command, writes a minimal JSON-RPC `initialize` request to stdin (line 120-131), and parses the server's `initialize` response (parseInitializeResponse, line 147+) to extract protocolVersion + capabilities. Falls back to version/heuristics only as a secondary path. A genuine handshake, not regex-sniffing. |
 | /api/admin/mcp-servers management routes (MCPService-backed) | ✅ complete | src/server/routes/admin/mcpServers.ts:31-471 implements test/connect/disconnect/delete/list/status/restart/bulk-disconnect with SSRF guard (isSafeUrl) and rate limiting. The connect/test/restart paths call MCPService.connectToServer/testConnection, which now work after the dynamic-import SDK fix, so the admin path is functional. |
-| MCPToolsTestingPage (client) | ❌ broken | src/client/src/pages/MCPToolsTestingPage.tsx:53 reads json.servers but GET /api/mcp/servers returns {data:{servers}} (servers.ts:36) — so serverList is always [] and no tools ever populate. Also line 199 renders <Textarea> which is NOT imported (line 16 imports Input/Select/Button only) -> Reference |
-| MCPServerManager component (legacy) | ❌ broken | src/client/src/components/MCPServerManager.tsx:55 does `if (data.servers) Object.entries(data.servers)` but /api/admin/mcp-servers returns an ARRAY at data.data.servers, not an object at data.servers. So the table always renders empty. Appears superseded by the MCPServersPage/ directory which parses |
+| MCPToolsTestingPage (client) | ✅ complete | Fixed in d186e8e4d (#2832): src/client/src/pages/MCPToolsTestingPage.tsx unwraps the {data:{servers}} response envelope from GET /api/mcp/servers, so the server list and tools populate; the missing Textarea import is resolved. |
+| MCPServerManager component (legacy) | ✅ complete | Fixed in f8b413e61 (#2834): src/client/src/components/MCPServerManager.tsx unwraps the /api/admin/mcp-servers response envelope (array at data.data.servers), so the server table renders correctly. |
 | McpToolProvider (packages/tool-mcp) | 🟡 partial | packages/tool-mcp/src/McpToolProvider.ts now loads the SDK via dynamic import() of the correct subpaths (stdio/streamableHttp/sse client transports, lines 148-178) and connects via a real transport — the previous broken root-require is gone. Marked partial because it is a separate connection store from MCPService (the architectural-gap entry below still applies) and is not the path bots use for tool execution. |
 
 ## bots-config
@@ -207,7 +207,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Semantic guardrails (LLM input/output) profile + test | 🟡 partial | guardrailProfiles.ts defines semanticInputGuard/semanticOutputGuard in the default 'semantic-protected' profile (src/config/guardrailProfiles.ts:53-148) and src/server/routes/guards.ts:121-181 POST /semantic/test wires to SemanticGuardrailService.evaluateInput/Output. However the guardProfiles CRUD  |
 | Bot-config templates | 🟡 partial | botConfig.ts:96-163 returns 3 hardcoded templates (discord_openai, slack_flowise, mattermost_openwebui) inline in the route — static data, not a managed/extensible template system. There is a richer ConfigurationTemplateService but this endpoint does not use it. |
 | GuardsPage 'Guard Settings' tab (global guard defaults) | ✅ complete | src/client/src/pages/GuardsPage.tsx now loads global guard defaults from GET /api/admin/guard-profiles/settings and persists edits via PUT (saveMutation, line 189-203, 'Guard settings updated' toast). Backed by real routes in src/server/routes/guardProfiles.ts:56,71 (loadGuardSettings/saveGuardSettings). The 'coming soon' placeholder is gone. |
-| Persona create / clone / update HTTP responses | ❌ broken | src/server/routes/personas.ts:152 (POST /), :178 (POST /:id/clone), :202 (PUT /:id) call manager.createPersona/clonePersona/updatePersona WITHOUT await, but those methods are async (PersonaManager.ts:245,279,261 return Promises). The handler serializes a pending Promise -> responds with empty/incorr |
+| Persona create / clone / update HTTP responses | ✅ complete | Fixed in 6069d1c1a (#2830): src/server/routes/personas.ts POST /, POST /:id/clone, and PUT /:id now await manager.createPersona/clonePersona/updatePersona, so handlers serialize the resolved persona instead of a pending Promise. |
 
 ## pipeline
 
@@ -340,7 +340,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Config import from YAML | ✅ complete | formatConverters.parseYAML (line 403) is now a real block-style YAML parser supporting nested mappings, block sequences, and the scalar types emitted by convertToYAML — it round-trips the export output. importConfigurations/importMainConfig route .yaml/.yml uploads through it, so YAML import works. |
 | Audit log query API (/api/enterprise/audit) | ✅ complete | src/server/routes/enterprise.ts GET /audit (line 207) now builds the filter, calls auditLogger.getAuditEvents, and actually returns the data: res.json(ApiResponse.success({ auditEvents, total })). Supports search/action/resource/user/date filters. (Note: the other enterprise GET endpoints — compliance/integrations/etc. — remain mock stubs.) |
 | Client AuditPage (audit log viewer) | ✅ complete | src/client/src/pages/AuditPage.tsx fetches '/api/admin/audit-logs?limit=100' (line 201) and reads data.data.auditEvents (line 202). The backend route (src/server/routes/admin/audit.ts:222) now returns real AuditLogger.getAuditEvents data with filter support, so the viewer shows genuine audit events. Shapes are aligned (auditEvents). |
-| Client ImportExportPage | ❌ broken | src/client/src/pages/ImportExportPage.tsx posts to '/api/admin/export' (line 76) and '/api/admin/import' (line 106). No such routes are registered under /api/admin (admin/index.ts mounts no export/import handler; admin/backup.ts is an empty router). The real config import/export lives at /api/import |
+| Client ImportExportPage | ✅ complete | Fixed in 93558e14d (#2840): src/server/routes/admin/backup.ts now implements the /export and /import routes the page posts to under /api/admin, so ImportExportPage round-trips configuration. |
 
 ## webui-infra
 
@@ -371,5 +371,5 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Webhook scheduled messages | 🟡 partial | src/server/routes/webhooks.ts:43-103: in-memory Map CRUD for scheduled messages (create/list/get/delete) with auth+role guards. Works as an API but is purely in-memory ('would be DB in production', line 17) and there is no scheduler that actually delivers the scheduled messages — status stays 'pendi |
 | Webhook event recording (ingress -> event log) | 🔲 stub | src/server/routes/webhookEvents.ts exports recordWebhookEvent() to feed the in-memory event store, but grep shows ZERO callers anywhere in src outside the file itself. No webhook ingress point records events, so even the richer store would always be empty. Retry handler only 'simulates a 202 Accepte |
 | CI/CD deployment routes | 🔲 stub | src/server/routes/ci.ts (mounted /api/ci, registerRoutes.ts:137): every endpoint (deployments list/create/get/rollback, drift, validate, pipeline status, tests run/results) builds a mock object then returns ApiResponse.success() with NO payload (e.g. lines 63,112,153,207,244,271,306,356). Comments s |
-| API Docs page (auto-generated catalog + live test) | ❌ broken | src/client/src/pages/ApiDocsPage.tsx duplicate-imports Button on BOTH line 5 and line 13 ('import Button from ../components/DaisyUI/Button') — a TS2300 duplicate-identifier error that breaks the module build/load. Underlying design is otherwise complete: backend src/server/routes/apiDocs.ts introspe |
-| Webhook events backend (list/detail/retry) | ❌ broken | Path/shape mismatch: WebhookEventsPage.tsx calls GET /api/webhooks/events (expects {data:{items,total,...}}), GET /api/webhooks/events/:id, and POST /api/webhooks/events/:id/retry. registerRoutes.ts:152 mounts src/server/routes/webhooks.ts at /api/webhooks, which returns {events:[],count:0} (wrong s |
+| API Docs page (auto-generated catalog + live test) | ✅ complete | Fixed in c96fe4930: the duplicate Button import in src/client/src/pages/ApiDocsPage.tsx was removed, clearing the TS2300 error; the page now builds and renders the apiDocs.ts-introspected catalog with live test. |
+| Webhook events backend (list/detail/retry) | ✅ complete | Fixed in 5b36e6bdb (#2841): src/server/routes/webhookEvents.ts implements GET /events, GET /events/:id, and POST /events/:id/retry with the {data:{items,total,...}} shape WebhookEventsPage expects, mounted in registerRoutes.ts:191. |
