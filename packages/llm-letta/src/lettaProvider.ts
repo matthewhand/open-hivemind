@@ -9,6 +9,10 @@ export interface LettaProviderConfig {
   systemPrompt?: string;
   sessionMode?: 'default' | 'per-channel' | 'per-user' | 'fixed';
   conversationId?: string;
+  /** Per-bot API key; falls back to LETTA_SERVER_PASSWORD env. */
+  apiKey?: string;
+  /** Per-bot server base URL; falls back to LETTA_BASE_URL env, then the SDK default. */
+  baseUrl?: string;
 }
 
 /**
@@ -54,9 +58,11 @@ export class LettaProvider implements ILlmProvider {
 
   constructor(config?: LettaProviderConfig) {
     this.config = config || {};
-    // Uses LETTA_SERVER_PASSWORD for both cloud and self-hosted auth
+    // Per-bot config wins; LETTA_SERVER_PASSWORD covers both cloud and
+    // self-hosted auth, LETTA_BASE_URL the server URL (SDK default otherwise).
     this.client = new Letta({
-      apiKey: process.env.LETTA_SERVER_PASSWORD,
+      apiKey: this.config.apiKey ?? process.env.LETTA_SERVER_PASSWORD,
+      baseURL: this.config.baseUrl ?? process.env.LETTA_BASE_URL,
     });
   }
 
@@ -254,7 +260,9 @@ export class LettaProvider implements ILlmProvider {
    * is returned as the completion text.
    */
   async generateCompletion(prompt: string): Promise<string> {
-    debug('generateCompletion is not natively supported; mapping to a single-turn chat completion.');
+    debug(
+      'generateCompletion is not natively supported; mapping to a single-turn chat completion.'
+    );
     return this.generateChatCompletion(prompt, []);
   }
 }

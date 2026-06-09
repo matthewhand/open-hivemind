@@ -340,6 +340,76 @@ describe('LettaProvider per-bot config isolation', () => {
   });
 });
 
+describe('LettaProvider client construction (per-bot auth/baseUrl)', () => {
+  const ORIGINAL_ENV = {
+    LETTA_SERVER_PASSWORD: process.env.LETTA_SERVER_PASSWORD,
+    LETTA_BASE_URL: process.env.LETTA_BASE_URL,
+  };
+
+  beforeEach(() => {
+    delete process.env.LETTA_SERVER_PASSWORD;
+    delete process.env.LETTA_BASE_URL;
+  });
+
+  afterAll(() => {
+    for (const [key, value] of Object.entries(ORIGINAL_ENV)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  it('create() wires per-bot apiKey and baseUrl through to the Letta client', async () => {
+    const { create } = await import('./index');
+
+    create({ agentId: 'agent-123', apiKey: 'bot-specific-key', baseUrl: 'http://bot-host:8283' });
+
+    expect(MockLetta).toHaveBeenCalledWith({
+      apiKey: 'bot-specific-key',
+      baseURL: 'http://bot-host:8283',
+    });
+  });
+
+  it('create() accepts raw schema env-var keys', async () => {
+    const { create } = await import('./index');
+
+    create({
+      LETTA_API_KEY: 'env-style-key',
+      LETTA_BASE_URL: 'http://env-style:8283',
+    });
+
+    expect(MockLetta).toHaveBeenCalledWith({
+      apiKey: 'env-style-key',
+      baseURL: 'http://env-style:8283',
+    });
+  });
+
+  it('falls back to LETTA_SERVER_PASSWORD and LETTA_BASE_URL env when config omits them', async () => {
+    process.env.LETTA_SERVER_PASSWORD = 'env-password';
+    process.env.LETTA_BASE_URL = 'http://env-host:8283';
+    const { create } = await import('./index');
+
+    create({ agentId: 'agent-123' });
+
+    expect(MockLetta).toHaveBeenCalledWith({
+      apiKey: 'env-password',
+      baseURL: 'http://env-host:8283',
+    });
+  });
+
+  it('per-bot config wins over process-wide env', async () => {
+    process.env.LETTA_SERVER_PASSWORD = 'env-password';
+    process.env.LETTA_BASE_URL = 'http://env-host:8283';
+    const { create } = await import('./index');
+
+    create({ apiKey: 'bot-key', baseUrl: 'http://bot-host:8283' });
+
+    expect(MockLetta).toHaveBeenCalledWith({
+      apiKey: 'bot-key',
+      baseURL: 'http://bot-host:8283',
+    });
+  });
+});
+
 describe('LettaProvider.generateCompletion', () => {
   it('maps a non-chat completion onto a single-turn chat completion', async () => {
     mockCreate.mockResolvedValue({
