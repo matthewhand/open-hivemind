@@ -46,8 +46,8 @@ test('capture rollback UI screenshots', async ({ page }) => {
   );
 
   // 1. Mock empty rollbacks
-  await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
-    await route.fulfill({ status: 200, json: { rollbacks: [] } });
+  await page.route('**/api/hot-reload/rollbacks', async (route) => {
+    await route.fulfill({ status: 200, json: { success: true, data: [] } });
   });
 
   await page.goto('/admin/configuration');
@@ -59,8 +59,11 @@ test('capture rollback UI screenshots', async ({ page }) => {
   await page.screenshot({ path: '/home/jules/verification/config-rollback-empty-fixed.png' });
 
   // 2. Mock rollbacks available
-  await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
-    await route.fulfill({ status: 200, json: { rollbacks: ['rollback_1711234567890_xxyyzz'] } });
+  await page.route('**/api/hot-reload/rollbacks', async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: { success: true, data: ['rollback_1711234567890_xxyyzz'] },
+    });
   });
 
   // Refresh to get new mock

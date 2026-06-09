@@ -77,12 +77,13 @@ test.describe('Configuration Page Screenshots', () => {
     });
 
     // Mock the rollbacks data
-    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+    await page.route('/api/hot-reload/rollbacks', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          rollbacks: ['rollback_1711234567890_xxyyzz', 'rollback_1711230000000_aabbcc'],
+          success: true,
+          data: ['rollback_1711234567890_xxyyzz', 'rollback_1711230000000_aabbcc'],
         }),
       });
     });

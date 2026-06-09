@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-/** POST /api/config/hot-reload */
+/** POST /api/hot-reload */
 export const HotReloadChangeSchema = z.object({
   body: z.object({
     changes: z.record(z.unknown()).refine((val) => Object.keys(val).length > 0, {
@@ -12,7 +12,7 @@ export const HotReloadChangeSchema = z.object({
   }),
 });
 
-/** POST /api/config/hot-reload/rollback/:snapshotId */
+/** POST /api/hot-reload/rollback/:snapshotId */
 export const HotReloadRollbackSchema = z.object({
   params: z.object({
     snapshotId: z.string().min(1, { message: 'Snapshot ID is required' }),

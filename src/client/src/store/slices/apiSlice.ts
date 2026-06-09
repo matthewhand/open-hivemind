@@ -156,7 +156,7 @@ export const apiSlice = createApi({
 
     applyHotReloadChange: builder.mutation<HotReloadResponse, HotReloadRequest>({
       query: (payload) => ({
-        url: '/api/config/hot-reload',
+        url: '/api/hot-reload',
         method: 'POST',
         body: payload,
       }),

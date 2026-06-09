@@ -76,10 +76,12 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     },
   };
 
-  // The page fetches /api/config/hot-reload/rollbacks and expects { rollbacks: string[] }
+  // The page fetches /api/hot-reload/rollbacks which returns the standard
+  // envelope { success: true, data: string[] }.
   // Rollback IDs are like "rollback_<timestamp>_<hash>" - the component parses the number after first _
   const mockRollbacks = {
-    rollbacks: [
+    success: true,
+    data: [
       'rollback_1774699200000_abc123',
       'rollback_1774612800000_def456',
       'rollback_1774440000000_ghi789',
@@ -131,7 +133,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -156,7 +158,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -181,7 +183,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -205,7 +207,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -247,7 +249,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -281,7 +283,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       savedPayload = route.request().postDataJSON();
       await route.fulfill({ status: 200, json: { success: true, message: 'Configuration saved' } });
     });
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -306,7 +308,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
         json: { success: true, message: 'Configuration saved successfully' },
       })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -334,7 +336,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -366,10 +368,10 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
-    await page.route('**/api/config/hot-reload/rollback/*', async (route) => {
+    await page.route('**/api/hot-reload/rollback/*', async (route) => {
       rolledBack = true;
       await route.fulfill({ status: 200, json: { success: true, message: 'Rollback successful' } });
     });
@@ -416,7 +418,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
         json: { success: false, message: 'Internal server error: failed to persist configuration' },
       })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -444,7 +446,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
@@ -471,7 +473,7 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
-    await page.route('**/api/config/hot-reload/rollbacks', (route) =>
+    await page.route('**/api/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 

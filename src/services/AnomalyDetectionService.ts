@@ -58,6 +58,17 @@ export class AnomalyDetectionService extends EventEmitter {
     debug('Anomaly detection started');
   }
 
+  /**
+   * Stop the anomaly detection interval
+   */
+  public stop(): void {
+    if (this.detectionInterval) {
+      clearInterval(this.detectionInterval);
+      this.detectionInterval = null;
+      debug('Anomaly detection stopped');
+    }
+  }
+
   static getInstance(
     dbManager?: DatabaseManager,
     wsService?: WebSocketService,

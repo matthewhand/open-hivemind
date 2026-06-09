@@ -50,10 +50,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   //   2. WebSocket connection initialization scripts
   //   3. DaisyUI theme switching which injects inline styles
   //
-  // MITIGATION: All user input is sanitized via Zod schemas and the sanitization
-  // middleware before being stored or rendered. See:
-  //   - src/server/middleware/sanitizationMiddleware.ts
-  //   - src/common/security/inputSanitizer.ts
+  // MITIGATION: All user input is validated/sanitized before being stored or
+  // rendered. See:
+  //   - src/validation/validateRequest.ts (Zod schema validation on API routes)
+  //   - src/message/handlers/inputProcessor.ts + src/utils/InputSanitizer.ts
+  //     (inbound message text sanitization)
   let cspDirectives: string[];
 
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {

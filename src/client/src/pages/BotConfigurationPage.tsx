@@ -224,8 +224,9 @@ const BotConfigurationPage: React.FC = () => {
 
   const fetchRollbacks = useCallback(async () => {
     try {
-      const data: any = await apiService.get('/api/config/hot-reload/rollbacks');
-      setRollbacks(data.rollbacks || []);
+      const data: any = await apiService.get('/api/hot-reload/rollbacks');
+      // Backend returns the standard envelope: { success: true, data: string[] }
+      setRollbacks(data?.data || []);
     } catch (_err) {
       errorToast('Rollback Error', 'Failed to fetch rollback snapshots');
     }
@@ -258,7 +259,7 @@ const BotConfigurationPage: React.FC = () => {
     try {
       setRollingBack(true);
       setError(null);
-      await apiService.post(`/api/config/hot-reload/rollback/${selectedSnapshot}`);
+      await apiService.post(`/api/hot-reload/rollback/${selectedSnapshot}`);
 
       setSuccess(`Successfully rolled back to snapshot ${selectedSnapshot}`);
       setIsRollbackModalOpen(false);

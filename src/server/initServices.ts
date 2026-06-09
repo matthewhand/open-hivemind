@@ -372,10 +372,22 @@ export async function initServices(
     shutdown: () => maintenanceService.stop(),
   });
 
-  // Initialize AnomalyDetectionService
-
-  AnomalyDetectionService.getInstance();
-  appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
+  // Initialize and start AnomalyDetectionService. Detection is on by default;
+  // set ANOMALY_DETECTION_ENABLED=false to opt out. Skipped in test runs to
+  // avoid leaking timers (same convention as IntegrationAnomalyDetector below).
+  const anomalyDetectionService = AnomalyDetectionService.getInstance();
+  if (process.env.NODE_ENV !== 'test' && process.env.ANOMALY_DETECTION_ENABLED !== 'false') {
+    anomalyDetectionService.start();
+    shutdownCoordinator.registerService({
+      name: 'AnomalyDetectionService',
+      shutdown: () => anomalyDetectionService.stop(),
+    });
+    appLogger.info('\ud83d\udd0d Anomaly Detection Service started');
+  } else {
+    appLogger.info(
+      '\ud83d\udd0d Anomaly Detection Service initialized (detection interval disabled)'
+    );
+  }
 
   // Initialize and start IntegrationAnomalyDetector. It reads live provider
   // metrics from ProviderMetricsCollector on its own interval, so simply

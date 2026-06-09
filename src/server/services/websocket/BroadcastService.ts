@@ -135,6 +135,14 @@ export class BroadcastService {
       });
     });
 
+    // An orchestration decision was made for an incoming message. The pipeline
+    // (DecisionStage) emits the typed `pipeline:decision` event; forward it to
+    // websocket clients as `pipeline_decision` so the ActivityPage live
+    // orchestration feed receives it.
+    (bus as any).on?.('pipeline:decision', (event: any) => {
+      this.distributor.broadcast('pipeline_decision', event);
+    });
+
     // A message failed at some pipeline stage. The pipeline emits the typed
     // `message:error` event; surface it as an alert on the monitoring feed.
     (bus as any).on?.('message:error', (event: any) => {
