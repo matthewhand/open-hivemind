@@ -22,15 +22,6 @@ interface AnalyticsResponse {
   dailyStats: Array<{ date: string; messages: number; errors: number }>;
 }
 
-interface PerformanceMetricsResponse {
-  cpuUsage: number;
-  memoryUsage: number;
-  responseTime: number;
-  errorRate: number;
-  uptime: number;
-  activeConnections: number;
-}
-
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const baseUrl = rawBaseUrl?.replace(/\/$/, '') ?? '';
 
@@ -47,7 +38,7 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Config', 'Status', 'SecureConfig', 'Analytics', 'Performance', 'Activity'],
+  tagTypes: ['Config', 'Status', 'SecureConfig', 'Analytics', 'Activity'],
   endpoints: (builder) => ({
     getConfig: builder.query<ConfigResponse, void>({
       query: () => '/api/config',
@@ -180,17 +171,6 @@ export const apiSlice = createApi({
       }),
       providesTags: ['Analytics'],
     }),
-    
-    getPerformanceMetrics: builder.query<PerformanceMetricsResponse, void>({
-      // NOTE: `/api/performance` (without `/enterprise`) is not a registered
-      // route. In dev mode that URL falls through to Vite's static-asset
-      // middleware and never resolves, leaving the fetch pending indefinitely
-      // — which in turn blocks Playwright's `networkidle` on the monitoring
-      // tab. Point at the real enterprise route which responds immediately.
-      query: () => '/api/enterprise/performance',
-      providesTags: ['Performance'],
-      // Polling will be handled by a custom hook
-    }),
 
     getActivity: builder.query<ActivityResponse, {
       bot?: string;
@@ -230,7 +210,6 @@ export const {
   useRestoreSecureConfigsMutation,
   useGetSecureConfigInfoQuery,
   useGetAnalyticsQuery,
-  useGetPerformanceMetricsQuery,
   useApplyHotReloadChangeMutation,
   useGetActivityQuery,
 } = apiSlice;

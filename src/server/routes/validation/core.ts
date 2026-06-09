@@ -230,18 +230,5 @@ export function createCoreRoutes(): Router {
     })
   );
 
-  /**
-   * WebSocket endpoint for real-time validation updates
-   * This would be implemented with a WebSocket library like Socket.io
-   */
-  router.get('/ws', (req: AuthMiddlewareRequest, res: Response) => {
-    // This is a placeholder for WebSocket implementation
-    // In a real implementation, you would set up a WebSocket connection
-    return res.json({
-      success: false,
-      message: 'WebSocket endpoint not implemented yet',
-    });
-  });
-
   return router;
 }

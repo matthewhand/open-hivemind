@@ -20,11 +20,9 @@ import apiDocsRouter from '@src/server/routes/apiDocs';
 import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
-import ciRouter from '@src/server/routes/ci';
 import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
-import enterpriseRouter from '@src/server/routes/enterprise';
 import errorsRouter from '@src/server/routes/errors';
 import guardsRouter from '@src/server/routes/guards';
 import hotReloadRouter from '@src/server/routes/hotReload';
@@ -165,8 +163,6 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/bot-config', botConfigRouter);
   app.use('/api/validation', validationRouter);
   app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
-  app.use('/api/ci', ciRouter);
-  app.use('/api/enterprise', authenticateToken, enterpriseRouter);
   app.use('/api/secure-config', authenticateToken, secureConfigRouter);
   // Mount the plugin-security router at /api/admin/plugins BEFORE the catch-all
   // /api/admin adminApiRouter so its /security, /:name/verify and /:name/trust
@@ -211,9 +207,8 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   // Unmatched API route guard — return 404 immediately so requests don't fall
   // through to the Vite dev middleware (which would hang forever trying to
   // resolve them as static assets). Without this, any typo or stale endpoint
-  // call from the frontend (e.g. `/api/performance` instead of
-  // `/api/enterprise/performance`) leaves the fetch pending indefinitely,
-  // blocking Playwright's `networkidle` and producing browser request hangs.
+  // call from the frontend leaves the fetch pending indefinitely, blocking
+  // Playwright's `networkidle` and producing browser request hangs.
   app.all(/^\/api(\/.*)?$/, (req: Request, res: Response) => {
     httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
     return res

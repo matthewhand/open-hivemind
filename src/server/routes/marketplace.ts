@@ -288,21 +288,6 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
-  // Add example community package if no community packages exist
-  if (!packageMap.has('hivemind-plugin-weather')) {
-    packageMap.set('hivemind-plugin-weather', {
-      name: 'hivemind-plugin-weather',
-      displayName: 'Weather Tool',
-      description:
-        'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
-      type: 'tool',
-      version: '1.2.0',
-      status: 'available',
-      trusted: false,
-      repoUrl: 'https://github.com/example/hivemind-plugin-weather',
-    });
-  }
-
   let allPackages = Array.from(packageMap.values());
 
   // Filter by community.json allowlist (if it exists)

@@ -1,36 +1,5 @@
 import { z } from 'zod';
 
-export const ToolUsageGuardSchema = z.object({
-  body: z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    description: z.string().optional(),
-    toolId: z.string().min(1, { message: 'ToolId is required' }),
-    guardType: z.enum(['owner_only', 'user_list', 'role_based'], {
-      message: 'guardType must be one of: owner_only, user_list, role_based',
-    }),
-    allowedUsers: z.array(z.string()).optional(),
-    allowedRoles: z.array(z.string()).optional(),
-    isActive: z.boolean().optional(),
-  }),
-});
-
-export const UpdateToolUsageGuardSchema = z.object({
-  params: z.object({
-    id: z.string().min(1, { message: 'Guard ID is required' }),
-  }),
-  body: z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    description: z.string().optional(),
-    toolId: z.string().min(1, { message: 'ToolId is required' }),
-    guardType: z.enum(['owner_only', 'user_list', 'role_based'], {
-      message: 'guardType must be one of: owner_only, user_list, role_based',
-    }),
-    allowedUsers: z.array(z.string()).optional(),
-    allowedRoles: z.array(z.string()).optional(),
-    isActive: z.boolean().optional(),
-  }),
-});
-
 export const ToggleIdParamSchema = z.object({
   params: z.object({
     id: z.string().min(1, { message: 'ID is required' }),
@@ -89,30 +58,6 @@ export const UpdateMessengerProviderSchema = z.object({
     config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
       message: 'Name, type, and config are required',
     }),
-  }),
-});
-
-export const PersonaSchema = z.object({
-  body: z.object({
-    key: z.string().regex(/^[a-zA-Z0-9_-]+$/, { message: 'Invalid format' }),
-    name: z.string().min(1, { message: 'Key, name, and systemPrompt are required' }),
-    systemPrompt: z.string().min(1, { message: 'Key, name, and systemPrompt are required' }),
-  }),
-});
-
-export const UpdatePersonaSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Persona key is required' }),
-  }),
-  body: z.object({
-    name: z.string().min(1, { message: 'Name and systemPrompt are required' }),
-    systemPrompt: z.string().min(1, { message: 'Name and systemPrompt are required' }),
-  }),
-});
-
-export const PersonaKeyParamSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Persona key is required' }),
   }),
 });
 

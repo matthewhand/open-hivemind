@@ -75,22 +75,6 @@ export const ErrorLogSchema = z.object({
     .passthrough(),
 });
 
-export const CIDeploySchema = z.object({
-  body: z
-    .object({
-      version: z.string().optional(),
-      environment: z.string().optional(),
-      force: z.boolean().optional(),
-    })
-    .optional(),
-});
-
-export const CIRollbackSchema = z.object({
-  params: z.object({
-    id: z.string().min(1),
-  }),
-});
-
 export const AnomalyResolveSchema = z.object({
   params: z.object({
     id: z.string().min(1),

@@ -17,7 +17,6 @@ import monitoringRouter from './monitoring';
 import providerHealthRouter from './providerHealth';
 import providerTypesRouter from './providerTypes';
 import systemInfoRouter from './systemInfo';
-import usersRouter from './users';
 
 const router = Router();
 const debug = Debug('app:webui:admin');
@@ -80,7 +79,6 @@ router.use('/', messengerProvidersRouter);
 router.use('/', providerHealthRouter);
 router.use('/', providerTypesRouter);
 router.use('/', systemInfoRouter);
-router.use('/', usersRouter);
 
 debug('Admin sub-routers mounted');
 
