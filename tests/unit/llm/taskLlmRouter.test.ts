@@ -9,8 +9,8 @@
  * default provider. These now resolve through the shared plugin loader.
  */
 
-import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import type { ILlmProvider } from '@hivemind/shared-types';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 
 // --- Mocks for collaborators ----------------------------------------------
 
@@ -66,6 +66,24 @@ jest.mock('@src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
     getInstance: () => ({ recordLlmTokenUsage: jest.fn() }),
   },
+}));
+
+// Mock the OpenWebUI package provider so the router's `openwebui` singleton
+// can be exercised without network/config side-effects.
+const mockOwuiGenerateCompletion = jest.fn();
+const mockOwuiSupportsCompletion = jest.fn();
+jest.mock('@integrations/openwebui/openWebUIProvider', () => ({
+  openWebUIProvider: {
+    name: 'openwebui',
+    supportsChatCompletion: () => true,
+    supportsCompletion: (...args: unknown[]) => mockOwuiSupportsCompletion(...args),
+    generateChatCompletion: jest.fn(),
+    generateCompletion: (...args: unknown[]) => mockOwuiGenerateCompletion(...args),
+  },
+}));
+
+jest.mock('@integrations/openwebui/runInference', () => ({
+  generateChatCompletion: jest.fn().mockResolvedValue({ text: 'chat-ok' }),
 }));
 
 function makeProvider(name: string): ILlmProvider {
@@ -141,6 +159,43 @@ describe('taskLlmRouter provider-construction coverage', () => {
     expect(mockInstantiateLlmProvider).toHaveBeenCalledWith(fakeMod, { baseUrl: 'http://letta' });
     expect(result.source).toBe('override');
     expect(result.provider.name).toBe('letta');
+  });
+
+  describe('openwebui non-chat completion', () => {
+    beforeEach(() => {
+      mockOwuiSupportsCompletion.mockReturnValue(true);
+      mockGetAllProviders.mockReturnValue([
+        { id: 'owui-1', name: 'openwebui', type: 'openwebui', enabled: true, config: {} },
+      ]);
+      taskOverrides.LLM_TASK_SUMMARY_PROVIDER = 'openwebui';
+    });
+
+    it('delegates generateCompletion to the package provider /completions path instead of throwing', async () => {
+      mockOwuiGenerateCompletion.mockResolvedValue('completion-ok');
+
+      const result = await getTaskLlm('summary');
+      expect(result.source).toBe('override');
+
+      await expect(result.provider.generateCompletion('summarize this')).resolves.toBe(
+        'completion-ok'
+      );
+      expect(mockOwuiGenerateCompletion).toHaveBeenCalledWith('summarize this');
+    });
+
+    it('reports completion support from the package provider', async () => {
+      const result = await getTaskLlm('summary');
+      expect(result.provider.supportsCompletion()).toBe(true);
+      expect(mockOwuiSupportsCompletion).toHaveBeenCalled();
+    });
+
+    it('propagates package-provider completion failures', async () => {
+      mockOwuiGenerateCompletion.mockRejectedValue(new Error('Non-chat completion failed: boom'));
+
+      const result = await getTaskLlm('summary');
+      await expect(result.provider.generateCompletion('x')).rejects.toThrow(
+        'Non-chat completion failed: boom'
+      );
+    });
   });
 
   it('falls back to the default provider when the plugin loader cannot resolve an unknown type', async () => {

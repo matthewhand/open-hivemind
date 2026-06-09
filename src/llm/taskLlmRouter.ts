@@ -7,6 +7,7 @@ import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
 import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
+import { openWebUIProvider } from '@integrations/openwebui/openWebUIProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import { getLlmProvider } from '@llm/getLlmProvider';
 
@@ -82,7 +83,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
 const openWebUI: ILlmProvider = {
   name: 'openwebui',
   supportsChatCompletion: () => true,
-  supportsCompletion: () => false,
+  supportsCompletion: () => openWebUIProvider.supportsCompletion(),
   generateChatCompletion: async (
     userMessage: string,
     historyMessages: IMessage[],
@@ -95,9 +96,9 @@ const openWebUI: ILlmProvider = {
     );
     return result.text || '';
   },
-  generateCompletion: async () => {
-    throw new Error('Non-chat completion not supported by OpenWebUI');
-  },
+  // Delegate to the package provider's real /completions path rather than
+  // rejecting non-chat completions outright.
+  generateCompletion: (prompt: string) => openWebUIProvider.generateCompletion(prompt),
 };
 
 /**
