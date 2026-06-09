@@ -1,8 +1,10 @@
 import Debug from 'debug';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
 import { getMemoryProfileByKey } from '@src/config/memoryProfiles';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateMemoryProvider, loadPlugin } from '@src/plugins';
 import type { IMemoryProvider } from '@src/types/IProvider';
+import Logger from '@common/logger';
 import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:MemoryManager');
@@ -49,6 +51,9 @@ export class MemoryManager {
 
   /** Profiles that failed to load — avoid repeated noisy retries. */
   private failedProfiles = new Set<string>();
+
+  /** Bots whose provider failures have already been warn-logged (rate limit). */
+  private warnedFailures = new Set<string>();
 
   private constructor() {}
 
@@ -168,7 +173,7 @@ export class MemoryManager {
       debug('Stored %s memory for bot "%s"', role, botName);
     } catch (err) {
       // Memory storage should never break the message pipeline.
-      debug('Failed to store memory for bot "%s": %O', botName, err);
+      this.reportProviderFailure(botName, 'store', err);
     }
   }
 
@@ -209,9 +214,42 @@ export class MemoryManager {
         metadata: r.metadata,
       }));
     } catch (err) {
-      debug('Failed to retrieve memories for bot "%s": %O', botName, err);
+      this.reportProviderFailure(botName, 'retrieve', err);
       return [];
     }
+  }
+
+  /**
+   * Surface a memory provider failure without breaking the message pipeline.
+   *
+   * The first failure per bot is elevated to a warn log (subsequent failures
+   * stay at debug to avoid log spam); every failure increments the
+   * `memory_provider_failure` metric.
+   */
+  private reportProviderFailure(
+    botName: string,
+    operation: 'store' | 'retrieve',
+    err: unknown
+  ): void {
+    try {
+      MetricsCollector.getInstance().recordMetric('memory_provider_failure', 1, {
+        bot: botName,
+        operation,
+      });
+    } catch {
+      // Metrics must never make a memory failure worse.
+    }
+
+    if (this.warnedFailures.has(botName)) {
+      debug('Failed to %s memory for bot "%s": %O', operation, botName, err);
+      return;
+    }
+    this.warnedFailures.add(botName);
+    Logger.warn(
+      `MemoryManager: memory ${operation} failed for bot "${botName}" — ` +
+        'further failures for this bot will be logged at debug level.',
+      err instanceof Error ? err.message : err
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -249,5 +287,7 @@ export class MemoryManager {
       this.providers.clear();
       this.failedProfiles.clear();
     }
+    // Allow a fresh warn after configuration changes.
+    this.warnedFailures.clear();
   }
 }
