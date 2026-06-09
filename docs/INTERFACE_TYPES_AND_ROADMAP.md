@@ -1,5 +1,7 @@
 # Open-Hivemind Interface Types & Development Roadmap
 
+> **Deprecated (roadmap sections)**: The roadmap content in this document is superseded by the root [ROADMAP.md](../ROADMAP.md).
+
 > **Last Updated**: 2026-02-22
 > **Purpose**: This document provides a comprehensive reference for all interface types in the codebase and a prioritized roadmap for development work. It is designed to be used by agentic coding fleets to pick up well-scoped tasks.
 

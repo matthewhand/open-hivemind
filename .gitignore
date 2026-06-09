@@ -236,6 +236,8 @@ k8s/
 archive/*
 !archive/screenshots/
 !archive/screenshots/*
+!archive/docs/
+!archive/docs/**
 /api/
 .specify/
 .kilocode/
