@@ -15,7 +15,7 @@ To add a new screenshot:
 
 The canonical end-to-end walkthrough — adding providers, wiring a bot, sending a message — as automated by `tests/e2e/golden-journey.spec.ts`.
 
-Run `npm run test:journey` to regenerate these screenshots; the spec is the source of truth for "MVP works." See [ROADMAP.md](/ROADMAP.md).
+Run `npm run test:journey:guide` to regenerate the full journey-01…11 set against demo-mode data (`tests/e2e/journey-user-guide.spec.ts`); `npm run test:journey` runs the golden-journey assertion spec. These screenshots are embedded in the [User Guide Quick Tour](../USER_GUIDE.md#quick-tour--your-first-session). See [ROADMAP.md](/ROADMAP.md).
 
 | Step | Screenshot | What / Why / How |
 |---|---|---|
@@ -25,6 +25,11 @@ Run `npm run test:journey` to regenerate these screenshots; the spec is the sour
 | **04 — Create Bot** | ![journey-04-bot-create](journey-04-bot-create.png) | **What:** the Bots page after wiring a bot to Discord + OpenAI. **Why:** the bot is the runtime object that ties messenger and LLM together. **How:** `POST /api/bots` with `messageProvider=discord` and `llmProvider=openai`. |
 | **05 — Bot Chat** | ![journey-05-bot-chat](journey-05-bot-chat.png) | **What:** the bot detail drawer open on the Test Drive tab after exchanging a message. **Why:** validates the full request→LLM→response pipeline in the browser. **How:** click the bot card on `/admin/bots` to open the side drawer, switch to the Test Drive tab, type "Hello, bot.", click Send. In mocked mode the SSE handler at `**/api/admin/llm-providers/providers/**/test-stream` returns a canned chunk + done event. |
 | **06 — Activity Log** | ![journey-06-activity](journey-06-activity.png) | **What:** the Activity page rendering after the exchange. **Why:** closes the loop — what the bot did is observable. **How:** navigate to `/admin/activity`; the page renders without error. Deeper assertions (a row referencing the test bot) are a follow-up. |
+| **07 — Personas** | ![journey-07-personas](journey-07-personas.png) | **What:** the Personas library with the demo persona presets. **Why:** personas are how one bot token speaks as different characters. **How:** navigate to `/admin/personas` with demo data seeded. |
+| **08 — Guards** | ![journey-08-guards](journey-08-guards.png) | **What:** the Guards page with guard profiles (rate limit, content filter, tool access). **Why:** demonstrates the safety layer applied per bot. **How:** navigate to `/admin/guards`. |
+| **09 — Memory** | ![journey-09-memory](journey-09-memory.png) | **What:** the Memory Providers configuration page. **Why:** memory backends give bots cross-conversation context. **How:** navigate to `/admin/memory`. |
+| **10 — Monitoring** | ![journey-10-monitoring](journey-10-monitoring.png) | **What:** the monitoring view with demo-mode metrics. **Why:** shows the observability surface operators rely on. **How:** navigate to the monitoring tab under `/admin/overview`. |
+| **11 — Export** | ![journey-11-export](journey-11-export.png) | **What:** the configuration Export page. **Why:** closes the story — the whole setup can be snapshotted as JSON/YAML/CSV. **How:** navigate to `/admin/export`. |
 
 ### Smart mocks (no real keys needed)
 

@@ -46,3 +46,9 @@ See [CLAUDE.md](/CLAUDE.md) for the screenshot naming and archival convention.
 | ![verification-bots-search](verification-bots-search.png) | Bot search verification (previous version) |
 | ![verification-personas](verification-personas.png) | Persona verification (previous version) |
 | ![verification-personas-copy](verification-personas-copy.png) | Persona copy verification (previous version) |
+| ![journey-01-onboarding](journey-01-onboarding.png) | Golden-journey onboarding step (previous version) |
+| ![journey-02-discord-add](journey-02-discord-add.png) | Golden-journey Discord-add step (previous version) |
+| ![journey-03-openai-add](journey-03-openai-add.png) | Golden-journey OpenAI-add step (previous version) |
+| ![journey-04-bot-create](journey-04-bot-create.png) | Golden-journey bot-create step (previous version) |
+| ![journey-05-bot-chat](journey-05-bot-chat.png) | Golden-journey bot-chat step (previous version) |
+| ![journey-06-activity](journey-06-activity.png) | Golden-journey activity step (previous version) |

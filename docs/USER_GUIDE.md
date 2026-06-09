@@ -1,8 +1,72 @@
 # Open-Hivemind User Guide
 
-Welcome to the Open-Hivemind User Guide. This document provides a detailed walkthrough of the WebUI, organized by the menu structure in the application.
+Welcome to the Open-Hivemind User Guide. It starts with a **Quick Tour** — the complete first-run user story with screenshots — followed by a detailed reference for every page, organized by the application's menu structure.
+
+> All screenshots show **demo-mode data** (simulated bots and conversations) and are captured automatically by Playwright (`npm run test:journey:guide`), so they stay in sync with the real UI.
+
+## Quick Tour — your first session
+
+### 1. First run & onboarding
+Start the server (`npm run dev`) and open `http://localhost:3028`. On a fresh install the onboarding wizard walks you through the three things a bot needs: an LLM provider, a message platform, and a name.
+
+![Onboarding wizard](screenshots/journey-01-onboarding.png)
+
+### 2. Connect a message platform
+Add your Discord (or Slack/Mattermost) bot token under **Messaging**. The connection is validated immediately, and one token can back several bot personas.
+
+![Adding a Discord connection](screenshots/journey-02-discord-add.png)
+
+### 3. Connect an LLM provider
+Under **LLM**, add a provider — OpenAI, Flowise, OpenWebUI, Letta, or OpenSwarm — and set the default model your bots will use.
+
+![Adding an OpenAI provider](screenshots/journey-03-openai-add.png)
+
+### 4. Create your first bot
+On the **Bots** page, click **Create Bot** and walk the 4-step wizard: Basics (name + providers) → Persona → Guardrails → Review. Your new bot appears alongside the rest of the fleet.
+
+![Bots page after creating a bot](screenshots/journey-04-bot-create.png)
+
+### 5. Test-drive it
+Open the bot's detail drawer and use **Test Drive** to exchange a message with the configured LLM before letting it loose on a real channel. Token usage and estimated cost are tracked per exchange.
+
+![Test-driving a bot from the detail drawer](screenshots/journey-05-bot-chat.png)
+
+### 6. Watch the activity feed
+**Activity** shows every message flowing through the hivemind in real time — who spoke, which bot replied, which provider served it, and how the reply decision was made.
+
+![Live activity feed](screenshots/journey-06-activity.png)
+
+### 7. Give bots personalities
+**Personas** hold reusable personality presets (system prompts + traits) you can assign to any bot — the same bot token can speak as different characters in different channels.
+
+![Persona library](screenshots/journey-07-personas.png)
+
+### 8. Set guardrails
+**Guards** define safety profiles: rate limits, content filtering strictness, and which MCP tools a bot may invoke (with human-in-the-loop approval if you want it).
+
+![Guard profiles](screenshots/journey-08-guards.png)
+
+### 9. Add memory
+**Memory** configures a backend (Mem0, Mem4AI, MemVault, or PostgreSQL) so bots remember context across conversations, with retention and eviction controls.
+
+![Memory provider configuration](screenshots/journey-09-memory.png)
+
+### 10. Monitor the system
+The monitoring view tracks health, message rates, and per-bot metrics; Prometheus-compatible metrics and trace export are available for external observability stacks.
+
+![Monitoring dashboard](screenshots/journey-10-monitoring.png)
+
+### 11. Export your configuration
+Finally, **Export** lets you snapshot the whole setup (bots, providers, personas, guards) as JSON/YAML/CSV — for backup, review, or seeding another instance.
+
+![Configuration export](screenshots/journey-11-export.png)
+
+That's the core loop: connect providers → create persona-driven bots → guard them → watch them work. The rest of this guide covers every page in depth.
+
+---
 
 ## Table of Contents
+- [Quick Tour — your first session](#quick-tour--your-first-session)
 - [Overview](#overview)
   - [Dashboard / Overview](#dashboard--overview)
   - [Live Chat Monitor](#live-chat-monitor)
