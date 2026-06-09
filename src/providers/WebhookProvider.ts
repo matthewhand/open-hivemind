@@ -25,6 +25,6 @@ export default class WebhookProvider {
   }
 
   public create(config: IAdapterConfig, dependencies: IServiceDependencies): IMessengerService {
-    return new WebhookService(dependencies);
+    return new WebhookService(dependencies, config as unknown as Record<string, unknown>);
   }
 }

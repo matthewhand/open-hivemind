@@ -90,12 +90,14 @@ export async function getMessengerProvider() {
   const hasDiscord = hasType('discord') || providerFilter.includes('discord');
   const hasSlack = hasType('slack') || providerFilter.includes('slack');
   const hasMattermost = hasType('mattermost') || providerFilter.includes('mattermost');
+  const hasWebhook = hasType('webhook') || providerFilter.includes('webhook');
 
   // Load each requested message provider dynamically via PluginLoader
   const requestedTypes = [
     { name: 'discord', wanted: hasDiscord && wantProvider('discord') },
     { name: 'slack', wanted: hasSlack && wantProvider('slack') },
     { name: 'mattermost', wanted: hasMattermost && wantProvider('mattermost') },
+    { name: 'webhook', wanted: hasWebhook && wantProvider('webhook') },
   ];
 
   // Lazy load dependencies provider to maintain CJS compatibility

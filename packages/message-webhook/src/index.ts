@@ -10,8 +10,8 @@ export { WebhookService };
 export { schema } from './schema';
 
 /** Standard factory alias — PluginLoader uses create() as the single entry point */
-export const create = (_config: any, dependencies: IServiceDependencies): IMessengerService => {
-  return new WebhookService(dependencies);
+export const create = (config: any, dependencies: IServiceDependencies): IMessengerService => {
+  return new WebhookService(dependencies, config ?? undefined);
 };
 
 export const manifest = {
