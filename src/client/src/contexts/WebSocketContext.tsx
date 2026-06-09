@@ -6,7 +6,7 @@ import { io } from 'socket.io-client';
 import type {
   MessageFlowEvent,
   PerformanceMetric,
-} from '../../../src/webui/services/WebSocketService';
+} from '../../../server/services/websocket/types';
 import type { AlertEvent } from '../types/Alert';
 import { logger } from '../utils/logger';
 
