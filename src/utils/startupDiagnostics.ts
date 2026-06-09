@@ -12,6 +12,39 @@ import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
 
 const startupLog = Logger.withContext('startup:diagnostics');
 
+/**
+ * Single source of truth for the feature flags reported at startup.
+ * Keep in sync with the Feature Flags table in CLAUDE.md.
+ */
+const FEATURE_FLAGS: ReadonlyArray<{ key: string; default: string; description: string }> = [
+  { key: 'HTTP_ENABLED', default: 'true', description: 'Enable HTTP server and WebUI' },
+  { key: 'SKIP_MESSENGERS', default: 'false', description: 'Skip messenger initialization' },
+  { key: 'WEBHOOK_ENABLED', default: 'false', description: 'Enable webhook service' },
+  {
+    key: 'USE_LEGACY_HANDLER',
+    default: 'false',
+    description: 'Revert to legacy monolithic handleMessage()',
+  },
+  {
+    key: 'ENABLE_VITE_DEV',
+    default: 'true',
+    description: 'Vite dev middleware (hot reload) when NODE_ENV=development',
+  },
+  {
+    key: 'ENABLE_WELCOME_MESSAGE',
+    default: 'false',
+    description: 'Send a welcome message to the default channel on bot startup',
+  },
+  {
+    key: 'DATABASE_PATH',
+    default: 'data/hivemind.db',
+    description: 'Path to the SQLite database file',
+  },
+  { key: 'LOW_MEMORY_MODE', default: 'false', description: 'Enable low memory optimizations' },
+  { key: 'SUPPRESS_HEALTH_LOGS', default: 'true', description: 'Suppress health endpoint logs' },
+  { key: 'DEBUG', default: '', description: 'Debug logging namespaces' },
+];
+
 interface EnvironmentSummary {
   critical: { key: string; value: string; status: 'present' | 'missing' | 'invalid' }[];
   optional: { key: string; value: string; status: 'present' | 'missing' }[];
@@ -137,16 +170,6 @@ export class StartupDiagnostics {
       'SECRET',
     ];
 
-    const featureFlags = [
-      { key: 'HTTP_ENABLED', description: 'HTTP server and WebUI' },
-      { key: 'SKIP_MESSENGERS', description: 'Messenger initialization' },
-      { key: 'WEBHOOK_ENABLED', description: 'Webhook service' },
-      { key: 'LOW_MEMORY_MODE', description: 'Low memory optimizations' },
-      { key: 'SUPPRESS_HEALTH_LOGS', description: 'Health endpoint logging' },
-      { key: 'DEBUG', description: 'Debug logging' },
-      { key: 'USE_LEGACY_HANDLER', description: 'Revert to legacy handleMessage()' },
-    ];
-
     const summary: EnvironmentSummary = {
       critical: [],
       optional: [],
@@ -174,12 +197,12 @@ export class StartupDiagnostics {
     });
 
     // Analyze feature flags
-    featureFlags.forEach(({ key, description }) => {
-      const value = process.env[key];
+    FEATURE_FLAGS.forEach((flag) => {
+      const value = process.env[flag.key];
       summary.featureFlags.push({
-        key,
-        value: value || 'false',
-        description,
+        key: flag.key,
+        value: value || flag.default,
+        description: flag.description,
       });
     });
 
@@ -478,24 +501,7 @@ export class StartupDiagnostics {
   private async logFeatureFlags(): Promise<void> {
     startupLog.info('🚩 Feature Flags');
 
-    const flags = [
-      { key: 'HTTP_ENABLED', default: 'true', description: 'Enable HTTP server and WebUI' },
-      { key: 'SKIP_MESSENGERS', default: 'false', description: 'Skip messenger initialization' },
-      { key: 'WEBHOOK_ENABLED', default: 'false', description: 'Enable webhook service' },
-      { key: 'LOW_MEMORY_MODE', default: 'false', description: 'Enable low memory optimizations' },
-      {
-        key: 'SUPPRESS_HEALTH_LOGS',
-        default: 'true',
-        description: 'Suppress health endpoint logs',
-      },
-      {
-        key: 'USE_LEGACY_HANDLER',
-        default: 'false',
-        description: 'Revert to legacy monolithic handleMessage()',
-      },
-    ];
-
-    flags.forEach((flag) => {
+    FEATURE_FLAGS.forEach((flag) => {
       const value = process.env[flag.key] || flag.default;
 
       const isActive = value === 'true' || value === '1';
