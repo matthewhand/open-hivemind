@@ -1,118 +1,76 @@
-# Contributing Guide
+# Contributing to Open-Hivemind
 
-This document summarizes developer conventions for debugging, feature flags, and routing behaviors across messaging providers.
+Thanks for your interest in contributing! This guide covers everything you need to get a
+development environment running and a pull request merged.
 
-## Debug logging namespaces
+## Development setup
 
-We use the `debug` package with consistent namespaces. Enable verbose output by setting `DEBUG` to a comma-separated list or wildcard.
+**Prerequisites:** Node.js 22 (an `.nvmrc` is provided) and [pnpm](https://pnpm.io/).
 
-Examples:
-- Shell:
-  - `DEBUG=app:* npm test`
-  - `DEBUG=app:discordService,app:ChannelRouter node ./dist/index.js`
-- Programmatic:
-  - `process.env.DEBUG = 'app:*'`
-
-Namespaces in use:
-- app:discordService — lifecycle, sendMessage, and initialization logs for DiscordService
-- app:DiscordMessage — normalized DiscordMessage traces (ids, authors, getters/setters)
-- app:SlackService:verbose — SlackService lifecycle and module wiring
-- app:SlackMessageIO — Slack message send/fetch operations
-- app:SlackEventBus — Express routes and Slack event handlers
-- app:SlackBotFacade — Slack bot lifecycle, joins, and bot info
-- app:ChannelRouter — routing debug: parsing configs, computeScore calculations, tie-breakers
-- app:slackConfig — Slack config loading
-- app:mattermostConfig — Mattermost config loading (warns if fixtures are missing)
-- app:openaiConfig — OpenAI config loading
-- app:openWebUIConfig — OpenWebUI config loading
-- app:flowiseSdkClient — Flowise SDK client requests/responses
-- app:webhookSecurity — webhook security checks
-- app:handleError — error logging helper
-- app:getRandomDelay — timing helper logs
-- app:rateLimiter — limiter logic logs
-- app:redactSensitiveInfo — sensitive info redaction
-
-Global Jest console suppression (tests):
-- A global Jest setup suppresses console logs by default for cleaner test output. You can override with `ALLOW_CONSOLE=1` to see console output while testing.
-
-## ChannelRouter quick snippet (enable flag and verify delegation)
-
-Environment (choose CSV or JSON)
-
-CSV
-```
-MESSAGE_CHANNEL_ROUTER_ENABLED=true
-CHANNEL_BONUSES="X:2,Y:1"
-CHANNEL_PRIORITIES="X:0,Y:1"
+```bash
+nvm use            # or: nvm install 22
+pnpm install
+npm run dev
 ```
 
-JSON
-```
-MESSAGE_CHANNEL_ROUTER_ENABLED=true
-CHANNEL_BONUSES='{"X":2,"Y":1}'
-CHANNEL_PRIORITIES='{"X":0,"Y":1}'
-```
+`npm run dev` runs the TypeScript backend directly via `tsx` with Vite hot-reloading for the
+frontend — **there is no build step**. Do not run `npm run build` or `npm start`; the `dist/`
+directory is unmaintained. The server is up when you see
+`🎉 Open Hivemind Server startup complete!` in the output.
 
-Minimal Jest check for gating
-```ts
-// tests/integrations/channelRouting/scoreChannel.gating.quick.test.ts
-import * as ChannelRouter from '@message/routing/ChannelRouter';
-import * as messageConfig from '@message/interfaces/messageConfig';
+Useful variants:
 
-describe('scoreChannel gating (quick)', () => {
-  const spy = jest.spyOn(ChannelRouter, 'computeScore').mockReturnValue(42);
+- `npm run dev:webui-only` — skip messenger (Discord/Slack/Mattermost) initialization.
+- `DEBUG=app:* npm run dev` — verbose logging via the `debug` package.
 
-  afterEach(() => {
-    jest.resetModules();
-    jest.clearAllMocks();
-  });
+## Running tests
 
-  it('flag disabled: returns 0 and does not call computeScore', async () => {
-    jest.spyOn(messageConfig, 'MESSAGE_CHANNEL_ROUTER_ENABLED', 'get').mockReturnValue(false);
-    const { default: DiscordService } = await import('@integrations/discord/DiscordService');
-    const svc = new DiscordService({} as any);
-    const score = svc.scoreChannel?.('channelA');
-    expect(score).toBe(0);
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('flag enabled: delegates to ChannelRouter.computeScore', async () => {
-    jest.spyOn(messageConfig, 'MESSAGE_CHANNEL_ROUTER_ENABLED', 'get').mockReturnValue(true);
-    const { default: DiscordService } = await import('@integrations/discord/DiscordService');
-    const svc = new DiscordService({} as any);
-    const score = svc.scoreChannel?.('channelA');
-    expect(score).toBe(42);
-    expect(spy).toHaveBeenCalledWith('channelA', expect.any(Object));
-  });
-});
+```bash
+npm test                  # unit tests (Jest)
+npx playwright test       # end-to-end tests (Playwright)
 ```
 
-Reference docs: see docs/channel-routing.md for full configuration, formula, and troubleshooting.
+- Run `npm test` before opening a PR; it must pass.
+- Tests suppress console output by default — set `ALLOW_CONSOLE=1` to see logs.
+- Add or update tests alongside any behavior change.
 
-## DiscordService initialization hardening
+## Lint and formatting
 
-To avoid runtime crashes in environments where `discord.js` may be partially mocked or unavailable (e.g., certain tests), the initialization uses a defensive fallback for GatewayIntentBits:
+A pre-commit hook runs [lint-staged](https://github.com/lint-staged/lint-staged), which applies
+`eslint --fix` and `prettier --write` to staged files under `src/`, `tests/`, and `packages/`.
+You can also run the tools manually:
 
-- `SafeGatewayIntentBits` fallbacks are used:
-  - When `GatewayIntentBits` fields are undefined, standard bitwise values are used:
-    - Guilds → `1 << 0`
-    - GuildMessages → `1 << 9`
-    - MessageContent → `1 << 15`
-    - GuildVoiceStates → `1 << 7`
+```bash
+npm run lint              # ESLint over src/
+npm run format            # Prettier over src/, tests/, packages/
+npm run check-types       # TypeScript type check (tsc --noEmit)
+```
 
-This ensures module import/initialization does not throw `TypeError` on accessing `GatewayIntentBits.*`.
+Style and naming conventions are documented in [docs/CODE_STYLE.md](docs/CODE_STYLE.md).
 
-## Makefile and testing
+## Pull requests
 
-- Use `make test` to run the full suite with coverage and explicit Jest config.
-- Coverage thresholds are enforced via `package.json` (global thresholds; branches currently set to 66).
-- Use `uv run -q npm test -- --config ./jest.config.js` for consistent local execution.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages and PR
+  titles, e.g. `feat: add mattermost typing indicator` or `fix(slack): handle empty payloads`.
+- Keep PRs focused and well-scoped — one logical change per PR.
+- Make sure `npm test`, `npm run lint`, and `npm run check-types` pass.
+- Update documentation (`docs/`, feature flags, etc.) when behavior changes.
+- Fill in the pull request template checklist.
 
-## Contribution workflow
+## Finding something to work on
 
-- Keep changes modular and well-scoped; prefer debug logs over console.
-- Run `make test` locally; ensure coverage thresholds are met.
-- When introducing new routing logic:
-  - Add or update `ChannelRouter` tests to preserve characterization.
-  - Add provider-specific tests that mock `messageConfig` and `ChannelRouter` where appropriate.
-- Document new debug namespaces and feature flags in this file.
+- [ROADMAP.md](ROADMAP.md) — effort-estimated entry points, from quick wins to larger features.
+- [GitHub issues](https://github.com/matthewhand/open-hivemind/issues) — bug reports and feature
+  requests; issues labeled `good first issue` are a great place to start.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — overview of how the pieces fit together.
+
+## Reporting issues
+
+- **Bugs and feature requests:** open a GitHub issue using the provided templates.
+- **Security vulnerabilities:** do **not** open a public issue — see [SECURITY.md](SECURITY.md)
+  for private reporting channels.
+
+## Code of conduct
+
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By participating, you are
+expected to uphold it.
