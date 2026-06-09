@@ -4,11 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-22.x-green)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/matthewhand/open-hivemind)
 
 Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
 
-> 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — tiered TODO checkboxes (MVP / Beta / Experimental / Proposed / Cut). MVP gate-check: `npm run test:journey`.
+> 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — a code-audited, nested checklist of what's shipped, what's partial, and what's planned (also summarized [at the bottom of this README](#project-status--roadmap)). Quick gate-check: `npm run test:journey`.
 
 Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.
 
@@ -33,15 +33,14 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and inbound webhooks from a single dashboard — with two-way messaging (receive + send) and native typing indicators.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus an inbound webhook ingress.
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
-*   **Shared Context & Memory**: Bots share a collective memory with conversation summarization and retention/eviction, allowing for sophisticated interactions.
-*   **Flexible LLMs**: OpenAI, Flowise, Ollama, OpenWebUI, Letta and more — with live model listing, response streaming, and function/tool calling.
+*   **Shared Context & Memory**: Pluggable memory backends (Mem0, Mem4AI, MemVault, PostgreSQL) with retention/eviction, wired into the message pipeline per bot.
+*   **Flexible LLMs**: OpenAI, Flowise, OpenWebUI, Letta, and OpenSwarm — with function/tool calling, plus live model listing and response streaming for OpenAI.
 *   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required. Import/export config as JSON, YAML, or CSV.
-*   **Scheduled Tasks**: Schedule recurring bot prompts and manage them from the dashboard.
-*   **Safety & Compliance**: Built-in guards, rate limiting, durable audit logging, and duplicate response suppression ensure stability.
-*   **Observability**: Real-time monitoring, health checks, Prometheus-compatible metrics, and trace export (console/file/OTLP).
-*   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
+*   **Safety & Compliance**: Guard profiles (rate limiting, content filter, tool-access control), TOTP 2FA, account lockout, session management, and durable audit logging.
+*   **Observability**: Real-time activity feed, health checks, Prometheus-compatible metrics, and trace export (console/file/OTLP).
+*   **Extensible**: MCP server integration with tool execution, human-in-the-loop approval, and per-bot tool guards.
 
 ## Installation & Quick Start
 
@@ -149,3 +148,37 @@ Open-Hivemind leverages a myriad of environment variables for system configurati
 *   **Global Fallbacks**: Unprefixed keys act as system-wide defaults (e.g., `LLM_PROVIDER`, `MESSAGE_PROVIDER`).
 
 For a comprehensive, documented list of every supported variable, consult the `.env.sample` file included in the root of the repository.
+
+## Project Status & Roadmap
+
+Open-Hivemind's core is **stable and verified**: multi-bot orchestration on Discord/Slack/Mattermost, five LLM providers, the 5-stage message pipeline, personas, guard profiles, MCP tool execution with approval flow, SQLite/Postgres persistence, and the full WebUI admin (35+ pages) are all working and covered by ~1,150 unit tests plus end-to-end user-journey tests.
+
+The items below are **not finished**. They exist in varying states (partial, stub, or planned) and are tracked with per-item detail and effort estimates in [ROADMAP.md](ROADMAP.md):
+
+- [ ] **Messaging platforms**
+  - [ ] Telegram support (send works; receive + bootstrap loading unfinished)
+  - [ ] Outgoing webhook messenger (inbound ingress works; outbound send is a stub)
+  - [ ] Slack interactive actions/modals beyond demo handlers
+  - [ ] Smart channel routing enabled by default (`MESSAGE_CHANNEL_ROUTER_ENABLED`, Discord-only today)
+- [ ] **LLM providers**
+  - [ ] Streaming for providers beyond OpenAI
+  - [ ] OpenWebUI: conversation-role fidelity and runtime knowledge-file RAG
+  - [ ] Vision (image input) support
+- [ ] **Memory**
+  - [ ] Durable MemVault store (in-memory today)
+  - [ ] Automatic conversation summarization (service exists, not yet wired in)
+- [ ] **MCP**
+  - [ ] Auto-connect bot-assigned MCP servers at startup
+  - [ ] Non-stdio MCP server transports in the connect path
+  - [ ] Unify the parallel MCP connection stores
+- [ ] **Monitoring**
+  - [ ] Replace remaining demo data in the monitoring dashboard with live series
+  - [ ] Per-step pipeline telemetry for message-flow replay
+- [ ] **Voice**
+  - [ ] Discord voice-channel join/leave (speech-to-text already works)
+- [ ] **Operations**
+  - [ ] Scheduled bot tasks persistence (in-memory today, lost on restart)
+  - [ ] Durable refresh-token store for multi-instance deployments
+  - [ ] Configurable CORS origins from settings
+
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md), and check [ROADMAP.md](ROADMAP.md) for effort-estimated entry points.
