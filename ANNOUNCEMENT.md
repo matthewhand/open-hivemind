@@ -1,3 +1,0 @@
-📋 **What's Working:** ✅ Bot Management (create, configure, start/stop, toggle) · ✅ Multi-provider receive & send (Discord, Slack, Mattermost, Webhook) · ✅ LLM Integration (OpenAI, Flowise, Ollama, OpenWebUI, Letta) with streaming & function calling · ✅ Persona Management (with usage tracking) · ✅ MCP Tool Servers · ✅ Guard Profiles & Security · ✅ Real-time Monitoring & Prometheus Metrics · ✅ Config Import/Export (JSON/YAML/CSV) & Backups · ✅ Scheduled Bot Tasks · ✅ Conversation Memory (summarization & retention) · ✅ Demo Mode · ✅ Trusted Network Login
-
-🚧 **What's Next:** 🔜 Marketplace plugin installation · 🔜 Multi-user roles & permissions UI · 🔜 Conversation history viewer · 🔜 Webhook event replay · 🔜 Two-factor auth & account lockout · 🔜 Discord voice / speech-to-text

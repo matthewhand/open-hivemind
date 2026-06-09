@@ -110,7 +110,7 @@ router.get(
 
 /**
  * POST /api/providers/memory/:name/test
- * Smoke-test a registered memory provider: add → search → get → delete.
+ * Smoke-test a registered memory provider: add → search → get → update → delete.
  */
 router.post(
   '/memory/:name/test',
@@ -232,7 +232,51 @@ router.post(
         });
       }
 
-      // Step 5: Delete
+      // Step 5: Update
+      // Optional in practice: some providers don't implement updateMemory, so
+      // skip gracefully and surface 'unsupported' rather than failing the run.
+      const tUpdate = Date.now();
+      const updateFn = (provider as { updateMemory?: unknown }).updateMemory;
+      if (typeof updateFn !== 'function') {
+        steps.push({
+          step: 'updateMemory',
+          status: 'skip',
+          ms: 0,
+          detail: 'unsupported',
+        });
+      } else if (memoryId) {
+        try {
+          const updated = await provider.updateMemory(
+            memoryId,
+            'Smoke test (updated): my favourite colour is green.',
+            { source: 'smoke-test', updated: true }
+          );
+          steps.push({
+            step: 'updateMemory',
+            status: updated ? 'pass' : 'fail',
+            ms: Date.now() - tUpdate,
+            detail: updated
+              ? { id: updated.id, content: updated.content?.substring(0, 100) }
+              : null,
+          });
+        } catch (err) {
+          steps.push({
+            step: 'updateMemory',
+            status: 'fail',
+            ms: Date.now() - tUpdate,
+            detail: err instanceof Error ? err.message : String(err),
+          });
+        }
+      } else {
+        steps.push({
+          step: 'updateMemory',
+          status: 'skip',
+          ms: 0,
+          detail: 'no memoryId from add step',
+        });
+      }
+
+      // Step 6: Delete
       const t4 = Date.now();
       if (memoryId) {
         try {
