@@ -32,7 +32,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [x] Reconcile legacy `/api/agents/personas` store with `PersonaManager` (legacy store removed; `/api/personas` is canonical)
 - [ ] **Messaging small fixes**
   - [x] Mattermost `getChannelOwnerId` (fetches channel info but never reads `creator_id`)
-  - [ ] Mattermost typing indicator via WebSocket channel (currently best-effort REST)
+  - [x] Mattermost typing indicator via WebSocket channel (REST fallback when the WS is not open)
 - [ ] **LLM routing small fixes**
   - [x] Allow OpenWebUI non-chat completion in `taskLlmRouter` (provider supports it; router throws)
   - [x] Accept implemented providers (flowise/letta/openwebui/openswarm) in the model-catalog route (static catalog 400s on them)
@@ -46,9 +46,9 @@ Small, verified gaps where the surrounding feature is otherwise done.
 
 - [ ] **Messaging platform completion**
   - [ ] Telegram: add to the messenger bootstrap load list (provider exists; never loaded) and implement receive (long-poll or webhook — currently send-only stub)
-  - [ ] Webhook messenger: implement real outgoing HTTP POST (returns fake id today); add to load list
+  - [x] Webhook messenger: implement real outgoing HTTP POST (returns fake id today); add to load list
   - [ ] Slack interactive actions: replace canned course-info demo handlers with generic action dispatch
-  - [ ] Mattermost: hot `addBot` into the running service (currently requires re-init)
+  - [x] Mattermost: hot `addBot` into the running service (currently requires re-init)
   - [ ] Channel routing: extend `pickBestChannel` beyond Discord; decide default for `MESSAGE_CHANNEL_ROUTER_ENABLED`
 - [ ] **LLM provider depth**
   - [ ] OpenWebUI: preserve assistant roles in history (all turns sent as `user` today); honor per-bot config in `create()`
