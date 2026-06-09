@@ -2,13 +2,18 @@
   "name": "open-hivemind",
   "version": "1.0.0",
   "packageManager": "pnpm@10.25.0",
-  "description": "A messenger bot to communicate with LLMs",
+  "description": "Multi-agent orchestration framework: deploy a coordinated network of LLM-powered bot personas across Discord, Slack, and Mattermost simultaneously",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matthewhand/open-hivemind.git"
+  },
+  "homepage": "https://github.com/matthewhand/open-hivemind#readme",
+  "bugs": {
+    "url": "https://github.com/matthewhand/open-hivemind/issues"
+  },
   "type": "commonjs",
   "engines": {
     "node": ">=22.0.0"
-  },
-  "bin": {
-    "hivemind": "dist/src/cli/HivemindCLI.js"
   },
   "workspaces": [
     "src/client",
@@ -100,8 +105,19 @@
     "@hivemind/message-webhook": "dist/packages/message-webhook/src",
     "@hivemind/shared-types": "dist/packages/shared-types/src"
   },
-  "keywords": [],
-  "author": "matthewhand+dot+au+at+gmail+dot+com",
+  "keywords": [
+    "chatbot",
+    "multi-agent",
+    "llm",
+    "discord",
+    "slack",
+    "mattermost",
+    "openai",
+    "mcp",
+    "bot-framework",
+    "agent-orchestration"
+  ],
+  "author": "Matthew Hand <matthewhand.au@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "@discordjs/builders": "^1.14.1",

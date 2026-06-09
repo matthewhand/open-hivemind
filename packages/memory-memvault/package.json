@@ -22,5 +22,6 @@
   "files": [
     "dist",
     "src"
-  ]
+  ],
+  "license": "MIT"
 }

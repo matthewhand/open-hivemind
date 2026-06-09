@@ -1,26 +1,27 @@
 {
-    "name": "@hivemind/shared-types",
-    "version": "1.0.0",
-    "description": "Shared TypeScript interfaces for Open Hivemind adapters",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "dependencies": {
-        "ipaddr.js": "^1.9.1",
-        "dompurify": "^3.4.0",
-        "jsdom": "^28.1.0"
-    },
-    "scripts": {
-        "build": "npx tsc",
-        "clean": "rm -rf dist",
-        "test": "echo \"No tests yet\" && exit 0"
-    },
-    "devDependencies": {
-        "typescript": "^5.9.2",
-        "@types/dompurify": "^3.2.0",
-        "@types/jsdom": "^28.0.0"
-    },
-    "files": [
-        "dist",
-        "src"
-    ]
+  "name": "@hivemind/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript interfaces for Open Hivemind adapters",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "ipaddr.js": "^1.9.1",
+    "dompurify": "^3.4.0",
+    "jsdom": "^28.1.0"
+  },
+  "scripts": {
+    "build": "npx tsc",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/dompurify": "^3.2.0",
+    "@types/jsdom": "^28.0.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "license": "MIT"
 }
