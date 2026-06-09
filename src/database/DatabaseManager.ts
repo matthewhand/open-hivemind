@@ -19,8 +19,13 @@ import {
   type AuditEventStats,
 } from './repositories/AuditEventRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
+import { BotTaskRepository, type BotScheduledTaskRecord } from './repositories/BotTaskRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
-import { InferenceRepository } from './repositories/InferenceRepository';
+import {
+  InferenceRepository,
+  type InferenceLogFilter,
+  type InferenceLogSummary,
+} from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
 import { MessageRepository } from './repositories/MessageRepository';
 import { SQLiteWrapper } from './sqliteWrapper';
@@ -101,6 +106,7 @@ export class DatabaseManager {
   private activityRepo!: ActivityRepository;
   private inferenceRepo!: InferenceRepository;
   private memoryRepo!: MemoryRepository;
+  private botTaskRepo!: BotTaskRepository;
 
   constructor() {
     this.initRepositories();
@@ -267,8 +273,9 @@ export class DatabaseManager {
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
     this.decisionRepo = new DecisionRepository(getDb, isConn);
     this.activityRepo = new ActivityRepository(getDb, isConn);
-    this.inferenceRepo = new InferenceRepository(getDb, isConn);
+    this.inferenceRepo = new InferenceRepository(getDb, isConn, isPg);
     this.memoryRepo = new MemoryRepository(getDb, isConn, isPg);
+    this.botTaskRepo = new BotTaskRepository(getDb, isConn, isPg);
   }
 
   // ---------------------------------------------------------------------------
@@ -451,6 +458,22 @@ export class DatabaseManager {
   }
 
   // ---------------------------------------------------------------------------
+  // Scheduled bot task operations -- delegated to BotTaskRepository
+  // ---------------------------------------------------------------------------
+
+  async getBotScheduledTasks(): Promise<BotScheduledTaskRecord[]> {
+    return this.botTaskRepo.getAllTasks();
+  }
+
+  async upsertBotScheduledTask(task: BotScheduledTaskRecord): Promise<void> {
+    return this.botTaskRepo.upsertTask(task);
+  }
+
+  async deleteBotScheduledTask(taskId: string): Promise<boolean> {
+    return this.botTaskRepo.deleteTask(taskId);
+  }
+
+  // ---------------------------------------------------------------------------
   // Approval operations -- delegated to ApprovalRepository
   // ---------------------------------------------------------------------------
 
@@ -566,6 +589,10 @@ export class DatabaseManager {
   async logInference(log: InferenceLog): Promise<number | string> {
     if (!databaseConfig.get('PERSIST_INFERENCE')) return 0;
     return this.inferenceRepo.logInference(log);
+  }
+
+  async getInferenceLogs(filter: InferenceLogFilter = {}): Promise<InferenceLogSummary[]> {
+    return this.inferenceRepo.getInferenceLogs(filter);
   }
 
   // ---------------------------------------------------------------------------

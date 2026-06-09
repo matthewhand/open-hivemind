@@ -65,6 +65,17 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
         await down(context);
       },
     },
+    {
+      name: '002_add_bot_scheduled_tasks.ts',
+      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+        const { up } = await import('./migrations/002_add_bot_scheduled_tasks');
+        await up(context);
+      },
+      down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+        const { down } = await import('./migrations/002_add_bot_scheduled_tasks');
+        await down(context);
+      },
+    },
   ];
 
   const umzug = new Umzug({

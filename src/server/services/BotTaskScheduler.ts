@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import Logger from '../../common/logger';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MessageBus } from '../../events/MessageBus';
 import { BotManager } from '../../managers/BotManager';
 
@@ -55,7 +56,7 @@ export class BotTaskScheduler {
       });
     }, 60000);
 
-    // Load tasks from DB (mocked for now, in a real scenario we'd use a Repository)
+    // Hydrate tasks from the durable store (bot_scheduled_tasks table).
     this.loadTasks().catch((err) => {
       logger.error('Error loading tasks', err);
     });
@@ -72,9 +73,34 @@ export class BotTaskScheduler {
     }
   }
 
-  private async loadTasks() {
-    // In a full implementation, we'd fetch from bot_scheduled_tasks table
-    debug('Loading scheduled tasks from database...');
+  /**
+   * Hydrate the in-memory task list from the `bot_scheduled_tasks` table so
+   * scheduled prompts survive restarts. No-op (in-memory only) when the
+   * database is unavailable.
+   */
+  private async loadTasks(): Promise<void> {
+    const dbManager = DatabaseManager.getInstance();
+    if (!dbManager.isConnected()) {
+      debug('Database not connected; scheduled tasks start empty (in-memory only)');
+      return;
+    }
+
+    const persisted = await dbManager.getBotScheduledTasks();
+    this.tasks = persisted.map((record) => ({ ...record }));
+    logger.info(`Loaded ${this.tasks.length} scheduled task(s) from database`);
+  }
+
+  /**
+   * Write a task through to the durable store. Persistence failures are
+   * logged but never thrown — the scheduler keeps working in memory even if
+   * the database is momentarily unavailable.
+   */
+  private async persistTask(task: ScheduledTask): Promise<void> {
+    try {
+      await DatabaseManager.getInstance().upsertBotScheduledTask(task);
+    } catch (err) {
+      logger.error('Failed to persist scheduled task', { taskId: task.id, error: err });
+    }
   }
 
   /**
@@ -98,6 +124,7 @@ export class BotTaskScheduler {
     };
 
     this.tasks.push(task);
+    await this.persistTask(task);
     logger.info(`Scheduled new task for bot ${botName}`, { taskId: task.id, intervalMinutes });
     return task;
   }
@@ -146,6 +173,7 @@ export class BotTaskScheduler {
           // Update next run time
           task.lastRun = new Date().toISOString();
           task.nextRun = now + task.intervalMs;
+          await this.persistTask(task);
         }
       }
     } catch (error) {
@@ -161,5 +189,12 @@ export class BotTaskScheduler {
 
   public deleteTask(taskId: string): void {
     this.tasks = this.tasks.filter((t) => t.id !== taskId);
+    // Fire-and-forget durable delete; the in-memory removal above is the
+    // behavior callers observe synchronously.
+    DatabaseManager.getInstance()
+      .deleteBotScheduledTask(taskId)
+      .catch((err) => {
+        logger.error('Failed to delete scheduled task from database', { taskId, error: err });
+      });
   }
 }
