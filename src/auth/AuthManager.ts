@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { LoginAttemptTracker } from './LoginAttemptTracker';
+import { RefreshTokenRepository } from './RefreshTokenRepository';
 import {
   buildOtpAuthUri,
   generateSecret as generateTotpSecretValue,
@@ -32,6 +33,12 @@ export class AuthManager {
   // Durable backing store for the user maps. Null in the test environment,
   // where persistence is intentionally skipped (mirrors the bcrypt skips).
   private userRepo: UserRepository | null = null;
+  // Durable backing store for the refresh-token allow-list. The in-memory Set
+  // above stays the fast path; this store makes issued refresh tokens survive
+  // process restarts. Null in the test environment (mirrors userRepo).
+  private refreshTokenRepo: RefreshTokenRepository | null = null;
+  /** Must match the `expiresIn: '7d'` used by {@link generateRefreshToken}. */
+  private static readonly REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly bcryptRounds = 12;
@@ -119,6 +126,21 @@ export class AuthManager {
         debug('WARN:', 'Failed to initialize durable user store; using in-memory only:', err);
         this.userRepo = null;
       }
+
+      try {
+        this.refreshTokenRepo = new RefreshTokenRepository();
+        const purged = this.refreshTokenRepo.deleteExpired();
+        if (purged > 0) {
+          debug('Purged %d expired refresh token(s) from durable store', purged);
+        }
+      } catch (err) {
+        debug(
+          'WARN:',
+          'Failed to initialize durable refresh-token store; using in-memory only:',
+          err
+        );
+        this.refreshTokenRepo = null;
+      }
     }
 
     // Create default admin user synchronously
@@ -172,6 +194,48 @@ export class AuthManager {
       this.userRepo.delete(userId);
     } catch (err) {
       debug('WARN:', 'Failed to delete user %s from store:', userId, err);
+    }
+  }
+
+  /**
+   * Add a refresh token to the allow-list (in-memory + durable store).
+   * Persistence failures are logged, never thrown — auth keeps working with
+   * the in-memory Set even if the store is momentarily unavailable.
+   */
+  private storeRefreshToken(token: string, userId: string): void {
+    this.refreshTokens.add(token);
+    if (!this.refreshTokenRepo) return;
+    try {
+      this.refreshTokenRepo.add(token, userId, Date.now() + AuthManager.REFRESH_TOKEN_TTL_MS);
+    } catch (err) {
+      debug('WARN:', 'Failed to persist refresh token:', err);
+    }
+  }
+
+  /** Remove a refresh token from the allow-list (in-memory + durable store). */
+  private discardRefreshToken(token: string): void {
+    this.refreshTokens.delete(token);
+    if (!this.refreshTokenRepo) return;
+    try {
+      this.refreshTokenRepo.delete(token);
+    } catch (err) {
+      debug('WARN:', 'Failed to remove refresh token from store:', err);
+    }
+  }
+
+  /**
+   * Whether a refresh token is on the allow-list. Checks the in-memory Set
+   * first (tokens minted by this process), then falls back to the durable
+   * store so tokens issued before a restart remain valid.
+   */
+  private isRefreshTokenActive(token: string): boolean {
+    if (this.refreshTokens.has(token)) return true;
+    if (!this.refreshTokenRepo) return false;
+    try {
+      return this.refreshTokenRepo.has(token);
+    } catch (err) {
+      debug('WARN:', 'Failed to query refresh-token store:', err);
+      return false;
     }
   }
 
@@ -418,7 +482,7 @@ export class AuthManager {
 
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
-    this.refreshTokens.add(refreshToken);
+    this.storeRefreshToken(refreshToken, user.id);
 
     debug(`User logged in: ${user.username}`);
 
@@ -457,7 +521,7 @@ export class AuthManager {
     this.persistUser(user);
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
-    this.refreshTokens.add(refreshToken);
+    this.storeRefreshToken(refreshToken, user.id);
     debug(`Trusted login for user: ${user.username}`);
     return { accessToken, refreshToken, user: this.sanitizeUser(user), expiresIn: 3600 };
   }
@@ -466,7 +530,7 @@ export class AuthManager {
    * Refresh access token using refresh token
    */
   public async refreshToken(refreshToken: string): Promise<AuthToken> {
-    if (!this.refreshTokens.has(refreshToken)) {
+    if (!this.isRefreshTokenActive(refreshToken)) {
       throw new Error('Invalid refresh token');
     }
 
@@ -482,9 +546,9 @@ export class AuthManager {
       const newAccessToken = this.generateAccessToken(user);
       const newRefreshToken = this.generateRefreshToken(user);
 
-      // Remove old refresh token and add new one
-      this.refreshTokens.delete(refreshToken);
-      this.refreshTokens.add(newRefreshToken);
+      // Remove old refresh token and add new one (rotation)
+      this.discardRefreshToken(refreshToken);
+      this.storeRefreshToken(newRefreshToken, user.id);
 
       return {
         accessToken: newAccessToken,
@@ -493,7 +557,7 @@ export class AuthManager {
         expiresIn: 3600,
       };
     } catch {
-      this.refreshTokens.delete(refreshToken);
+      this.discardRefreshToken(refreshToken);
       throw new Error('Invalid refresh token');
     }
   }
@@ -502,7 +566,7 @@ export class AuthManager {
    * Logout user by invalidating refresh token
    */
   public async logout(refreshToken: string): Promise<void> {
-    this.refreshTokens.delete(refreshToken);
+    this.discardRefreshToken(refreshToken);
     debug('User logged out');
   }
 
@@ -530,7 +594,18 @@ export class AuthManager {
    * Generate JWT refresh token
    */
   private generateRefreshToken(user: User): string {
-    return jwt.sign({ userId: user.id }, this.jwtRefreshSecret, { expiresIn: '7d' });
+    return jwt.sign(
+      {
+        userId: user.id,
+        // Unique token id so two refresh tokens minted within the same second
+        // (e.g. login immediately followed by rotation) are never byte
+        // identical. Without it, rotating a token would "revoke" and re-issue
+        // the exact same string, making rotation a no-op in the allow-list.
+        jti: crypto.randomBytes(16).toString('hex'),
+      },
+      this.jwtRefreshSecret,
+      { expiresIn: '7d' }
+    );
   }
 
   /**
@@ -643,6 +718,15 @@ export class AuthManager {
       this.emailMap.delete(user.email);
     }
     this.removeUserFromStore(userId);
+    // Revoke the user's persisted refresh tokens so a deleted account cannot
+    // be resurrected from a still-valid refresh token after a restart.
+    if (this.refreshTokenRepo) {
+      try {
+        this.refreshTokenRepo.deleteAllForUser(userId);
+      } catch (err) {
+        debug('WARN:', 'Failed to revoke refresh tokens for deleted user %s:', userId, err);
+      }
+    }
     return this.users.delete(userId);
   }
 
