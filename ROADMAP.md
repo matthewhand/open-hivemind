@@ -74,7 +74,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] Persist scheduled bot tasks (`loadTasks()` is an empty stub — in-memory only)
   - [ ] Webhook scheduled messages: durable store + delivery scheduler (in-memory Map, never delivered)
 - [ ] **Webhook events**
-  - [x] Call `recordWebhookEvent()` from the ingress handlers + real retry re-dispatch (nav entry still pending)
+  - [x] Call `recordWebhookEvent()` from the ingress handlers + real retry re-dispatch (nav entry added)
 
 ## 🔭 Later — large items (weeks / needs design)
 
@@ -86,14 +86,14 @@ Small, verified gaps where the surrounding feature is otherwise done.
 
 ## 🧹 Tech-debt decisions (each needs a yes/no, then ~a day)
 
-- [ ] `ProviderRegistry` scans a directory that no longer exists (always finds 0) — repoint at the plugin loader or delete
+- [x] `ProviderRegistry` scans a directory that no longer exists (always finds 0) — repointed at SyncProviderRegistry + PluginLoader
 - [ ] Two parallel auth middlewares guard different route subsets (`src/auth/middleware.ts` vs `src/server/middleware/auth.ts`) — consolidate (security-review hazard)
-- [ ] Dead zustand stores alongside Redux (only `uiStore` is used) — delete the rest; both libraries ship to the bundle
+- [x] Dead zustand stores alongside Redux (only `uiStore` is used) — deleted the rest
 - [ ] Logger sprawl (7+ logger modules) — pick `@hivemind/shared-types` logger + `src/common/logger.ts`, migrate the rest
-- [ ] `WebSocketContext.tsx` imports a type from a nonexistent path (survives only because esbuild erases type imports) — fix the import
+- [x] `WebSocketContext.tsx` imports a type from a nonexistent path (survives only because esbuild erases type imports) — fixed the import; dead `src/webui/` deleted
 - [ ] Deploy-target thrash: `src/netlify/` stub app, `vercel.json`, `netlify.toml`, `fly.toml`, `pinokio.js`, `build:serverless` (copies a nonexistent file) — pick supported targets (Docker + bare node), delete the rest
 - [ ] `package.json` `bin` + `_moduleAliases` point at unmaintained `dist/` — remove or replace with a tsx launcher
-- [ ] Feature-flag tables duplicated inside `startupDiagnostics.ts` and drifting from CLAUDE.md — single source of truth
+- [x] Feature-flag tables duplicated inside `startupDiagnostics.ts` and drifting from CLAUDE.md — merged into one `FEATURE_FLAGS` constant
 - [ ] ~96 "test-only" modules (unreachable from entrypoints, kept green by unit tests — e.g. `AlertManager`, `HealthChecker`, `ConfigExporter/Importer`, `AnalyticsCalculator`) — per module: wire in or delete with its tests
 - [ ] Alternate DI schema system (SchemaManager/ConnectionManager) intentionally off the live path — adopt or remove
 
@@ -127,6 +127,6 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [x] Convert remaining journey specs to current UI (15/17 tests green)
   - [ ] `bot-lifecycle` "creation to messaging flow": Test Drive input never visible after wizard create (test.fixme with notes)
   - [ ] `llm-integration` "add OpenAI provider and configure with bot": POST /api/bots returns 500 (possible real bug — should be 4xx; test.fixme with notes)
-- [ ] Run the full journey suite in CI (workflow currently runs only `smoke|core-pages`)
+- [x] Run the full journey suite in CI (dedicated `journeys` job in playwright.yml)
 - [x] Story-driven User Guide with auto-captured demo-data screenshots (`npm run test:journey:guide`, journey-01..11)
 - [ ] Periodic axe-core WCAG audit + screenshot-doc regeneration cadence
