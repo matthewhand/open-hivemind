@@ -23,12 +23,6 @@ export interface Agent {
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
-export interface AgentPersona {
-  key: string;
-  name: string;
-  systemPrompt: string;
-}
-
 export interface MCPConfig {
   serverUrl: string;
   apiKey?: string;
@@ -60,22 +54,8 @@ export const deleteAgent = async (id: string): Promise<void> => {
   await apiFetch<void>('DELETE', `/api/admin/agents/${id}`);
 };
 
-export const getPersonas = async (): Promise<AgentPersona[]> => {
-  const data = await apiFetch<{ personas: AgentPersona[] }>('GET', '/api/admin/agents/personas');
-  return data.personas || [];
-};
-
-export const createPersona = async (persona: Omit<AgentPersona, 'key'>): Promise<void> => {
-  await apiFetch<void>('POST', '/api/admin/agents/personas', persona);
-};
-
-export const updatePersona = async (key: string, persona: Omit<AgentPersona, 'key'>): Promise<void> => {
-  await apiFetch<void>('PUT', `/api/admin/agents/personas/${key}`, persona);
-};
-
-export const deletePersona = async (key: string): Promise<void> => {
-  await apiFetch<void>('DELETE', `/api/admin/agents/personas/${key}`);
-};
+// NOTE: Persona CRUD helpers were removed. Personas are managed exclusively
+// through the canonical /api/personas API (see services/api/personas.ts).
 
 export const getMCPServers = async (): Promise<string[]> => {
   const data = await apiFetch<{ servers: string[] }>('GET', '/api/admin/mcp/servers');

@@ -50,28 +50,5 @@ export const AgentIdParamSchema = z.object({
   }),
 });
 
-/** Schema for POST /api/agents/personas — create persona */
-export const CreateAgentPersonaSchema = z.object({
-  body: z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    systemPrompt: z.string().min(1, { message: 'System prompt is required' }),
-  }),
-});
-
-/** Schema for PUT /api/agents/personas/:key — update persona */
-export const UpdateAgentPersonaSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Persona key is required' }),
-  }),
-  body: z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    systemPrompt: z.string().min(1, { message: 'System prompt is required' }),
-  }),
-});
-
-/** Schema for DELETE /api/agents/personas/:key */
-export const AgentPersonaKeyParamSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Persona key is required' }),
-  }),
-});
+// NOTE: The legacy /api/agents/personas schemas were removed along with the
+// routes; the canonical persona API is /api/personas (personasSchema.ts).

@@ -28,8 +28,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] Gate or implement Provider Health page (currently 100% fabricated SLO numbers in primary nav)
   - [ ] Fix hot-reload path mismatch (client calls `/api/config/hot-reload/*`; backend mounts `/api/hot-reload`)
 - [ ] **Guards / personas**
-  - [ ] Persist semantic-guard fields through guard-profile CRUD (sanitizer drops them on edit)
-  - [ ] Reconcile legacy `/api/agents/personas` store with `PersonaManager` (two persona stores)
+  - [x] Persist semantic-guard fields through guard-profile CRUD (sanitizer drops them on edit)
+  - [x] Reconcile legacy `/api/agents/personas` store with `PersonaManager` (legacy store removed; `/api/personas` is canonical)
 - [ ] **Messaging small fixes**
   - [ ] Mattermost `getChannelOwnerId` (fetches channel info but never reads `creator_id`)
   - [ ] Mattermost typing indicator via WebSocket channel (currently best-effort REST)

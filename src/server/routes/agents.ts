@@ -9,10 +9,7 @@ import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   AgentIdParamSchema,
-  AgentPersonaKeyParamSchema,
-  CreateAgentPersonaSchema,
   CreateAgentSchema,
-  UpdateAgentPersonaSchema,
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -39,14 +36,7 @@ interface AgentConfig {
   updatedAt?: string;
 }
 
-interface Persona {
-  key: string;
-  name: string;
-  systemPrompt: string;
-}
-
 const AGENTS_CONFIG_FILE = join(process.cwd(), 'data', 'agents.json');
-const PERSONAS_CONFIG_FILE = join(process.cwd(), 'data', 'personas.json');
 
 const ensureDataDir = async (): Promise<void> => {
   const dataDir = join(process.cwd(), 'data');
@@ -208,103 +198,8 @@ router.delete(
   })
 );
 
-// GET /api/agents/personas - Get all personas
-router.get(
-  '/personas',
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, [
-      {
-        key: 'default',
-        name: 'Default Assistant',
-        systemPrompt:
-          'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
-      },
-      {
-        key: 'friendly',
-        name: 'Friendly Helper',
-        systemPrompt: 'You are a friendly and enthusiastic AI assistant.',
-      },
-      {
-        key: 'technical',
-        name: 'Technical Expert',
-        systemPrompt: 'You are a technical expert AI assistant.',
-      },
-    ]);
-    return res.json(ApiResponse.success({ personas }));
-  })
-);
-
-// POST /api/agents/personas - Create new persona
-router.post(
-  '/personas',
-  validateRequest(CreateAgentPersonaSchema),
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const { name, systemPrompt } = req.body;
-    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-    const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-    const existingPersona = personas.find((p) => p.key === key);
-    if (existingPersona) {
-      return res.status(HTTP_STATUS.OK).json(ApiResponse.success({ persona: existingPersona }));
-    }
-
-    const newPersona: Persona = { key, name, systemPrompt };
-    personas.push(newPersona);
-    await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
-
-    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ persona: newPersona }));
-  })
-);
-
-// PUT /api/agents/personas/:key - Update persona
-router.put(
-  '/personas/:key',
-  validateRequest(UpdateAgentPersonaSchema),
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const { key } = req.params;
-    const { name, systemPrompt } = req.body;
-
-    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-    const personaIndex = personas.findIndex((p) => p.key === key);
-
-    if (personaIndex === -1) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
-    }
-
-    personas[personaIndex] = { key, name, systemPrompt };
-    await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
-
-    return res.json(ApiResponse.success({ persona: personas[personaIndex] }));
-  })
-);
-
-// DELETE /api/agents/personas/:key - Delete persona
-router.delete(
-  '/personas/:key',
-  validateRequest(AgentPersonaKeyParamSchema),
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const { key } = req.params;
-
-    if (key === 'default') {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ApiResponse.error('Cannot delete default persona', 'BAD_REQUEST'));
-    }
-
-    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-    const filteredPersonas = personas.filter((p) => p.key !== key);
-
-    if (filteredPersonas.length === personas.length) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
-    }
-
-    await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
-    return res.json(ApiResponse.success());
-  })
-);
+// NOTE: The legacy /personas sub-routes (backed by data/personas.json) were
+// removed. The canonical persona store is PersonaManager, exposed via
+// /api/personas (src/server/routes/personas.ts).
 
 export default router;
