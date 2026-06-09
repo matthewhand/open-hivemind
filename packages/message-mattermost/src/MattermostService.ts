@@ -183,9 +183,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         const user = post.user_id ? await client?.getUser(post.user_id) : null;
         if (user) {
           username =
-            `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-            user.username ||
-            'Unknown';
+            `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Unknown';
           isBot = Boolean(user.is_bot);
         }
       } catch (err: any) {
@@ -730,11 +728,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return '';
       }
 
-      // In Mattermost, channels don't have a single "owner" like Discord
-      // For direct/group channels, we could return the other participant
-      // For regular channels, we could return the creator_id if available
-      // For now, return empty string as Mattermost doesn't track channel creators by default
-      return '';
+      // Mattermost channels don't have a single "owner" like Discord, but the
+      // API exposes the user that created the channel via `creator_id`. Use it
+      // as the closest equivalent (empty for DMs/system-created channels).
+      return channel.creator_id || '';
     } catch (error) {
       debug(`Failed to get channel owner for ${channelId}:`, error);
       return '';

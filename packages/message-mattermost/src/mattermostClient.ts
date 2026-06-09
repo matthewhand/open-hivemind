@@ -56,6 +56,7 @@ interface Channel {
   display_name: string;
   type: string;
   team_id: string;
+  creator_id?: string;
   purpose?: string;
   header?: string;
 }
