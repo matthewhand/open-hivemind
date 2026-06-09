@@ -158,7 +158,7 @@ export class AnalyticsCalculator {
   static analyzeTimePatterns(events: MessageFlowEvent[]): BehaviorPattern[] {
     const hourCounts = new Array(24).fill(0);
     events.forEach((e) => {
-      const hour = new Date(e.timestamp).getHours();
+      const hour = new Date(e.timestamp).getUTCHours();
       hourCounts[hour]++;
     });
 
