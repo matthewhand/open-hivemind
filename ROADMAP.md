@@ -19,28 +19,28 @@ account lockout, session management, audit logging) is **shipped and verified**.
 Small, verified gaps where the surrounding feature is otherwise done.
 
 - [ ] **Monitoring wiring**
-  - [ ] Start `AnomalyDetectionService` periodic loop (instantiated but `.start()` never called — `initServices.ts`)
-  - [ ] Bridge `pipeline:decision` bus events to the `pipeline_decision` WS event (ActivityPage listener never fires — `BroadcastService`)
+  - [x] Start `AnomalyDetectionService` periodic loop (instantiated but `.start()` never called — `initServices.ts`)
+  - [x] Bridge `pipeline:decision` bus events to the `pipeline_decision` WS event (ActivityPage listener never fires — `BroadcastService`)
   - [ ] Call `shouldPause()` from Enrich/Inference/Send stages (pipeline debugger only pauses in DecisionStage)
   - [ ] Wire `MetricsCollector.incrementMessages/recordResponseTime` from the real pipeline (currently only the demo simulator feeds it)
 - [ ] **WebUI honesty**
-  - [ ] Remove fake `hivemind-plugin-weather` sample from marketplace route (leaks into real provider pages)
-  - [ ] Gate or implement Provider Health page (currently 100% fabricated SLO numbers in primary nav)
-  - [ ] Fix hot-reload path mismatch (client calls `/api/config/hot-reload/*`; backend mounts `/api/hot-reload`)
+  - [x] Remove fake `hivemind-plugin-weather` sample from marketplace route (leaks into real provider pages)
+  - [x] Gate or implement Provider Health page (currently 100% fabricated SLO numbers in primary nav)
+  - [x] Fix hot-reload path mismatch (client calls `/api/config/hot-reload/*`; backend mounts `/api/hot-reload`)
 - [ ] **Guards / personas**
   - [x] Persist semantic-guard fields through guard-profile CRUD (sanitizer drops them on edit)
   - [x] Reconcile legacy `/api/agents/personas` store with `PersonaManager` (legacy store removed; `/api/personas` is canonical)
 - [ ] **Messaging small fixes**
-  - [ ] Mattermost `getChannelOwnerId` (fetches channel info but never reads `creator_id`)
+  - [x] Mattermost `getChannelOwnerId` (fetches channel info but never reads `creator_id`)
   - [ ] Mattermost typing indicator via WebSocket channel (currently best-effort REST)
 - [ ] **LLM routing small fixes**
-  - [ ] Allow OpenWebUI non-chat completion in `taskLlmRouter` (provider supports it; router throws)
-  - [ ] Accept implemented providers (flowise/letta/openwebui/openswarm) in the model-catalog route (static catalog 400s on them)
+  - [x] Allow OpenWebUI non-chat completion in `taskLlmRouter` (provider supports it; router throws)
+  - [x] Accept implemented providers (flowise/letta/openwebui/openswarm) in the model-catalog route (static catalog 400s on them)
 - [ ] **MCP small fixes**
-  - [ ] Add backends for MCPToolsPage's `GET /tools/preferences`, `POST /tools/history`, `POST /tools/:id/toggle` (UI calls them; silently caught)
+  - [x] Add backends for MCPToolsPage's `GET /tools/preferences`, `POST /tools/history`, `POST /tools/:id/toggle` (UI calls them; silently caught)
 - [ ] **Memory small fixes**
-  - [ ] Extend memory provider smoke test with `updateMemory` step (now exists for Postgres)
-  - [ ] Surface memory failures (currently silently debug-swallowed; add metric/log signal)
+  - [x] Extend memory provider smoke test with `updateMemory` step (now exists for Postgres)
+  - [x] Surface memory failures (currently silently debug-swallowed; add metric/log signal)
 
 ## 🚧 Next — medium items (days each)
 
@@ -74,7 +74,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] Persist scheduled bot tasks (`loadTasks()` is an empty stub — in-memory only)
   - [ ] Webhook scheduled messages: durable store + delivery scheduler (in-memory Map, never delivered)
 - [ ] **Webhook events**
-  - [ ] Call `recordWebhookEvent()` from the ingress handlers (event log permanently empty), make retry re-dispatch, add nav entry
+  - [x] Call `recordWebhookEvent()` from the ingress handlers + real retry re-dispatch (nav entry still pending)
 
 ## 🔭 Later — large items (weeks / needs design)
 
@@ -124,6 +124,9 @@ Small, verified gaps where the surrounding feature is otherwise done.
 
 - [x] Journey-spec architecture: page objects, auth fixtures, `completeCreateBotWizard()` helper
 - [x] `full-journey-auth-to-bot`, `full-journey-database-ops`, `full-journey-export-import` green (7/7)
-- [ ] Convert remaining journey specs to current UI (`bot-lifecycle`, `llm-integration`, `smart-sequence`, `golden-journey`, `user-flows`)
+- [x] Convert remaining journey specs to current UI (15/17 tests green)
+  - [ ] `bot-lifecycle` "creation to messaging flow": Test Drive input never visible after wizard create (test.fixme with notes)
+  - [ ] `llm-integration` "add OpenAI provider and configure with bot": POST /api/bots returns 500 (possible real bug — should be 4xx; test.fixme with notes)
 - [ ] Run the full journey suite in CI (workflow currently runs only `smoke|core-pages`)
+- [x] Story-driven User Guide with auto-captured demo-data screenshots (`npm run test:journey:guide`, journey-01..11)
 - [ ] Periodic axe-core WCAG audit + screenshot-doc regeneration cadence

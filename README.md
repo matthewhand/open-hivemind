@@ -112,11 +112,11 @@ Once the application is running, open your browser to `http://localhost:3028`.
 2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
 3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
 
-For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](docs/USER_GUIDE.md).
+For the full first-session walkthrough with screenshots — onboarding through providers, bot creation, chat, personas, guards, memory, monitoring, and export — see the **[User Guide Quick Tour](docs/USER_GUIDE.md#quick-tour--your-first-session)** (screenshots are auto-captured from the live UI with demo data via `npm run test:journey:guide`). The same guide covers every menu item in depth.
 
 ## Documentation
 
-*   [User Guide](docs/USER_GUIDE.md): Detailed explanation of all WebUI features.
+*   [User Guide](docs/USER_GUIDE.md): Screenshot-backed Quick Tour of the full user story, plus a detailed explanation of all WebUI features.
 *   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
 *   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
 
