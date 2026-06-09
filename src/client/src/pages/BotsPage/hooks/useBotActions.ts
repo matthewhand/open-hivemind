@@ -58,7 +58,10 @@ export const useBotActions = (
   const handleCreateBot = useCallback(async (botData: Partial<BotConfig>) => {
     try {
       const response = await apiService.post<{ data: BotConfig }>('/api/bots', botData);
-      setBots((prev) => [...prev, response.data]);
+      // POST /api/bots returns an empty success envelope (no bot payload);
+      // pushing `undefined` into the list crashes the grid render. The
+      // fetchBots() below refreshes the list with the created bot.
+      if (response.data) setBots((prev) => [...prev, response.data]);
       toastSuccess('Bot created successfully');
       showStamp?.();
       setIsCreateModalOpen(false);

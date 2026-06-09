@@ -46,7 +46,7 @@ export const BotListGrid: React.FC<BotListGridProps> = memo(({
     <div className={compactView ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
       {filteredBots.map((bot, index) => (
         <div
-          key={bot.id}
+          key={bot.id ?? bot.name ?? index}
           className="relative"
           draggable={!isMobile}
           onDragStart={onBotDragStart(index)}

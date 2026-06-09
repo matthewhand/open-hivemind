@@ -389,9 +389,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const handleProviderConfigChange = (newConfig: Record<string, any>) => {
+    // `name` is owned by the modal's own Provider Name field; the inner form
+    // only carries a stale snapshot of it from mount, which would clobber
+    // what the user typed (none of the provider schemas define a `name` field).
+    const { name: _staleName, ...rest } = newConfig;
     setFormData(prev => ({
       ...prev,
-      ...newConfig,
+      ...rest,
     }));
   };
 
@@ -568,6 +572,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           {currentSchema ? (
             /* Preferred: rich local schema via ProviderConfigForm */
             <ProviderConfigForm
+              key={`${modalState.providerType}-${selectedType}`}
               providerType={selectedType}
               schema={currentSchema}
               initialConfig={formData}

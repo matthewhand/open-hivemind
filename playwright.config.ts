@@ -111,7 +111,16 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
     env: {
-      JWT_SECRET: process.env.JWT_SECRET || 'e2e-test-secret-mock'
+      JWT_SECRET: process.env.JWT_SECRET || 'e2e-test-secret-mock',
+      // Parallel E2E workers easily exceed the conservative per-IP rate-limit
+      // defaults (e.g. 100 API req/min, 10 config req/5min), causing flaky
+      // 429s. Raise the ceilings for the test server; rate-limit behaviour
+      // itself is covered by route-mocked specs (e2e-error-recovery).
+      RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX || '100000',
+      RATE_LIMIT_API_MAX: process.env.RATE_LIMIT_API_MAX || '100000',
+      RATE_LIMIT_CONFIG_MAX: process.env.RATE_LIMIT_CONFIG_MAX || '100000',
+      RATE_LIMIT_ADMIN_MAX: process.env.RATE_LIMIT_ADMIN_MAX || '100000',
+      RATE_LIMIT_AUTH_MAX: process.env.RATE_LIMIT_AUTH_MAX || '10000',
     }
   },
 
