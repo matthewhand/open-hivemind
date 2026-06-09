@@ -1,3 +1,9 @@
+import express from 'express';
+import request from 'supertest';
+import webhookEventsRouter, {
+  recordWebhookEvent,
+} from '../../../../src/server/routes/webhookEvents';
+
 /**
  * Contract tests for the webhook events routes consumed by WebhookEventsPage.
  *
@@ -10,11 +16,12 @@
  * registerRoutes mounts at /api/webhooks.
  */
 
-import express from 'express';
-import request from 'supertest';
-import webhookEventsRouter, {
-  recordWebhookEvent,
-} from '../../../../src/server/routes/webhookEvents';
+// Use unique ids per event so retry tests can distinguish the original event
+// from the retry event (the global uuid mock returns a constant).
+jest.mock('uuid', () => {
+  let n = 0;
+  return { v4: () => `test-uuid-${++n}` };
+});
 
 function buildApp() {
   const app = express();
@@ -98,9 +105,7 @@ describe('webhookEvents routes contract', () => {
       payload: { detail: 'value' },
     });
 
-    const res = await request(app)
-      .get(`/api/webhooks/events/${recorded.id}`)
-      .expect(200);
+    const res = await request(app).get(`/api/webhooks/events/${recorded.id}`).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.id).toBe(recorded.id);
@@ -108,13 +113,106 @@ describe('webhookEvents routes contract', () => {
   });
 
   it('GET /events/:id returns 404 for an unknown id', async () => {
-    const res = await request(app)
-      .get('/api/webhooks/events/does-not-exist')
-      .expect(404);
+    const res = await request(app).get('/api/webhooks/events/does-not-exist').expect(404);
     expect(res.body.success).toBe(false);
   });
 
-  it('POST /events/:id/retry replays a failed event', async () => {
+  it('POST /events/:id/retry re-dispatches through the redeliver handler and records the real outcome', async () => {
+    const redeliver = jest.fn().mockResolvedValue({ statusCode: 200 });
+    const failed = recordWebhookEvent({
+      source: 'telegram',
+      endpoint: '/webhook/telegram',
+      method: 'POST',
+      statusCode: 502,
+      duration: 9,
+      payload: { retry: 'me' },
+      error: 'bad gateway',
+      redeliver,
+    });
+
+    const res = await request(app)
+      .post(`/api/webhooks/events/${failed.id}/retry`)
+      .send({})
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.originalId).toBe(failed.id);
+    expect(res.body.data.retryId).toBeDefined();
+    expect(res.body.data.retryId).not.toBe(failed.id);
+    expect(res.body.data.statusCode).toBe(200);
+    expect(typeof res.body.data.message).toBe('string');
+
+    // The original payload must be re-dispatched through the handler path.
+    expect(redeliver).toHaveBeenCalledTimes(1);
+    expect(redeliver).toHaveBeenCalledWith({ retry: 'me' });
+
+    // The retry is recorded as a new event with the real outcome.
+    const detail = await request(app)
+      .get(`/api/webhooks/events/${res.body.data.retryId}`)
+      .expect(200);
+    expect(detail.body.data.statusCode).toBe(200);
+    expect(detail.body.data.headers['x-retry-of']).toBe(failed.id);
+    expect(detail.body.data.payload).toEqual({ retry: 'me' });
+  });
+
+  it('POST /events/:id/retry records a failed retry when redelivery fails again', async () => {
+    const redeliver = jest.fn().mockResolvedValue({ statusCode: 502, error: 'still bad gateway' });
+    const failed = recordWebhookEvent({
+      source: 'telegram',
+      endpoint: '/webhook/telegram',
+      method: 'POST',
+      statusCode: 502,
+      duration: 9,
+      payload: { retry: 'again' },
+      error: 'bad gateway',
+      redeliver,
+    });
+
+    const res = await request(app)
+      .post(`/api/webhooks/events/${failed.id}/retry`)
+      .send({})
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.statusCode).toBe(502);
+    expect(res.body.data.message).toContain('failed');
+
+    const detail = await request(app)
+      .get(`/api/webhooks/events/${res.body.data.retryId}`)
+      .expect(200);
+    expect(detail.body.data.statusCode).toBe(502);
+    expect(detail.body.data.error).toBe('still bad gateway');
+  });
+
+  it('POST /events/:id/retry records a 500 retry when the redeliver handler throws', async () => {
+    const redeliver = jest.fn().mockRejectedValue(new Error('boom'));
+    const failed = recordWebhookEvent({
+      source: 'discord',
+      endpoint: '/webhook/discord',
+      method: 'POST',
+      statusCode: 500,
+      duration: 4,
+      payload: { kind: 'thrower' },
+      error: 'original failure',
+      redeliver,
+    });
+
+    const res = await request(app)
+      .post(`/api/webhooks/events/${failed.id}/retry`)
+      .send({})
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.statusCode).toBe(500);
+
+    const detail = await request(app)
+      .get(`/api/webhooks/events/${res.body.data.retryId}`)
+      .expect(200);
+    expect(detail.body.data.statusCode).toBe(500);
+    expect(detail.body.data.error).toBe('boom');
+  });
+
+  it('POST /events/:id/retry returns 501 when no redeliver handler was captured', async () => {
     const failed = recordWebhookEvent({
       source: 'telegram',
       endpoint: '/webhook/telegram',
@@ -128,12 +226,26 @@ describe('webhookEvents routes contract', () => {
     const res = await request(app)
       .post(`/api/webhooks/events/${failed.id}/retry`)
       .send({})
-      .expect(200);
+      .expect(501);
 
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.originalId).toBe(failed.id);
-    expect(res.body.data.retryId).toBeDefined();
-    expect(typeof res.body.data.message).toBe('string');
+    expect(res.body.success).toBe(false);
+  });
+
+  it('GET /events list items do not leak the redeliver function', async () => {
+    recordWebhookEvent({
+      source: 'generic',
+      endpoint: '/webhook',
+      method: 'POST',
+      statusCode: 500,
+      duration: 1,
+      payload: { x: 1 },
+      redeliver: jest.fn().mockResolvedValue({ statusCode: 200 }),
+    });
+
+    const res = await request(app).get('/api/webhooks/events').expect(200);
+    for (const item of res.body.data.items) {
+      expect(item.redeliver).toBeUndefined();
+    }
   });
 
   it('POST /events/:id/retry rejects retrying a successful event', async () => {
@@ -146,10 +258,7 @@ describe('webhookEvents routes contract', () => {
       payload: {},
     });
 
-    const res = await request(app)
-      .post(`/api/webhooks/events/${ok.id}/retry`)
-      .send({})
-      .expect(400);
+    const res = await request(app).post(`/api/webhooks/events/${ok.id}/retry`).send({}).expect(400);
 
     expect(res.body.success).toBe(false);
   });

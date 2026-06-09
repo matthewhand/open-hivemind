@@ -12,6 +12,18 @@ const router = Router();
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
+export interface WebhookRedeliverResult {
+  statusCode: number;
+  error?: string;
+}
+
+/**
+ * Re-dispatches the original payload through the same processing path the
+ * ingress handler used. Captured as a closure at recording time so retry can
+ * genuinely replay the event rather than fabricating a success.
+ */
+export type WebhookRedeliverFn = (payload: unknown) => Promise<WebhookRedeliverResult>;
+
 export interface WebhookEvent {
   id: string;
   timestamp: string;
@@ -24,6 +36,7 @@ export interface WebhookEvent {
   payload: unknown; // full payload (stored in memory)
   headers: Record<string, string>;
   error?: string;
+  redeliver?: WebhookRedeliverFn; // not serialized (functions are dropped by JSON)
 }
 
 // ── In-memory event store ───────────────────────────────────────────────────
@@ -52,6 +65,7 @@ export function recordWebhookEvent(opts: {
   payload?: unknown;
   headers?: Record<string, string>;
   error?: string;
+  redeliver?: WebhookRedeliverFn;
 }): WebhookEvent {
   const payloadStr = opts.payload ? JSON.stringify(opts.payload) : '';
   const event: WebhookEvent = {
@@ -68,6 +82,7 @@ export function recordWebhookEvent(opts: {
     payload: opts.payload ?? null,
     headers: opts.headers ?? {},
     error: opts.error,
+    redeliver: opts.redeliver,
   };
   addEvent(event);
   debug('Recorded webhook event %s from %s (%d)', event.id, event.source, event.statusCode);
@@ -109,7 +124,7 @@ router.get('/events', (req, res) => {
     const paged = filtered.slice(offset, offset + limit);
 
     // Strip full payload from list view — clients fetch detail by id
-    const items = paged.map(({ payload: _payload, ...rest }) => rest);
+    const items = paged.map(({ payload: _payload, redeliver: _redeliver, ...rest }) => rest);
 
     return res.json(
       ApiResponse.success({
@@ -164,24 +179,54 @@ router.post(
           .json(ApiResponse.error('Only failed events can be retried'));
       }
 
-      // Record a retry attempt with a simulated 202 Accepted
+      // Without a redelivery handler captured at ingress there is nothing to
+      // genuinely replay — refuse rather than fabricate a queued/success event.
+      if (!original.redeliver) {
+        return res
+          .status(HTTP_STATUS.NOT_IMPLEMENTED)
+          .json(
+            ApiResponse.error(
+              'This event cannot be retried: no redelivery handler was captured when it was recorded'
+            )
+          );
+      }
+
+      // Re-dispatch the original payload through the same handler path and
+      // record the real outcome as a new event.
+      const start = Date.now();
+      let result: WebhookRedeliverResult;
+      try {
+        result = await original.redeliver(original.payload);
+      } catch (error) {
+        result = {
+          statusCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+
       const retryEvent = recordWebhookEvent({
         source: original.source,
         endpoint: original.endpoint,
         method: original.method,
-        statusCode: 202,
-        duration: 0,
+        statusCode: result.statusCode,
+        duration: Date.now() - start,
         payload: original.payload,
         headers: { ...original.headers, 'x-retry-of': original.id },
+        error: result.error,
+        redeliver: original.redeliver,
       });
 
-      debug('Retried webhook event %s → %s', original.id, retryEvent.id);
+      debug('Retried webhook event %s → %s (%d)', original.id, retryEvent.id, result.statusCode);
 
       return res.json(
         ApiResponse.success({
           originalId: original.id,
           retryId: retryEvent.id,
-          message: 'Event queued for retry',
+          statusCode: result.statusCode,
+          message:
+            result.statusCode < 400
+              ? 'Event redelivered successfully'
+              : `Retry failed with status ${result.statusCode}`,
         })
       );
     } catch (error) {

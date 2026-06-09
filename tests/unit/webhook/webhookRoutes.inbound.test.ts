@@ -1,3 +1,10 @@
+import express from 'express';
+import request from 'supertest';
+import { WebhookService } from '@hivemind/message-webhook';
+import type { IMessengerService } from '@hivemind/shared-types';
+import webhookEventsRouter from '@src/server/routes/webhookEvents';
+import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+
 /**
  * Tests that inbound webhook ingress is wired to the messenger service's
  * handleIncomingWebhook method.
@@ -20,16 +27,20 @@ jest.mock('@webhook/security/webhookSecurity', () => ({
   verifySlackSignature: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import express from 'express';
-import request from 'supertest';
-import type { IMessengerService } from '@hivemind/shared-types';
-import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
-import { WebhookService } from '@hivemind/message-webhook';
+// Unique event ids so retry tests can distinguish original from retry events
+// (the global uuid mock returns a constant).
+jest.mock('uuid', () => {
+  let n = 0;
+  return { v4: () => `test-uuid-${++n}` };
+});
 
 function buildApp(messageService: IMessengerService, targetChannel?: string) {
   const app = express();
   app.use(express.json());
   configureWebhookRoutes(app, messageService, targetChannel);
+  // Mount the WebUI event log routes so we can assert ingress recording and
+  // exercise the retry endpoint against real recorded events.
+  app.use('/api/webhooks', webhookEventsRouter);
   return app;
 }
 
@@ -108,5 +119,108 @@ describe('inbound webhook route wiring', () => {
     const app = buildApp(failingService);
 
     await request(app).post('/webhook/receive').send({ text: 'hi' }).expect(500);
+  });
+});
+
+describe('webhook ingress event recording', () => {
+  it('records a success event in the webhook event log for /webhook/receive', async () => {
+    const service = new WebhookService();
+    service.setMessageHandler(jest.fn().mockResolvedValue('ok'));
+
+    const app = buildApp(service);
+
+    await request(app)
+      .post('/webhook/receive')
+      .set('user-agent', 'jest-agent')
+      .send({ text: 'record me', channel: 'C9' })
+      .expect(200);
+
+    const list = await request(app).get('/api/webhooks/events').expect(200);
+    const event = list.body.data.items.find(
+      (e: { endpoint: string; payloadPreview: string }) =>
+        e.endpoint === '/webhook/receive' && e.payloadPreview.includes('record me')
+    );
+    expect(event).toBeDefined();
+    expect(event.source).toBe('generic');
+    expect(event.method).toBe('POST');
+    expect(event.statusCode).toBe(200);
+    expect(event.headers['user-agent']).toBe('jest-agent');
+  });
+
+  it('records a failure event when processing rejects', async () => {
+    const failingService = {
+      getDefaultChannel: () => 'default',
+      setMessageHandler: () => undefined,
+      handleIncomingWebhook: jest.fn().mockRejectedValue(new Error('boom')),
+    } as unknown as IMessengerService;
+
+    const app = buildApp(failingService);
+
+    await request(app).post('/webhook/receive').send({ text: 'will fail' }).expect(500);
+
+    const list = await request(app).get('/api/webhooks/events?status=failed').expect(200);
+    const event = list.body.data.items.find((e: { payloadPreview: string }) =>
+      e.payloadPreview.includes('will fail')
+    );
+    expect(event).toBeDefined();
+    expect(event.statusCode).toBe(500);
+    expect(event.error).toBe('boom');
+  });
+
+  it('records Slack ingress under the slack source', async () => {
+    const service = new WebhookService();
+    service.setMessageHandler(jest.fn().mockResolvedValue('slack-ok'));
+
+    const app = buildApp(service);
+
+    await request(app).post('/webhook/slack').send({ text: 'slack ping' }).expect(200);
+
+    const list = await request(app).get('/api/webhooks/events?source=slack').expect(200);
+    const event = list.body.data.items.find((e: { payloadPreview: string }) =>
+      e.payloadPreview.includes('slack ping')
+    );
+    expect(event).toBeDefined();
+    expect(event.endpoint).toBe('/webhook/slack');
+  });
+
+  it('retrying a recorded failure re-dispatches through the real handler path', async () => {
+    const handleIncomingWebhook = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('transient outage'))
+      .mockResolvedValueOnce('recovered');
+    const service = {
+      getDefaultChannel: () => 'default',
+      setMessageHandler: () => undefined,
+      handleIncomingWebhook,
+    } as unknown as IMessengerService;
+
+    const app = buildApp(service, 'target-channel');
+
+    // First delivery fails and is recorded.
+    await request(app).post('/webhook/receive').send({ text: 'flaky' }).expect(500);
+
+    const list = await request(app).get('/api/webhooks/events?status=failed').expect(200);
+    const failed = list.body.data.items.find((e: { payloadPreview: string }) =>
+      e.payloadPreview.includes('flaky')
+    );
+    expect(failed).toBeDefined();
+
+    // Retry re-dispatches the original payload through handleIncomingWebhook.
+    const retry = await request(app)
+      .post(`/api/webhooks/events/${failed.id}/retry`)
+      .send({})
+      .expect(200);
+
+    expect(retry.body.success).toBe(true);
+    expect(retry.body.data.statusCode).toBe(200);
+    expect(handleIncomingWebhook).toHaveBeenCalledTimes(2);
+    expect(handleIncomingWebhook).toHaveBeenLastCalledWith({ text: 'flaky' }, 'target-channel');
+
+    // The successful retry is recorded as a new event.
+    const detail = await request(app)
+      .get(`/api/webhooks/events/${retry.body.data.retryId}`)
+      .expect(200);
+    expect(detail.body.data.statusCode).toBe(200);
+    expect(detail.body.data.headers['x-retry-of']).toBe(failed.id);
   });
 });

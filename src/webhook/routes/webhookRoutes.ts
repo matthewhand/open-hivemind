@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import type express from 'express';
 import type { IMessengerService } from '@hivemind/shared-types';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
+import { recordWebhookEvent } from '@src/server/routes/webhookEvents';
 // Import after jest.doMock of config to allow per-test overrides
 import {
   verifyIpWhitelist,
@@ -92,11 +93,148 @@ function validateWebhookBody(body: WebhookBody): { valid: boolean; errors: strin
   return { valid: errors.length === 0, errors };
 }
 
+/**
+ * Outcome of processing a webhook payload, independent of the express
+ * request/response objects so the same logic can be replayed on retry.
+ */
+interface WebhookOutcome {
+  statusCode: number;
+  body: Record<string, unknown>;
+  error?: string;
+}
+
+/** Record only non-sensitive request headers (no tokens/signatures). */
+function pickSafeHeaders(req: Request): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const name of ['content-type', 'user-agent']) {
+    const value = req.headers[name];
+    if (typeof value === 'string') {
+      headers[name] = value;
+    }
+  }
+  return headers;
+}
+
 export function configureWebhookRoutes(
   app: express.Application,
   messageService: IMessengerService,
   targetChannel?: string
 ): void {
+  // Processing logic is factored out of the express handlers so the WebUI
+  // retry endpoint (POST /api/webhooks/events/:id/retry) can re-dispatch a
+  // recorded payload through the exact same path.
+  const processPredictionWebhook = async (body: WebhookBody): Promise<WebhookOutcome> => {
+    // Validate request body
+    const validation = validateWebhookBody(body);
+    if (!validation.valid) {
+      debug('Webhook validation failed:', validation.errors);
+      return {
+        statusCode: 400,
+        body: { error: 'Invalid request body', details: validation.errors },
+        error: `Invalid request body: ${validation.errors.join('; ')}`,
+      };
+    }
+
+    const predictionId = String(body.id);
+    const predictionStatus = body.status;
+    const resultArray = body.output;
+    const imageUrl = predictionImageMap.get(predictionId);
+
+    debug('Processing webhook:', { predictionId, predictionStatus, hasImageUrl: !!imageUrl });
+
+    // Use the message service to send platform-agnostic messages
+    const resultMessage =
+      predictionStatus === 'succeeded'
+        ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
+        : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+
+    try {
+      const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
+      await messageService.sendPublicAnnouncement(channelId, resultMessage);
+      debug('Successfully sent webhook message to channel:', channelId);
+      return { statusCode: 200, body: { success: true } };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug('Failed to send webhook message:', message);
+      return { statusCode: 500, body: { error: 'Failed to process webhook' }, error: message };
+    }
+  };
+
+  const processInboundWebhook = async (payload: unknown): Promise<WebhookOutcome> => {
+    if (!supportsIncomingWebhook(messageService)) {
+      debug('Messenger service does not support inbound webhooks');
+      return {
+        statusCode: 501,
+        body: { error: 'Inbound webhooks are not supported by the configured messenger service' },
+        error: 'Inbound webhooks are not supported by the configured messenger service',
+      };
+    }
+
+    try {
+      const reply = await messageService.handleIncomingWebhook(payload, targetChannel);
+      return { statusCode: 200, body: { success: true, reply } };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug('Failed to process inbound webhook:', message);
+      return {
+        statusCode: 500,
+        body: { error: 'Failed to process inbound webhook' },
+        error: message,
+      };
+    }
+  };
+
+  const processSlackWebhook = async (payload: unknown): Promise<WebhookOutcome> => {
+    // Slack-formatted payloads are also handled by handleIncomingWebhook
+    // (it understands attachments/username). Forward when supported.
+    if (supportsIncomingWebhook(messageService)) {
+      try {
+        const reply = await messageService.handleIncomingWebhook(payload, targetChannel);
+        return { statusCode: 200, body: { success: true, reply } };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        debug('Failed to process Slack webhook:', message);
+        return {
+          statusCode: 500,
+          body: { error: 'Failed to process Slack webhook' },
+          error: message,
+        };
+      }
+    }
+
+    return { statusCode: 200, body: { success: true } };
+  };
+
+  // Runs the processor, records the event in the in-memory webhook event log
+  // (with a redeliver closure so it can be genuinely retried), and sends the
+  // HTTP response.
+  const dispatch = async (
+    req: Request,
+    res: Response,
+    source: string,
+    process: (payload: unknown) => Promise<WebhookOutcome>
+  ): Promise<Response> => {
+    const start = Date.now();
+    const outcome = await process(req.body);
+
+    recordWebhookEvent({
+      source,
+      endpoint: req.path,
+      method: req.method,
+      statusCode: outcome.statusCode,
+      duration: Date.now() - start,
+      payload: req.body,
+      headers: pickSafeHeaders(req),
+      error: outcome.error,
+      redeliver: async (payload) => {
+        const result = await process(payload);
+        return { statusCode: result.statusCode, error: result.error };
+      },
+    });
+
+    return res.status(outcome.statusCode).json(outcome.body);
+  };
+
   app.post(
     '/webhook',
     verifyWebhookToken,
@@ -112,40 +250,9 @@ export function configureWebhookRoutes(
         status: req.body?.status,
       });
 
-      // Validate request body
-      const validation = validateWebhookBody(req.body);
-      if (!validation.valid) {
-        debug('Webhook validation failed:', validation.errors);
-        return res.status(400).json({
-          error: 'Invalid request body',
-          details: validation.errors,
-        });
-      }
-
-      const { id: predictionId, status: predictionStatus, output: resultArray } = req.body;
-      const imageUrl = predictionImageMap.get(predictionId);
-
-      debug('Processing webhook:', { predictionId, predictionStatus, hasImageUrl: !!imageUrl });
-
-      // Use the message service to send platform-agnostic messages
-      const resultMessage =
-        predictionStatus === 'succeeded'
-          ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
-          : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
-
-      try {
-        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
-        await messageService.sendPublicAnnouncement(channelId, resultMessage);
-        debug('Successfully sent webhook message to channel:', channelId);
-      } catch (error) {
-        debug(
-          'Failed to send webhook message:',
-          error instanceof Error ? error.message : String(error)
-        );
-        return res.status(500).json({ error: 'Failed to process webhook' });
-      }
-
-      return res.status(200).json({ success: true });
+      return dispatch(req, res, 'generic', (payload) =>
+        processPredictionWebhook(payload as WebhookBody)
+      );
     }
   );
 
@@ -160,44 +267,13 @@ export function configureWebhookRoutes(
     async (req: Request, res: Response) => {
       debug('Received inbound webhook payload:', { bodyKeys: Object.keys(req.body || {}) });
 
-      if (!supportsIncomingWebhook(messageService)) {
-        debug('Messenger service does not support inbound webhooks');
-        return res.status(501).json({
-          error: 'Inbound webhooks are not supported by the configured messenger service',
-        });
-      }
-
-      try {
-        const reply = await messageService.handleIncomingWebhook(req.body, targetChannel);
-        return res.status(200).json({ success: true, reply });
-      } catch (error) {
-        debug(
-          'Failed to process inbound webhook:',
-          error instanceof Error ? error.message : String(error)
-        );
-        return res.status(500).json({ error: 'Failed to process inbound webhook' });
-      }
+      return dispatch(req, res, 'generic', processInboundWebhook);
     }
   );
 
   app.post('/webhook/slack', verifySlackSignature, async (req: Request, res: Response) => {
     debug('Received Slack webhook:', req.body);
 
-    // Slack-formatted payloads are also handled by handleIncomingWebhook
-    // (it understands attachments/username). Forward when supported.
-    if (supportsIncomingWebhook(messageService)) {
-      try {
-        const reply = await messageService.handleIncomingWebhook(req.body, targetChannel);
-        return res.status(200).json({ success: true, reply });
-      } catch (error) {
-        debug(
-          'Failed to process Slack webhook:',
-          error instanceof Error ? error.message : String(error)
-        );
-        return res.status(500).json({ error: 'Failed to process Slack webhook' });
-      }
-    }
-
-    return res.status(200).json({ success: true });
+    return dispatch(req, res, 'slack', processSlackWebhook);
   });
 }
