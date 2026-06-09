@@ -339,12 +339,12 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   // Default dropdown position
   return (
     <div className={`dropdown dropdown-end ${className}`}>
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Theme switcher dropdown">
+      <button type="button" aria-haspopup="menu" className="btn btn-ghost btn-circle" aria-label="Theme switcher dropdown">
         <div className="indicator">
           🎨
           {previewTheme && <span className="indicator-item badge badge-xs badge-primary"></span>}
         </div>
-      </div>
+      </button>
 
       <div tabIndex={0} className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
         <div className="card-body">
@@ -485,7 +485,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         {!compact && (
           <button
             className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-warning' : 'text-base-content/30'
-              } ${isFavorite || 'opacity-0 group-hover:opacity-100'}`}
+              } ${isFavorite || 'opacity-0 focus-visible:opacity-100 group-hover:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(theme.value);

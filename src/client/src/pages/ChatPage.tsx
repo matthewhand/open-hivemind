@@ -46,6 +46,7 @@ const ChatPage: React.FC = () => {
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const { profiles: llmProfiles } = useLLMProfiles();
   const llmProviders = llmProfiles as LlmProviderOption[];
@@ -232,7 +233,9 @@ const ChatPage: React.FC = () => {
         Active Bots ({bots.length})
       </div>
       <div className="flex-1 overflow-y-auto">
-        {loading && bots.length === 0 ? (
+        {error ? (
+          <div className="p-4 text-center text-error"><span className="font-bold">Error loading bots</span><br/><span className="text-sm opacity-80">{error}</span></div>
+        ) : loading && bots.length === 0 ? (
           <div className="p-4"><SkeletonList items={4} showAvatar /></div>
         ) : (
           <ul className="menu w-full p-2 gap-1">
