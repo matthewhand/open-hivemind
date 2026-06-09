@@ -370,6 +370,86 @@ export const PERPLEXITY_MODELS: ModelMetadata[] = [
 ];
 
 /**
+ * OpenWebUI Models
+ *
+ * OpenWebUI is self-hosted, so the real model list depends on what the
+ * instance serves (query with `?live=true` for the actual list). These static
+ * entries mirror the package defaults (`OPEN_WEBUI_MODEL` /
+ * `OPEN_WEBUI_EMBEDDING_MODEL` in packages/llm-openwebui).
+ */
+export const OPENWEBUI_MODELS: ModelMetadata[] = [
+  {
+    id: 'llama3.2',
+    name: 'Llama 3.2',
+    description: 'Default OpenWebUI chat model (OPEN_WEBUI_MODEL)',
+    type: 'chat',
+    contextWindow: 131072,
+    supportsStreaming: true,
+  },
+  {
+    id: 'nomic-embed-text',
+    name: 'Nomic Embed Text',
+    description: 'Default OpenWebUI embedding model (OPEN_WEBUI_EMBEDDING_MODEL)',
+    type: 'embedding',
+    contextWindow: 8192,
+  },
+];
+
+/**
+ * Flowise Models
+ *
+ * Flowise routes requests to chatflows rather than raw models; the entries
+ * below represent the two chatflow slots the integration is configured with
+ * (packages/llm-flowise).
+ */
+export const FLOWISE_MODELS: ModelMetadata[] = [
+  {
+    id: 'conversation-chatflow',
+    name: 'Conversation Chatflow',
+    description: 'Chatflow used for conversation interactions (FLOWISE_CONVERSATION_CHATFLOW_ID)',
+    type: 'chat',
+  },
+  {
+    id: 'completion-chatflow',
+    name: 'Completion Chatflow',
+    description: 'Chatflow used for text completion tasks (FLOWISE_COMPLETION_CHATFLOW_ID)',
+    type: 'chat',
+  },
+];
+
+/**
+ * Letta Models
+ *
+ * Letta is agent-based: requests are served by a configured agent on a
+ * self-hosted Letta server rather than a selectable foundation model
+ * (packages/llm-letta).
+ */
+export const LETTA_MODELS: ModelMetadata[] = [
+  {
+    id: 'default-agent',
+    name: 'Default Agent',
+    description: 'Configured Letta agent (LETTA_AGENT_ID) on the connected Letta server',
+    type: 'chat',
+    supportsStreaming: true,
+  },
+];
+
+/**
+ * OpenSwarm Models
+ *
+ * OpenSwarm uses team names as the model identifier on its OpenAI-compatible
+ * endpoint; `default-team` is the built-in default (packages/llm-openswarm).
+ */
+export const OPENSWARM_MODELS: ModelMetadata[] = [
+  {
+    id: 'default-team',
+    name: 'Default Team',
+    description: 'Default OpenSwarm team used as the model identifier (OPENSWARM_TEAM)',
+    type: 'chat',
+  },
+];
+
+/**
  * Aggregated provider models
  */
 export const LLM_MODELS_BY_PROVIDER: ProviderModels = {
@@ -377,6 +457,10 @@ export const LLM_MODELS_BY_PROVIDER: ProviderModels = {
   anthropic: ANTHROPIC_MODELS,
   google: GOOGLE_MODELS,
   perplexity: PERPLEXITY_MODELS,
+  openwebui: OPENWEBUI_MODELS,
+  flowise: FLOWISE_MODELS,
+  letta: LETTA_MODELS,
+  openswarm: OPENSWARM_MODELS,
 };
 
 /**
