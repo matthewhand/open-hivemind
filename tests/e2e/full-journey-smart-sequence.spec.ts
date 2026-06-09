@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { getApiAuthHeaders } from './helpers';
 import { setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Full Journey: Smart Sequence', () => {
@@ -10,21 +11,8 @@ test.describe('Full Journey: Smart Sequence', () => {
     // 1. Auth Setup
     await setupTestWithErrorDetection(page);
 
-    const jwtSecret = process.env.JWT_SECRET || 'e2e-test-secret-mock';
-    const fakeToken = require('jsonwebtoken').sign(
-      {
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        username: 'admin',
-        userId: 'admin',
-        role: 'admin',
-        permissions: ['*'],
-      },
-      jwtSecret
-    );
-    const authHeaders = {
-      Authorization: `Bearer ${fakeToken}`,
-      'Content-Type': 'application/json',
-    };
+    // Admin JWT + CSRF token (server enforces CSRF on state-changing requests)
+    const authHeaders = await getApiAuthHeaders(request);
 
     // Step 1: Add LLM Provider via API
     console.log('Setting up LLM Provider...');

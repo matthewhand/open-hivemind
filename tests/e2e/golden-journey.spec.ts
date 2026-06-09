@@ -1,5 +1,6 @@
 import { APIRequestContext, expect, Page, test } from '@playwright/test';
 import { setupProviderMocks } from './fixtures/providers';
+import { getApiAuthHeaders } from './helpers';
 import { setupTestWithErrorDetection } from './test-utils';
 
 /**
@@ -46,27 +47,17 @@ const BOT_NAME = 'Golden-Journey-Bot';
 const MSG_PROVIDER_NAME = 'Golden-Discord';
 const LLM_PROVIDER_NAME = 'Golden-OpenAI';
 
-function authHeaders(): Record<string, string> {
-  const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
-  const jwt = require('jsonwebtoken');
-  const token = jwt.sign(
-    {
-      exp: Math.floor(Date.now() / 1000) + 3600,
-      username: 'admin',
-      userId: 'admin',
-      role: 'admin',
-      permissions: ['*'],
-    },
-    jwtSecret
-  );
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-}
+// Admin JWT + CSRF headers come from getApiAuthHeaders (helpers.ts); the
+// server enforces CSRF on state-changing requests and the JWT fallback
+// secret must match playwright.config.ts webServer env.
 
 test.describe.serial('Golden Journey: Discord + OpenAI', () => {
   test.setTimeout(180_000);
 
   test('configure providers, create bot, exchange a message', async ({ page, request }) => {
     await setupTestWithErrorDetection(page);
+    const apiHeaders = await getApiAuthHeaders(request);
+    const authHeaders = () => apiHeaders;
     const modes = await setupProviderMocks(page);
     console.log(`[golden-journey] OpenAI=${modes.openai}, Discord=${modes.discord}`);
 
@@ -85,10 +76,11 @@ test.describe.serial('Golden Journey: Discord + OpenAI', () => {
       }
 
       // Assert the admin sidebar is rendered — proves we're authenticated.
+      // (Sidebar items are links inside the "Main menu" navigation.)
       await expect(
         page
-          .getByRole('menuitem', { name: /^Dashboard$/i })
-          .or(page.getByRole('menuitem', { name: /^Bots$/i }))
+          .getByRole('link', { name: /^Dashboard$/i })
+          .or(page.getByRole('link', { name: /^Bots$/i }))
           .first()
       ).toBeVisible({ timeout: 10_000 });
       await shot(page, '01-onboarding');

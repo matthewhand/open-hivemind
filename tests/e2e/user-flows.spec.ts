@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { completeCreateBotWizard } from './helpers';
 import {
   assertNoErrors,
   navigateAndWaitReady,
@@ -37,7 +38,12 @@ test.describe('User Flows', () => {
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
-      page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
+      page.route('**/api/personas', (route) =>
+        route.fulfill({
+          status: 200,
+          json: [{ id: 'default', name: 'Default Assistant', description: 'A helpful assistant' }],
+        })
+      ),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
@@ -64,25 +70,15 @@ test.describe('User Flows', () => {
   test('complete bot creation flow without errors', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await mockCommonEndpoints(page);
+    // POST /api/bots is covered by the catch-all **/api/** mock (200 {})
     await navigateAndWaitReady(page, '/admin/bots');
 
-    // Open create modal
-    const createBtn = page
-      .locator('button')
-      .filter({ hasText: /create|new|add/i })
-      .first();
-    if ((await createBtn.count()) > 0) {
-      await createBtn.click();
+    // Open the Create Bot wizard and walk all 4 steps against mocked APIs
+    const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
+    await createBtn.click();
+    await completeCreateBotWizard(page, 'E2E Test Bot');
 
-      // Fill form
-      const nameInput = page.locator('input').first();
-      if ((await nameInput.count()) > 0) {
-        await nameInput.fill('E2E Test Bot');
-      }
-
-      // Close modal
-      await page.keyboard.press('Escape');
-    }
     await page.screenshot({ path: 'test-results/flow-01-bot-creation.png', fullPage: true });
 
     await assertNoErrors(errors, 'Bot creation flow');

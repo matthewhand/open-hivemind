@@ -1,9 +1,45 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
  * Helper utilities for Playwright E2E tests
  * Re-exports common test utilities for convenience
  */
+
+/**
+ * Build headers for direct API requests (admin JWT + CSRF token).
+ *
+ * The server enforces CSRF on state-changing requests: the token from
+ * GET /api/csrf-token is bound to a session cookie, so the SAME
+ * APIRequestContext must be used for the subsequent requests (Playwright's
+ * `request` fixture persists cookies automatically).
+ *
+ * The JWT fallback secret must match playwright.config.ts webServer env
+ * (JWT_SECRET: 'e2e-test-secret-mock').
+ */
+export async function getApiAuthHeaders(
+  request: APIRequestContext
+): Promise<Record<string, string>> {
+  const jwtSecret = process.env.JWT_SECRET || 'e2e-test-secret-mock';
+
+  const jwt = require('jsonwebtoken');
+  const token = jwt.sign(
+    {
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      username: 'admin',
+      userId: 'admin',
+      role: 'admin',
+      permissions: ['*'],
+    },
+    jwtSecret
+  );
+  const csrfRes = await request.get('/api/csrf-token');
+  const { csrfToken } = await csrfRes.json();
+  return {
+    Authorization: `Bearer ${token}`,
+    'x-csrf-token': csrfToken,
+    'Content-Type': 'application/json',
+  };
+}
 
 /**
  * Mock the endpoints the Create Bot wizard depends on:
