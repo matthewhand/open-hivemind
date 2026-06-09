@@ -68,3 +68,61 @@ jobs:
           name: playwright-report
           path: playwright-report
           if-no-files-found: ignore
+
+  journeys:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Install Playwright browsers
+        # Use the locally installed playwright version, not pnpm dlx (which
+        # downloads the latest and expects a different browser revision).
+        run: npx playwright install --with-deps
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Run Playwright journey suites
+        env:
+          CI: 'true'
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3028
+          SKIP_MESSENGERS: 'true'
+          HTTP_ENABLED: 'true'
+          NODE_ENV: test
+          PORT: '3028'
+        run: pnpm run test:playwright -- full-journey-auth-to-bot full-journey-database-ops full-journey-export-import full-journey-bot-lifecycle full-journey-llm-integration full-journey-smart-sequence golden-journey user-flows --project=chromium --reporter=line
+
+      - name: Upload Playwright test artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-journey-artifacts
+          path: test-results
+          if-no-files-found: ignore
+
+      - name: Upload Playwright report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-journey-report
+          path: playwright-report
+          if-no-files-found: ignore
