@@ -25,24 +25,15 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # ---------- Stage 1a: Dev Caching Strategy (Default) ----------
-# Copies individual package.jsons to maximize Docker layer caching during development
+# Copies the manifests plus the packages tree before installing. A hardcoded
+# per-package COPY list silently breaks whenever a workspace package is added
+# (pnpm fails with ERR_PNPM_WORKSPACE_PKG_NOT_FOUND), and the legacy builder
+# builds this stage even when targeting deps-prod — so prefer correctness
+# over per-manifest layer caching here.
 FROM base AS deps-dev
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY src/client/package.json src/client/
-COPY packages/llm-flowise/package.json packages/llm-flowise/
-COPY packages/llm-letta/package.json packages/llm-letta/
-COPY packages/llm-openai/package.json packages/llm-openai/
-COPY packages/llm-openswarm/package.json packages/llm-openswarm/
-COPY packages/llm-openwebui/package.json packages/llm-openwebui/
-COPY packages/memory-mem0/package.json packages/memory-mem0/
-COPY packages/memory-mem4ai/package.json packages/memory-mem4ai/
-COPY packages/memory-postgres/package.json packages/memory-postgres/
-COPY packages/message-discord/package.json packages/message-discord/
-COPY packages/message-mattermost/package.json packages/message-mattermost/
-COPY packages/message-slack/package.json packages/message-slack/
-COPY packages/message-webhook/package.json packages/message-webhook/
-COPY packages/shared-types/package.json packages/shared-types/
-COPY packages/tool-mcp/package.json packages/tool-mcp/
+COPY packages packages
 
 RUN pnpm install --no-frozen-lockfile
 COPY . .
