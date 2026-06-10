@@ -117,6 +117,7 @@ For the full first-session walkthrough with screenshots — onboarding through p
 ## Documentation
 
 *   [User Guide](docs/USER_GUIDE.md): Screenshot-backed Quick Tour of the full user story, plus a detailed explanation of all WebUI features.
+*   [Guided Tour](docs/GUIDED_TOUR.md): A narrative, persona-driven walkthrough — building a two-bot support swarm from onboarding to backup.
 *   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
 *   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
 

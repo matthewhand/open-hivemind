@@ -2,7 +2,9 @@
 
 Welcome to the Open-Hivemind User Guide. It starts with a **Quick Tour** — the complete first-run user story with screenshots — followed by a detailed reference for every page, organized by the application's menu structure.
 
-> All screenshots show **demo-mode data** (simulated bots and conversations) and are captured automatically by Playwright (`npm run test:journey:guide`), so they stay in sync with the real UI.
+> All screenshots show **demo-mode data** (simulated bots and conversations) and are captured automatically by Playwright (`npm run test:journey:guide`), so they stay in sync with the real UI. A full index of every screenshot in the repo lives in [SCREENSHOTS.md](SCREENSHOTS.md).
+
+> Prefer a story? The **[Guided Tour](GUIDED_TOUR.md)** follows Sam, a community manager, through building a complete support swarm — onboarding, two persona-driven bots, guardrails, memory, MCP tools, and backup — at a deeper level than the Quick Tour below.
 
 ## Quick Tour — your first session
 
@@ -12,7 +14,7 @@ Start the server (`npm run dev`) and open `http://localhost:3028`. On a fresh in
 ![Onboarding wizard](screenshots/journey-01-onboarding.png)
 
 ### 2. Connect a message platform
-Add your Discord (or Slack/Mattermost) bot token under **Messaging**. The connection is validated immediately, and one token can back several bot personas.
+Add your Discord (or Slack/Mattermost/Telegram) bot token under **Messaging**. The connection is validated immediately, and one token can back several bot personas.
 
 ![Adding a Discord connection](screenshots/journey-02-discord-add.png)
 
@@ -47,7 +49,7 @@ Open the bot's detail drawer and use **Test Drive** to exchange a message with t
 ![Guard profiles](screenshots/journey-08-guards.png)
 
 ### 9. Add memory
-**Memory** configures a backend (Mem0, Mem4AI, MemVault, or PostgreSQL) so bots remember context across conversations, with retention and eviction controls.
+**Memory** configures a backend (Mem0, Mem4AI, MemVault, or PostgreSQL) so bots remember context across conversations, with retention and eviction controls. The built-in MemVault store persists to the app's SQLite database, so memories survive restarts.
 
 ![Memory provider configuration](screenshots/journey-09-memory.png)
 
@@ -134,7 +136,7 @@ reference sections below for screenshots and per-page detail.
 > *As an operator, I want one bot answering in my Discord/Slack/Mattermost channel.*
 
 1. Open the [Setup Wizard](#onboarding-wizard) — it launches automatically on first start, from the Demo Mode banner's **Get Started** button, or any time from **Settings → Rerun Setup Wizard**.
-2. **Message Provider**: pick Discord, Slack, or Mattermost and paste the credentials (bot token for Discord; bot + app token and signing secret for Slack; URL + token for Mattermost). See [Message Platforms](#message-platforms).
+2. **Message Provider**: pick Discord, Slack, Mattermost, or Telegram and paste the credentials (bot token for Discord; bot + app token and signing secret for Slack; URL + token for Mattermost; @BotFather bot token for Telegram). See [Message Platforms](#message-platforms).
 3. **LLM Provider**: pick OpenAI, Flowise, or OpenWebUI and enter the API key. Any OpenAI-compatible endpoint (e.g. a local Ollama or vLLM server) works via the OpenAI provider's base-URL field. See [LLM Providers](#llm-providers).
 4. **Create a Bot**: name it and link it to the providers from steps 2–3.
 5. **Review** and launch. The wizard summary shows a green check next to each configured provider.
@@ -201,7 +203,7 @@ reference sections below for screenshots and per-page detail.
 
 > *As a builder, I want my bot to call external tools (search, tickets, databases) via Model Context Protocol.*
 
-1. Add the server under [MCP Servers](#mcp-servers) (by URL) and wait for the connection check to pass; its tools are discovered automatically.
+1. Add the server under [MCP Servers](#mcp-servers) (by URL — `stdio://`, `http(s)://`, and `sse://` transports are all supported) and wait for the connection check to pass; its tools are discovered automatically. Servers already assigned to a bot's configuration connect automatically at startup.
 2. Inspect them on [MCP Tools](#mcp-tools) — view each tool's input/output schema and test it directly in Form or JSON mode before any bot touches it.
 3. Enable the tools you want and scope access per bot via [Guards](#guards) tool permissions.
 4. Verify in conversation that the bot invokes the tool, and audit usage on the [Activity Feed](#activity-feed).
@@ -213,18 +215,18 @@ reference sections below for screenshots and per-page detail.
 1. Automatic: the server takes a daily configuration backup with a 7-backup retention window — view the history under [System Management](#system-management).
 2. Manual: create a backup before risky changes from [System Backups & Export](#system-backups--export), or download the full config as JSON/YAML/CSV.
 3. Restore by importing the file on the same page, or roll back individual config sections via [Global Defaults](#global-defaults) hot-reload snapshots.
-4. Note: scheduled bot tasks (recurring prompts via the `/api/bots/:id/tasks` API) are currently held in memory only and are **not** included in backups — they are lost on restart. See [docs/ROADMAP.md](ROADMAP.md).
+4. Note: scheduled bot tasks (recurring prompts via the `/api/bots/:id/tasks` API) are currently held in memory only and are **not** included in backups — they are lost on restart. See [ROADMAP.md](../ROADMAP.md).
 
 ### Workflow 10: Lock down a public-facing deployment
 
 > *As an admin, I'm exposing the WebUI beyond localhost and need it secured.*
 
-1. Set `NODE_ENV=production` — this enforces strict validation; the app refuses to start without a proper `SESSION_SECRET` (≥ 32 chars).
+1. Set `NODE_ENV=production` — this enforces strict validation; the app refuses to start without a proper `SESSION_SECRET` (≥ 32 chars). All protected API routes share a single authentication middleware (session or JWT bearer) that verifies the token's user still exists and returns uniform JSON 401/403 bodies; the E2E test bypass (`ALLOW_TEST_BYPASS`) is hard-refused in production.
 2. Set strong `ADMIN_PASSWORD`, `SESSION_SECRET`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`; disable `ALLOW_LOCALHOST_ADMIN`/`ALLOW_LOCAL_NETWORK_ACCESS`.
 3. Restrict access: `ADMIN_IP_WHITELIST` for the admin UI, `CORS_ORIGIN`, `TRUST_PROXY` behind a reverse proxy, and rate limits (`RATE_LIMIT_API_MAX`). Webhook endpoints are deny-by-default — allow specific callers via `WEBHOOK_IP_WHITELIST` (exact IPs, no CIDR).
 4. Configure [Guards](#guards) for content filtering and tool permissions, and review [Plugin Security](#plugin-security) trust levels for any community packages.
 5. Confirm [Audit & Governance](#audit--governance) is recording admin actions, then re-run the daily health check (Workflow 6).
-6. Note: two-factor authentication and account lockout are **not yet available** (under security review — see [docs/ROADMAP.md](ROADMAP.md)); compensate with IP restrictions and a strong password.
+6. Note: two-factor authentication and account lockout are **not yet available** (under security review — see [ROADMAP.md](../ROADMAP.md)); compensate with IP restrictions and a strong password.
 
 ---
 
@@ -309,6 +311,7 @@ Manage connections to Large Language Model providers.
 *   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
 *   **System Default**: Define the fallback provider for bots without a specific profile.
 *   **WebUI Intelligence**: Select a provider to power internal AI features.
+*   **OpenWebUI fidelity**: conversation history keeps assistant/system roles intact (the model sees its own prior replies as assistant turns), and each bot's own API URL/key/model settings are honored, falling back to the global `OPEN_WEBUI_*` configuration.
 
 ![LLM Providers List](screenshots/llm-providers-list.png)
 ![Add LLM Profile](screenshots/llm-add-profile-modal.png)
@@ -320,9 +323,9 @@ Connect your bots to messaging services.
 ![Add Message Provider](screenshots/message-add-provider-modal.png)
 
 *   **Discord**: Add your Discord Bot Token and configure server settings.
-*   **Slack**: Set up your Slack App Token and Bot Token.
+*   **Slack**: Set up your Slack App Token and Bot Token. Interactive components (buttons, modals) are acknowledged immediately and dispatched through a generic `action_id` registry; actions without a registered handler are forwarded into the bot's normal message pipeline so the LLM can respond.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
-*   **Telegram**: Add your Telegram Bot Token (obtained from @BotFather).
+*   **Telegram**: Add your Telegram Bot Token (obtained from @BotFather). Messages are received via long-polling, so no public webhook URL is required.
 *   **Status**: Check connection health for each platform.
 
 ### [Memory Providers](/admin/providers/memory)
@@ -331,6 +334,7 @@ Configure memory providers for persistent context and knowledge storage.
 ![Memory Providers List](screenshots/memory-providers-list.png)
 
 *   **Provider Types**: Support for Redis, Pinecone, and other database or vector storage backends.
+*   **Durable MemVault**: the built-in MemVault backend persists memories to the app's SQLite database (write-through cache on top; set `durable: false` to keep it in-memory only), and long conversations are summarized automatically in the message pipeline.
 *   **Configuration Details**: View connection parameters like host and environment.
 *   **Bot Associations**: See which bots are actively utilizing each memory profile.
 *   **System Default**: Define the fallback memory provider for bots without a specific profile.
@@ -371,6 +375,8 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 
 *   **Server List**: View and manage connected MCP servers.
 *   **Add Server**: Connect to a new MCP server by URL.
+*   **Transports**: `stdio://`, `http://`/`https://` (streamable HTTP), and `sse://` server URLs are supported; an optional API key is sent as a Bearer header on network transports.
+*   **Auto-Connect at Startup**: servers assigned to bots in their configuration connect automatically when the app starts — no manual connect step needed.
 *   **Tool Discovery**: Automatically discover tools provided by connected servers.
 *   **Connection Status**: Monitor server health and retry failed connections.
 
@@ -520,7 +526,7 @@ The Setup Wizard guides you through the minimum configuration required to run a 
 | Step | What you configure |
 |------|-------------------|
 | 1. Welcome | Overview of what's needed |
-| 2. Message Provider | Choose a platform (Discord, Slack, Mattermost) and enter credentials |
+| 2. Message Provider | Choose a platform (Discord, Slack, Mattermost, Telegram) and enter credentials |
 | 3. LLM Provider | Choose an AI provider (OpenAI, Flowise, OpenWebUI) and enter API key |
 | 4. Create a Bot | Name your first bot and link it to the providers from steps 2 & 3 |
 | 5. Review | Confirm configuration and launch |
@@ -682,3 +688,5 @@ You can trigger the **Update Screenshots** workflow manually from the Actions ta
 npm run generate-docs
 ```
 This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state natively, and saves the images to `docs/screenshots/`.
+
+A complete tracking index of every screenshot (current and archived), with where each one is used, lives in [SCREENSHOTS.md](SCREENSHOTS.md). The naming/archival convention is documented in [CLAUDE.md](../CLAUDE.md).
