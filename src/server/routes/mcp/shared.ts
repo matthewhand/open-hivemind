@@ -2,7 +2,8 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { resolveMcpTransport } from '@src/mcp/transportSelection';
 import { ErrorUtils } from '@src/types/errors';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 
@@ -24,7 +25,7 @@ export interface MCPServer {
 
 export interface MCPClient {
   client: Client;
-  transport: StdioClientTransport;
+  transport: Transport;
   server: MCPServer;
 }
 
@@ -70,62 +71,104 @@ export const saveMCPServers = async (servers: MCPServer[]): Promise<void> => {
   await fs.writeFile(MCP_SERVERS_CONFIG_FILE, JSON.stringify(serversToSave, null, 2), 'utf8');
 };
 
+/**
+ * Loads the MCP SDK entry points via dynamic `import()`.
+ *
+ * The SDK is ESM-only with subpath exports (no usable CJS root export), so it
+ * must be loaded via dynamic import. Exposed as a mutable seam object so unit
+ * tests can stub the SDK (module-level mocking of dynamic ESM imports is
+ * unreliable in jest) — same pattern as MCPService.loadSdk.
+ */
+export const mcpSdk = {
+  load: async () => {
+    const [
+      { Client },
+      { StreamableHTTPClientTransport },
+      { SSEClientTransport },
+      { StdioClientTransport },
+    ] = await Promise.all([
+      import('@modelcontextprotocol/sdk/client/index.js'),
+      import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
+      import('@modelcontextprotocol/sdk/client/sse.js'),
+      import('@modelcontextprotocol/sdk/client/stdio.js'),
+    ]);
+    return { Client, StreamableHTTPClientTransport, SSEClientTransport, StdioClientTransport };
+  },
+};
+
+/**
+ * Builds the right SDK client transport for a server URL.
+ *
+ * Scheme-based selection (see src/mcp/transportSelection.ts):
+ * `stdio://` -> stdio, `http(s)://` -> Streamable HTTP,
+ * `sse://`/`sse+http(s)://` -> legacy SSE. An optional apiKey is sent as a
+ * Bearer Authorization header on the network transports.
+ */
+export const createTransportForServer = async (server: MCPServer): Promise<Transport> => {
+  const { StreamableHTTPClientTransport, SSEClientTransport, StdioClientTransport } =
+    await mcpSdk.load();
+
+  const resolved = resolveMcpTransport(server.url);
+
+  if (resolved.kind === 'stdio') {
+    return new StdioClientTransport({ command: resolved.target, args: [] });
+  }
+
+  const requestInit = server.apiKey
+    ? { headers: { Authorization: `Bearer ${server.apiKey}` } }
+    : undefined;
+
+  return resolved.kind === 'sse'
+    ? new SSEClientTransport(new URL(resolved.target), { requestInit })
+    : new StreamableHTTPClientTransport(new URL(resolved.target), { requestInit });
+};
+
 // Connect to MCP server
 export const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
   try {
     debug(`Connecting to MCP server: ${server.name} at ${server.url}`);
 
-    // For stdio transport (local MCP servers)
-    if (server.url.startsWith('stdio://')) {
-      const command = server.url.replace('stdio://', '');
-      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
-      const transport = new StdioClientTransport({
-        command: command,
-        args: [],
-      });
+    const transport = await createTransportForServer(server);
 
-      const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
-      const client = new Client(
-        {
-          name: `hivemind-${server.name}`,
-          version: '1.0.0',
+    const { Client } = await mcpSdk.load();
+    const client = new Client(
+      {
+        name: `hivemind-${server.name}`,
+        version: '1.0.0',
+      },
+      {
+        capabilities: {
+          experimental: {},
         },
-        {
-          capabilities: {
-            experimental: {},
-          },
-        }
-      );
+      }
+    );
 
-      await client.connect(transport);
+    await client.connect(transport);
 
-      // Get available tools
-      const toolsResponse = await client.listTools();
-      const tools = toolsResponse.tools.map((tool) => ({
-        name: tool.name,
-        description: tool.description || '',
-        inputSchema: tool.inputSchema,
-      }));
+    // Get available tools
+    const toolsResponse = await client.listTools();
+    const tools = toolsResponse.tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description || '',
+      inputSchema: tool.inputSchema,
+    }));
 
-      const mcpClient: MCPClient = {
-        client,
-        transport,
-        server: {
-          ...server,
-          connected: true,
-          tools,
-          lastConnected: new Date().toISOString(),
-          error: undefined,
-        },
-      };
+    const mcpClient: MCPClient = {
+      client,
+      transport,
+      server: {
+        ...server,
+        connected: true,
+        tools,
+        lastConnected: new Date().toISOString(),
+        error: undefined,
+      },
+    };
 
-      connectedClients.set(server.name, mcpClient);
-      debug(`Successfully connected to MCP server: ${server.name}`);
+    connectedClients.set(server.name, mcpClient);
+    debug(`Successfully connected to MCP server: ${server.name}`);
 
-      return mcpClient;
-    } else {
-      throw new Error(`Unsupported MCP server URL scheme: ${server.url}`);
-    }
+    return mcpClient;
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug(`Failed to connect to MCP server ${server.name}:`, ErrorUtils.getMessage(hivemindError));
