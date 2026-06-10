@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { waitForPageReady } from './test-utils';
 
 /**
  * Inject a fake JWT into localStorage so ProtectedRoute considers the
@@ -10,7 +11,10 @@ import { expect, test } from '@playwright/test';
  * protected page.  Server-side API calls work because the webServer is started
  * with ALLOW_TEST_BYPASS=true / ALLOW_LOCALHOST_ADMIN=true.
  */
-async function injectAuthAndNavigate(page: import('@playwright/test').Page, targetPath: string): Promise<void> {
+async function injectAuthAndNavigate(
+  page: import('@playwright/test').Page,
+  targetPath: string
+): Promise<void> {
   // A JWT whose payload has a far-future expiry and a fake (but parseable) signature.
   // AuthContext only checks the `exp` field client-side; it never verifies the
   // signature in the browser.
@@ -28,9 +32,14 @@ async function injectAuthAndNavigate(page: import('@playwright/test').Page, targ
   };
 
   // Navigate to /login first to establish the app origin so we can set
-  // localStorage for that origin.
-  await page.goto('/login');
-  await page.waitForLoadState('domcontentloaded');
+  // localStorage for that origin. Bounded waits throughout: this spec runs
+  // against the live server (no mocks), where unbounded waits hang until the
+  // test timeout.
+  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+  // Let any client-side redirect settle before evaluate — page.evaluate
+  // against a navigating context hangs until the test timeout.
+  await waitForPageReady(page, 5000);
 
   await page.evaluate(
     ({ token, user }) => {
@@ -44,8 +53,10 @@ async function injectAuthAndNavigate(page: import('@playwright/test').Page, targ
   );
 
   // Navigate to the target; ProtectedRoute will now see isAuthenticated=true.
-  await page.goto(targetPath);
-  await page.waitForLoadState('networkidle');
+  // waitForPageReady caps the networkidle wait, which is unbounded against an
+  // app with background polling.
+  await page.goto(targetPath, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await waitForPageReady(page, 5000);
 }
 
 test.describe('Core Pages Rendering', () => {

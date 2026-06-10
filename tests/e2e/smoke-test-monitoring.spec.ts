@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  expectBodyNotEmpty,
   registerViteSourceBypass,
   setupTestWithErrorDetection,
   waitForPageReady,
@@ -95,6 +96,8 @@ async function validatePageLoads(
         throw new Error(`Unexpected redirect to ${currentUrl}`);
       }
 
+      await expectBodyNotEmpty(page);
+
       const body = page.locator('body');
       const bodyText = await body.innerText().catch(() => '');
 
@@ -103,15 +106,6 @@ async function validatePageLoads(
         bodyText.includes('Unexpected Application Error')
       ) {
         throw new Error('React error boundary detected');
-      }
-
-      const isEmpty = await body.evaluate((el) => {
-        const text = el.textContent || '';
-        return text.trim().length === 0;
-      });
-
-      if (isEmpty) {
-        throw new Error('Page body is empty');
       }
 
       results.push({ label, status: 'pass' });

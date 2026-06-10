@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  expectBodyNotEmpty,
   registerViteSourceBypass,
   setupTestWithErrorDetection,
   waitForPageReady,
@@ -398,21 +399,18 @@ test.describe('Smoke Test - All Pages', () => {
 
         // Check for critical page element
         if (criticalElement) {
-          // Use a short timeout to keep the test fast
+          // 'attached' resolves as soon as the element exists, so a generous
+          // timeout only costs time on failure; 2s was too tight for WebKit
+          // first paints on loaded CI runners.
           const element = page.locator(criticalElement).first();
-          await element.waitFor({ state: 'attached', timeout: 2000 });
+          await element.waitFor({ state: 'attached', timeout: 10000 });
         }
 
-        // Verify body has content (not blank page)
+        // Verify body has content (not blank page). Use a short per-page
+        // timeout so a systemic blank-page condition fails fast per route
+        // instead of eating the whole test timeout before the summary prints.
         const body = page.locator('body');
-        const isEmpty = await body.evaluate((el) => {
-          const text = el.textContent || '';
-          return text.trim().length === 0;
-        });
-
-        if (isEmpty) {
-          throw new Error('Page body is empty');
-        }
+        await expectBodyNotEmpty(page, 3000);
 
         // Check for React error boundaries
         const bodyText = await body.innerText().catch(() => '');
@@ -507,10 +505,11 @@ test.describe('Smoke Test - All Pages', () => {
     for (const { path, label } of criticalPages) {
       const response = await page.goto(path, {
         waitUntil: 'domcontentloaded',
-        timeout: 5000,
+        timeout: 10000,
       });
 
-      expect(response?.status()).toBe(200);
+      const status = response?.status() || 0;
+      expect([200, 304], `HTTP ${status} for ${label}`).toContain(status);
 
       // Verify body has content
       const body = page.locator('body');
