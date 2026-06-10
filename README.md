@@ -8,7 +8,7 @@
 
 Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
 
-> 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — tiered TODO checkboxes (MVP / Beta / Experimental / Proposed / Cut). MVP gate-check: `npm run test:journey`.
+> 🗺️ **Roadmap & status:** see [docs/ROADMAP.md](docs/ROADMAP.md) — tiered TODO checkboxes (Shipped / In Progress / Experimental / Proposed), backed by the per-feature audit in [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md). MVP gate-check: `npm run test:journey`.
 
 Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.
 
@@ -33,13 +33,13 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and inbound webhooks from a single dashboard — with two-way messaging (receive + send) and native typing indicators.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — with two-way messaging (receive + send) and native typing indicators. Inbound webhook ingress is also supported (outbound webhook delivery is on the [roadmap](docs/ROADMAP.md)).
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
 *   **Shared Context & Memory**: Bots share a collective memory with conversation summarization and retention/eviction, allowing for sophisticated interactions.
-*   **Flexible LLMs**: OpenAI, Flowise, Ollama, OpenWebUI, Letta and more — with live model listing, response streaming, and function/tool calling.
+*   **Flexible LLMs**: OpenAI, Flowise, OpenWebUI, Letta, and OpenSwarm — with live model listing, plus response streaming and function/tool calling on the OpenAI provider. (Any OpenAI-compatible endpoint, such as a local Ollama server, can be used via the OpenAI provider's base-URL setting.)
 *   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required. Import/export config as JSON, YAML, or CSV.
 *   **Scheduled Tasks**: Schedule recurring bot prompts and manage them from the dashboard.
-*   **Safety & Compliance**: Built-in guards, rate limiting, durable audit logging, and duplicate response suppression ensure stability.
+*   **Safety & Guardrails**: Built-in guard profiles, rate limiting, durable audit logging, and duplicate response suppression. (No formal compliance certifications — review [docs/SECURITY_HARDENING.md](docs/SECURITY_HARDENING.md) before public deployment.)
 *   **Observability**: Real-time monitoring, health checks, Prometheus-compatible metrics, and trace export (console/file/OTLP).
 *   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
 

@@ -1,11 +1,11 @@
 # Open Hivemind Architecture Documentation
 
 **Version**: 1.1.0
-**Status**: Production-Ready
+**Status**: Beta — core messaging, LLM, and WebUI paths are live; some subsystems are partial or stubbed. See [FEATURE_STATUS.md](FEATURE_STATUS.md) for the per-feature audit and [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## 🏗️ System Architecture Overview
 
-The Open Hivemind project is a full-stack enterprise application built with React, TypeScript, Node.js, and Express. It features a sophisticated AI bot management system with comprehensive monitoring, analytics, and infrastructure automation.
+The Open Hivemind project is a full-stack TypeScript application built with React, Node.js, and Express. It provides an AI bot management system with monitoring, activity logging, and configuration tooling.
 
 ### 📋 Core Components
 
@@ -25,11 +25,11 @@ The Open Hivemind project is a full-stack enterprise application built with Reac
 - **API**: RESTful with WebSocket support
 
 #### **Infrastructure**
-- **CI/CD**: GitHub Actions with comprehensive workflows
-- **Deployment**: Vercel (frontend) and custom hosting (backend)
-- **Monitoring**: Real-time health checks and alerting
-- **Backup**: Automated backup and disaster recovery
-- **Analytics**: Advanced usage tracking and user behavior analysis
+- **CI/CD**: GitHub Actions (lint, type-check, tests, build smoke)
+- **Deployment**: Docker image or Node.js process (see README); no hosted/managed deployment
+- **Monitoring**: Health-check endpoints, Prometheus-compatible metrics, and anomaly detection (threshold alerting is not yet wired into production paths)
+- **Backup**: On-demand configuration export/backup (no automated disaster recovery)
+- **Analytics**: Activity logging and per-provider metrics collection
 
 ## 🗂️ Project Structure
 

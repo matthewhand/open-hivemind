@@ -28,6 +28,8 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [LLM Models API](api/llm-models-endpoint.md) - LLM provider model listing with pricing and capabilities
 
 ## 📚 Reference & Planning
+- [Roadmap](ROADMAP.md) — tiered TODO checkboxes (Shipped / In Progress / Experimental / Proposed)
+- [Feature Implementation Status](FEATURE_STATUS.md) — per-feature audit, 307 features across 10 domains
 - [Package Specifications & Features](reference/package.md)
 - [Project TODOs](reference/todo.md)
 - [Bot Management Design](reference/BOT_MANAGEMENT_DESIGN.md)

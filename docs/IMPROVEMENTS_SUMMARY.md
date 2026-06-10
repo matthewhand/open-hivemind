@@ -167,7 +167,7 @@ onChange={async (e) => {
 - **Rate Limits**: Well-configured for application scale
 - **Error Handling**: Graceful degradation and recovery
 - **Monitoring**: Comprehensive real-time metrics with automated alerts
-- **Test Coverage**: 95% coverage for performance-critical components
+- **Test Coverage**: Enforced Jest thresholds — 61% branches, 69% functions, 73% lines (see `jest.config.js`)
 
 ## 🎯 Key Benefits Delivered
 
