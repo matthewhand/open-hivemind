@@ -18,19 +18,24 @@ import { globalErrorHandler } from '@src/middleware/errorHandler';
 import botsRouter from '@src/server/routes/bots';
 
 // --- Mock BotManager so the route uses a controllable in-memory manager ---
-const getAllBots = jest.fn();
-const createBot = jest.fn();
+// The manager object is created inside the hoisted factory (and re-exported
+// for the tests) so getInstance() can never observe it in its TDZ — module
+// evaluation order differs between local and CI jest runs.
+jest.mock('@src/managers/BotManager', () => {
+  const manager = {
+    getAllBots: jest.fn(),
+    createBot: jest.fn(),
+  };
+  return {
+    BotManager: {
+      getInstance: jest.fn(async () => manager),
+    },
+    __mockManager: manager,
+  };
+});
 
-const mockManager = {
-  getAllBots,
-  createBot,
-};
-
-jest.mock('@src/managers/BotManager', () => ({
-  BotManager: {
-    getInstance: jest.fn(async () => mockManager),
-  },
-}));
+const { __mockManager: mockManager } = jest.requireMock('@src/managers/BotManager');
+const { getAllBots, createBot } = mockManager;
 
 // Avoid pulling heavy singletons during router import.
 jest.mock('@src/server/services/WebSocketService', () => ({
