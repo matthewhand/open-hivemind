@@ -68,7 +68,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [ ] **Auth/persistence robustness**
   - [ ] Durable refresh-token allow-list (in-memory Set; lost on restart, not multi-instance safe)
   - [ ] Widen `auditMiddleware` beyond config routers; persist the `enableAuditLogging` settings toggle
-  - [ ] Configurable CORS origins (inline localhost regex today; settings field unconsumed)
+  - [x] Configurable CORS origins (`CORS_ORIGIN`/`CORS_ALLOWED_ORIGINS` env + stored `cors.origins` setting; localhost always allowed; `*` = allow-all without credentials)
   - [ ] Transactional config-backup restore; validation on main-config import
   - [ ] Harden `postgresWrapper.translateSql` (self-admittedly naive)
   - [ ] Persist scheduled bot tasks (`loadTasks()` is an empty stub — in-memory only)

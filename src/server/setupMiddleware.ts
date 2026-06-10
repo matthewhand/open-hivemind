@@ -9,6 +9,7 @@ import path from 'path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { maintenanceModeMiddleware } from '@src/middleware/maintenanceMiddleware';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { resolveCorsDecision } from '@src/server/corsOrigins';
 import { securityHeaders } from '@src/server/middleware/security';
 import Logger from '@common/logger';
 
@@ -42,15 +43,17 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   // Maintenance mode middleware - check if system is in maintenance mode
   app.use(maintenanceModeMiddleware);
 
-  // CORS middleware for localhost development
+  // CORS middleware. Localhost is always allowed (dev fallback); additional
+  // origins come from CORS_ORIGIN / CORS_ALLOWED_ORIGINS and the stored
+  // `cors.origins` setting — see src/server/corsOrigins.ts.
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const origin = req.headers.origin;
-    // Strictly match http://localhost or http://127.0.0.1 with optional port
-    const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const decision = resolveCorsDecision(req.headers.origin);
 
-    if (isLocalhost) {
-      res.setHeader('Access-Control-Allow-Origin', origin as string);
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (decision) {
+      res.setHeader('Access-Control-Allow-Origin', decision.allowOrigin);
+      if (decision.credentials) {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
       res.setHeader(
         'Access-Control-Allow-Headers',
