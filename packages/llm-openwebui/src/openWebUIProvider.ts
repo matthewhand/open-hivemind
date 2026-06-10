@@ -5,74 +5,143 @@ import { getSessionKey } from './sessionManager';
 
 const debug = Debug('app:openWebUIProvider');
 
-const model = openWebUIConfig.get('model');
+/**
+ * Per-bot configuration for the OpenWebUI provider.
+ *
+ * Every field is optional; unset fields fall back to the process-wide
+ * convict config (`OPEN_WEBUI_*` env vars).
+ */
+export interface OpenWebUIProviderConfig {
+  /** Per-bot API base URL; falls back to OPEN_WEBUI_API_URL. */
+  apiUrl?: string;
+  /** Full Authorization header value (e.g. "Bearer xyz"); wins over apiKey. */
+  authHeader?: string;
+  /** Per-bot API key (sent as a Bearer token); falls back to OPEN_WEBUI_API_KEY. */
+  apiKey?: string;
+  /** Per-bot chat model; falls back to OPEN_WEBUI_MODEL. */
+  model?: string;
+  /** Per-bot embedding model; falls back to OPEN_WEBUI_EMBEDDING_MODEL. */
+  embeddingModel?: string;
+}
 
 /**
- * Creates an HTTP client with proper authorization headers based on auth method.
- * @returns An http client configured for OpenWebUI API.
+ * Maps an IMessage history entry to an OpenAI-compatible chat role.
+ *
+ * The bot's own messages (role "assistant" or `isFromBot()`) are preserved
+ * as `assistant` turns and system turns pass through, so the model sees a
+ * faithful conversation instead of every turn flattened to `user`.
  */
-async function createOpenWebUIClient() {
-  const apiUrl = openWebUIConfig.get('apiUrl');
-  const authMethod = openWebUIConfig.get('authMethod');
-  const apiKey = openWebUIConfig.get('apiKey');
-
-  // For API key auth, we can create the client directly with the key
-  if (authMethod === 'apiKey' && apiKey) {
-    return http.create(apiUrl, {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    });
+export function mapHistoryRole(msg: IMessage): 'user' | 'assistant' | 'system' {
+  if (msg.role === 'assistant' || msg.role === 'system') {
+    return msg.role;
   }
-
-  // For password auth, we need to get the session key first
-  const sessionKey = await getSessionKey();
-  return http.create(apiUrl, {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${sessionKey}`,
-  });
+  try {
+    if (typeof msg.isFromBot === 'function' && msg.isFromBot()) {
+      return 'assistant';
+    }
+  } catch (error) {
+    debug('isFromBot() threw while mapping history role; defaulting to "user":', error);
+  }
+  return 'user';
 }
 
 /**
  * Provides chat and non-chat completion functionality for OpenWebUI.
- * Supports both password-based and API key authentication.
+ * Supports both password-based and API key authentication, with optional
+ * per-bot overrides for apiUrl / auth / model.
  */
-export const openWebUIProvider: ILlmProvider = {
-  name: 'openwebui',
-  supportsChatCompletion: (): boolean => true,
-  supportsCompletion: (): boolean => true,
+export class OpenWebUIProvider implements ILlmProvider {
+  name = 'openwebui';
+  private config: OpenWebUIProviderConfig;
+
+  constructor(config?: OpenWebUIProviderConfig) {
+    this.config = config || {};
+  }
+
+  supportsChatCompletion(): boolean {
+    return true;
+  }
+
+  supportsCompletion(): boolean {
+    return true;
+  }
+
+  /**
+   * Creates an HTTP client with proper authorization headers.
+   *
+   * Resolution order: per-bot authHeader → per-bot apiKey → global apiKey
+   * (when authMethod is "apiKey") → password session key.
+   */
+  private async createClient() {
+    const apiUrl = this.config.apiUrl || openWebUIConfig.get('apiUrl');
+
+    if (this.config.authHeader) {
+      return http.create(apiUrl, {
+        'Content-Type': 'application/json',
+        Authorization: this.config.authHeader,
+      });
+    }
+
+    const authMethod = openWebUIConfig.get('authMethod');
+    const apiKey =
+      this.config.apiKey || (authMethod === 'apiKey' ? openWebUIConfig.get('apiKey') : '');
+    if (apiKey) {
+      return http.create(apiUrl, {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      });
+    }
+
+    // For password auth, we need to get the session key first
+    const sessionKey = await getSessionKey();
+    return http.create(apiUrl, {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${sessionKey}`,
+    });
+  }
+
+  private resolveModel(metadata?: Record<string, any>): string {
+    return (
+      metadata?.modelOverride ||
+      metadata?.model ||
+      this.config.model ||
+      openWebUIConfig.get('model')
+    );
+  }
 
   async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = []
+    historyMessages: IMessage[] = [],
+    metadata?: Record<string, any>
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
-    const client = await createOpenWebUIClient();
+    const client = await this.createClient();
     const messages = [
-      ...historyMessages.map((msg) => ({ role: 'user', content: msg.getText() })),
-      { role: 'user', content: userMessage },
+      ...historyMessages.map((msg) => ({ role: mapHistoryRole(msg), content: msg.getText() })),
+      { role: 'user' as const, content: userMessage },
     ];
 
     try {
       const data = await client.post<{ choices: Array<{ message: { content: string } }> }>(
         '/chat/completions',
-        { model, messages }
+        { model: this.resolveModel(metadata), messages }
       );
       return data.choices[0].message.content;
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
       throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
     }
-  },
+  }
 
   async generateCompletion(prompt: string): Promise<string> {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
-    const client = await createOpenWebUIClient();
+    const client = await this.createClient();
 
     try {
       const data = await client.post<{ choices: Array<{ text: string }> }>('/completions', {
-        model,
+        model: this.resolveModel(),
         prompt,
         max_tokens: 100,
       });
@@ -81,7 +150,7 @@ export const openWebUIProvider: ILlmProvider = {
       debug('Error generating non-chat completion:', formatError(error));
       throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
     }
-  },
+  }
 
   /**
    * Generates an embedding vector for the given text using the OpenAI-compatible
@@ -92,8 +161,8 @@ export const openWebUIProvider: ILlmProvider = {
   async generateEmbedding(text: string): Promise<number[]> {
     debug('Generating embedding with OpenWebUI:', { text });
 
-    const client = await createOpenWebUIClient();
-    const embeddingModel = openWebUIConfig.get('embeddingModel');
+    const client = await this.createClient();
+    const embeddingModel = this.config.embeddingModel || openWebUIConfig.get('embeddingModel');
 
     try {
       const data = await client.post<{ data: Array<{ embedding: number[] }> }>('/embeddings', {
@@ -109,8 +178,14 @@ export const openWebUIProvider: ILlmProvider = {
       debug('Error generating embedding:', formatError(error));
       throw new Error(`Embedding generation failed: ${getErrorMessage(error)}`);
     }
-  },
-};
+  }
+}
+
+/**
+ * Default provider instance backed entirely by the process-wide config.
+ * Per-bot instances are created via the package `create()` factory.
+ */
+export const openWebUIProvider = new OpenWebUIProvider();
 
 /**
  * Safely extracts the error message.

@@ -1,5 +1,6 @@
-import { manifest } from './index';
-import { openWebUIProvider } from './openWebUIProvider';
+import type { IMessage } from '@hivemind/shared-types';
+import { create, manifest } from './index';
+import { mapHistoryRole, openWebUIProvider } from './openWebUIProvider';
 
 // Mock DNS so isSafeUrl always resolves to a public IP in tests
 jest.mock('dns', () => ({
@@ -41,6 +42,21 @@ function mockFetch(body: unknown, status = 200) {
       headers: { 'content-type': 'application/json' },
     })
   );
+}
+
+function makeMsg(text: string, role: string, fromBot = false): IMessage {
+  return {
+    role,
+    content: text,
+    getText: () => text,
+    isFromBot: () => fromBot,
+  } as unknown as IMessage;
+}
+
+function lastFetchCall() {
+  const calls = (global.fetch as jest.Mock).mock.calls;
+  const [url, init] = calls[calls.length - 1];
+  return { url: url as string, init: init as RequestInit, body: JSON.parse(init.body as string) };
 }
 
 beforeEach(() => jest.clearAllMocks());
@@ -106,5 +122,131 @@ describe('openWebUIProvider', () => {
     await expect(openWebUIProvider.generateEmbedding!('embed me')).rejects.toThrow(
       'Embedding generation failed'
     );
+  });
+});
+
+describe('history role mapping', () => {
+  it('mapHistoryRole preserves assistant and system roles', () => {
+    expect(mapHistoryRole(makeMsg('hi', 'assistant'))).toBe('assistant');
+    expect(mapHistoryRole(makeMsg('rules', 'system'))).toBe('system');
+  });
+
+  it('mapHistoryRole maps bot-authored messages to assistant even when role is user', () => {
+    expect(mapHistoryRole(makeMsg('bot said this', 'user', true))).toBe('assistant');
+  });
+
+  it('mapHistoryRole defaults human and unknown roles to user', () => {
+    expect(mapHistoryRole(makeMsg('hello', 'user'))).toBe('user');
+    expect(mapHistoryRole(makeMsg('tool output', 'tool'))).toBe('user');
+    expect(mapHistoryRole(makeMsg('weird', ''))).toBe('user');
+  });
+
+  it('mapHistoryRole falls back to user when isFromBot throws', () => {
+    const msg = {
+      role: 'user',
+      getText: () => 'x',
+      isFromBot: () => {
+        throw new Error('boom');
+      },
+    } as unknown as IMessage;
+    expect(mapHistoryRole(msg)).toBe('user');
+  });
+
+  it('generateChatCompletion sends mixed history with correct roles', async () => {
+    mockFetch({ choices: [{ message: { content: 'ok' } }] });
+    const history = [
+      makeMsg('you are helpful', 'system'),
+      makeMsg('hello bot', 'user'),
+      makeMsg('hello human', 'assistant'),
+      makeMsg('platform bot turn', 'user', true),
+    ];
+    await openWebUIProvider.generateChatCompletion('latest question', history);
+
+    const { body } = lastFetchCall();
+    expect(body.messages).toEqual([
+      { role: 'system', content: 'you are helpful' },
+      { role: 'user', content: 'hello bot' },
+      { role: 'assistant', content: 'hello human' },
+      { role: 'assistant', content: 'platform bot turn' },
+      { role: 'user', content: 'latest question' },
+    ]);
+  });
+});
+
+describe('per-bot config via create()', () => {
+  it('uses per-bot apiUrl, apiKey and model when provided', async () => {
+    mockFetch({ choices: [{ message: { content: 'bot reply' } }] });
+    const provider = create({
+      apiUrl: 'https://bot.example.com/api',
+      apiKey: 'bot-key',
+      model: 'bot-model',
+    });
+
+    expect(await provider.generateChatCompletion('hi', [])).toBe('bot reply');
+
+    const { url, init, body } = lastFetchCall();
+    expect(url).toBe('https://bot.example.com/api/chat/completions');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer bot-key');
+    expect(body.model).toBe('bot-model');
+  });
+
+  it('accepts raw schema key names (OPEN_WEBUI_*)', async () => {
+    mockFetch({ choices: [{ message: { content: 'raw reply' } }] });
+    const provider = create({
+      OPEN_WEBUI_API_URL: 'https://raw.example.com/api',
+      OPEN_WEBUI_API_KEY: 'raw-key',
+      OPEN_WEBUI_MODEL: 'raw-model',
+    });
+
+    expect(await provider.generateChatCompletion('hi', [])).toBe('raw reply');
+
+    const { url, init, body } = lastFetchCall();
+    expect(url).toBe('https://raw.example.com/api/chat/completions');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer raw-key');
+    expect(body.model).toBe('raw-model');
+  });
+
+  it('authHeader wins over apiKey', async () => {
+    mockFetch({ choices: [{ message: { content: 'ok' } }] });
+    const provider = create({
+      apiUrl: 'https://bot.example.com/api',
+      authHeader: 'Bearer custom-token',
+      apiKey: 'ignored-key',
+    });
+
+    await provider.generateChatCompletion('hi', []);
+
+    const { init } = lastFetchCall();
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer custom-token');
+  });
+
+  it('falls back to global config when no per-bot overrides are given', async () => {
+    mockFetch({ choices: [{ message: { content: 'global reply' } }] });
+    const provider = create({});
+
+    expect(await provider.generateChatCompletion('hi', [])).toBe('global reply');
+
+    const { url, body } = lastFetchCall();
+    expect(url).toBe('https://openwebui.example.com/chat/completions');
+    expect(body.model).toBe('test-model');
+  });
+
+  it('uses per-bot model for non-chat completions', async () => {
+    mockFetch({ choices: [{ text: 'completion' }] });
+    const provider = create({
+      apiUrl: 'https://bot.example.com/api',
+      apiKey: 'bot-key',
+      model: 'bot-model',
+    });
+
+    expect(await provider.generateCompletion('prompt')).toBe('completion');
+
+    const { url, body } = lastFetchCall();
+    expect(url).toBe('https://bot.example.com/api/completions');
+    expect(body.model).toBe('bot-model');
+  });
+
+  it('returns a fresh provider instance per call', () => {
+    expect(create({ model: 'a' })).not.toBe(create({ model: 'a' }));
   });
 });
