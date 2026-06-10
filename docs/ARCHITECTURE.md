@@ -28,7 +28,7 @@ The Open Hivemind project is a full-stack TypeScript application built with Reac
 - **CI/CD**: GitHub Actions (lint, type-check, tests, build smoke)
 - **Deployment**: Docker image or Node.js process (see README); no hosted/managed deployment
 - **Monitoring**: Health-check endpoints, Prometheus-compatible metrics, and anomaly detection (threshold alerting is not yet wired into production paths)
-- **Backup**: On-demand configuration export/backup (no automated disaster recovery)
+- **Backup**: Scheduled daily configuration backups with retention, plus on-demand export/import (no automated disaster recovery)
 - **Analytics**: Activity logging and per-provider metrics collection
 
 ## 🗂️ Project Structure

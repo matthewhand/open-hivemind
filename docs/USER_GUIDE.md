@@ -3,6 +3,17 @@
 Welcome to the Open-Hivemind User Guide. This document provides a detailed walkthrough of the WebUI, organized by the menu structure in the application.
 
 ## Table of Contents
+- [Common Workflows](#common-workflows)
+  - [First launch — explore in Demo Mode](#workflow-1-first-launch--explore-in-demo-mode)
+  - [Set up your first live bot](#workflow-2-set-up-your-first-live-bot)
+  - [Headless setup with environment variables](#workflow-3-headless-setup-with-environment-variables)
+  - [Give your bots distinct personalities](#workflow-4-give-your-bots-distinct-personalities)
+  - [Run a multi-bot swarm in one channel](#workflow-5-run-a-multi-bot-swarm-in-one-channel)
+  - [Daily health check](#workflow-6-daily-health-check)
+  - [Debug "my bot didn't reply"](#workflow-7-debug-my-bot-didnt-reply)
+  - [Extend a bot with MCP tools](#workflow-8-extend-a-bot-with-mcp-tools)
+  - [Back up and restore configuration](#workflow-9-back-up-and-restore-configuration)
+  - [Lock down a public-facing deployment](#workflow-10-lock-down-a-public-facing-deployment)
 - [Overview](#overview)
   - [Dashboard / Overview](#dashboard--overview)
   - [Live Chat Monitor](#live-chat-monitor)
@@ -36,6 +47,120 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [API Documentation](#api-documentation)
   - [Help & FAQ](#help--faq)
 - [Documentation Maintenance](#documentation-maintenance)
+
+---
+
+## Common Workflows
+
+The most common setup and operational user stories, end to end. Each step links into the
+reference sections below for screenshots and per-page detail.
+
+### Workflow 1: First launch — explore in Demo Mode
+
+> *As a new user, I want to see what the platform does before entering any credentials.*
+
+1. Start the app (`pnpm run dev`, or the Docker/Pinokio options in the [README](../README.md)) and open `http://localhost:3028`.
+2. Log in with the password you set via the `ADMIN_PASSWORD` environment variable. On a trusted network you can enable password-less local access with `ALLOW_LOCALHOST_ADMIN` / `ALLOW_LOCAL_NETWORK_ACCESS`.
+3. With no bots configured, the app runs in [Demo Mode](#demo-mode): a purple banner appears and every page is seeded with simulated bots, conversations, and metrics. Nothing is persisted.
+4. Browse the [Dashboard](#dashboard--overview), [Live Chat Monitor](#live-chat-monitor), and [Monitoring](#monitoring) pages to get a feel for the UI. Press **Ctrl + K** to jump anywhere via the [Command Palette](#command-palette).
+5. When you're ready to go live, click **Get Started** on the demo banner to enter the Setup Wizard (Workflow 2).
+
+### Workflow 2: Set up your first live bot
+
+> *As an operator, I want one bot answering in my Discord/Slack/Mattermost channel.*
+
+1. Open the [Setup Wizard](#onboarding-wizard) — it launches automatically on first start, from the Demo Mode banner's **Get Started** button, or any time from **Settings → Rerun Setup Wizard**.
+2. **Message Provider**: pick Discord, Slack, or Mattermost and paste the credentials (bot token for Discord; bot + app token and signing secret for Slack; URL + token for Mattermost). See [Message Platforms](#message-platforms).
+3. **LLM Provider**: pick OpenAI, Flowise, or OpenWebUI and enter the API key. Any OpenAI-compatible endpoint (e.g. a local Ollama or vLLM server) works via the OpenAI provider's base-URL field. See [LLM Providers](#llm-providers).
+4. **Create a Bot**: name it and link it to the providers from steps 2–3.
+5. **Review** and launch. The wizard summary shows a green check next to each configured provider.
+6. Verify it works: open the bot on the [Bots page](#bots--bot-management) and use the **Test Drive** tab to chat against its LLM provider directly (streamed responses, no platform round-trip). Then mention the bot in your channel and watch the reply arrive in the [Live Chat Monitor](#live-chat-monitor).
+
+### Workflow 3: Headless setup with environment variables
+
+> *As a DevOps engineer, I want to configure bots from a `.env` file so deployments are reproducible — no clicking.*
+
+1. Copy `.env.sample` to `.env`.
+2. Define each bot with the `BOTS_<NAME>_` prefix. A minimal Discord + OpenAI bot:
+   ```bash
+   BOTS_ALPHA_MESSAGE_PROVIDER=discord
+   BOTS_ALPHA_LLM_PROVIDER=openai
+   BOTS_ALPHA_PERSONA=default
+   BOTS_ALPHA_DISCORD_BOT_TOKEN=your-discord-bot-token
+   BOTS_ALPHA_OPENAI_API_KEY=sk-your-openai-api-key
+   BOTS_ALPHA_OPENAI_MODEL=gpt-4o
+   ```
+3. For a single bot you can skip the prefix and use the global fallbacks (`MESSAGE_PROVIDER`, `LLM_PROVIDER`, `DISCORD_BOT_TOKEN`, …).
+4. Set the admin/auth variables (`ADMIN_PASSWORD`, and in production `SESSION_SECRET`, `JWT_SECRET`, `JWT_REFRESH_SECRET` — see Workflow 10).
+5. Start the app. Env-defined bots register automatically; the WebUI shows them on the [Bots page](#bots--bot-management) alongside any UI-created bots.
+
+`.env.sample` documents every supported variable.
+
+### Workflow 4: Give your bots distinct personalities
+
+> *As a community manager, I want each bot to have its own voice and behavior.*
+
+1. Go to [Personas](#personas-management) and create a persona — the system prompt is its core instruction set. Built-in personas are read-only but can be cloned as starting points.
+2. Assign it to one or more bots (bulk assignment is supported). Prompt edits propagate immediately to every assigned bot.
+3. To shape *when* the bot speaks (not just *how*), attach a [Response Profile](#response-profiles): base response probability, mention bonuses, and group-activity modifiers.
+4. Watch the result in the [Live Chat Monitor](#live-chat-monitor) and tune.
+
+### Workflow 5: Run a multi-bot swarm in one channel
+
+> *As a power user, I want several personas coexisting in the same channel without talking over each other.*
+
+1. Define multiple bots (Workflow 2 or 3 — e.g. `BOTS_ALPHA_*` and `BOTS_BETA_*`), each with its own platform credentials and persona.
+2. Point them at the same channel/guild.
+3. Set each bot's [Response Profile](#response-profiles) swarm mode — e.g. **Exclusive** (one bot claims a conversation), **Broadcast**, or **Collaborative** — and tune engagement probabilities so bots defer to busy conversations ("social anxiety" logic).
+4. Observe the interplay in the [Live Chat Monitor](#live-chat-monitor) and check per-bot volume on the [Activity Feed](#activity-feed) to confirm no bot is dominating.
+
+### Workflow 6: Daily health check
+
+> *As an operator, I want a quick morning routine to confirm everything is running.*
+
+1. Open the [Dashboard](#dashboard--overview): all bots show **Online**, recent activity looks normal.
+2. Check [System Health](#system-health): Database, LLM, Memory, and Message provider cards are green; hover any degraded chip for the error detail.
+3. Skim the [Monitoring](#monitoring) dashboard for CPU/memory and per-bot health scores. Prometheus-compatible metrics are exported if you scrape externally.
+4. Glance at [Audit & Governance](#audit--governance) for unexpected admin actions.
+
+### Workflow 7: Debug "my bot didn't reply"
+
+> *As an operator, a user reports the bot ignored them and I need to find out why.*
+
+1. **Was the message received?** Filter the [Activity Feed](#activity-feed) by the bot and time range. If the inbound message isn't there, the platform connection is the problem — check the provider's status on [Message Platforms](#message-platforms) and the service cards on [System Health](#system-health).
+2. **Did the bot choose not to answer?** Bots respond probabilistically. Check the bot's [Response Profile](#response-profiles) — an un-mentioned message in a busy channel may simply have lost the dice roll. Direct mentions raise the response chance.
+3. **Was it blocked?** Review [Guards](#guards) — content filters and tool permissions can suppress a response.
+4. **Did the LLM fail?** Use the **Test Drive** tab on the [Bots page](#bots--bot-management) to call the bot's LLM provider directly; an error here means a key, quota, or endpoint problem.
+5. Export the filtered activity log as CSV if you need to share findings.
+
+### Workflow 8: Extend a bot with MCP tools
+
+> *As a builder, I want my bot to call external tools (search, tickets, databases) via Model Context Protocol.*
+
+1. Add the server under [MCP Servers](#mcp-servers) (by URL) and wait for the connection check to pass; its tools are discovered automatically.
+2. Inspect them on [MCP Tools](#mcp-tools) — view each tool's input/output schema and test it directly in Form or JSON mode before any bot touches it.
+3. Enable the tools you want and scope access per bot via [Guards](#guards) tool permissions.
+4. Verify in conversation that the bot invokes the tool, and audit usage on the [Activity Feed](#activity-feed).
+
+### Workflow 9: Back up and restore configuration
+
+> *As an operator, I want to survive a bad config change or migrate to a new host.*
+
+1. Automatic: the server takes a daily configuration backup with a 7-backup retention window — view the history under [System Management](#system-management).
+2. Manual: create a backup before risky changes from [System Backups & Export](#system-backups--export), or download the full config as JSON/YAML/CSV.
+3. Restore by importing the file on the same page, or roll back individual config sections via [Global Defaults](#global-defaults) hot-reload snapshots.
+4. Note: scheduled bot tasks (recurring prompts via the `/api/bots/:id/tasks` API) are currently held in memory only and are **not** included in backups — they are lost on restart. See [docs/ROADMAP.md](ROADMAP.md).
+
+### Workflow 10: Lock down a public-facing deployment
+
+> *As an admin, I'm exposing the WebUI beyond localhost and need it secured.*
+
+1. Set `NODE_ENV=production` — this enforces strict validation; the app refuses to start without a proper `SESSION_SECRET` (≥ 32 chars).
+2. Set strong `ADMIN_PASSWORD`, `SESSION_SECRET`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`; disable `ALLOW_LOCALHOST_ADMIN`/`ALLOW_LOCAL_NETWORK_ACCESS`.
+3. Restrict access: `ADMIN_IP_WHITELIST` for the admin UI, `CORS_ORIGIN`, `TRUST_PROXY` behind a reverse proxy, and rate limits (`RATE_LIMIT_API_MAX`). Webhook endpoints are deny-by-default — allow specific callers via `WEBHOOK_IP_WHITELIST` (exact IPs, no CIDR).
+4. Configure [Guards](#guards) for content filtering and tool permissions, and review [Plugin Security](#plugin-security) trust levels for any community packages.
+5. Confirm [Audit & Governance](#audit--governance) is recording admin actions, then re-run the daily health check (Workflow 6).
+6. Note: two-factor authentication and account lockout are **not yet available** (under security review — see [docs/ROADMAP.md](ROADMAP.md)); compensate with IP restrictions and a strong password.
 
 ---
 
