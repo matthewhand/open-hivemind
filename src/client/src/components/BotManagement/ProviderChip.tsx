@@ -119,7 +119,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
           </Badge>
 
           {/* Action Buttons */}
-          <div className="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
             {/* Edit Button */}
             {onEdit && !disabled && (
               <Tooltip content="Edit provider">

@@ -92,6 +92,7 @@ const ChatPage: React.FC = () => {
   const {
     data: botsData,
     isLoading: botsLoading,
+    isError: botsError,
     refetch: refetchBots,
   } = useQuery<BotData[]>({
     queryKey: ['bots'],
@@ -231,9 +232,29 @@ const ChatPage: React.FC = () => {
       <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
         Active Bots ({bots.length})
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto flex flex-col">
         {loading && bots.length === 0 ? (
           <div className="p-4"><SkeletonList items={4} showAvatar /></div>
+        ) : botsError ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <EmptyState
+              icon={Activity}
+              title="Failed to Load Bots"
+              description="There was a problem connecting to the server. Please try again."
+              variant="error"
+              actionLabel="Retry"
+              onAction={handleRefresh}
+            />
+          </div>
+        ) : bots.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <EmptyState
+              icon={Bot}
+              title="No Active Bots"
+              description="You don't have any bots running right now."
+              variant="noData"
+            />
+          </div>
         ) : (
           <ul className="menu w-full p-2 gap-1">
             {bots.map(bot => (
