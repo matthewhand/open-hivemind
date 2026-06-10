@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
+import { authenticate } from '@src/auth/middleware';
 import { asyncErrorHandler } from '@src/middleware/errorHandler';
 import { DiscordProvider } from '@src/providers/DiscordProvider';
-import { authenticateToken } from '@src/server/middleware/auth';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '@src/types/constants';
 
@@ -14,7 +14,7 @@ const router = Router();
  */
 router.post(
   '/discord',
-  authenticateToken,
+  authenticate,
   asyncErrorHandler(async (req: Request, res: Response) => {
     try {
       const provider = new DiscordProvider();
