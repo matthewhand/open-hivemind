@@ -66,12 +66,12 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] Persist per-step pipeline telemetry for Message Flow Replay (UI infers steps today)
   - [ ] Feed the 7 deferred BusinessKpi metrics (cost/retention/churn/availability) or hide them
 - [ ] **Auth/persistence robustness**
-  - [ ] Durable refresh-token allow-list (in-memory Set; lost on restart, not multi-instance safe)
+  - [x] Durable refresh-token allow-list (SQLite-backed via DatabaseManager; in-memory cache on top)
   - [ ] Widen `auditMiddleware` beyond config routers; persist the `enableAuditLogging` settings toggle
   - [x] Configurable CORS origins (`CORS_ORIGIN`/`CORS_ALLOWED_ORIGINS` env + stored `cors.origins` setting; localhost always allowed; `*` = allow-all without credentials)
   - [ ] Transactional config-backup restore; validation on main-config import
   - [ ] Harden `postgresWrapper.translateSql` (self-admittedly naive)
-  - [ ] Persist scheduled bot tasks (`loadTasks()` is an empty stub — in-memory only)
+  - [x] Persist scheduled bot tasks (DB-backed via migration 002; loadTasks restores on boot)
   - [ ] Webhook scheduled messages: durable store + delivery scheduler (in-memory Map, never delivered)
 - [ ] **Webhook events**
   - [x] Call `recordWebhookEvent()` from the ingress handlers + real retry re-dispatch (nav entry added)
