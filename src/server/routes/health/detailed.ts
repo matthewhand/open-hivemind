@@ -2,6 +2,7 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { optionalAuth } from '../../../auth/middleware';
 import { UserConfigStore } from '../../../config/UserConfigStore';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../../services/ApiMonitorService';
@@ -14,7 +15,6 @@ import {
   EndpointIdParamSchema,
 } from '../../../validation/schemas/healthSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { optionalAuth } from '../../middleware/auth';
 import { buildSystemChecks, calculateErrorRate, calculateHealthStatus } from './helpers';
 
 const router = Router();

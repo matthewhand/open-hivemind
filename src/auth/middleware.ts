@@ -1,8 +1,19 @@
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
-import { AuthenticationError, AuthorizationError } from '../types/errorClasses';
 import { AuthManager } from './AuthManager';
 import type { AuthMiddlewareRequest, User, UserRole } from './types';
+
+// Canonical declaration of `req.user` for plain Express handlers.
+// Inherited from the former src/server/middleware/auth.ts when the two
+// parallel auth middlewares were consolidated — many route handlers access
+// `req.user` on the un-cast Request type.
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
 
 interface TokenPayload {
   userId: string;
@@ -12,6 +23,22 @@ interface TokenPayload {
 }
 
 const debug = Debug('app:AuthMiddleware');
+
+/**
+ * Fake admin user injected when the E2E test bypass is enabled
+ * (ALLOW_TEST_BYPASS=true — refused outright in production).
+ * Mirrors the user formerly injected by src/server/middleware/auth.ts so
+ * Playwright E2E flows keep working after consolidation.
+ */
+const TEST_BYPASS_USER: User = {
+  id: 'test-admin',
+  username: 'admin',
+  email: 'test@open-hivemind.local',
+  role: 'admin',
+  isActive: true,
+  createdAt: new Date().toISOString(),
+  lastLogin: new Date().toISOString(),
+};
 
 export class AuthMiddleware {
   private static instance: AuthMiddleware;
@@ -30,10 +57,36 @@ export class AuthMiddleware {
 
   /**
    * JWT Authentication middleware
-   * Verifies JWT token and attaches user to request
-   * Bypasses authentication for localhost requests
+   * Verifies JWT token and attaches user to request.
+   *
+   * Bypass flags (both opt-in, both refused/ineffective in production):
+   *   - ALLOW_TEST_BYPASS=true  — E2E test bypass; any request is treated as
+   *     admin. Hard-refused (HTTP 500) when NODE_ENV=production.
+   *   - ALLOW_LOCALHOST_ADMIN=true — requests from a strictly validated
+   *     localhost origin are treated as admin when no valid token is supplied.
+   *
+   * Failure responses are explicit JSON with RFC-conventional status codes:
+   *   401 — missing/invalid/expired token, or token for a nonexistent user.
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // ── E2E test bypass (formerly src/server/middleware/auth.ts) ──
+    // Activate by setting ALLOW_TEST_BYPASS=true (never in production).
+    if (process.env.ALLOW_TEST_BYPASS === 'true') {
+      if (process.env.NODE_ENV === 'production') {
+        // Defense-in-depth: refuse to bypass if a hostile env reaches us.
+        res.status(500).json({
+          error: 'Server misconfiguration: ALLOW_TEST_BYPASS cannot be used in production',
+        });
+        return;
+      }
+      (req as AuthMiddlewareRequest).user = TEST_BYPASS_USER;
+      (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(
+        TEST_BYPASS_USER.role
+      );
+      next();
+      return;
+    }
+
     // Helper to check for localhost
     const isLocalhostRequest = (): boolean => {
       const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
@@ -135,20 +188,24 @@ export class AuthMiddleware {
       }
 
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new AuthenticationError(
-          'Bearer token required in Authorization header',
-          undefined,
-          'missing_token'
-        );
+        // Explicit 401 JSON — preserves the response contract of the former
+        // src/server/middleware/auth.ts (no global error handler is mounted,
+        // so next(err) would render Express's default HTML error page).
+        res.status(401).json({ error: 'Access token required' });
+        return;
       }
 
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
       const payload = this.authManager.verifyAccessToken(token) as TokenPayload;
 
-      // Get user from token payload
+      // Get user from token payload. A valid token whose user has been
+      // deleted is rejected — deliberately the same generic message as an
+      // invalid token to avoid user enumeration.
       const user = this.authManager.getUser(payload.userId);
       if (!user) {
-        throw new AuthenticationError('User not found', undefined, 'invalid_credentials');
+        debug('Token valid but user %s not found', payload.userId);
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
       }
 
       const userWithTenant = user;
@@ -168,18 +225,16 @@ export class AuthMiddleware {
       }
 
       debug('Authentication error:', error);
-      // Pass error to Express error handler instead of throwing
-      if (error instanceof AuthenticationError) {
-        next(error);
-        return;
-      }
-      next(new AuthenticationError('Invalid or expired token', undefined, 'expired_token'));
+      // 401 (not the former 403 of src/server/middleware/auth.ts): an
+      // invalid/expired token is an authentication failure per RFC 6750.
+      res.status(401).json({ error: 'Invalid or expired token' });
     }
   };
 
   /**
    * Role-based authorization middleware
-   * Checks if user has required role
+   * Checks if user has required role (hierarchical: a higher role always
+   * satisfies a lower requirement — admin passes every check).
    */
   public requireRole = (
     requiredRole: string
@@ -187,7 +242,7 @@ export class AuthMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
-        next(new AuthenticationError('User not authenticated', undefined, 'missing_token'));
+        res.status(401).json({ error: 'Authentication required' });
         return;
       }
 
@@ -202,14 +257,11 @@ export class AuthMiddleware {
       const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
 
       if (userRoleLevel < requiredRoleLevel) {
-        next(
-          new AuthorizationError(
-            `Required role: ${requiredRole}, your role: ${authReq.user.role}`,
-            'role_check',
-            'access',
-            requiredRole
-          )
-        );
+        res.status(403).json({
+          error: 'Insufficient role',
+          required: requiredRole,
+          userRole: authReq.user.role,
+        });
         return;
       }
 
@@ -230,19 +282,15 @@ export class AuthMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
-        next(new AuthenticationError('User not authenticated', undefined, 'missing_token'));
+        res.status(401).json({ error: 'Authentication required' });
         return;
       }
 
       if (!authReq.permissions?.includes(permission)) {
-        next(
-          new AuthorizationError(
-            `Required permission: ${permission}`,
-            'permission_check',
-            'access',
-            permission
-          )
-        );
+        res.status(403).json({
+          error: 'Insufficient permissions',
+          required: permission,
+        });
         return;
       }
 
@@ -259,13 +307,13 @@ export class AuthMiddleware {
 
   /**
    * Optional authentication middleware
-   * Attaches user to request if token is present, but doesn't fail if missing
+   * Attaches user to request if a valid token is present, but doesn't fail if
+   * missing. Does NOT clobber a `req.user` set by upstream middleware
+   * (preserves the semantics of the former src/server/middleware/auth.ts
+   * optionalAuth, whose consumers were migrated here).
    */
   public optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const authReq = req as AuthMiddlewareRequest;
-    // Initialize user as undefined
-    authReq.user = undefined;
-    authReq.permissions = undefined;
 
     try {
       const authHeader = Array.isArray(req.headers.authorization)

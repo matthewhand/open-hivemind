@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { authenticate, requireRole } from '@src/auth/middleware';
 import { apiLimiter, configLimiter } from '@src/middleware/rateLimiter';
 import {
   installPlugin,
@@ -9,7 +10,6 @@ import {
   uninstallPlugin,
   updatePlugin,
 } from '@src/plugins/PluginManager';
-import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
@@ -250,7 +250,7 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
 // ---------------------------------------------------------------------------
 
 // All marketplace routes require authentication
-router.use(authenticateToken);
+router.use(authenticate);
 
 // ⚡ Bolt Optimization: Cache expensive file system reads and module loading
 let cachedPackages: MarketplacePackage[] | null = null;

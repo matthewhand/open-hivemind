@@ -8,8 +8,8 @@ import fs from 'fs';
 import path from 'path';
 import { type NextFunction, type Request, type Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
+import { authenticate } from '@src/auth/middleware';
 import { SessionManager } from '@src/auth/SessionManager';
-import { authenticateToken } from '@src/server/middleware/auth';
 import { csrfProtection, csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
 import activityRouter from '@src/server/routes/activity';
@@ -128,7 +128,7 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   //
   // Rules:
   //   1. Auth routes first — the CSRF/token endpoint must always be reachable.
-  //   2. Protected routes — routes that require authenticateToken middleware.
+  //   2. Protected routes — routes that require authenticate middleware.
   //   3. Resource routers — each mounted at its own specific '/api/<resource>'.
   //      These never conflict because they only handle their own sub-paths.
   //   4. Catch-all '/api' router LAST — openapiRouter serves /api/openapi*
@@ -147,23 +147,23 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   // routes so login/refresh remain reachable before a session exists.
   app.use('/api', SessionManager.getInstance().sessionMiddleware());
 
-  // 2. Protected routes (authenticateToken required)
-  app.use('/api/swarm', authenticateToken, swarmRouter);
-  app.use('/api/anomalies', authenticateToken, anomalyRouter);
-  app.use('/api/guards', authenticateToken, guardsRouter);
-  app.use('/api/specs', authenticateToken, specsRouter);
-  app.use('/api/import-export', authenticateToken, importExportRouter);
+  // 2. Protected routes (authenticate required)
+  app.use('/api/swarm', authenticate, swarmRouter);
+  app.use('/api/anomalies', authenticate, anomalyRouter);
+  app.use('/api/guards', authenticate, guardsRouter);
+  app.use('/api/specs', authenticate, specsRouter);
+  app.use('/api/import-export', authenticate, importExportRouter);
 
   // 3. Resource routers (specific paths, no catch-all conflict)
-  app.use('/api/activity', authenticateToken, activityRouter);
-  app.use('/api/agents', authenticateToken, agentsRouter);
-  app.use('/api/dashboard', authenticateToken, dashboardRouter);
-  app.use('/api/config', authenticateToken, webuiConfigRouter);
-  app.use('/api/bots', authenticateToken, botsRouter);
+  app.use('/api/activity', authenticate, activityRouter);
+  app.use('/api/agents', authenticate, agentsRouter);
+  app.use('/api/dashboard', authenticate, dashboardRouter);
+  app.use('/api/config', authenticate, webuiConfigRouter);
+  app.use('/api/bots', authenticate, botsRouter);
   app.use('/api/bot-config', botConfigRouter);
   app.use('/api/validation', validationRouter);
-  app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
-  app.use('/api/secure-config', authenticateToken, secureConfigRouter);
+  app.use('/api/hot-reload', authenticate, hotReloadRouter);
+  app.use('/api/secure-config', authenticate, secureConfigRouter);
   // Mount the plugin-security router at /api/admin/plugins BEFORE the catch-all
   // /api/admin adminApiRouter so its /security, /:name/verify and /:name/trust
   // routes (consumed by the PluginSecurity dashboard) take precedence. The router
@@ -171,23 +171,23 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/admin/plugins', pluginSecurityRouter);
   app.use('/api/admin', adminApiRouter);
   app.use('/api/integrations', integrationsRouter);
-  app.use('/api/letta', authenticateToken, lettaRouter);
-  app.use('/api/marketplace', authenticateToken, marketplaceRouter);
-  app.use('/api/mcp', authenticateToken, mcpRouter);
+  app.use('/api/letta', authenticate, lettaRouter);
+  app.use('/api/marketplace', authenticate, marketplaceRouter);
+  app.use('/api/mcp', authenticate, mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
-  app.use('/api/monitoring', authenticateToken, monitoringRouter);
-  app.use('/api/onboarding', authenticateToken, onboardingRouter);
-  app.use('/api/personas', authenticateToken, personasRouter);
-  app.use('/api/providers', authenticateToken, providersRouter);
-  app.use('/api/templates', authenticateToken, templatesRouter);
+  app.use('/api/monitoring', authenticate, monitoringRouter);
+  app.use('/api/onboarding', authenticate, onboardingRouter);
+  app.use('/api/personas', authenticate, personasRouter);
+  app.use('/api/providers', authenticate, providersRouter);
+  app.use('/api/templates', authenticate, templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
   // webhookEventsRouter serves /events* (list, detail, retry) with the contract
   // the WebUI expects; webhooksRouter handles /scheduled*. Order matters so the
   // events routes are matched first.
-  app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
-  app.use('/api/webhooks', authenticateToken, webhooksRouter);
-  app.use('/api/webui', authenticateToken, webuiRouter);
-  app.use('/api/test', authenticateToken, testRouter);
+  app.use('/api/webhooks', authenticate, webhookEventsRouter);
+  app.use('/api/webhooks', authenticate, webhooksRouter);
+  app.use('/api/webui', authenticate, webuiRouter);
+  app.use('/api/test', authenticate, testRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
 

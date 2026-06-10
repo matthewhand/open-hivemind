@@ -37,8 +37,8 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
       return;
     }
 
-    // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
-    // The authenticateToken middleware usually populates req.user
+    // Get tenantId from request user if available (assuming req.user is populated by the authenticate middleware)
+    // The authenticate middleware usually populates req.user
     const tenantId = req.user?.tenantId;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);

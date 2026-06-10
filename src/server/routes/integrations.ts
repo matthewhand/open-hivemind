@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { authenticate, requireRole } from '@src/auth/middleware';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { configLimiter } from '@src/middleware/rateLimiter';
-import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
@@ -18,7 +18,7 @@ const router = Router();
 const providerManager = ProviderConfigManager.getInstance();
 
 // Middleware: Admin access required for all integration changes
-router.use(authenticateToken);
+router.use(authenticate);
 router.use(requireRole('admin'));
 
 /**

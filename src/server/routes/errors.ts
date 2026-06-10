@@ -1,12 +1,12 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { authenticate } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 const logger = createLogger('errorsRouter');
@@ -97,7 +97,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
 });
 
 // Get error statistics (for monitoring)
-router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
+router.get('/stats', authenticate, async (req: Request, res: Response) => {
   try {
     const stats = await errorLogger.getErrorStats();
     return res.json(ApiResponse.success(stats));
@@ -110,7 +110,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Get recent errors (for debugging)
-router.get('/recent', authenticateToken, async (req: Request, res: Response) => {
+router.get('/recent', authenticate, async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const recentErrors = await errorLogger.getRecentErrors(limit);

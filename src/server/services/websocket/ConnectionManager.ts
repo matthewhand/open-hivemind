@@ -59,13 +59,13 @@ export class ConnectionManager {
     // never read it, so any peer reachable via CORS could connect and
     // consume bot-status / pipeline / audit broadcasts (cross-tenant leak).
     //
-    // Mirrors the HTTP `authenticateToken` middleware: verifies a JWT via
+    // Mirrors the HTTP `authenticate` middleware (src/auth/middleware): verifies a JWT via
     // AuthManager and attaches user info to `socket.data.user`. Refuses
     // the connection (Socket.IO surfaces this as `connect_error` on the
     // client) if the token is missing, malformed, or expired.
     this.io.use((socket: Socket, next) => {
       // Test-only bypass: matches the HTTP-side ALLOW_TEST_BYPASS gate
-      // that's already refused in production by middleware/auth.ts.
+      // that's already refused in production by src/auth/middleware.ts.
       if (process.env.ALLOW_TEST_BYPASS === 'true' && process.env.NODE_ENV !== 'production') {
         socket.data.user = { id: 'test-bypass', role: 'admin', permissions: ['*'] };
         return next();

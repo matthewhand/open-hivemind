@@ -6,8 +6,8 @@
 
 import Debug from 'debug';
 import { Router } from 'express';
+import { authenticate, requireRole } from '@src/auth/middleware';
 import { configLimiter } from '@src/middleware/rateLimiter';
-import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '@src/types/constants';
 
@@ -29,7 +29,7 @@ const scheduledMessages = new Map<string, any>();
  * GET /api/webhooks/scheduled
  * List scheduled messages
  */
-router.get('/scheduled', configLimiter, authenticateToken, (req, res) => {
+router.get('/scheduled', configLimiter, authenticate, (req, res) => {
   const messages = Array.from(scheduledMessages.values());
   return res.json(ApiResponse.success({ messages, count: messages.length }));
 });
@@ -38,7 +38,7 @@ router.get('/scheduled', configLimiter, authenticateToken, (req, res) => {
  * GET /api/webhooks/scheduled/:id
  * Get a scheduled message by ID
  */
-router.get('/scheduled/:id', configLimiter, authenticateToken, (req, res) => {
+router.get('/scheduled/:id', configLimiter, authenticate, (req, res) => {
   const message = scheduledMessages.get(req.params.id);
   if (!message) {
     return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Scheduled message not found'));
@@ -50,7 +50,7 @@ router.get('/scheduled/:id', configLimiter, authenticateToken, (req, res) => {
  * POST /api/webhooks/scheduled
  * Create a scheduled message
  */
-router.post('/scheduled', configLimiter, authenticateToken, requireRole('admin'), (req, res) => {
+router.post('/scheduled', configLimiter, authenticate, requireRole('admin'), (req, res) => {
   const { botId, channelId, message, scheduledTime } = req.body;
   if (!botId || !channelId || !message || !scheduledTime) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
@@ -74,21 +74,13 @@ router.post('/scheduled', configLimiter, authenticateToken, requireRole('admin')
  * DELETE /api/webhooks/scheduled/:id
  * Delete a scheduled message
  */
-router.delete(
-  '/scheduled/:id',
-  configLimiter,
-  authenticateToken,
-  requireRole('admin'),
-  (req, res) => {
-    const deleted = scheduledMessages.delete(req.params.id);
-    if (!deleted) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error('Scheduled message not found'));
-    }
-    debug('Deleted scheduled message %s', req.params.id);
-    return res.json(ApiResponse.success({ message: 'Deleted' }));
+router.delete('/scheduled/:id', configLimiter, authenticate, requireRole('admin'), (req, res) => {
+  const deleted = scheduledMessages.delete(req.params.id);
+  if (!deleted) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Scheduled message not found'));
   }
-);
+  debug('Deleted scheduled message %s', req.params.id);
+  return res.json(ApiResponse.success({ message: 'Deleted' }));
+});
 
 export default router;
