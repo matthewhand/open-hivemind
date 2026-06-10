@@ -25,11 +25,11 @@ The Open Hivemind project is a full-stack enterprise application built with Reac
 - **API**: RESTful with WebSocket support
 
 #### **Infrastructure**
-- **CI/CD**: GitHub Actions with comprehensive workflows
-- **Deployment**: Vercel (frontend) and custom hosting (backend)
-- **Monitoring**: Real-time health checks and alerting
-- **Backup**: Automated backup and disaster recovery
-- **Analytics**: Advanced usage tracking and user behavior analysis
+- **CI/CD**: GitHub Actions (lint, type-check, tests, build smoke)
+- **Deployment**: Docker image or Node.js process (see README); no hosted/managed deployment
+- **Monitoring**: Health-check endpoints, Prometheus-compatible metrics, and anomaly detection (threshold alerting is not yet wired into production paths)
+- **Backup**: Scheduled daily configuration backups with retention, plus on-demand export/import (no automated disaster recovery)
+- **Analytics**: Activity logging and per-provider metrics collection
 
 ## 🗂️ Project Structure
 
