@@ -55,8 +55,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] OpenWebUI knowledge-file RAG: per-bot/runtime knowledge upload (single startup file today)
   - [ ] Streaming for providers beyond OpenAI (only `llm-openai` implements `generateStreamingChatCompletion`)
 - [ ] **Memory depth**
-  - [ ] MemVault durable store (in-memory only; Postgres/pgvector store deferred)
-  - [ ] Wire `ConversationSummaryService` into the pipeline (zero callers today)
+  - [x] MemVault durable store (SQLite-backed via DatabaseManager + migration 003, in-memory cache on top; Postgres/pgvector store still deferred)
+  - [x] Wire `ConversationSummaryService` into the pipeline (Enrich stage summarizes older history turns; `MESSAGE_HISTORY_SUMMARY_ENABLED`, default off)
 - [ ] **MCP**
   - [x] Auto-connect bot-assigned MCP servers at startup (only admin routes connect today)
   - [x] Support non-stdio MCP server URLs in `/api/mcp/servers` connect path (stdio:// only)

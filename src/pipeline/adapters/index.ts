@@ -12,6 +12,8 @@ export type { MemoryRetrieverDeps } from './MemoryRetrieverAdapter';
 
 export { PromptBuilderAdapter } from './PromptBuilderAdapter';
 
+export { HistorySummarizerAdapter } from './HistorySummarizerAdapter';
+
 export { LlmInvokerAdapter } from './LlmInvokerAdapter';
 export type { LlmInvokerDeps } from './LlmInvokerAdapter';
 

@@ -4,6 +4,7 @@ import { getMemoryProfileByKey } from '@src/config/memoryProfiles';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateMemoryProvider, loadPlugin } from '@src/plugins';
 import type { IMemoryProvider } from '@src/types/IProvider';
+import { getServiceDependencies } from '@src/utils/serviceDependencies';
 import Logger from '@common/logger';
 import { withTimeout } from '@common/withTimeout';
 
@@ -125,7 +126,21 @@ export class MemoryManager {
     try {
       const pluginName = `memory-${profile.provider}`;
       const mod = await loadPlugin(pluginName);
-      const provider = instantiateMemoryProvider(mod, profile.config) as IMemoryProvider;
+      // Inject service dependencies so providers can resolve the database
+      // manager (durable MemVault store) and LLM providers (embeddings).
+      // Dependencies are strictly optional: if they cannot be assembled the
+      // provider is instantiated without them (in-memory behavior).
+      let dependencies;
+      try {
+        dependencies = getServiceDependencies('MemoryManager');
+      } catch (err) {
+        debug('Service dependencies unavailable; instantiating provider without them: %O', err);
+      }
+      const provider = instantiateMemoryProvider(
+        mod,
+        profile.config,
+        dependencies
+      ) as IMemoryProvider;
       this.providers.set(profileKey, provider);
       debug('Instantiated memory provider for profile "%s" (plugin: %s)', profileKey, pluginName);
       return provider;

@@ -27,6 +27,11 @@ import {
   type InferenceLogSummary,
 } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
+import {
+  MemVaultRepository,
+  type MemVaultMemoryRecord,
+  type MemVaultScope,
+} from './repositories/MemVaultRepository';
 import { MessageRepository } from './repositories/MessageRepository';
 import { SQLiteWrapper } from './sqliteWrapper';
 import type {
@@ -82,6 +87,8 @@ export type {
   AuditEventStats,
 } from './repositories/AuditEventRepository';
 
+export type { MemVaultMemoryRecord, MemVaultScope } from './repositories/MemVaultRepository';
+
 export type { Database } from './sqliteWrapper';
 
 const debug = Debug('app:DatabaseManager');
@@ -106,6 +113,7 @@ export class DatabaseManager {
   private activityRepo!: ActivityRepository;
   private inferenceRepo!: InferenceRepository;
   private memoryRepo!: MemoryRepository;
+  private memVaultRepo!: MemVaultRepository;
   private botTaskRepo!: BotTaskRepository;
 
   constructor() {
@@ -275,6 +283,7 @@ export class DatabaseManager {
     this.activityRepo = new ActivityRepository(getDb, isConn);
     this.inferenceRepo = new InferenceRepository(getDb, isConn, isPg);
     this.memoryRepo = new MemoryRepository(getDb, isConn, isPg);
+    this.memVaultRepo = new MemVaultRepository(getDb, isConn, isPg);
     this.botTaskRepo = new BotTaskRepository(getDb, isConn, isPg);
   }
 
@@ -650,6 +659,34 @@ export class DatabaseManager {
     } = {}
   ): Promise<number> {
     return this.memoryRepo.evictMemories(options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // MemVault durable store (memvault_memories — see migration 003)
+  //
+  // These methods structurally satisfy the `MemVaultDurableBackend` contract
+  // declared in packages/memory-memvault, so this manager can be injected as
+  // the durable backend via IServiceDependencies.getDatabaseManager().
+  // ---------------------------------------------------------------------------
+
+  async upsertMemVaultMemory(record: MemVaultMemoryRecord): Promise<void> {
+    return this.memVaultRepo.upsert(record);
+  }
+
+  async getMemVaultMemory(id: string): Promise<MemVaultMemoryRecord | null> {
+    return this.memVaultRepo.getById(id);
+  }
+
+  async listMemVaultMemories(scope: MemVaultScope = {}): Promise<MemVaultMemoryRecord[]> {
+    return this.memVaultRepo.list(scope);
+  }
+
+  async deleteMemVaultMemory(id: string): Promise<boolean> {
+    return this.memVaultRepo.deleteById(id);
+  }
+
+  async clearMemVaultMemories(scope: MemVaultScope = {}): Promise<number> {
+    return this.memVaultRepo.clear(scope);
   }
 
   /**

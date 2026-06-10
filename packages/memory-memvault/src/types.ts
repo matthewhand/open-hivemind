@@ -17,6 +17,12 @@ export interface MemVaultConfig {
   recencyHalfLifeMs?: number;
   /** Default number of results returned by searches that omit `limit`. */
   defaultLimit?: number;
+  /**
+   * Persist memories through the host application's database when one is
+   * available (default `true`). Set to `false` to force the non-durable
+   * in-process store even when a database manager is injected.
+   */
+  durable?: boolean;
 }
 
 /**

@@ -1,5 +1,5 @@
-import Debug from 'debug';
 import { randomUUID } from 'crypto';
+import Debug from 'debug';
 import type {
   IMemoryProvider,
   IServiceDependencies,
@@ -7,6 +7,7 @@ import type {
   MemoryScopeOptions,
   MemorySearchResult,
 } from '@hivemind/shared-types';
+import { DatabaseMemVaultStore, isMemVaultDurableBackend } from './DatabaseMemVaultStore';
 import { InMemoryMemVaultStore } from './InMemoryMemVaultStore';
 import { cosineSimilarity, hybridScore } from './scoring';
 import type { MemVaultConfig, MemVaultStore, StoredMemory } from './types';
@@ -73,9 +74,7 @@ export class MemVaultProvider implements IMemoryProvider {
       this.embeddingProvider = providers.find((p) => p.name === this.config.embeddingProfile);
     }
     if (!this.embeddingProvider) {
-      this.embeddingProvider = providers.find(
-        (p) => typeof p.generateEmbedding === 'function'
-      );
+      this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
     }
   }
 
@@ -197,8 +196,7 @@ export class MemVaultProvider implements IMemoryProvider {
       const ready = this.store.isReady();
       this.resolveEmbeddingProvider();
       const hasEmbedding =
-        !!this.embeddingProvider &&
-        typeof this.embeddingProvider.generateEmbedding === 'function';
+        !!this.embeddingProvider && typeof this.embeddingProvider.generateEmbedding === 'function';
       if (ready && hasEmbedding) {
         return { status: 'ok', details: { store: this.store.constructor.name } };
       }
@@ -242,9 +240,35 @@ function toEntry(record: StoredMemory, score?: number): MemoryEntry {
 
 /**
  * Plugin factory — PluginLoader-compatible entry point.
+ *
+ * When the host injects a database manager (via
+ * `dependencies.getDatabaseManager()`) that exposes the MemVault durable
+ * backend surface, memories are persisted through it (with an in-memory
+ * cache on top) so they survive restarts. Set `config.durable = false` to
+ * opt out. Without a usable backend the provider falls back to the
+ * non-durable in-process store.
  */
-export function create(config: MemVaultConfig, dependencies: IServiceDependencies): MemVaultProvider {
-  return new MemVaultProvider(config, dependencies);
+export function create(
+  config: MemVaultConfig = {},
+  dependencies?: IServiceDependencies
+): MemVaultProvider {
+  let store: MemVaultStore | undefined;
+  if (config.durable !== false && dependencies?.getDatabaseManager) {
+    try {
+      const backend = dependencies.getDatabaseManager();
+      if (isMemVaultDurableBackend(backend)) {
+        store = new DatabaseMemVaultStore(backend, (operation, err) =>
+          debug('Durable store %s failed (continuing from cache): %O', operation, err)
+        );
+        debug('MemVault using database-backed durable store');
+      } else {
+        debug('Injected database manager lacks MemVault backend surface; using in-memory store');
+      }
+    } catch (err) {
+      debug('Failed to resolve database manager; using in-memory store: %O', err);
+    }
+  }
+  return new MemVaultProvider(config, dependencies, store);
 }
 
 export const manifest = {
