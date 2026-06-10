@@ -32,6 +32,12 @@ node_modules
 # TypeScript compiled output
 dist
 
+# Runtime data — local databases and user state must never ship in the image
+data/
+*.db
+*.db-shm
+*.db-wal
+
 # Environment files
 .env
 .env.local
