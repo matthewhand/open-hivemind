@@ -54,7 +54,10 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        run: pnpm run test:playwright
+        # Chromium smoke subset only — the full unfiltered matrix (all specs ×
+        # 3 browsers) exceeds the 60-min job timeout and duplicates
+        # playwright.yml, which owns the smoke and journey suites.
+        run: npx playwright test --grep "smoke|core-pages" --project=chromium --reporter=line
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
