@@ -58,8 +58,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] MemVault durable store (in-memory only; Postgres/pgvector store deferred)
   - [ ] Wire `ConversationSummaryService` into the pipeline (zero callers today)
 - [ ] **MCP**
-  - [ ] Auto-connect bot-assigned MCP servers at startup (only admin routes connect today)
-  - [ ] Support non-stdio MCP server URLs in `/api/mcp/servers` connect path (stdio:// only)
+  - [x] Auto-connect bot-assigned MCP servers at startup (only admin routes connect today)
+  - [x] Support non-stdio MCP server URLs in `/api/mcp/servers` connect path (stdio:// only)
 - [ ] **Monitoring truth**
   - [x] Replace `mockSpans` + `Math.random()` bot stats in MonitoringDashboard with real data
   - [x] Implement `/api/activity/messages` and `/llm-usage` (return `[]` today) and real `/chart-data` (random series today)

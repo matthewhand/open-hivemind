@@ -1,8 +1,12 @@
 import Debug from 'debug';
 import { SlackMessageProvider } from '@hivemind/message-slack';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import type { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
+import { resolveMcpTransport } from './transportSelection';
 
 // The MCP SDK is published as ESM-only with subpath exports (no CJS root
 // export), so it MUST be loaded via a dynamic `import()` of the real entry
@@ -40,9 +44,12 @@ export class MCPService {
    *
    * Loads the SDK via dynamic `import()` of its real subpath entry points
    * (the package has no working CJS root export, so `require()` throws), then
-   * selects the correct transport from the server URL scheme:
+   * selects the correct transport from the server URL scheme (see
+   * ./transportSelection):
    *  - `http(s)://` -> StreamableHTTPClientTransport (remote servers); the
    *    optional apiKey is sent as a Bearer Authorization header.
+   *  - `sse://` / `sse+http(s)://` -> SSEClientTransport (legacy remote
+   *    servers); apiKey handled the same way.
    *  - `stdio://`   -> StdioClientTransport (local command servers).
    *
    * @param config - The MCP server configuration.
@@ -57,40 +64,50 @@ export class MCPService {
    * imports unreliable in jest); tests spy on this method instead.
    */
   protected async loadSdk(): Promise<{
-    Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client;
-    StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport;
-    StdioClientTransport: typeof import('@modelcontextprotocol/sdk/client/stdio.js').StdioClientTransport;
+    Client: typeof Client;
+    StreamableHTTPClientTransport: typeof StreamableHTTPClientTransport;
+    SSEClientTransport: typeof SSEClientTransport;
+    StdioClientTransport: typeof StdioClientTransport;
   }> {
-    const [{ Client }, { StreamableHTTPClientTransport }, { StdioClientTransport }] =
-      await Promise.all([
-        import('@modelcontextprotocol/sdk/client/index.js'),
-        import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
-        import('@modelcontextprotocol/sdk/client/stdio.js'),
-      ]);
-    return { Client, StreamableHTTPClientTransport, StdioClientTransport };
+    const [
+      { Client },
+      { StreamableHTTPClientTransport },
+      { SSEClientTransport },
+      { StdioClientTransport },
+    ] = await Promise.all([
+      import('@modelcontextprotocol/sdk/client/index.js'),
+      import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
+      import('@modelcontextprotocol/sdk/client/sse.js'),
+      import('@modelcontextprotocol/sdk/client/stdio.js'),
+    ]);
+    return { Client, StreamableHTTPClientTransport, SSEClientTransport, StdioClientTransport };
   }
 
   private async createConnectedClient(config: MCPConfig, clientName: string): Promise<Client> {
-    const { Client, StreamableHTTPClientTransport, StdioClientTransport } = await this.loadSdk();
+    const { Client, StreamableHTTPClientTransport, SSEClientTransport, StdioClientTransport } =
+      await this.loadSdk();
 
     const client = new Client(
       { name: clientName, version: '1.0.0' },
       { capabilities: { experimental: {} } }
     );
 
-    const url = config.serverUrl;
-    if (url.startsWith('stdio://')) {
-      const command = url.replace('stdio://', '');
-      const transport = new StdioClientTransport({ command, args: [] });
+    const resolved = resolveMcpTransport(config.serverUrl);
+
+    if (resolved.kind === 'stdio') {
+      const transport = new StdioClientTransport({ command: resolved.target, args: [] });
       await client.connect(transport);
       return client;
     }
 
-    const transport = new StreamableHTTPClientTransport(new URL(url), {
-      requestInit: config.apiKey
-        ? { headers: { Authorization: `Bearer ${config.apiKey}` } }
-        : undefined,
-    });
+    const requestInit = config.apiKey
+      ? { headers: { Authorization: `Bearer ${config.apiKey}` } }
+      : undefined;
+
+    const transport =
+      resolved.kind === 'sse'
+        ? new SSEClientTransport(new URL(resolved.target), { requestInit })
+        : new StreamableHTTPClientTransport(new URL(resolved.target), { requestInit });
     await client.connect(transport);
     return client;
   }
@@ -232,6 +249,69 @@ export class MCPService {
         `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  /**
+   * Connects every MCP server assigned to an enabled bot via its
+   * `mcpServers` configuration.
+   *
+   * Intended as a startup hook (see src/server/initServices.ts): historically
+   * only the admin WebUI routes ever connected MCP servers, so bot-assigned
+   * servers were silently unavailable until an admin clicked "connect".
+   *
+   * Failure-tolerant by design — a server that cannot be reached is recorded
+   * in `failed` and logged, but never throws, so boot is not blocked by an
+   * offline tool server. Servers are deduplicated by name across bots, and
+   * servers (or bots) explicitly disabled via `enabled: false` are skipped.
+   *
+   * @returns The names of servers that connected and those that failed.
+   */
+  public async autoConnectConfiguredServers(): Promise<{
+    connected: string[];
+    failed: { name: string; error: string }[];
+  }> {
+    const connected: string[] = [];
+    const failed: { name: string; error: string }[] = [];
+
+    const pending = new Map<string, MCPConfig>();
+    try {
+      const bots = BotConfigurationManager.getInstance().getAllBots();
+      for (const bot of bots) {
+        if (bot.enabled === false) {
+          continue;
+        }
+        for (const server of bot.mcpServers ?? []) {
+          if (!server?.name || !server.serverUrl || server.enabled === false) {
+            continue;
+          }
+          if (this.clients.has(server.name) || pending.has(server.name)) {
+            continue; // already connected, or another bot already queued it
+          }
+          pending.set(server.name, {
+            name: server.name,
+            serverUrl: server.serverUrl,
+            apiKey: server.credentials?.apiKey,
+          });
+        }
+      }
+    } catch (error) {
+      // Config lookup failure must not block boot either.
+      debug('Auto-connect: unable to read bot configurations:', error);
+      return { connected, failed };
+    }
+
+    for (const config of pending.values()) {
+      try {
+        await this.connectToServer(config);
+        connected.push(config.name);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failed.push({ name: config.name, error: message });
+        debug(`Auto-connect: failed to connect MCP server ${config.name}: ${message}`);
+      }
+    }
+
+    return { connected, failed };
   }
 
   /**

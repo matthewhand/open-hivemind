@@ -405,6 +405,36 @@ export async function initServices(
     appLogger.info('\ud83d\udd0d Integration Anomaly Detector started');
   }
 
+  // Auto-connect MCP servers assigned to enabled bots (bot config `mcpServers`).
+  // Historically only the admin WebUI routes ever connected MCP servers, so
+  // bot-assigned servers were unavailable until an admin connected them by
+  // hand. Fire-and-forget: a slow or unreachable tool server must never block
+  // boot \u2014 failures are logged as warnings and the bot runs without that
+  // server's tools. Disconnect on shutdown is handled by ShutdownCoordinator
+  // (MCPService.disconnectAll). Skipped in test runs (same convention as the
+  // detectors above).
+  if (process.env.NODE_ENV !== 'test') {
+    void (async () => {
+      try {
+        const { MCPService } = await import('@src/mcp/MCPService');
+        const { connected, failed } = await MCPService.getInstance().autoConnectConfiguredServers();
+        if (connected.length > 0) {
+          appLogger.info('\ud83d\udd0c MCP auto-connect: servers connected', { connected });
+        }
+        for (const failure of failed) {
+          appLogger.warn('\ud83d\udd0c MCP auto-connect: server connection failed', failure);
+        }
+        if (connected.length === 0 && failed.length === 0) {
+          indexLog('MCP auto-connect: no bot-assigned MCP servers configured');
+        }
+      } catch (error) {
+        appLogger.warn('MCP auto-connect failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })();
+  }
+
   // Prepare messenger services collection for optional webhook registration later
 
   let messengerServices: any[] = [];
