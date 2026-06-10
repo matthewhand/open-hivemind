@@ -51,7 +51,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [x] Mattermost: hot `addBot` into the running service (currently requires re-init)
   - [ ] Channel routing: extend `pickBestChannel` beyond Discord; decide default for `MESSAGE_CHANNEL_ROUTER_ENABLED`
 - [ ] **LLM provider depth**
-  - [ ] OpenWebUI: preserve assistant roles in history (all turns sent as `user` today); honor per-bot config in `create()`
+  - [x] OpenWebUI: preserve assistant roles in history (all turns sent as `user` today); honor per-bot config in `create()`
   - [ ] OpenWebUI knowledge-file RAG: per-bot/runtime knowledge upload (single startup file today)
   - [ ] Streaming for providers beyond OpenAI (only `llm-openai` implements `generateStreamingChatCompletion`)
 - [ ] **Memory depth**
