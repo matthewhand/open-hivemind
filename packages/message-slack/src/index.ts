@@ -20,8 +20,12 @@ export { schema } from './schema';
 export { default as SlackService } from './SlackService';
 export { SlackBotManager } from './SlackBotManager';
 export { SlackSignatureVerifier } from './SlackSignatureVerifier';
-export { SlackInteractiveHandler } from './SlackInteractiveHandler';
-export { SlackInteractiveActions } from './SlackInteractiveActions';
+export {
+  SlackInteractiveHandler,
+  type SlackActionContext,
+  type SlackActionHandler,
+  type SlackActionPattern,
+} from './SlackInteractiveHandler';
 export { SlackEventProcessor } from './SlackEventProcessor';
 export { SlackMessageProcessor } from './SlackMessageProcessor';
 export { SlackWelcomeHandler } from './SlackWelcomeHandler';
