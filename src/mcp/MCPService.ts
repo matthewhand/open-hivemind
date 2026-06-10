@@ -252,6 +252,69 @@ export class MCPService {
   }
 
   /**
+   * Connects every MCP server assigned to an enabled bot via its
+   * `mcpServers` configuration.
+   *
+   * Intended as a startup hook (see src/server/initServices.ts): historically
+   * only the admin WebUI routes ever connected MCP servers, so bot-assigned
+   * servers were silently unavailable until an admin clicked "connect".
+   *
+   * Failure-tolerant by design — a server that cannot be reached is recorded
+   * in `failed` and logged, but never throws, so boot is not blocked by an
+   * offline tool server. Servers are deduplicated by name across bots, and
+   * servers (or bots) explicitly disabled via `enabled: false` are skipped.
+   *
+   * @returns The names of servers that connected and those that failed.
+   */
+  public async autoConnectConfiguredServers(): Promise<{
+    connected: string[];
+    failed: { name: string; error: string }[];
+  }> {
+    const connected: string[] = [];
+    const failed: { name: string; error: string }[] = [];
+
+    const pending = new Map<string, MCPConfig>();
+    try {
+      const bots = BotConfigurationManager.getInstance().getAllBots();
+      for (const bot of bots) {
+        if (bot.enabled === false) {
+          continue;
+        }
+        for (const server of bot.mcpServers ?? []) {
+          if (!server?.name || !server.serverUrl || server.enabled === false) {
+            continue;
+          }
+          if (this.clients.has(server.name) || pending.has(server.name)) {
+            continue; // already connected, or another bot already queued it
+          }
+          pending.set(server.name, {
+            name: server.name,
+            serverUrl: server.serverUrl,
+            apiKey: server.credentials?.apiKey,
+          });
+        }
+      }
+    } catch (error) {
+      // Config lookup failure must not block boot either.
+      debug('Auto-connect: unable to read bot configurations:', error);
+      return { connected, failed };
+    }
+
+    for (const config of pending.values()) {
+      try {
+        await this.connectToServer(config);
+        connected.push(config.name);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failed.push({ name: config.name, error: message });
+        debug(`Auto-connect: failed to connect MCP server ${config.name}: ${message}`);
+      }
+    }
+
+    return { connected, failed };
+  }
+
+  /**
    * Disconnect from an MCP server
    */
   public async disconnectFromServer(serverName: string): Promise<void> {

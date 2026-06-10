@@ -1,3 +1,4 @@
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPService } from '../../../src/mcp/MCPService';
 
 /**
@@ -131,5 +132,129 @@ describe('MCPService SDK client construction', () => {
     expect(tools).toEqual([{ name: 'echo', serverName: 'remote' }]);
     // testConnection must NOT store the client.
     expect(service.getConnectedServers()).not.toContain('remote');
+  });
+
+  describe('autoConnectConfiguredServers (startup hook)', () => {
+    const stubBots = (bots: unknown[]) => {
+      jest
+        .spyOn(BotConfigurationManager, 'getInstance')
+        .mockReturnValue({ getAllBots: () => bots } as unknown as BotConfigurationManager);
+    };
+
+    it('connects every MCP server assigned to enabled bots, deduplicated by name', async () => {
+      stubBots([
+        {
+          name: 'bot-a',
+          mcpServers: [
+            { name: 'srv-http', serverUrl: 'https://example.com/mcp' },
+            { name: 'srv-stdio', serverUrl: 'stdio://my-mcp-binary' },
+          ],
+        },
+        {
+          name: 'bot-b',
+          // Same server assigned to a second bot must only connect once.
+          mcpServers: [{ name: 'srv-http', serverUrl: 'https://example.com/mcp' }],
+        },
+      ]);
+
+      const result = await service.autoConnectConfiguredServers();
+
+      expect(result.connected.sort()).toEqual(['srv-http', 'srv-stdio']);
+      expect(result.failed).toEqual([]);
+      expect(ClientCtor).toHaveBeenCalledTimes(2);
+      expect(service.getConnectedServers().sort()).toEqual(['srv-http', 'srv-stdio']);
+    });
+
+    it('skips disabled bots, disabled servers, and incomplete server entries', async () => {
+      stubBots([
+        {
+          name: 'disabled-bot',
+          enabled: false,
+          mcpServers: [{ name: 'should-not-connect', serverUrl: 'https://x.example/mcp' }],
+        },
+        {
+          name: 'bot',
+          mcpServers: [
+            { name: 'disabled-server', serverUrl: 'https://y.example/mcp', enabled: false },
+            { name: 'no-url' }, // missing serverUrl
+            { name: 'ok', serverUrl: 'https://ok.example/mcp' },
+          ],
+        },
+        { name: 'bot-without-servers' },
+      ]);
+
+      const result = await service.autoConnectConfiguredServers();
+
+      expect(result.connected).toEqual(['ok']);
+      expect(result.failed).toEqual([]);
+      expect(service.getConnectedServers()).toEqual(['ok']);
+    });
+
+    it('tolerates individual connection failures and keeps connecting the rest', async () => {
+      stubBots([
+        {
+          name: 'bot',
+          mcpServers: [
+            { name: 'down', serverUrl: 'https://down.example/mcp' },
+            { name: 'up', serverUrl: 'https://up.example/mcp' },
+          ],
+        },
+      ]);
+      mockConnect.mockRejectedValueOnce(new Error('ECONNREFUSED')).mockResolvedValueOnce(undefined);
+
+      const result = await service.autoConnectConfiguredServers();
+
+      expect(result.connected).toEqual(['up']);
+      expect(result.failed).toHaveLength(1);
+      expect(result.failed[0].name).toBe('down');
+      expect(result.failed[0].error).toContain('ECONNREFUSED');
+      expect(service.getConnectedServers()).toEqual(['up']);
+    });
+
+    it('passes server credentials.apiKey through as a Bearer header', async () => {
+      stubBots([
+        {
+          name: 'bot',
+          mcpServers: [
+            {
+              name: 'secured',
+              serverUrl: 'https://secure.example/mcp',
+              credentials: { apiKey: 'tok-123' },
+            },
+          ],
+        },
+      ]);
+
+      await service.autoConnectConfiguredServers();
+
+      expect(StreamableHTTPCtor).toHaveBeenCalledWith(expect.any(URL), {
+        requestInit: { headers: { Authorization: 'Bearer tok-123' } },
+      });
+    });
+
+    it('returns empty results instead of throwing when bot config lookup fails', async () => {
+      jest.spyOn(BotConfigurationManager, 'getInstance').mockImplementation(() => {
+        throw new Error('config store unavailable');
+      });
+
+      await expect(service.autoConnectConfiguredServers()).resolves.toEqual({
+        connected: [],
+        failed: [],
+      });
+    });
+
+    it('does not reconnect servers that are already connected', async () => {
+      stubBots([
+        { name: 'bot', mcpServers: [{ name: 'srv', serverUrl: 'https://example.com/mcp' }] },
+      ]);
+      await service.connectToServer({ name: 'srv', serverUrl: 'https://example.com/mcp' });
+      ClientCtor.mockClear();
+
+      const result = await service.autoConnectConfiguredServers();
+
+      expect(result.connected).toEqual([]);
+      expect(result.failed).toEqual([]);
+      expect(ClientCtor).not.toHaveBeenCalled();
+    });
   });
 });
