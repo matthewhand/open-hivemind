@@ -30,72 +30,30 @@ import DistributedTraceWaterfall, { TraceSpan } from '../components/Monitoring/D
 import BotActivityWaterfallMonitor from '../components/Monitoring/BotActivityWaterfallMonitor';
 import { apiService } from '../services/api';
 import type { StatusResponse, Bot } from '../services/api';
+import type { PipelineTrace } from '../services/api/monitoring';
 import Debug from 'debug';
 const debug = Debug('app:client:components:Monitoring:MonitoringDashboard');
 
-const mockSpans: TraceSpan[] = [
-  {
-    id: 'trace-req-8f9d3b2a',
-    parentId: null,
-    name: 'POST /api/v1/chat/completions',
-    service: 'api-gateway',
-    startTime: 0,
-    duration: 1245.5,
-    status: 'success',
-    tags: { 'http.status_code': '200', 'client.id': 'app-mobile-1' }
-  },
-  {
-    id: 'span-auth-11',
-    parentId: 'trace-req-8f9d3b2a',
-    name: 'authenticateRequest',
-    service: 'auth-service',
-    startTime: 5.2,
-    duration: 45.1,
-    status: 'success',
-    tags: { 'user.id': 'usr_99823' }
-  },
-  {
-    id: 'span-db-12',
-    parentId: 'span-auth-11',
-    name: 'querySessionToken',
-    service: 'database',
-    startTime: 8.5,
-    duration: 38.0,
-    status: 'success',
-    tags: { 'db.query': 'SELECT * FROM sessions WHERE token = ?' }
-  },
-  {
-    id: 'span-bot-20',
-    parentId: 'trace-req-8f9d3b2a',
-    name: 'processChatLogic',
-    service: 'bot-core',
-    startTime: 55.0,
-    duration: 1180.2,
-    status: 'success'
-  },
-  {
-    id: 'span-llm-30',
-    parentId: 'span-bot-20',
-    name: 'generateResponse',
-    service: 'llm-provider',
-    startTime: 60.5,
-    duration: 1050.8,
-    status: 'success',
-    tags: { 'model': 'gpt-4', 'tokens.prompt': '145', 'tokens.completion': '280' }
-  },
-  {
-    id: 'span-ext-api-40',
-    parentId: 'span-bot-20',
-    name: 'fetchUserData',
-    service: 'external-api',
-    startTime: 1120.0,
-    duration: 65.0,
-    status: 'error',
-    tags: { 'http.url': 'https://api.crm.local/users/99823' },
-    logs: ['Connection timeout after 60ms', 'Retrying... failed']
-  }
-];
-
+/**
+ * Map a server-side pipeline trace (PipelineTracer ring buffer) to the
+ * flat span shape the waterfall component renders. Span start times are
+ * made relative to the trace start.
+ */
+const pipelineTraceToSpans = (trace: PipelineTrace): TraceSpan[] => {
+  const service = String(trace.rootSpan.attributes?.botName ?? 'pipeline');
+  return trace.spans.map((span) => ({
+    id: span.id,
+    parentId: span.id === trace.rootSpan.id ? null : trace.rootSpan.id,
+    name: span.name,
+    service,
+    startTime: Math.max(0, span.startTime - trace.startTime),
+    duration: span.durationMs ?? (span.endTime ? span.endTime - span.startTime : 0),
+    status: span.status === 'error' ? 'error' : 'success',
+    tags: Object.fromEntries(
+      Object.entries(span.attributes ?? {}).map(([key, value]) => [key, String(value)])
+    ),
+  }));
+};
 
 interface BotWithStatus extends Bot {
   id: string;
@@ -106,7 +64,7 @@ interface BotWithStatus extends Bot {
     errorCount: number;
     responseTime: number;
     uptime: number;
-    lastActivity: string;
+    lastActivity?: string;
   };
 }
 
@@ -139,6 +97,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const [bots, setBots] = useState<BotWithStatus[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [refreshInterval, setRefreshInterval] = useState(initialRefreshInterval);
+  const [traces, setTraces] = useState<PipelineTrace[]>([]);
+  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
   const { isConnected, botStats } = useWebSocket();
   const lastWsActivity = useRef<number>(0);
 
@@ -180,11 +140,21 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     }
   }, [onRefresh]);
 
+  const fetchTraces = useCallback(async () => {
+    try {
+      const data = await apiService.getDecisionTraces();
+      setTraces(Array.isArray(data?.traces) ? data.traces : []);
+    } catch (err) {
+      debug('ERROR:', '[Monitoring] getDecisionTraces failed:', err);
+    }
+  }, []);
+
   const handleRefresh = useCallback(() => {
     // Manually triggered refresh ignores staleness
     fetchStatus();
     fetchConfig();
-  }, [fetchStatus, fetchConfig]);
+    fetchTraces();
+  }, [fetchStatus, fetchConfig, fetchTraces]);
 
   // Memoize system metrics bot map for O(1) lookups
   const systemMetricsMap = useMemo(() => {
@@ -199,7 +169,9 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     return map;
   }, [systemMetrics]);
 
-  // Derive bots with status combining config and system data independently
+  // Derive bots with status combining config and system data independently.
+  // When no status has been reported for a bot yet, show an honest
+  // "unknown / no data" state instead of fabricated numbers.
   useEffect(() => {
     const botsWithStatus = configBots.map((bot: Bot) => {
       const statusBot = systemMetricsMap.get(bot.name);
@@ -213,15 +185,15 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
           errorCount: statusBot.errorCount || 0,
           responseTime: 0, // Not in StatusResponse
           uptime: 0, // Not in StatusResponse
-          lastActivity: new Date().toISOString(),
+          lastActivity: undefined, // Not in StatusResponse
         } : {
-          status: 'healthy',
-          connected: true,
-          messageCount: Math.floor(Math.random() * 100),
-          errorCount: Math.floor(Math.random() * 5),
-          responseTime: Math.floor(Math.random() * 500) + 100,
-          uptime: Math.floor(Math.random() * 86400),
-          lastActivity: new Date().toISOString(),
+          status: 'unknown',
+          connected: false,
+          messageCount: 0,
+          errorCount: 0,
+          responseTime: 0,
+          uptime: 0,
+          lastActivity: undefined,
         },
       };
     });
@@ -276,6 +248,24 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     return () => clearInterval(interval);
   }, [fetchStatus, fetchConfig, refreshInterval, isConnected, isStatusLoading, isConfigLoading]);
 
+  // Load real pipeline traces when the tracing tab is opened
+  useEffect(() => {
+    if (activeTab === 'tracing') {
+      fetchTraces();
+    }
+  }, [activeTab, fetchTraces]);
+
+  // Most recent trace first; the latest is selected by default
+  const orderedTraces = useMemo(() => [...traces].sort((a, b) => b.startTime - a.startTime), [traces]);
+  const selectedTrace = useMemo(
+    () => orderedTraces.find((t) => t.traceId === selectedTraceId) ?? orderedTraces[0] ?? null,
+    [orderedTraces, selectedTraceId],
+  );
+  const selectedTraceSpans = useMemo(
+    () => (selectedTrace ? pipelineTraceToSpans(selectedTrace) : []),
+    [selectedTrace],
+  );
+
   const getOverallHealthStatus = () => {
     if (!bots.length) { return 'unknown'; }
 
@@ -286,6 +276,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     if (botHealthIssues > 0) {
       const hasError = bots.some(bot => bot.statusData?.status === 'error');
       return hasError ? 'error' : 'warning';
+    }
+
+    // If no bot has reported real status data yet, the truth is "unknown".
+    if (bots.every(bot => bot.statusData?.status === 'unknown')) {
+      return 'unknown';
     }
     return 'healthy';
   };
@@ -337,17 +332,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     {
       id: 'latency',
       title: 'Response Time',
-      value: `${bots.length > 0
-        ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
-        : 0}ms`,
-      description: 'Average',
+      // Response time is not reported by the status endpoint yet; show the
+      // average only when at least one bot has a real measurement.
+      value: bots.some(bot => (bot.statusData?.responseTime || 0) > 0)
+        ? `${Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.filter(bot => (bot.statusData?.responseTime || 0) > 0).length)}ms`
+        : 'N/A',
+      description: bots.some(bot => (bot.statusData?.responseTime || 0) > 0) ? 'Average' : 'No data recorded',
       icon: <Clock className="w-8 h-8" />,
       color: 'secondary' as const,
     }
   ];
-
-  // Need to import AlertTriangle
-  // Added AlertTriangle to imports in the file block above (I'll need to make sure it's actually there)
 
   return (
     <div className="flex-1 space-y-6">
@@ -440,7 +434,36 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         </TabPanel>
 
         <TabPanel value={activeTab} index="tracing">
-          <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={mockSpans} className="h-[600px] shadow-lg rounded-xl" />
+          {orderedTraces.length === 0 ? (
+            <Alert variant="info">
+              No pipeline traces recorded yet. Traces appear here once messages flow through the
+              processing pipeline.
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-base-content/70">Trace:</span>
+                <Select
+                  className="select-bordered"
+                  size="sm"
+                  value={selectedTrace?.traceId ?? ''}
+                  onChange={(e) => setSelectedTraceId(e.target.value)}
+                  aria-label="Select trace"
+                >
+                  {orderedTraces.map((trace) => (
+                    <option key={trace.traceId} value={trace.traceId}>
+                      {new Date(trace.startTime).toLocaleTimeString()} — {String(trace.rootSpan.attributes?.botName ?? 'pipeline')} ({trace.totalDurationMs ?? 0}ms)
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <DistributedTraceWaterfall
+                traceId={selectedTrace?.traceId ?? ''}
+                spans={selectedTraceSpans}
+                className="h-[600px] shadow-lg rounded-xl"
+              />
+            </div>
+          )}
         </TabPanel>
       </div>
     </div>

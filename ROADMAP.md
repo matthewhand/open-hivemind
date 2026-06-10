@@ -61,8 +61,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
   - [ ] Auto-connect bot-assigned MCP servers at startup (only admin routes connect today)
   - [ ] Support non-stdio MCP server URLs in `/api/mcp/servers` connect path (stdio:// only)
 - [ ] **Monitoring truth**
-  - [ ] Replace `mockSpans` + `Math.random()` bot stats in MonitoringDashboard with real data
-  - [ ] Implement `/api/activity/messages` and `/llm-usage` (return `[]` today) and real `/chart-data` (random series today)
+  - [x] Replace `mockSpans` + `Math.random()` bot stats in MonitoringDashboard with real data
+  - [x] Implement `/api/activity/messages` and `/llm-usage` (return `[]` today) and real `/chart-data` (random series today)
   - [ ] Persist per-step pipeline telemetry for Message Flow Replay (UI infers steps today)
   - [ ] Feed the 7 deferred BusinessKpi metrics (cost/retention/churn/availability) or hide them
 - [ ] **Auth/persistence robustness**

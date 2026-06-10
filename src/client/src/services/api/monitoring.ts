@@ -2,10 +2,37 @@
 import { ApiService } from './core';
 import type { ActivityResponse, StatusResponse } from './types';
 
+/** A single span recorded by the server-side PipelineTracer. */
+export interface PipelineTraceSpan {
+  id: string;
+  name: string;
+  startTime: number;
+  endTime?: number;
+  durationMs?: number;
+  status: 'ok' | 'error';
+  attributes: Record<string, string | number | boolean>;
+  children: PipelineTraceSpan[];
+}
+
+/** A completed message-pipeline trace from /api/admin/decision-traces. */
+export interface PipelineTrace {
+  traceId: string;
+  rootSpan: PipelineTraceSpan;
+  spans: PipelineTraceSpan[];
+  startTime: number;
+  endTime?: number;
+  totalDurationMs?: number;
+}
+
 export function monitoringMixin(api: ApiService) {
   return {
     getStatus(): Promise<StatusResponse> {
       return api.request<StatusResponse>('/api/dashboard/status');
+    },
+
+    /** Recent completed message-pipeline traces recorded by the PipelineTracer. */
+    getDecisionTraces(): Promise<{ traces: PipelineTrace[] }> {
+      return api.request<{ traces: PipelineTrace[] }>('/api/admin/decision-traces');
     },
 
     getActivity(params: {
