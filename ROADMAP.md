@@ -81,6 +81,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [ ] **Pipeline/legacy parity, then sunset** — content filter, semantic guardrails, command handling, and maintenance mode live only in the legacy path; port them to pipeline stages, then remove `USE_LEGACY_HANDLER` and the legacy monolith
 - [ ] **Unify the 3 (4 with `packages/tool-mcp`) parallel MCP connection stores** — `MCPService.clients`, `serverLifecycle` processes, `shared.ts` `connectedClients`, `McpToolProvider` never share state
 - [ ] **Discord voice** — STT landed (Whisper, #2844) but `voiceChannelManager` join/leave is a no-op stub; restore voice-channel support or remove the UI affordances
+- [ ] **Live Chat Monitor revival** — `/admin/chat` page was removed as dead code (depended on deleted `useProvidersCache`); PR #3025 fixed and re-registered it — restore from `e4e57d6d9` with its dependency chain if the feature is wanted
 - [ ] **Vision (image input) support** — stub across providers
 - [ ] **`transfer_to_bot` swarm-routing tool** — canned no-op today
 
