@@ -45,7 +45,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 ## 🚧 Next — medium items (days each)
 
 - [ ] **Messaging platform completion**
-  - [ ] Telegram: add to the messenger bootstrap load list (provider exists; never loaded) and implement receive (long-poll or webhook — currently send-only stub)
+  - [x] Telegram: add to the messenger bootstrap load list (provider exists; never loaded) and implement receive (long-poll or webhook — currently send-only stub)
   - [x] Webhook messenger: implement real outgoing HTTP POST (returns fake id today); add to load list
   - [ ] Slack interactive actions: replace canned course-info demo handlers with generic action dispatch
   - [x] Mattermost: hot `addBot` into the running service (currently requires re-init)
@@ -88,7 +88,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 ## 🧹 Tech-debt decisions (each needs a yes/no, then ~a day)
 
 - [x] `ProviderRegistry` scans a directory that no longer exists (always finds 0) — repointed at SyncProviderRegistry + PluginLoader
-- [ ] Two parallel auth middlewares guard different route subsets (`src/auth/middleware.ts` vs `src/server/middleware/auth.ts`) — consolidate (security-review hazard)
+- [x] Two parallel auth middlewares guard different route subsets (`src/auth/middleware.ts` vs `src/server/middleware/auth.ts`) — consolidate (security-review hazard)
 - [x] Dead zustand stores alongside Redux (only `uiStore` is used) — deleted the rest
 - [ ] Logger sprawl (7+ logger modules) — pick `@hivemind/shared-types` logger + `src/common/logger.ts`, migrate the rest
 - [x] `WebSocketContext.tsx` imports a type from a nonexistent path (survives only because esbuild erases type imports) — fixed the import; dead `src/webui/` deleted

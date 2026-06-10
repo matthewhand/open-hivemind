@@ -55,6 +55,8 @@
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
       "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/message-telegram": ["packages/message-telegram/src/index.ts"],
+      "@hivemind/message-telegram/*": ["packages/message-telegram/src/*"],
       "@hivemind/message-webhook": ["packages/message-webhook/src/index.ts"],
       "@hivemind/message-webhook/*": ["packages/message-webhook/src/*"],
       "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
@@ -75,6 +77,7 @@
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*",
+    "packages/message-telegram/src/**/*",
     "packages/message-webhook/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*", "packages/**/*.test.ts"],

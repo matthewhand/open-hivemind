@@ -137,6 +137,7 @@
     "@hivemind/message-discord": "workspace:*",
     "@hivemind/message-mattermost": "workspace:*",
     "@hivemind/message-slack": "workspace:*",
+    "@hivemind/message-telegram": "workspace:*",
     "@hivemind/message-webhook": "workspace:*",
     "@hivemind/shared-types": "workspace:*",
     "@hivemind/tool-mcp": "workspace:*",
