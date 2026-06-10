@@ -237,7 +237,20 @@ const BotConfigurationPage: React.FC = () => {
       setError(null);
 
       const data: any = await apiService.get('/api/config/global');
-      setConfigs(data || {});
+      // Keep only entries shaped like config sections ({ values, schema } objects).
+      // Guards against envelope/error payloads (e.g. { success: true, data: [] }):
+      // an array entry would make `config?.values` resolve to Array.prototype.values
+      // (a function), which react-hook-form treats as an async defaultValues
+      // resolver and crashes on.
+      const sections: GlobalConfigs = {};
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        for (const [name, section] of Object.entries(data)) {
+          if (section && typeof section === 'object' && !Array.isArray(section)) {
+            sections[name] = section as ConfigSchema;
+          }
+        }
+      }
+      setConfigs(sections);
       await fetchRollbacks();
     } catch (err: unknown) {
       const message = (err instanceof Error ? err.message : String(err)) || 'Failed to fetch configuration';

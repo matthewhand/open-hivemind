@@ -41,13 +41,17 @@ interface WebhookEventSummary {
 
 interface EventsResponse {
   success: boolean;
-  data: {
-    items: WebhookEventSummary[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  // The server returns a pagination object, but tolerate an array or a
+  // missing/partial payload (e.g. an unseeded backend or generic mocks).
+  data?:
+    | WebhookEventSummary[]
+    | {
+        items?: WebhookEventSummary[];
+        total?: number;
+        page?: number;
+        limit?: number;
+        totalPages?: number;
+      };
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -128,9 +132,13 @@ const WebhookEventsPage: React.FC = () => {
 
       const json: EventsResponse = await apiService.get(`/api/webhooks/events?${params.toString()}`);
       if (json.success) {
-        setEvents(json.data.items);
-        setTotalPages(json.data.totalPages);
-        setTotal(json.data.total);
+        // Tolerate degenerate payloads (e.g. `data: []` or missing fields) so
+        // an unseeded backend still renders the empty state instead of crashing.
+        const data = json.data;
+        const items = Array.isArray(data) ? data : data?.items ?? [];
+        setEvents(items);
+        setTotalPages((Array.isArray(data) ? undefined : data?.totalPages) ?? 1);
+        setTotal((Array.isArray(data) ? undefined : data?.total) ?? items.length);
       }
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : String(err)) ?? 'Failed to load webhook events');

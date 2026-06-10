@@ -336,9 +336,10 @@ const ApiDocsPage: React.FC = () => {
     const loadDocs = async () => {
       try {
         const data: ApiDocsResponse = await apiService.get('/api/docs', { credentials: 'include' });
-        setGroups(data.data.groups);
-        if (data.data.groups.length > 0) {
-          setActivePrefix(data.data.groups[0].prefix);
+        const loadedGroups = Array.isArray(data?.data?.groups) ? data.data.groups : [];
+        setGroups(loadedGroups);
+        if (loadedGroups.length > 0) {
+          setActivePrefix(loadedGroups[0].prefix);
         }
       } catch (err: unknown) {
         setError((err instanceof Error ? err.message : String(err)));

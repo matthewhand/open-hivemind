@@ -60,7 +60,9 @@ const BotCreatePage: React.FC = () => {
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
-        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+        const rawPersonas: any = personasResult.status === 'fulfilled' ? personasResult.value : [];
+        // /api/personas returns a bare array, but tolerate { success, data } envelopes too
+        const personasData = Array.isArray(rawPersonas) ? rawPersonas : rawPersonas?.data;
         const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
         let mcpServersData: any[] = [];
@@ -72,7 +74,7 @@ const BotCreatePage: React.FC = () => {
           // Silent fallback for MCP servers
         }
 
-        setPersonas(personasData || []);
+        setPersonas(Array.isArray(personasData) ? personasData : []);
         setLlmProfiles(profilesData?.llm || profilesData?.profiles?.llm || []);
         const servers = mcpServersData;
         setMcpServers(Array.isArray(servers) ? servers : []);

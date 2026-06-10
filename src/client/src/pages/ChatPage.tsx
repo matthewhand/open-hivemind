@@ -6,8 +6,7 @@ import { useLLMProfiles } from '../hooks/useProvidersCache';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
-import Menu from '../components/DaisyUI/Menu';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X } from 'lucide-react';
 import Indicator from '../components/DaisyUI/Indicator';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -16,9 +15,10 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
-import { Alert } from '../components/DaisyUI/Alert';
 import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
+import Swap from '../components/DaisyUI/Swap';
+import Tooltip from '../components/DaisyUI/Tooltip';
 
 // Define Bot type based on API response
 interface BotData {
@@ -58,16 +58,6 @@ const ChatPage: React.FC = () => {
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
 
-  // Fetch LLM providers
-  const fetchLlmProviders = useCallback(async () => {
-    try {
-      const data = await apiService.get('/api/admin/llm-profiles');
-      setLlmProviders((data as any).data || []);
-    } catch (_err) {
-      showError('Failed to fetch LLM providers');
-    }
-  }, []);
-
   // Hot swap LLM provider
   const handleSwapProvider = useCallback(async (botId: string, newProviderKey: string) => {
     setSwappingProvider(botId);
@@ -80,7 +70,7 @@ const ChatPage: React.FC = () => {
       ));
 
       showSuccess('LLM provider updated successfully');
-    } catch (_err) {
+    } catch (err) {
       showError(err instanceof Error ? err.message : 'Failed to swap provider');
     } finally {
       setSwappingProvider(null);
@@ -362,7 +352,9 @@ const ChatPage: React.FC = () => {
           className="flex-1 mb-0 p-0 border-0 bg-transparent rounded-none"
           actions={
             <Tooltip content="Refresh" position="left">
-              <Button variant="ghost" size="md" onClick={handleRefresh} loading={loading || historyLoading} className="btn-circle" aria-label="Refresh" />
+              <Button variant="ghost" size="md" onClick={handleRefresh} loading={loading || historyLoading} className="btn-circle" aria-label="Refresh">
+                <RefreshCw className="w-5 h-5" />
+              </Button>
             </Tooltip>
           }
         />

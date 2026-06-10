@@ -161,4 +161,21 @@ describe('BotConfigurationPage / ConfigSectionForm', () => {
     // (global + rollbacks) on top of the initial two.
     await waitFor(() => expect(mockGet.mock.calls.length).toBeGreaterThanOrEqual(4));
   });
+
+  it('renders the empty state when the API returns an envelope payload instead of config sections', async () => {
+    // Regression: CI smoke tests stub every /api/** route with
+    // { success: true, data: [] }. The array entry made `config?.values`
+    // resolve to Array.prototype.values (a function), which react-hook-form
+    // treated as an async defaultValues resolver and crashed on, tripping the
+    // page's error boundary. Non-section entries must be filtered out.
+    mockGet.mockResolvedValue({ success: true, data: [] });
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByText('No configurations found')).toBeTruthy(),
+    );
+    // No form should have been rendered for the bogus entries.
+    expect(document.querySelector('form')).toBeNull();
+  });
 });
