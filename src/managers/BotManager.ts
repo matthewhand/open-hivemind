@@ -313,6 +313,12 @@ export class BotManager extends EventEmitter {
       return botInstance;
     } catch (error: unknown) {
       debug('Error creating bot:', ErrorUtils.getMessage(error));
+      // Preserve client/validation errors (statusCode 4xx) so routes can map
+      // them to a proper 4xx response instead of a generic 500.
+      const statusCode = (error as { statusCode?: number } | null)?.statusCode;
+      if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
+        throw error;
+      }
       throw ErrorUtils.createError(
         `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'

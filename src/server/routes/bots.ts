@@ -220,7 +220,19 @@ router.post(
       return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
     }
 
-    await manager.createBot(request);
+    try {
+      await manager.createBot(request);
+    } catch (error: unknown) {
+      // Validation failures (e.g. unknown llmProvider / profile key) are
+      // tagged with a 4xx statusCode — surface them as a client error
+      // instead of letting them bubble up as a 500.
+      const statusCode = (error as { statusCode?: number } | null)?.statusCode;
+      if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
+        const msg = error instanceof Error ? error.message : String(error);
+        return res.status(statusCode).json(ApiResponse.error(msg, 'VALIDATION_ERROR'));
+      }
+      throw error;
+    }
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
   })
 );

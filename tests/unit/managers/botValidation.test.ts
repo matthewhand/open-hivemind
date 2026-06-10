@@ -1,10 +1,17 @@
+import { getLlmProfileByKey } from '../../../src/config/llmProfiles';
+import { BotInstance, CreateBotRequest } from '../../../src/managers/botTypes';
 import {
   isValidBotInstance,
   sanitizeConfig,
   validateBotConfig,
   validateCreateBotRequest,
 } from '../../../src/managers/botValidation';
-import { BotInstance, CreateBotRequest } from '../../../src/managers/botTypes';
+
+jest.mock('../../../src/config/llmProfiles', () => ({
+  getLlmProfileByKey: jest.fn(),
+}));
+
+const mockGetLlmProfileByKey = getLlmProfileByKey as jest.Mock;
 
 describe('botValidation', () => {
   describe('isValidBotInstance', () => {
@@ -66,7 +73,47 @@ describe('botValidation', () => {
         name: 'Bot',
         messageProvider: 'invalid',
       };
-      expect(() => validateCreateBotRequest(invalidRequest)).toThrow('Valid message provider is required');
+      expect(() => validateCreateBotRequest(invalidRequest)).toThrow(
+        'Valid message provider is required'
+      );
+    });
+
+    it('should accept an llmProvider that matches an existing LLM profile key', () => {
+      mockGetLlmProfileByKey.mockReturnValue({
+        key: 'e2e-openai-12345',
+        name: 'E2E OpenAI',
+        provider: 'openai',
+        config: { apiKey: 'sk-mock' },
+      });
+
+      const request: CreateBotRequest = {
+        name: 'Profile Bot',
+        messageProvider: 'discord',
+        llmProvider: 'e2e-openai-12345' as any,
+      };
+      expect(() => validateCreateBotRequest(request)).not.toThrow();
+      expect(mockGetLlmProfileByKey).toHaveBeenCalledWith('e2e-openai-12345');
+    });
+
+    it('should throw a 400-tagged error for an llmProvider that is neither built-in nor a profile key', () => {
+      mockGetLlmProfileByKey.mockReturnValue(undefined);
+
+      const request: any = {
+        name: 'Bad Profile Bot',
+        messageProvider: 'discord',
+        llmProvider: 'bogus-key',
+      };
+
+      let thrown: unknown;
+      try {
+        validateCreateBotRequest(request);
+      } catch (err) {
+        thrown = err;
+      }
+      expect(thrown).toBeInstanceOf(Error);
+      expect((thrown as Error).message).toContain('Unknown LLM provider "bogus-key"');
+      expect((thrown as { statusCode?: number }).statusCode).toBe(400);
+      expect((thrown as { code?: string }).code).toBe('VALIDATION_ERROR');
     });
   });
 

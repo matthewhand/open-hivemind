@@ -477,10 +477,14 @@ router.post(
 // single SSE chunk + done event, matching the {type:'chunk'|'done'|'error'} shape
 // the BotTestDriveTab consumer already parses. A true token-by-token stream is
 // a follow-up — the plugin interface doesn't expose streaming yet.
+// `:type` accepts either a built-in provider type (openai, flowise, ...) or an
+// LLM provider *profile* key (bots created via the wizard store the profile
+// key in `llmProvider`), which is resolved to its provider type + config.
 router.post(
   '/llm-providers/providers/:type/test-stream',
   asyncErrorHandler(async (req, res) => {
-    const type = String(req.params.type || '').toLowerCase();
+    const rawType = String(req.params.type || '');
+    let type = rawType.toLowerCase();
     const { message, systemPrompt, conversationHistory } = req.body ?? {};
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -498,18 +502,33 @@ router.post(
     }
 
     const validTypes = ['openai', 'flowise', 'openwebui', 'letta'];
+
+    // Resolve LLM provider profile keys (e.g. a bot's linked profile) to the
+    // profile's provider type and config.
+    let profileConfig: Record<string, any> | null = null;
     if (!validTypes.includes(type)) {
-      send({ type: 'error', error: `Unsupported provider type: ${type}` });
+      const { getLlmProfileByKey } = await import('../../../config/llmProfiles');
+      const profile = getLlmProfileByKey(rawType);
+      if (profile && validTypes.includes((profile.provider || '').toLowerCase())) {
+        type = profile.provider.toLowerCase();
+        profileConfig = { ...(profile.config || {}) };
+      }
+    }
+
+    if (!validTypes.includes(type)) {
+      send({ type: 'error', error: `Unsupported provider type: ${rawType}` });
       return res.end();
     }
 
     try {
-      // Pick the first active provider config of this type for model/baseUrl etc.
+      // Use the resolved profile config, or pick the first active provider
+      // config of this type for model/baseUrl etc.
       const providers = await webUIStorage.getLlmProviders();
       const saved = providers.find(
         (p: any) => (p.type || '').toLowerCase() === type && p.isActive !== false
       );
-      const config: Record<string, any> = saved?.config ? { ...saved.config } : {};
+      const config: Record<string, any> =
+        profileConfig ?? (saved?.config ? { ...saved.config } : {});
       // Legacy data may contain a "sk-***" truncated key from before the
       // sanitization bug was fixed — drop it so the plugin falls back to env.
       if (typeof config.apiKey === 'string' && config.apiKey.endsWith('***')) {
