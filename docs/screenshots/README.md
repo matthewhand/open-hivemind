@@ -1,7 +1,8 @@
 # Screenshots — Current State
 This directory contains the canonical (current) screenshots of the Open Hivemind UI.
 When a screenshot is updated, the previous version moves to `archive/screenshots/` under the same filename.
-See [CLAUDE.md](/CLAUDE.md) for the screenshot naming and archival convention.
+See [CLAUDE.md](/CLAUDE.md) for the screenshot naming and archival convention, and
+[docs/SCREENSHOTS.md](../SCREENSHOTS.md) for the full tracking index of every screenshot (current + archived) with where each one is used.
 ## How to Regenerate Screenshots
 Screenshots are generated automatically using Playwright:
 To add a new screenshot:
