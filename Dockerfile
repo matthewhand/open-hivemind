@@ -1,3 +1,7 @@
+# Global build arg — must be declared before the first FROM to be usable
+# in FROM lines (stage-scoped ARGs are invisible there and expand empty).
+ARG BUILD_MODE=dev
+
 FROM node:22-alpine AS base
 
 # ── Stage 0: System deps (rarely changes) ────────────────────────────────────
