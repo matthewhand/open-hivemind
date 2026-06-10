@@ -427,7 +427,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                     { label: 'Use System Default', value: '' },
                                     ...fetchedLlmProfiles.map(p => ({
                                         label: `${p.name} (${p.provider})`,
-                                        value: p.id,
+                                        // /api/config/llm-profiles items are keyed by `key`
+                                        value: p.key ?? p.id,
                                     })),
                                 ]}
                             />

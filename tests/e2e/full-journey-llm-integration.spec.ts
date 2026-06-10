@@ -55,11 +55,7 @@ test.describe('Full Journey: LLM Provider Integration', () => {
     await expect(dialog).toBeHidden({ timeout: 10000 });
   }
 
-  // FIXME: POST /api/bots returns 500 when creating a bot immediately after
-  // adding an OpenAI provider profile in this flow (should be 4xx at worst —
-  // possibly a real bug in provider-profile linking).
-  // Tracked in ROADMAP.md (E2E verification).
-  test.fixme('Add OpenAI provider and configure with bot', async ({ page }) => {
+  test('Add OpenAI provider and configure with bot', async ({ page }) => {
     await setupTestWithErrorDetection(page);
 
     const providerName = `E2E OpenAI ${Date.now()}`;

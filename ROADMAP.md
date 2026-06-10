@@ -125,8 +125,8 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [x] Journey-spec architecture: page objects, auth fixtures, `completeCreateBotWizard()` helper
 - [x] `full-journey-auth-to-bot`, `full-journey-database-ops`, `full-journey-export-import` green (7/7)
 - [x] Convert remaining journey specs to current UI (15/17 tests green)
-  - [ ] `bot-lifecycle` "creation to messaging flow": Test Drive input never visible after wizard create (test.fixme with notes)
-  - [ ] `llm-integration` "add OpenAI provider and configure with bot": POST /api/bots returns 500 (possible real bug — should be 4xx; test.fixme with notes)
+  - [x] `bot-lifecycle` "creation to messaging flow" (fixed: wizard submitted profile label as llmProvider — CreateBotWizard `value: p.key`)
+  - [x] `llm-integration` "add OpenAI provider and configure with bot" (fixed: validation accepts LLM profile keys; 4xx no longer masked as 500)
 - [x] Run the full journey suite in CI (dedicated `journeys` job in playwright.yml)
 - [x] Story-driven User Guide with auto-captured demo-data screenshots (`npm run test:journey:guide`, journey-01..11)
 - [ ] Periodic axe-core WCAG audit + screenshot-doc regeneration cadence

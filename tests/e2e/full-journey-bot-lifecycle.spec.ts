@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { completeCreateBotWizard } from './helpers';
+import { completeCreateBotWizard, getApiAuthHeaders } from './helpers';
 import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 /**
@@ -59,21 +59,38 @@ test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
     console.log('✅ Full bot lifecycle journey completed successfully');
   });
 
-  // FIXME: the Test Drive tab's "Type a message..." input never becomes
-  // visible after creating the bot via the wizard — the detail drawer either
-  // fails to open for the fresh bot or the tab content doesn't render.
-  // 15/17 journey tests pass; tracked in ROADMAP.md (E2E verification).
-  test.fixme('Bot creation to messaging flow', async ({ page }) => {
+  test('Bot creation to messaging flow', async ({ page, request }) => {
     await setupTestWithErrorDetection(page);
 
-    const botName = `Messaging Test Bot ${Date.now()}`;
+    const ts = Date.now();
+    const botName = `Messaging Test Bot ${ts}`;
+    const profileKey = `e2e-lifecycle-${ts}`;
+    const profileName = `E2E Lifecycle ${ts}`;
 
-    // Step 1: Create bot via the Create Bot wizard
+    // The Test Drive tab requires the bot to have an LLM provider linked —
+    // bots left on "Use System Default" render a "No LLM Provider Configured"
+    // empty state instead of the chat input. Create a provider profile up
+    // front and assign it in the wizard.
+    const headers = await getApiAuthHeaders(request);
+    const profileRes = await request.post('/api/config/llm-profiles', {
+      headers,
+      data: {
+        key: profileKey,
+        name: profileName,
+        provider: 'openai',
+        config: { apiKey: 'sk-mock-e2e-key-12345', model: 'gpt-4' },
+      },
+    });
+    expect(profileRes.status(), 'LLM profile create').toBe(201);
+
+    // Step 1: Create bot via the Create Bot wizard with the profile assigned
     await navigateAndWaitReady(page, '/admin/bots');
     const createBtn = page.getByRole('button', { name: 'Create Bot' }).first();
     await expect(createBtn).toBeVisible();
     await createBtn.click();
-    await completeCreateBotWizard(page, botName);
+    await completeCreateBotWizard(page, botName, {
+      llmProviderLabel: `${profileName} (openai)`,
+    });
 
     // Verify creation success in list (target the stable card container)
     const botCard = page.locator('.cursor-pointer').filter({ hasText: botName }).first();
