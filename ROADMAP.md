@@ -93,7 +93,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [ ] Logger sprawl (7+ logger modules) — pick `@hivemind/shared-types` logger + `src/common/logger.ts`, migrate the rest
 - [x] `WebSocketContext.tsx` imports a type from a nonexistent path (survives only because esbuild erases type imports) — fixed the import; dead `src/webui/` deleted
 - [ ] Deploy-target thrash: `src/netlify/` stub app, `vercel.json`, `netlify.toml`, `fly.toml`, `pinokio.js`, `build:serverless` (copies a nonexistent file) — pick supported targets (Docker + bare node), delete the rest
-- [ ] `package.json` `bin` + `_moduleAliases` point at unmaintained `dist/` — remove or replace with a tsx launcher
+- [x] `package.json` `_moduleAliases` pointed at unmaintained `dist/` and crashed NODE_ENV=production under tsx (Docker) — module-alias removed; tsx resolves tsconfig paths in all runtimes (`bin` was already gone)
 - [x] Feature-flag tables duplicated inside `startupDiagnostics.ts` and drifting from CLAUDE.md — merged into one `FEATURE_FLAGS` constant
 - [ ] ~96 "test-only" modules (unreachable from entrypoints, kept green by unit tests — e.g. `AlertManager`, `HealthChecker`, `ConfigExporter/Importer`, `AnalyticsCalculator`) — per module: wire in or delete with its tests
 - [ ] Alternate DI schema system (SchemaManager/ConnectionManager) intentionally off the live path — adopt or remove
