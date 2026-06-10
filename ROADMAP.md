@@ -131,3 +131,19 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [x] Run the full journey suite in CI (dedicated `journeys` job in playwright.yml)
 - [x] Story-driven User Guide with auto-captured demo-data screenshots (`npm run test:journey:guide`, journey-01..11)
 - [ ] Periodic axe-core WCAG audit + screenshot-doc regeneration cadence
+
+## 🅿️ Deferral notes — autonomous session 2026-06-10
+
+Every remaining unticked item above was explicitly deferred this session, with reasons:
+
+- **Channel routing beyond Discord / `MESSAGE_CHANNEL_ROUTER_ENABLED` default** — needs design: channel-scoring semantics differ per platform; no safe mechanical port.
+- **OpenWebUI knowledge-file RAG** — feature work requiring a per-bot knowledge-lifecycle design (upload, refresh, deletion), not a gap-fill.
+- **Streaming beyond OpenAI** — each provider's streaming API differs; needs per-provider implementation passes.
+- **Per-step pipeline telemetry persistence (Message Flow Replay)** — requires a telemetry schema design; UI currently infers steps acceptably.
+- **7 deferred BusinessKpi metrics** — definitions (cost/retention/churn/availability) are product decisions, not code gaps.
+- **auditMiddleware widening + `enableAuditLogging` toggle persistence** — security-adjacent; deserves its own focused review session.
+- **Transactional config-backup restore / import validation; `translateSql` hardening; webhook scheduled-message delivery** — medium robustness items, no current data-loss reports; queued for the next maintenance wave.
+- **Pipeline/legacy parity then sunset; 3-way MCP store unification; Discord voice; vision; `transfer_to_bot`** — "Later" tier as designed: each needs an architecture decision before implementation.
+- **Live Chat Monitor revival** — restore from `e4e57d6d9` with its dependency chain if the feature is wanted (see tech-debt note).
+- **Deploy-target thrash / logger sprawl / ~96 test-only modules** — each requires a maintainer yes/no before deletion; lists are in the tech-debt section.
+- **NEW: stabilize `smoke-test-all-pages` on firefox in CI** — intermittent ErrorBoundary console error hit 3 PR runs this session (passes on retry, including on markdown-only diffs); quarantine or root-cause the firefox-specific render error.
