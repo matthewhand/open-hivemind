@@ -68,7 +68,8 @@ const Dashboard: React.FC = () => {
         setLayout(response.data.layout);
       }
     } catch (e) {
-      console.error('Failed to fetch dashboard layout', e);
+      // Non-fatal: the dashboard renders with the default layout.
+      console.warn('Failed to fetch dashboard layout', e);
     }
   }, []);
 

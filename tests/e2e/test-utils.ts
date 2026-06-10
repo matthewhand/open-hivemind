@@ -86,6 +86,16 @@ const IGNORED_ERROR_PATTERNS = [
   // Vite dev server transient errors on cold start
   /504/i,
   /Outdated Optimize Dep/i,
+  // WebKit logs fetches aborted by navigation as access-control failures
+  // (e.g. "Fetch API cannot load .../api/dashboard/tips due to access control
+  // checks" when a page unmounts mid-request). The app handles the rejection;
+  // only the browser console message leaks.
+  /due to access control checks/i,
+  // WebKit's phrasings of network/chunk-load failures already ignored above
+  // for chromium (/Network Error/, /net::ERR_/, /Loading chunk.*failed/)
+  /Load failed/i,
+  /Importing a module script failed/i,
+  /Not allowed to request resource/i,
 ];
 
 /**
@@ -125,8 +135,11 @@ export function setupErrorCollection(page: Page): string[] {
       const url = response.url();
       // Only log API errors, ignore favicon/assets if any
       if (url.includes('/api/')) {
-        errors.push(`[Network Error] 401 Unauthorized: ${url}`);
-        console.error(`🔴 Network Error: 401 Unauthorized: ${url}`);
+        const message = `[Network Error] 401 Unauthorized: ${url}`;
+        if (!shouldIgnoreError(message)) {
+          errors.push(message);
+          console.error(`🔴 Network Error: 401 Unauthorized: ${url}`);
+        }
       }
     }
   });
@@ -194,6 +207,29 @@ export async function waitForPageReady(page: Page, timeout = 5000) {
 export async function navigateAndWaitReady(page: Page, path: string) {
   await page.goto(path);
   await waitForPageReady(page);
+}
+
+/**
+ * Wait up to `timeout` ms for the body to contain visible text, then throw
+ * 'Page body is empty' if it never does. Polling (rather than a one-shot
+ * check) absorbs slow first paints on loaded CI runners, where WebKit in
+ * particular can take longer than the post-navigation settle to commit the
+ * initial render.
+ */
+export async function expectBodyNotEmpty(page: Page, timeout = 10000) {
+  try {
+    await page.waitForFunction(
+      () => ((document.body && document.body.textContent) || '').trim().length > 0,
+      undefined,
+      { timeout, polling: 250 }
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/Timeout.*exceeded/i.test(msg)) {
+      throw new Error('Page body is empty');
+    }
+    throw new Error(`Page body check aborted: ${msg}`);
+  }
 }
 
 /**

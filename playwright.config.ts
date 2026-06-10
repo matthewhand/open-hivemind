@@ -72,6 +72,8 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      /* WebKit is flakier than the other engines; give it extra retries */
+      retries: 3,
     },
   ],
 

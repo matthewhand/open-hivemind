@@ -15,6 +15,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -48,13 +49,12 @@ jobs:
           echo "Found $UNIT_PASSING_TESTS passing unit tests"
 
       - name: Install Playwright browsers
-        run: pnpm dlx playwright install --with-deps
+        # Use the locally installed playwright version, not pnpm dlx (which
+        # downloads the latest and expects a different browser revision).
+        run: npx playwright install --with-deps
 
       - name: Run E2E tests
         run: pnpm run test:playwright
-      - name: Generate Playwright report
-        if: always()
-        run: pnpm dlx playwright show-report
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,10 +67,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-test-results
-          path: test-results.json
+          path: test-results/results.json
           retention-days: 30
       - name: Update README badge
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.actor != 'github-actions[bot]'
+        continue-on-error: true
         run: |
           UNIT_PASSING_TESTS="${{ steps.unit-test.outputs.unit_passing_tests }}"
           # Update the README.md with the new unit test count (E2E separate)
@@ -78,6 +79,7 @@ jobs:
           sed -i "s/badge\/unit-tests-[0-9]\+%20passing/badge\/unit-tests-$UNIT_PASSING_TESTS%20passing/" README.md
       - name: Commit README update
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.actor != 'github-actions[bot]'
+        continue-on-error: true
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"

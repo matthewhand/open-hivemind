@@ -340,7 +340,7 @@ const ChatPage: React.FC = () => {
                 checked={sidebarOpen}
                 onContent={<X className="w-5 h-5" />}
                 offContent={<LucideMenuIcon className="w-5 h-5" />}
-                rotate
+                variant="rotate"
               />
             </Button>
           </Tooltip>
