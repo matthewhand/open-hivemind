@@ -22,7 +22,6 @@ const BOT_PAGES: PageTest[] = [
   { path: '/admin/bots', label: 'Bots List' },
   { path: '/admin/bots/create', label: 'Bot Create' },
   { path: '/admin/bots/templates', label: 'Bot Templates' },
-  { path: '/admin/chat', label: 'Chat' },
 ];
 
 async function mockAllApiEndpoints(page: import('@playwright/test').Page) {
@@ -145,14 +144,7 @@ test.describe('Smoke Test - Bot Management Pages', () => {
     expect(errors.length).toBe(0);
   });
 
-  test('chat page loads', async ({ page }) => {
-    const errors = await setupTestWithErrorDetection(page);
-    await mockAllApiEndpoints(page);
-
-    const results = await validatePageLoads(page, [BOT_PAGES[3]], errors);
-    const failures = results.filter((r) => r.status === 'fail');
-
-    expect(failures.length, `Chat page failed: ${failures[0]?.error}`).toBe(0);
-    expect(errors.length).toBe(0);
-  });
+  // The /admin/chat Live Chat Monitor was removed with the dead-code purge
+  // (ChatPage depended on the deleted useProvidersCache); its revival is a
+  // ROADMAP item. Re-add a smoke case here when the route returns.
 });
