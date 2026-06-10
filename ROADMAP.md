@@ -47,7 +47,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [ ] **Messaging platform completion**
   - [ ] Telegram: add to the messenger bootstrap load list (provider exists; never loaded) and implement receive (long-poll or webhook — currently send-only stub)
   - [x] Webhook messenger: implement real outgoing HTTP POST (returns fake id today); add to load list
-  - [ ] Slack interactive actions: replace canned course-info demo handlers with generic action dispatch
+  - [x] Slack interactive actions: replace canned course-info demo handlers with generic action dispatch
   - [x] Mattermost: hot `addBot` into the running service (currently requires re-init)
   - [ ] Channel routing: extend `pickBestChannel` beyond Discord; decide default for `MESSAGE_CHANNEL_ROUTER_ENABLED`
 - [ ] **LLM provider depth**
