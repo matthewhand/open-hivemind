@@ -109,7 +109,10 @@ jobs:
           HTTP_ENABLED: 'true'
           NODE_ENV: test
           PORT: '3028'
-        run: pnpm run test:playwright -- full-journey-auth-to-bot full-journey-database-ops full-journey-export-import full-journey-bot-lifecycle full-journey-llm-integration full-journey-smart-sequence golden-journey user-flows --project=chromium --reporter=line
+        # Call playwright directly: with `pnpm run ... --` the literal `--`
+        # is forwarded and playwright reads --project as a positional filter,
+        # silently running every browser project instead of chromium only.
+        run: npx playwright test full-journey-auth-to-bot full-journey-database-ops full-journey-export-import full-journey-bot-lifecycle full-journey-llm-integration full-journey-smart-sequence golden-journey user-flows --project=chromium --reporter=line
 
       - name: Upload Playwright test artifacts
         if: ${{ always() }}
