@@ -87,8 +87,10 @@ module.exports = {
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
-    sqlite$: '<rootDir>/tests/mocks/sqlite.ts',
-    sqlite3$: '<rootDir>/tests/mocks/sqlite3.ts',
+    // Anchored so the Node core module `node:sqlite` (used by real-SQLite
+    // persistence tests) is NOT swallowed by the `sqlite` package mock.
+    '^sqlite$': '<rootDir>/tests/mocks/sqlite.ts',
+    '^sqlite3$': '<rootDir>/tests/mocks/sqlite3.ts',
     'better-sqlite3$': '<rootDir>/tests/mocks/sqlite3.ts',
     bcrypt$: '<rootDir>/tests/mocks/bcrypt.ts',
     'discord.js':

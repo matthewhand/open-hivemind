@@ -76,6 +76,17 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
         await down(context);
       },
     },
+    {
+      name: '003_add_memvault_memories.ts',
+      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+        const { up } = await import('./migrations/003_add_memvault_memories');
+        await up(context);
+      },
+      down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+        const { down } = await import('./migrations/003_add_memvault_memories');
+        await down(context);
+      },
+    },
   ];
 
   const umzug = new Umzug({
