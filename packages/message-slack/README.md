@@ -14,7 +14,7 @@ Core / loaders / routing / events / utils:
 Backwards-compatible classes:
 
 - `SlackService` (default + named), `SlackBotManager`, `SlackSignatureVerifier`
-- `SlackInteractiveHandler`, `SlackInteractiveActions`
+- `SlackInteractiveHandler` — generic interactive action dispatch: `block_actions` / `view_submission` payloads are acknowledged, then routed by `action_id` (or view `callback_id`) through a registry of pattern → handler entries (`registerAction(pattern, handler)`, exact strings or RegExp). Unmatched actions fall through to a default handler that forwards the action as a message through the normal message-handler path so bots/LLMs can respond.
 - `SlackWelcomeHandler`, `SlackMessage` (default), `SlackMessageProvider`
 - `testSlackConnection`
 

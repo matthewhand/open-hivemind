@@ -28,9 +28,8 @@ import { SlackEventBus, type ISlackEventBus } from './modules/ISlackEventBus';
 import { SlackMessageIO, type ISlackMessageIO } from './modules/ISlackMessageIO';
 import { SlackBotManager } from './SlackBotManager';
 import { SlackEventProcessor } from './SlackEventProcessor';
-import { SlackInteractiveActions } from './SlackInteractiveActions';
-import { SlackInteractiveHandler } from './SlackInteractiveHandler';
-import type SlackMessage from './SlackMessage';
+import { SlackInteractiveHandler, type SlackActionContext } from './SlackInteractiveHandler';
+import SlackMessage from './SlackMessage';
 import { SlackMessageProcessor } from './SlackMessageProcessor';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackWelcomeHandler } from './SlackWelcomeHandler';
@@ -91,7 +90,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
   private botManagers: Map<string, SlackBotManager> = new Map();
   private signatureVerifiers: Map<string, SlackSignatureVerifier> = new Map();
   private interactiveHandlers: Map<string, SlackInteractiveHandler> = new Map();
-  private interactiveActions: Map<string, SlackInteractiveActions> = new Map();
   private eventProcessors: Map<string, SlackEventProcessor> = new Map();
   private messageProcessors: Map<string, SlackMessageProcessor> = new Map();
   private welcomeHandlers: Map<string, SlackWelcomeHandler> = new Map();
@@ -168,38 +166,93 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
     const botManager = new SlackBotManager([instance], instance.mode);
     const signatureVerifier = new SlackSignatureVerifier(instance.signingSecret);
-    const interactiveActions = new SlackInteractiveActions(this);
-
-    const interactiveHandlers = {
-      sendCourseInfo: async (channel: string) => interactiveActions.sendCourseInfo(channel),
-      sendBookingInstructions: async (channel: string) =>
-        interactiveActions.sendBookingInstructions(channel),
-      sendStudyResources: async (channel: string) => interactiveActions.sendStudyResources(channel),
-      sendAskQuestionModal: async (triggerId: string) =>
-        interactiveActions.sendAskQuestionModal(triggerId),
-      sendInteractiveHelpMessage: async (channel: string, userId: string) =>
-        interactiveActions.sendInteractiveHelpMessage(channel, userId),
-      handleButtonClick: async (channel: string, userId: string, actionId: string) => {
-        const welcomeHandler = new SlackWelcomeHandler(botManager);
-        return welcomeHandler.handleButtonClick(channel, userId, actionId);
-      },
-    };
-
-    const interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
     const eventProcessor = new SlackEventProcessor(this);
     const messageProcessor = new SlackMessageProcessor(botManager);
     const welcomeHandler = new SlackWelcomeHandler(botManager);
 
+    // Generic interactive action dispatch: actions matching a registered
+    // pattern are handled locally; everything else is acknowledged and
+    // forwarded through the normal message-handler path so bots/LLMs respond.
+    const interactiveHandler = new SlackInteractiveHandler((context) =>
+      this.forwardActionToMessageHandler(botName, context)
+    );
+    interactiveHandler.registerAction(
+      /^(learn_objectives|how_to|contact_support|report_issue|learn_more)_/,
+      async (context) => {
+        const channelId = context.channelId || this.resolveDefaultChannel(botName);
+        if (!channelId) {
+          debug(`[${botName}] No channel available for welcome action: ${context.actionId}`);
+          return;
+        }
+        await welcomeHandler.handleButtonClick(
+          channelId,
+          context.userId || 'unknown',
+          context.actionId
+        );
+      }
+    );
+
     this.botManagers.set(botName, botManager);
     this.signatureVerifiers.set(botName, signatureVerifier);
     this.interactiveHandlers.set(botName, interactiveHandler);
-    this.interactiveActions.set(botName, interactiveActions);
     this.eventProcessors.set(botName, eventProcessor);
     this.messageProcessors.set(botName, messageProcessor);
     this.welcomeHandlers.set(botName, welcomeHandler);
     this.botConfigs.set(botName, instance);
     this.joinTs.set(botName, Date.now() / 1000);
     this.lastSentEventTs.set(botName, '');
+  }
+
+  /** Resolve the channel to use when an interactive payload does not carry one. */
+  private resolveDefaultChannel(botName: string): string | undefined {
+    const cfg = this.botConfigs.get(botName);
+    return cfg?.defaultChannel || cfg?.defaultChannelId || process.env.SLACK_DEFAULT_CHANNEL_ID;
+  }
+
+  /**
+   * Default interactive-action behavior: forward the action as a synthetic
+   * message through the normal message-handler path so bots/LLMs can respond.
+   * The action value (or label, or action_id) becomes the message text.
+   */
+  private async forwardActionToMessageHandler(
+    botName: string,
+    context: SlackActionContext
+  ): Promise<void> {
+    const botManager = this.botManagers.get(botName);
+    if (!botManager) {
+      debug(`[${botName}] Cannot forward action "${context.actionId}": no bot manager`);
+      return;
+    }
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) {
+      debug(`[${botName}] Cannot forward action "${context.actionId}": no bots available`);
+      return;
+    }
+    const channelId = context.channelId || this.resolveDefaultChannel(botName);
+    if (!channelId) {
+      debug(`[${botName}] Cannot forward action "${context.actionId}": no channel available`);
+      return;
+    }
+    const text = (context.value || context.text || context.actionId || '').trim();
+    if (!text) {
+      debug(`[${botName}] Cannot forward action "${context.actionId}": no text to forward`);
+      return;
+    }
+
+    const ts = (Date.now() / 1000).toFixed(6);
+    const message = new SlackMessage(text, channelId, {
+      user: context.payload?.user,
+      channel: channelId,
+      ts,
+      event_ts: ts,
+      type: 'interactive_action',
+      action_id: context.actionId,
+      interaction_type: context.type,
+    });
+    debug(
+      `[${botName}] Forwarding interactive action "${context.actionId}" as message to channel ${channelId}`
+    );
+    await botManager.handleMessage(message, [], bots[0].config);
   }
 
   /**
@@ -1261,7 +1314,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
     this.botManagers.delete(botName);
     this.signatureVerifiers.delete(botName);
     this.interactiveHandlers.delete(botName);
-    this.interactiveActions.delete(botName);
     this.eventProcessors.delete(botName);
     this.messageProcessors.delete(botName);
     this.welcomeHandlers.delete(botName);
