@@ -28,6 +28,7 @@ import {
 import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import {
   DecisionStrategyAdapter,
+  HistorySummarizerAdapter,
   LlmInvokerAdapter,
   MemoryRetrieverAdapter,
   MemoryStorerAdapter,
@@ -109,7 +110,14 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
     })
   );
 
-  const enrich = new EnrichStage(bus, new MemoryRetrieverAdapter(), new PromptBuilderAdapter());
+  const enrich = new EnrichStage(
+    bus,
+    new MemoryRetrieverAdapter(),
+    new PromptBuilderAdapter(),
+    // Config-gated (MESSAGE_HISTORY_SUMMARY_ENABLED, default off): compresses
+    // older history turns into an LLM summary instead of raw truncation.
+    new HistorySummarizerAdapter()
+  );
 
   const inference = new InferenceStage(bus, new LlmInvokerAdapter({ botConfig: deps.botConfig }));
 

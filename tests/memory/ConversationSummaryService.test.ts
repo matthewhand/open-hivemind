@@ -100,4 +100,57 @@ describe('ConversationSummaryService', () => {
 
     expect((summarizer as jest.Mock).mock.calls[0][0]).toBe('u-anon: hi');
   });
+
+  describe('summarizeTurns (pipeline history summarization)', () => {
+    const noopStore: ConversationSummaryStore = {
+      getMessages: jest.fn(async () => []),
+      storeConversationSummary: jest.fn(async () => 1),
+    };
+
+    it('renders an author-attributed transcript and returns the trimmed summary', async () => {
+      const summarizer: Summarizer = jest.fn(async () => '  the summary  ');
+      const service = new ConversationSummaryService({ store: noopStore, summarizer });
+
+      const result = await service.summarizeTurns(
+        [
+          { author: 'Alice', text: 'hello' },
+          { text: 'system notice' },
+          { author: 'Bob', text: 'goodbye' },
+        ],
+        { maxWords: 80, maxTokensOverride: 250 }
+      );
+
+      expect(result).toBe('the summary');
+      expect(summarizer).toHaveBeenCalledWith('Alice: hello\nsystem notice\nBob: goodbye', {
+        maxWords: 80,
+        maxTokensOverride: 250,
+      });
+      // Pipeline summaries are transient prompt context: nothing is persisted.
+      expect(noopStore.storeConversationSummary).not.toHaveBeenCalled();
+    });
+
+    it('returns null when every turn is empty', async () => {
+      const summarizer: Summarizer = jest.fn();
+      const service = new ConversationSummaryService({ store: noopStore, summarizer });
+
+      await expect(service.summarizeTurns([{ text: '' }, { text: '   ' }])).resolves.toBeNull();
+      expect(summarizer).not.toHaveBeenCalled();
+    });
+
+    it('returns null when the summarizer produces an empty summary', async () => {
+      const summarizer: Summarizer = jest.fn(async () => '   ');
+      const service = new ConversationSummaryService({ store: noopStore, summarizer });
+
+      await expect(service.summarizeTurns([{ text: 'hello' }])).resolves.toBeNull();
+    });
+
+    it('propagates summarizer errors so callers can fall back to raw history', async () => {
+      const summarizer: Summarizer = jest.fn(async () => {
+        throw new Error('LLM down');
+      });
+      const service = new ConversationSummaryService({ store: noopStore, summarizer });
+
+      await expect(service.summarizeTurns([{ text: 'hello' }])).rejects.toThrow('LLM down');
+    });
+  });
 });

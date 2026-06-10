@@ -51,6 +51,17 @@ export interface ConversationSummaryServiceDeps {
 }
 
 /**
+ * A single conversation turn supplied by the pipeline (already in memory —
+ * no database read involved). Rendered as `author: text` in the transcript.
+ */
+export interface ConversationTurn {
+  /** Display name (or id) of the speaker; omitted turns render as just text. */
+  author?: string;
+  /** The message text. */
+  text: string;
+}
+
+/**
  * Produces and persists summaries of a channel's conversation history.
  *
  * This wires together three previously-disconnected pieces:
@@ -117,6 +128,42 @@ export class ConversationSummaryService {
     );
 
     return { id, summary };
+  }
+
+  /**
+   * Summarizes an in-memory list of conversation turns (oldest first).
+   *
+   * Used by the pipeline's Enrich stage to compress older history turns into
+   * a short summary instead of dropping them outright. Unlike
+   * {@link summarizeChannel} this neither reads from nor writes to the
+   * database — the turns are already in memory and the result is transient
+   * prompt context.
+   *
+   * Returns `null` when there is nothing to summarize or the summarizer
+   * produced an empty string. Summarizer errors propagate to the caller,
+   * which is expected to fall back to unsummarized history.
+   */
+  async summarizeTurns(
+    turns: ConversationTurn[],
+    options: { maxWords?: number; maxTokensOverride?: number } = {}
+  ): Promise<string | null> {
+    const meaningful = turns.filter((t) => t.text && t.text.trim().length > 0);
+    if (meaningful.length === 0) {
+      debug('No non-empty turns supplied; nothing to summarize');
+      return null;
+    }
+
+    const transcript = meaningful
+      .map((t) => (t.author ? `${t.author}: ${t.text}` : t.text))
+      .join('\n');
+
+    const summaryText = await this.summarizer(transcript, {
+      maxWords: options.maxWords ?? DEFAULT_MAX_WORDS,
+      maxTokensOverride: options.maxTokensOverride,
+    });
+
+    const trimmed = (summaryText ?? '').trim();
+    return trimmed.length > 0 ? trimmed : null;
   }
 }
 
