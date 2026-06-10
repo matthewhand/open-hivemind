@@ -10,6 +10,7 @@ const debug = Debug('app:RefreshTokenRepository');
 /**
  * Shape of a row in the `auth_refresh_tokens` table.
  */
+// eslint-disable-next-line unused-imports/no-unused-vars -- documents the table schema
 interface RefreshTokenRow {
   token_hash: string;
   user_id: string;
@@ -130,7 +131,9 @@ export class RefreshTokenRepository {
   /** Whether the token is on the allow-list and not yet expired. */
   public has(token: string, nowMs: number = Date.now()): boolean {
     const row = this.db
-      .prepare('SELECT 1 AS present FROM auth_refresh_tokens WHERE token_hash = ? AND expires_at > ?')
+      .prepare(
+        'SELECT 1 AS present FROM auth_refresh_tokens WHERE token_hash = ? AND expires_at > ?'
+      )
       .get(RefreshTokenRepository.hashToken(token), nowMs) as { present: number } | undefined;
     return row !== undefined;
   }
@@ -145,9 +148,7 @@ export class RefreshTokenRepository {
 
   /** Remove every token belonging to a user (e.g. on account deletion). */
   public deleteAllForUser(userId: string): number {
-    const info = this.db
-      .prepare('DELETE FROM auth_refresh_tokens WHERE user_id = ?')
-      .run(userId);
+    const info = this.db.prepare('DELETE FROM auth_refresh_tokens WHERE user_id = ?').run(userId);
     return info.changes;
   }
 
@@ -161,9 +162,9 @@ export class RefreshTokenRepository {
 
   /** Number of tokens currently stored (including expired, pre-purge). */
   public count(): number {
-    const row = this.db
-      .prepare('SELECT COUNT(*) AS n FROM auth_refresh_tokens')
-      .get() as { n: number };
+    const row = this.db.prepare('SELECT COUNT(*) AS n FROM auth_refresh_tokens').get() as {
+      n: number;
+    };
     return row.n;
   }
 
