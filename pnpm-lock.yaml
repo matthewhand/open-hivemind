@@ -89,6 +89,9 @@ importers:
       '@hivemind/message-slack':
         specifier: workspace:*
         version: link:packages/message-slack
+      '@hivemind/message-telegram':
+        specifier: workspace:*
+        version: link:packages/message-telegram
       '@hivemind/message-webhook':
         specifier: workspace:*
         version: link:packages/message-webhook
@@ -839,6 +842,22 @@ importers:
       '@slack/webhook':
         specifier: ^7.0.4
         version: 7.0.8(debug@4.4.3)
+      debug:
+        specifier: ^4.3.7
+        version: 4.4.3(supports-color@8.1.1)
+    devDependencies:
+      '@types/debug':
+        specifier: ^4.1.12
+        version: 4.1.13
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/message-telegram:
+    dependencies:
+      '@hivemind/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
       debug:
         specifier: ^4.3.7
         version: 4.4.3(supports-color@8.1.1)

@@ -17,7 +17,7 @@ export function validateBotConfiguration(config: unknown): ConfigurationValidati
     errors.push('Bot name is required');
   }
 
-  if (!configObj.discord && !configObj.slack && !configObj.mattermost) {
+  if (!configObj.discord && !configObj.slack && !configObj.mattermost && !configObj.telegram) {
     errors.push('At least one platform configuration is required');
   }
 
@@ -29,6 +29,11 @@ export function validateBotConfiguration(config: unknown): ConfigurationValidati
   const slackConfig = configObj.slack as Record<string, unknown>;
   if (slackConfig && !slackConfig.botToken) {
     errors.push('Slack bot token is required');
+  }
+
+  const telegramConfig = configObj.telegram as Record<string, unknown>;
+  if (telegramConfig && !telegramConfig.botToken) {
+    errors.push('Telegram bot token is required');
   }
 
   return {
@@ -57,6 +62,10 @@ export function sanitizeConfiguration(config: Record<string, unknown>): Record<s
   const slackConfig = sanitized.slack as Record<string, unknown>;
   if (slackConfig?.botToken) {
     slackConfig.botToken = 'secret-***';
+  }
+  const telegramConfig = sanitized.telegram as Record<string, unknown>;
+  if (telegramConfig?.botToken) {
+    telegramConfig.botToken = 'secret-***';
   }
   return sanitized;
 }

@@ -7,7 +7,7 @@ export const botSchema = {
   // Message provider configuration
   MESSAGE_PROVIDER: {
     doc: 'Message provider type (discord, slack, etc.)',
-    format: ['discord', 'slack', 'mattermost', 'webhook'],
+    format: ['discord', 'slack', 'mattermost', 'telegram', 'webhook'],
     default: 'discord',
     env: 'BOTS_{name}_MESSAGE_PROVIDER',
   },
@@ -194,6 +194,22 @@ export const botSchema = {
     format: String,
     default: '',
     env: 'BOTS_{name}_MATTERMOST_CHANNEL',
+  },
+
+  // Telegram-specific configuration
+  TELEGRAM_BOT_TOKEN: {
+    doc: 'Telegram bot token from BotFather (format: <bot_id>:<secret>)',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_TELEGRAM_BOT_TOKEN',
+    sensitive: true,
+  },
+
+  TELEGRAM_CHAT_ID: {
+    doc: 'Default Telegram chat/channel ID for outbound messages',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_TELEGRAM_CHAT_ID',
   },
 
   // OpenAI configuration

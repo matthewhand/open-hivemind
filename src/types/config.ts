@@ -17,7 +17,7 @@
 /**
  * Message provider types
  */
-export type MessageProvider = 'discord' | 'slack' | 'mattermost' | 'webhook';
+export type MessageProvider = 'discord' | 'slack' | 'mattermost' | 'telegram' | 'webhook';
 
 /**
  * LLM provider types
@@ -91,6 +91,16 @@ export interface MattermostConfig {
   token: string;
   /** Default Mattermost channel for messages */
   channel?: string;
+}
+
+/**
+ * Telegram configuration
+ */
+export interface TelegramBotConfig {
+  /** Telegram bot token from BotFather (format: <bot_id>:<secret>) */
+  botToken: string;
+  /** Default chat/channel ID for outbound messages */
+  chatId?: string;
 }
 
 /**
@@ -231,6 +241,8 @@ export interface BotConfig {
   slack?: SlackConfig;
   /** Mattermost-specific configuration */
   mattermost?: MattermostConfig;
+  /** Telegram-specific configuration */
+  telegram?: TelegramBotConfig;
   /** OpenAI configuration */
   openai?: OpenAIConfig;
   /** Flowise configuration */
@@ -768,7 +780,7 @@ export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
 /**
  * Union type for all platform configurations
  */
-export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig;
+export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig | TelegramBotConfig;
 
 /**
  * Letta session mode - determines how conversation sessions are scoped

@@ -62,6 +62,8 @@ module.exports = {
     '^@hivemind/message-slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@hivemind/message-mattermost$': '<rootDir>/packages/message-mattermost/src/index.ts',
     '^@hivemind/message-mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
+    '^@hivemind/message-telegram$': '<rootDir>/packages/message-telegram/src/index.ts',
+    '^@hivemind/message-telegram/(.*)$': '<rootDir>/packages/message-telegram/src/$1',
     '^@hivemind/message-webhook$': '<rootDir>/packages/message-webhook/src/index.ts',
     '^@hivemind/message-webhook/(.*)$': '<rootDir>/packages/message-webhook/src/$1',
     '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',

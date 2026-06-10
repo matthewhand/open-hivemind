@@ -173,6 +173,15 @@ export function createBotConfig(
     };
   }
 
+  // Add Telegram configuration if bot token is provided
+  const telegramBotToken = botConfig.get('TELEGRAM_BOT_TOKEN');
+  if (telegramBotToken) {
+    config.telegram = {
+      botToken: telegramBotToken,
+      chatId: botConfig.get('TELEGRAM_CHAT_ID') || undefined,
+    };
+  }
+
   // Add OpenAI configuration if API key is provided
   const openaiApiKey = botConfig.get('OPENAI_API_KEY');
   if (openaiApiKey) {
