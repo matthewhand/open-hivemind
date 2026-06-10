@@ -1,5 +1,5 @@
-import { validateRequiredEnvVars } from '../../../src/utils/envValidation';
 import Logger from '../../../src/common/logger';
+import { validateRequiredEnvVars } from '../../../src/utils/envValidation';
 
 jest.mock('../../../src/common/logger');
 
@@ -135,6 +135,16 @@ describe('validateRequiredEnvVars', () => {
       delete process.env.MATTERMOST_TOKEN;
 
       expect(() => validateRequiredEnvVars()).toThrow(/at least one messaging platform token/);
+    });
+
+    it('should pass without messaging tokens when SKIP_MESSENGERS=true (WebUI-only mode)', () => {
+      delete process.env.DISCORD_BOT_TOKEN;
+      delete process.env.SLACK_BOT_TOKEN;
+      delete process.env.MATTERMOST_TOKEN;
+      process.env.SKIP_MESSENGERS = 'true';
+
+      expect(() => validateRequiredEnvVars()).not.toThrow();
+      delete process.env.SKIP_MESSENGERS;
     });
 
     it('should pass if SLACK_BOT_TOKEN is provided instead of DISCORD_BOT_TOKEN', () => {
