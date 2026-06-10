@@ -467,13 +467,13 @@ const IntegrationsPanel: React.FC = () => {
                 if (isAdvanced && !advancedMode) return null;
 
                 return (
-                  <div
+                  <dl
                     key={key}
-                    className="flex justify-between items-center p-2.5 bg-base-100 rounded-lg border border-base-200 shadow-sm"
+                    className="flex justify-between items-center p-2.5 bg-base-100 rounded-lg border border-base-200 shadow-sm m-0"
                   >
-                    <span className="text-[10px] font-mono opacity-60 uppercase truncate mr-2" title={key}>{key}</span>
-                    <span className="font-bold text-xs">{String(value)}</span>
-                  </div>
+                    <dt className="text-[10px] font-mono opacity-60 uppercase truncate mr-2" title={key}>{key}</dt>
+                    <dd className="font-bold text-xs m-0">{String(value)}</dd>
+                  </dl>
                 );
               })}
 

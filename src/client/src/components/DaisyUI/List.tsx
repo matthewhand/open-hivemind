@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
-export interface ListRowProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ListRowProps extends React.HTMLAttributes<HTMLLIElement> {
   /** Additional CSS classes */
   className?: string;
   children?: React.ReactNode;
@@ -15,9 +15,9 @@ export const ListRow: React.FC<ListRowProps> = React.memo(({
   const classes = classNames('list-row', className);
 
   return (
-    <div className={classes} {...props}>
+    <li className={classes} role="listitem" {...props}>
       {children}
-    </div>
+    </li>
   );
 });
 
@@ -65,7 +65,7 @@ export const ListColWrap: React.FC<ListColWrapProps> = React.memo(({
 
 ListColWrap.displayName = 'ListColWrap';
 
-export interface ListProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ListProps extends React.HTMLAttributes<HTMLUListElement> {
   /** Additional CSS classes */
   className?: string;
   children?: React.ReactNode;
@@ -79,9 +79,9 @@ const List: React.FC<ListProps> = React.memo(({
   const classes = classNames('list', className);
 
   return (
-    <div className={classes} {...props}>
+    <ul className={classes} role="list" {...props}>
       {children}
-    </div>
+    </ul>
   );
 });
 
