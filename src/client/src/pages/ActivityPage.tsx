@@ -409,11 +409,38 @@ const ActivityPage: React.FC = () => {
     refetch: refetchActivity,
   } = useQuery<ActivityResponse>({
     queryKey: ['activity', activityUrl],
-    queryFn: () => apiService.get<ActivityResponse>(activityUrl),
+    // /api/dashboard/activity wraps its payload in an ApiResponse envelope
+    // ({ success, data: { events, ... } }). Unwrap it — treating the envelope
+    // as the ActivityResponse left `events`/`filters` undefined, so the page
+    // showed "No activity yet" / 0 stats even while the server had events.
+    queryFn: async () => {
+      const raw = await apiService.get<any>(activityUrl);
+      return (raw?.events ? raw : raw?.data ?? raw) as ActivityResponse;
+    },
     staleTime: 15_000,
     gcTime: 30_000,
     refetchInterval: autoRefresh ? 5000 : undefined,
   });
+
+  // Active Bots reads the same /api/bots source as the Dashboard and Bots
+  // pages so the stat cannot contradict them (see Dashboard.tsx).
+  const { data: botsResult } = useQuery<any>({
+    queryKey: ['activity', 'bots'],
+    queryFn: () => apiService.get<any>('/api/bots'),
+    staleTime: 15_000,
+    gcTime: 30_000,
+  });
+
+  const activeBotCount = useMemo(() => {
+    const botsList: any[] = Array.isArray(botsResult) ? botsResult
+      : Array.isArray(botsResult?.data) ? botsResult.data
+      : botsResult?.data?.bots ?? botsResult?.bots ?? [];
+    if (!Array.isArray(botsList) || botsList.length === 0) return null;
+    return botsList.filter((bot) => {
+      const botStatus = (bot?.status || '').toLowerCase();
+      return botStatus === 'active' || botStatus === 'running' || bot?.connected;
+    }).length;
+  }, [botsResult]);
 
   const [allEvents, setAllEvents] = useState<ActivityEvent[]>([]);
 
@@ -700,7 +727,7 @@ const ActivityPage: React.FC = () => {
     {
       id: 'bots',
       title: 'Active Bots',
-      value: availableFilters?.agents?.length || 0,
+      value: activeBotCount ?? (availableFilters?.agents?.length || 0),
       icon: <Bot className="w-8 h-8" />,
       color: 'secondary' as const,
     },

@@ -5,6 +5,8 @@ import {
   windowSecondsToMs,
   clampMaxRequests,
   formatWindow,
+  guardChipClass,
+  guardChipVariant,
   DEFAULT_GUARD_SETTINGS,
   type GuardSettings,
 } from './guardSettings';
@@ -115,6 +117,34 @@ describe('guardSettings logic', () => {
       ).toBe(false);
       expect(settingsEqual(base, { ...base, defaultContentFilterStrictness: 'high' })).toBe(false);
       expect(settingsEqual(base, { ...base, evaluationOrder: 'parallel' })).toBe(false);
+    });
+  });
+
+  describe('guardChipClass / guardChipVariant', () => {
+    it('renders disabled guards as neutral ghost', () => {
+      expect(guardChipClass(false)).toBe('badge-ghost');
+      expect(guardChipClass(false, 'high')).toBe('badge-ghost');
+      expect(guardChipVariant(false, 'high')).toBe('ghost');
+    });
+
+    it('maps protection levels to safety colours (never error-red)', () => {
+      expect(guardChipClass(true, 'low')).toBe('badge-warning');
+      expect(guardChipClass(true, 'medium')).toBe('badge-info');
+      expect(guardChipClass(true, 'high')).toBe('badge-success');
+      expect(guardChipVariant(true, 'low')).toBe('warning');
+      expect(guardChipVariant(true, 'medium')).toBe('info');
+      expect(guardChipVariant(true, 'high')).toBe('success');
+    });
+
+    it('uses a positive outline for enabled binary guards (no level)', () => {
+      expect(guardChipClass(true)).toBe('badge-success badge-outline');
+      expect(guardChipVariant(true)).toBe('success');
+    });
+
+    it('never produces an error class for any level', () => {
+      for (const level of [undefined, 'low', 'medium', 'high', 'unknown']) {
+        expect(guardChipClass(true, level as never)).not.toContain('error');
+      }
     });
   });
 });

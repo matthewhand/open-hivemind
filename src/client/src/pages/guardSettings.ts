@@ -91,3 +91,43 @@ export const settingsEqual = (a: GuardSettings, b: GuardSettings): boolean =>
   a.defaultRateLimit.windowMs === b.defaultRateLimit.windowMs &&
   a.defaultContentFilterStrictness === b.defaultContentFilterStrictness &&
   a.evaluationOrder === b.evaluationOrder;
+
+/**
+ * Semantic DaisyUI badge classes for guard chips.
+ *
+ * Protection level reads as *safety*, never danger: disabled/off chips are
+ * neutral-ghost, low protection is warning (weak), medium is info, and high
+ * is success (strongest). Binary guards (access control, rate limit) use a
+ * success outline when enabled so "guard active" is consistently positive.
+ */
+export const guardChipClass = (enabled: boolean, level?: GuardStrictness | string): string => {
+  if (!enabled) return 'badge-ghost';
+  if (!level) return 'badge-success badge-outline';
+  switch (level) {
+    case 'low':
+      return 'badge-warning';
+    case 'high':
+      return 'badge-success';
+    case 'medium':
+    default:
+      return 'badge-info';
+  }
+};
+
+/** Badge variant equivalent of {@link guardChipClass} for <Badge variant=...>. */
+export const guardChipVariant = (
+  enabled: boolean,
+  level?: GuardStrictness | string
+): 'ghost' | 'success' | 'warning' | 'info' => {
+  if (!enabled) return 'ghost';
+  if (!level) return 'success';
+  switch (level) {
+    case 'low':
+      return 'warning';
+    case 'high':
+      return 'success';
+    case 'medium':
+    default:
+      return 'info';
+  }
+};

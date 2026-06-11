@@ -27,6 +27,8 @@ import {
   windowSecondsToMs,
   clampMaxRequests,
   formatWindow,
+  guardChipClass,
+  guardChipVariant,
   DEFAULT_GUARD_SETTINGS,
   type GuardSettings,
 } from './guardSettings';
@@ -144,18 +146,18 @@ const defaultNewProfile: Omit<GuardProfile, 'id' | 'createdAt' | 'updatedAt'> = 
 };
 
 /** Read-only status row for the detail drawer */
-const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: boolean; detail: string }> = ({ icon, label, enabled, detail }) => (
-  <div className="flex items-center justify-between py-2">
+const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: boolean; detail: string; level?: string }> = ({ icon, label, enabled, detail, level }) => (
+  <div className="flex items-center justify-between gap-3 py-2">
     <span className="flex items-center gap-2 text-sm font-medium">
       {icon} {label}
     </span>
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 shrink-0">
       {enabled ? (
         <CheckCircle className="w-4 h-4 text-success" />
       ) : (
         <XCircle className="w-4 h-4 text-base-content/30" />
       )}
-      <Badge variant={enabled ? 'primary' : 'ghost'} size="sm">{detail}</Badge>
+      <Badge variant={guardChipVariant(enabled, level)} size="sm">{detail}</Badge>
     </div>
   </div>
 );
@@ -614,7 +616,7 @@ const GuardsPage: React.FC = () => {
                   <AlertTriangle className="w-5 h-5" /> Content Filter
                   <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                     <Toggle
-                      color="error"
+                      color="primary"
                       checked={guardsValue?.contentFilter?.enabled || false}
                       onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
                     />
@@ -634,7 +636,7 @@ const GuardsPage: React.FC = () => {
                         max={3}
                         step={1}
                         disabled={!guardsValue?.contentFilter?.enabled}
-                        variant="error"
+                        variant="primary"
                         showMarks={true}
                         showValue={false}
                         marks={[
@@ -700,29 +702,29 @@ const GuardsPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-3 mb-6">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="flex items-center gap-2">
-                          <Shield className="w-4 h-4 opacity-70" /> Access Control
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Shield className="w-4 h-4 opacity-70 shrink-0" /> Access Control
                         </span>
-                        <div className={`badge ${profile.guards.mcpGuard.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                        <div className={`badge shrink-0 whitespace-nowrap ${guardChipClass(profile.guards.mcpGuard.enabled)}`}>
                           {profile.guards.mcpGuard.enabled ? profile.guards.mcpGuard.type : 'Disabled'}
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="flex items-center gap-2">
-                          <RefreshCw className="w-4 h-4 opacity-70" /> Rate Limit
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="flex items-center gap-2 min-w-0">
+                          <RefreshCw className="w-4 h-4 opacity-70 shrink-0" /> Rate Limit
                         </span>
-                        <div className={`badge ${profile.guards.rateLimit?.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                        <div className={`badge shrink-0 whitespace-nowrap ${guardChipClass(!!profile.guards.rateLimit?.enabled)}`}>
                           {profile.guards.rateLimit?.enabled ? `${profile.guards.rateLimit.maxRequests}/${profile.guards.rateLimit.windowMs / 1000}s` : 'Disabled'}
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="flex items-center gap-2 min-w-0">
+                          <AlertTriangle className="w-4 h-4 opacity-70 shrink-0" /> Content Filter
                         </span>
-                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error' : 'badge-ghost'}`}>
+                        <div className={`badge shrink-0 whitespace-nowrap ${guardChipClass(!!profile.guards.contentFilter?.enabled, profile.guards.contentFilter?.strictness)}`}>
                           {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
                         </div>
                       </div>
@@ -898,7 +900,7 @@ const GuardsPage: React.FC = () => {
                   />
 
                   <GuardStatusRow
-                    icon={<AlertTriangle className="w-4 h-4 text-error" />}
+                    icon={<AlertTriangle className="w-4 h-4 text-primary" />}
                     label="Content Filter"
                     enabled={!!selectedProfile.guards.contentFilter?.enabled}
                     detail={
@@ -906,6 +908,7 @@ const GuardsPage: React.FC = () => {
                         ? selectedProfile.guards.contentFilter.strictness
                         : 'Disabled'
                     }
+                    level={selectedProfile.guards.contentFilter?.strictness}
                   />
                   {selectedProfile.guards.contentFilter?.enabled && (selectedProfile.guards.contentFilter.blockedTerms?.length ?? 0) > 0 && (
                     <div className="py-2 pl-6">
