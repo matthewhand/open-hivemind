@@ -92,7 +92,7 @@ Small, verified gaps where the surrounding feature is otherwise done.
 - [x] Dead zustand stores alongside Redux (only `uiStore` is used) — deleted the rest
 - [ ] Logger sprawl (7+ logger modules) — pick `@hivemind/shared-types` logger + `src/common/logger.ts`, migrate the rest
 - [x] `WebSocketContext.tsx` imports a type from a nonexistent path (survives only because esbuild erases type imports) — fixed the import; dead `src/webui/` deleted
-- [ ] Deploy-target thrash: `src/netlify/` stub app, `vercel.json`, `netlify.toml`, `fly.toml`, `pinokio.js`, `build:serverless` (copies a nonexistent file) — pick supported targets (Docker + bare node), delete the rest
+- [x] Deploy-target thrash: `src/netlify/` stub app, `vercel.json`, `netlify.toml`, `fly.toml`, `pinokio.js`, `build:serverless` (copied a nonexistent file) — Netlify/Vercel now wrap the real Express app via `src/server/serverlessApp.ts` (stateless demo-mode previews); Fly/Docker remain the full-server targets
 - [x] `package.json` `_moduleAliases` pointed at unmaintained `dist/` and crashed NODE_ENV=production under tsx (Docker) — module-alias removed; tsx resolves tsconfig paths in all runtimes (`bin` was already gone)
 - [x] Feature-flag tables duplicated inside `startupDiagnostics.ts` and drifting from CLAUDE.md — merged into one `FEATURE_FLAGS` constant
 - [ ] ~96 "test-only" modules (unreachable from entrypoints, kept green by unit tests — e.g. `AlertManager`, `HealthChecker`, `ConfigExporter/Importer`, `AnalyticsCalculator`) — per module: wire in or delete with its tests

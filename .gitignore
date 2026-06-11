@@ -200,6 +200,7 @@ tests/e2e/screenshots/
 .claude/
 .qwen/
 .vercel
+.netlify/
 
 test-results/
 .last-run*
