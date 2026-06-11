@@ -53,11 +53,15 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
   const badgeVariant = STATUS_BADGE[status] ?? 'neutral';
   const statusLabel = STATUS_LABEL[status] ?? status;
   const isActive = status === 'active' || status === 'running';
+  // Disabled bots are visually muted so they stand apart from active ones at
+  // a glance (still readable and fully clickable).
+  const isDisabledBot = status === 'disabled';
 
   return (
     <Card
       className={`shadow-xl border transition-shadow duration-200 cursor-pointer
-        ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}`}
+        ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}
+        ${isDisabledBot ? 'opacity-60 saturate-50 bg-base-200/60' : ''}`}
       onClick={onPreview ? () => onPreview(bot) : undefined}
     >
       <Card.Body>
@@ -158,9 +162,9 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
         {/* Actions */}
         <div className="flex gap-2 pt-2 border-t border-base-200">
           <Button
-            variant="primary"
+            variant={isDisabledBot ? 'ghost' : 'primary'}
             size="sm"
-            className="flex-1"
+            className={`flex-1 ${isDisabledBot ? 'border border-base-300' : ''}`}
             onClick={(e) => { e.stopPropagation(); onEdit?.(bot); }}
           >
             <Settings className="w-3 h-3 mr-1" />
