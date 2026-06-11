@@ -5,6 +5,7 @@ import {
   Brain, MessageSquare, Map, Search, CornerDownLeft,
 } from 'lucide-react';
 import Kbd from './DaisyUI/Kbd';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface PaletteItem {
   id: string;
@@ -77,29 +78,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   }, [selectedIndex]);
 
   // Focus trap: keep Tab/Shift-Tab cycling within the dialog
-  const handleDialogKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key !== 'Tab') return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    },
-    []
-  );
+  useFocusTrap(isOpen, dialogRef);
 
   const selectItem = useCallback(
     (item: PaletteItem) => {
@@ -162,7 +141,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        onKeyDown={(e) => { handleKeyDown(e); handleDialogKeyDown(e); }}
+        onKeyDown={handleKeyDown}
       >
         {/* Search input */}
         <div className="flex items-center gap-2 px-4 border-b border-base-300">
