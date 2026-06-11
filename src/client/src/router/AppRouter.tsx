@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -10,63 +11,63 @@ import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const Login = lazy(() => import('../components/Login'));
+const Login = lazyWithRetry(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
 
 // Standalone pages
-const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
+const StandaloneActivity = lazyWithRetry(() => import('../pages/StandaloneActivity'));
 
 // Uber pages
-const OverviewPage = lazy(() => import('../pages/OverviewPage'));
-const BotsPage = lazy(() => import('../pages/BotsPage'));
-const PersonasPage = lazy(() => import('../pages/PersonasPage'));
-const GuardsPage = lazy(() => import('../pages/GuardsPage'));
-const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
-const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
-const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
-const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
-const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
-const ActivityPage = lazy(() => import('../pages/ActivityPage'));
-const DeveloperPage = lazy(() => import('../pages/DeveloperPage'));
+const OverviewPage = lazyWithRetry(() => import('../pages/OverviewPage'));
+const BotsPage = lazyWithRetry(() => import('../pages/BotsPage'));
+const PersonasPage = lazyWithRetry(() => import('../pages/PersonasPage'));
+const GuardsPage = lazyWithRetry(() => import('../pages/GuardsPage'));
+const BotCreatePage = lazyWithRetry(() => import('../pages/BotCreatePage'));
+const BotTemplatesPage = lazyWithRetry(() => import('../pages/BotTemplatesPage'));
+const MCPServerManager = lazyWithRetry(() => import('../components/MCPServerManager'));
+const MCPServersPage = lazyWithRetry(() => import('../pages/MCPServersPage'));
+const MCPToolsPage = lazyWithRetry(() => import('../pages/MCPToolsPage'));
+const ActivityPage = lazyWithRetry(() => import('../pages/ActivityPage'));
+const DeveloperPage = lazyWithRetry(() => import('../pages/DeveloperPage'));
 
-const PluginSecurityPage = lazy(() => import('../pages/PluginSecurityPage'));
+const PluginSecurityPage = lazyWithRetry(() => import('../pages/PluginSecurityPage'));
 
 // Monitoring Dashboard pages
-const MonitoringDashboard = lazy(() => import('../pages/MonitoringDashboard'));
-const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
-const SystemManagement = lazy(() => import('../pages/SystemManagement'));
-const ExportPage = lazy(() => import('../pages/ExportPage'));
-const SystemSettings = lazy(() => import('../pages/SystemSettings'));
-const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
-const ConfigPage = lazy(() => import('../pages/ConfigPage'));
-const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
-const SitemapPage = lazy(() => import('../pages/SitemapPage'));
-const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
-const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
-const MarketplacePage = lazy(() => import('../pages/MarketplacePage'));
-const ProvidersPage = lazy(() => import('../pages/ProvidersPage'));
-const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'));
-const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
-const MemoryProvidersPage = lazy(() => import('../pages/MemoryProvidersPage'));
-const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
-const ResponseProfilesPage = lazy(() => import('../pages/ResponseProfilesPage'));
-const SpecsPage = lazy(() => import('../pages/SpecsPage'));
-const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
-const AuditPage = lazy(() => import('../pages/AuditPage'));
-const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
-const ProviderHealthPage = lazy(() => import('../pages/ProviderHealthPage'));
-const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
-const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
-const AboutPage = lazy(() => import('../pages/AboutPage'));
-const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
-const HelpPage = lazy(() => import('../pages/HelpPage'));
+const MonitoringDashboard = lazyWithRetry(() => import('../pages/MonitoringDashboard'));
+const AnalyticsDashboard = lazyWithRetry(() => import('../pages/AnalyticsDashboard'));
+const SystemManagement = lazyWithRetry(() => import('../pages/SystemManagement'));
+const ExportPage = lazyWithRetry(() => import('../pages/ExportPage'));
+const SystemSettings = lazyWithRetry(() => import('../pages/SystemSettings'));
+const BotConfigurationPage = lazyWithRetry(() => import('../pages/BotConfigurationPage'));
+const ConfigPage = lazyWithRetry(() => import('../pages/ConfigPage'));
+const StaticPagesPage = lazyWithRetry(() => import('../pages/StaticPagesPage'));
+const SitemapPage = lazyWithRetry(() => import('../pages/SitemapPage'));
+const DaisyUIShowcase = lazyWithRetry(() => import('../pages/DaisyUIShowcase'));
+const IntegrationsPage = lazyWithRetry(() => import('../pages/IntegrationsPage'));
+const MarketplacePage = lazyWithRetry(() => import('../pages/MarketplacePage'));
+const ProvidersPage = lazyWithRetry(() => import('../pages/ProvidersPage'));
+const MessageProvidersPage = lazyWithRetry(() => import('../pages/MessageProvidersPage'));
+const LLMProvidersPage = lazyWithRetry(() => import('../pages/LLMProvidersPage'));
+const MemoryProvidersPage = lazyWithRetry(() => import('../pages/MemoryProvidersPage'));
+const ToolProvidersPage = lazyWithRetry(() => import('../pages/ToolProvidersPage'));
+const ResponseProfilesPage = lazyWithRetry(() => import('../pages/ResponseProfilesPage'));
+const SpecsPage = lazyWithRetry(() => import('../pages/SpecsPage'));
+const SpecDetailPage = lazyWithRetry(() => import('../pages/SpecDetailPage'));
+const AuditPage = lazyWithRetry(() => import('../pages/AuditPage'));
+const AdminHealthPage = lazyWithRetry(() => import('../pages/AdminHealthPage'));
+const ProviderHealthPage = lazyWithRetry(() => import('../pages/ProviderHealthPage'));
+const WebhookEventsPage = lazyWithRetry(() => import('../pages/WebhookEventsPage'));
+const OnboardingPage = lazyWithRetry(() => import('../pages/OnboardingPage'));
+const AboutPage = lazyWithRetry(() => import('../pages/AboutPage'));
+const ApiDocsPage = lazyWithRetry(() => import('../pages/ApiDocsPage'));
+const HelpPage = lazyWithRetry(() => import('../pages/HelpPage'));
 
 
 interface LoadingFallbackProps {
   message?: string;
 }
 
-const TipRotator = lazy(() => import('../components/TipRotator'));
+const TipRotator = lazyWithRetry(() => import('../components/TipRotator'));
 
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message: _message = 'Loading...' }) => (
   <div className="min-h-[60vh] p-6">
