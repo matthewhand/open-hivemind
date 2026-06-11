@@ -283,7 +283,13 @@ export class DashboardService {
       return true;
     });
 
-    const paginatedEvents = filteredEvents
+    // Newest-first so page 0 is the most recent activity and "load more"
+    // (higher offsets) walks backwards into history.
+    const orderedEvents = [...filteredEvents].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    const paginatedEvents = orderedEvents
       .slice(offset, offset + limit)
       .map((event) => this.annotateEvent(event, botMap));
 

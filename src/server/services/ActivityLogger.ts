@@ -145,8 +145,12 @@ export class ActivityLogger {
 
       const limit = options.limit || 100;
       const offset = options.offset || 0;
+      // Keep a rolling window of the newest (offset + limit) matches so the
+      // feed surfaces recent events. The previous implementation returned the
+      // OLDEST matches (it stopped reading once `limit` lines matched), which
+      // made /api/dashboard/activity show stale history after a restart.
+      const windowSize = offset + limit;
       const matchedEvents: MessageFlowEvent[] = [];
-      let matchIndex = 0;
 
       const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
       const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
@@ -180,21 +184,20 @@ export class ActivityLogger {
             continue;
           }
 
-          // We have a match
-          if (matchIndex >= offset) {
-            matchedEvents.push(event);
-            if (matchedEvents.length >= limit) {
-              break; // We have enough
-            }
+          matchedEvents.push(event);
+          if (matchedEvents.length > windowSize) {
+            matchedEvents.shift();
           }
-          matchIndex++;
         } catch (e) {
           debug('Failed to parse activity log line: %O', e);
           continue;
         }
       }
 
-      return matchedEvents;
+      // Apply offset from the oldest end of the window, mirroring the
+      // tail-cache path (filterEvents): skip `offset`, return the newest `limit`.
+      const afterOffset = offset > 0 ? matchedEvents.slice(offset) : matchedEvents;
+      return afterOffset.slice(-limit);
     } catch (error) {
       debug('Failed to read activity log: %O', error);
       return [];
@@ -209,6 +212,14 @@ export class ActivityLogger {
 
     // If no limit or limit > cache size, we need to read from disk
     if (!options.limit || options.limit > this.MAX_CACHE_SIZE) {
+      return false;
+    }
+
+    // The cache only holds events logged by THIS process. If it has fewer
+    // events than requested, older events may still exist in the JSONL file
+    // (e.g. right after a restart), so fall through to the disk read instead
+    // of returning a short (or empty) result.
+    if (this.tailCache.length < options.limit) {
       return false;
     }
 

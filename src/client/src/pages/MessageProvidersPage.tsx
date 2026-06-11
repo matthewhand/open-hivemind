@@ -33,8 +33,10 @@ import {
 } from 'lucide-react';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
+import Tooltip from '../components/DaisyUI/Tooltip';
+import { PlatformIcon, PLATFORM_COLORS } from '../components/PlatformIcons';
+import { deriveProviderStatus, type StatusBotLike } from '../utils/messageProviderStatus';
 import { apiService } from '../services/api';
-import { getProviderSchema } from '../provider-configs';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 import useUrlParams from '../hooks/useUrlParams';
 
@@ -247,7 +249,14 @@ interface ProfilesTabProps {
   filteredProfiles: any[];
   providerTypes: { label: string; value: string }[];
   getProviderIcon: (type: string) => React.ReactNode;
+  statusBots: StatusBotLike[];
 }
+
+const STATUS_BADGE_VARIANTS = {
+  connected: 'success',
+  configured: 'info',
+  error: 'error',
+} as const;
 
 const ProfilesTab: React.FC<ProfilesTabProps> = ({
   profiles,
@@ -267,6 +276,7 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
   filteredProfiles,
   providerTypes,
   getProviderIcon,
+  statusBots,
 }) => {
   const stats = [
     { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'message', color: 'primary' as const },
@@ -324,12 +334,17 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
         />
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredProfiles.map((profile) => (
+          {filteredProfiles.map((profile) => {
+            const status = deriveProviderStatus(profile, statusBots);
+            return (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
               <div>
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                    <div
+                      className="p-3 bg-primary/10 text-primary rounded-xl"
+                      style={PLATFORM_COLORS[profile.provider] ? { color: PLATFORM_COLORS[profile.provider] } : undefined}
+                    >
                       {getProviderIcon(profile.provider)}
                     </div>
                     <div>
@@ -337,7 +352,18 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                         {profile.name}
                         <span className="text-xs font-normal opacity-80 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h2>
-                      <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
+                        <Tooltip content={status.description}>
+                          <Badge variant={STATUS_BADGE_VARIANTS[status.level]} size="sm">
+                            <span
+                              className="inline-block w-1.5 h-1.5 rounded-full bg-current mr-1"
+                              aria-hidden
+                            />
+                            {status.label}
+                          </Badge>
+                        </Tooltip>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -369,7 +395,8 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                 )}
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -388,6 +415,7 @@ const MessageProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [statusBots, setStatusBots] = useState<StatusBotLike[]>([]);
   const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.messageProviders.expandedProfile', null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -411,8 +439,24 @@ const MessageProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiService.get('/api/config/message-profiles');
-      setProfiles((res as any).message || (res as any).profiles?.message || []);
+      const [profilesResult, statusResult] = await Promise.allSettled([
+        apiService.get('/api/config/message-profiles'),
+        apiService.getStatus(),
+      ]);
+
+      if (profilesResult.status === 'fulfilled') {
+        const res = profilesResult.value;
+        setProfiles((res as any).message || (res as any).profiles?.message || []);
+      } else {
+        throw profilesResult.reason;
+      }
+
+      // Connection state comes from the same /api/dashboard/status source the
+      // Dashboard uses; failure to load it degrades to config-derived status.
+      if (statusResult.status === 'fulfilled') {
+        const rawStatus: any = statusResult.value;
+        setStatusBots(rawStatus?.data?.bots ?? rawStatus?.bots ?? []);
+      }
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : String(err)) || 'Failed to load message profiles');
     } finally {
@@ -487,10 +531,7 @@ const MessageProvidersPage: React.FC = () => {
     }
   };
 
-  const getProviderIcon = (type: string) => {
-    const schema = getProviderSchema(type);
-    return schema?.icon || <MessageIcon className="w-5 h-5" />;
-  };
+  const getProviderIcon = (type: string) => <PlatformIcon provider={type} className="w-5 h-5" />;
 
   const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
 
@@ -532,6 +573,7 @@ const MessageProvidersPage: React.FC = () => {
           filteredProfiles={filteredProfiles}
           providerTypes={providerTypes}
           getProviderIcon={getProviderIcon}
+          statusBots={statusBots}
         />
       ),
     },

@@ -275,6 +275,52 @@ describe('ActivityPage', () => {
     expect(getActivityMock).toHaveBeenCalled();
   });
 
+  it('unwraps the ApiResponse envelope from /api/dashboard/activity', async () => {
+    // The server wraps the payload as { success, data: { events, ... } }.
+    // Regression: treating the envelope as the payload showed "No activity
+    // yet" / zeroed stats even when the server had events.
+    const envelope = {
+      success: true,
+      data: {
+        events: [
+          {
+            id: '1',
+            timestamp: new Date().toISOString(),
+            botName: 'DemoBot',
+            status: 'success',
+            provider: 'discord',
+            llmProvider: 'openai',
+            messageType: 'incoming',
+          },
+        ],
+        filters: { agents: ['DemoBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
+        pagination: { total: 1, limit: 200, offset: 0, hasMore: false },
+      },
+    };
+
+    getActivityMock.mockImplementation((endpoint: string) => {
+      if (endpoint === '/api/bots') return Promise.resolve({ success: true, data: [] });
+      return Promise.resolve(envelope);
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <WebSocketProvider>
+          <MemoryRouter>
+            <ActivityPage />
+          </MemoryRouter>
+        </WebSocketProvider>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
+
+    // Events render (table view) instead of the empty state.
+    expect(screen.getByTestId('data-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument();
+  });
+
   it('handles API errors gracefully', async () => {
     getActivityMock.mockRejectedValue(new Error('Network error'));
 
