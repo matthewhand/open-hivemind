@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/matthewhand/open-hivemind)
 
-Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
+Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, Mattermost, and Telegram simultaneously.
 
 > 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — a code-audited, nested checklist of what's shipped, what's partial, and what's planned (also summarized [at the bottom of this README](#project-status--roadmap)). Quick gate-check: `npm run test:journey`.
 
@@ -33,7 +33,7 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus an inbound webhook ingress.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and Telegram from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus an inbound webhook ingress.
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
 *   **Shared Context & Memory**: Pluggable memory backends (Mem0, Mem4AI, MemVault, PostgreSQL) with retention/eviction, wired into the message pipeline per bot.
 *   **Flexible LLMs**: OpenAI, Flowise, OpenWebUI, Letta, and OpenSwarm — with function/tool calling, plus live model listing and response streaming for OpenAI.
@@ -118,7 +118,7 @@ For the full first-session walkthrough with screenshots — onboarding through p
 
 *   [User Guide](docs/USER_GUIDE.md): Screenshot-backed Quick Tour of the full user story, plus a detailed explanation of all WebUI features.
 *   [Guided Tour](docs/GUIDED_TOUR.md): A narrative, persona-driven walkthrough — building a two-bot support swarm from onboarding to backup.
-*   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
+*   [Developer Guide](DEVELOPER.md): Stack at a glance, day-to-day commands, and architecture orientation.
 *   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
 
 ## License
