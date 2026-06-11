@@ -56,44 +56,48 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
             </div>
             <div className="flex items-center gap-2">
                <Tooltip content="Run Performance Benchmark" position="top">
-                 <button
-                   type="button"
+                 <Button
+                   variant="ghost"
+                   size="xs"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsBenchmarkOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
                    aria-label={`Run performance benchmark for ${bot.name}`}
                  >
                     <Trophy className="w-4 h-4" />
-                 </button>
+                 </Button>
                </Tooltip>
                <Tooltip content="Version History" position="top">
-                 <button
-                   type="button"
+                 <Button
+                   variant="ghost"
+                   size="xs"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsHistoryOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
                    aria-label={`View version history for ${bot.name}`}
                  >
                     <History className="w-4 h-4" />
-                 </button>
+                 </Button>
                </Tooltip>
                <Tooltip content="AI Performance Insights" position="top">
-                 <button
-                   type="button"
+                 <Button
+                   variant="ghost"
+                   size="xs"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsInsightsOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
                    aria-label={`View AI performance insights for ${bot.name}`}
                  >
                     <Sparkles className="w-4 h-4" />
-                 </button>
+                 </Button>
                </Tooltip>
                <Tooltip content="Run Diagnostic" position="top">
-                 <button
-                   type="button"
+                 <Button
+                   variant="ghost"
+                   size="xs"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsDiagnosticOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
                    aria-label={`Run diagnostic for ${bot.name}`}
                  >
                     <Activity className="w-4 h-4" />
-                 </button>
+                 </Button>
                </Tooltip>
                <Badge
                 variant={toBadgeVariant(getStatusColor(botStatus))}
