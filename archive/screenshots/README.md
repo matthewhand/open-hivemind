@@ -52,3 +52,8 @@ See [CLAUDE.md](/CLAUDE.md) for the screenshot naming and archival convention.
 | ![journey-04-bot-create](journey-04-bot-create.png) | Golden-journey bot-create step (previous version) |
 | ![journey-05-bot-chat](journey-05-bot-chat.png) | Golden-journey bot-chat step (previous version) |
 | ![journey-06-activity](journey-06-activity.png) | Golden-journey activity step (previous version) |
+| ![journey-07-personas](journey-07-personas.png) | User-guide journey personas step (previous version) |
+| ![journey-08-guards](journey-08-guards.png) | User-guide journey guards step (previous version) |
+| ![journey-09-memory](journey-09-memory.png) | User-guide journey memory step (previous version) |
+| ![journey-10-monitoring](journey-10-monitoring.png) | User-guide journey monitoring step (previous version) |
+| ![journey-11-export](journey-11-export.png) | User-guide journey export step (previous version) |
