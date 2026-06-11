@@ -180,6 +180,10 @@ export interface ActivityEvent {
   processingTime?: number;
   status: 'success' | 'error' | 'timeout';
   errorMessage?: string;
+  /** Display-only enrichment, currently emitted by demo-mode seeding only. */
+  userName?: string;
+  channelName?: string;
+  content?: string;
 }
 
 export interface ActivityTimelineBucket {

@@ -12,6 +12,8 @@ import {
   CONVERSATION_THREADS,
   DEMO_USERS,
   ERROR_MESSAGES,
+  SHOWCASE_CHANNEL,
+  SHOWCASE_CONVERSATION,
   type DemoActivitySimulator,
   type DemoBot,
 } from './DemoConstants';
@@ -116,6 +118,41 @@ export class DemoActivitySimulatorService {
     for (let i = 2; i >= 0; i--) {
       const alert = this.createAlertEventForWS(new Date(now - i * 60000).toISOString());
       this.wsService.recordAlert(alert);
+    }
+
+    this.seedShowcaseConversation(now);
+  }
+
+  /**
+   * Seed the staged "hivemind in action" conversation: multiple personas
+   * responding (or deliberately staying silent) to one user in one channel.
+   * Timestamps are strictly chronological, ending shortly before `now`.
+   */
+  private seedShowcaseConversation(now: number): void {
+    for (const message of SHOWCASE_CONVERSATION) {
+      const event: MessageFlowEvent = {
+        id: `demo-showcase-${crypto.randomUUID()}`,
+        timestamp: new Date(now - message.secondsAgo * 1000).toISOString(),
+        botName: message.botName,
+        provider: 'discord',
+        llmProvider: 'openai',
+        channelId: SHOWCASE_CHANNEL.id,
+        channelName: SHOWCASE_CHANNEL.name,
+        userId: message.userId,
+        userName: message.userName,
+        messageType: message.messageType,
+        content: message.content,
+        contentLength: message.content.length,
+        processingTime: message.messageType === 'outgoing' ? message.processingTime : undefined,
+        status: 'success',
+      };
+
+      try {
+        this.activityLogger.log(event);
+      } catch {
+        // ActivityLogger may not be initialized in tests
+      }
+      this.wsService.recordMessageFlow(event);
     }
   }
 
@@ -231,6 +268,7 @@ export class DemoActivitySimulatorService {
     const threadContent = this.generateThreadContent();
     const isIncoming = threadContent.isFromUser;
     const content = threadContent.content;
+    const channelId = bot.discord?.channelId || bot.slack?.channelId || `demo-channel-${bot.name}`;
 
     return {
       id: `demo-msg-${Date.now()}-${crypto.randomUUID()}`,
@@ -238,9 +276,12 @@ export class DemoActivitySimulatorService {
       botName: bot.name,
       provider: bot.messageProvider,
       llmProvider: bot.llmProvider,
-      channelId: bot.discord?.channelId || bot.slack?.channelId || `demo-channel-${bot.name}`,
+      channelId,
+      channelName: bot.discord ? `#${channelId}` : channelId,
       userId: user.id,
+      userName: user.name,
       messageType: isIncoming ? 'incoming' : 'outgoing',
+      content,
       contentLength: content.length,
       processingTime: isIncoming ? undefined : processingTime,
       status: hasError ? 'error' : processingTime > 1500 ? 'timeout' : 'success',

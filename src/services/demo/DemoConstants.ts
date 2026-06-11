@@ -345,6 +345,82 @@ export const CONVERSATION_THREADS = [
   ],
 ];
 
+/**
+ * Staged "hivemind in action" conversation: one channel, one real question,
+ * and multiple personas that decide for themselves whether to chime in.
+ * SupportBot answers, DevOpsBot adds an ops tip, AnalyticsBot stays silent
+ * (selective engagement), and SupportBot follows up to show momentum.
+ *
+ * Seeded once by DemoActivitySimulator.seedHistoricalData() — demo mode only.
+ */
+export const SHOWCASE_CHANNEL = {
+  id: 'demo-community-support',
+  name: '#community-support',
+} as const;
+
+export interface ShowcaseMessage {
+  /** How many seconds before "now" this message was sent (larger = older). */
+  secondsAgo: number;
+  botName: string;
+  messageType: 'incoming' | 'outgoing';
+  userId: string;
+  userName: string;
+  content: string;
+  /** LLM latency in ms — outgoing messages only. */
+  processingTime?: number;
+}
+
+export const SHOWCASE_CONVERSATION: ShowcaseMessage[] = [
+  {
+    secondsAgo: 95,
+    botName: 'SupportBot',
+    messageType: 'incoming',
+    userId: 'user-grace',
+    userName: 'Grace Lee',
+    content:
+      'Hey folks — anyone know why my webhook fires twice every time a delivery fails? I keep getting duplicate tickets.',
+  },
+  {
+    secondsAgo: 82,
+    botName: 'SupportBot',
+    messageType: 'outgoing',
+    userId: 'user-grace',
+    userName: 'Grace Lee',
+    processingTime: 742,
+    content:
+      'Hi Grace! Double-firing on a failure is almost always the retry policy: if your endpoint takes too long to acknowledge, the first attempt times out and gets retried. Quick check — does your handler return 200 before doing the heavy work?',
+  },
+  {
+    secondsAgo: 61,
+    botName: 'DevOpsBot',
+    messageType: 'outgoing',
+    userId: 'user-grace',
+    userName: 'Grace Lee',
+    processingTime: 518,
+    content:
+      'Adding to what SupportBot said: switch the retry backoff to exponential and raise the ack timeout to 30s. Defaults are tuned for fast consumers — slow handlers need the headroom.',
+  },
+  {
+    secondsAgo: 38,
+    botName: 'SupportBot',
+    messageType: 'incoming',
+    userId: 'user-grace',
+    userName: 'Grace Lee',
+    content:
+      'That was it — we were acknowledging after the DB write. Moving the ack up fixed the duplicates. Is there a way to see retry attempts in the dashboard?',
+  },
+  {
+    secondsAgo: 22,
+    botName: 'SupportBot',
+    messageType: 'outgoing',
+    userId: 'user-grace',
+    userName: 'Grace Lee',
+    processingTime: 633,
+    content:
+      'Glad that fixed it! Yes — every delivery attempt lands in the Activity feed. Filter by your webhook bot to see each retry, its status, and how long it took.',
+  },
+];
+
 export const ERROR_MESSAGES = [
   'Rate limit exceeded for LLM provider',
   'Connection timeout to message platform',

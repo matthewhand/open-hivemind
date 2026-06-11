@@ -31,7 +31,9 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ## Core Functionality
 
-![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
+![Hivemind showcase — multiple AI personas conversing in one channel](docs/screenshots/hivemind-showcase.png)
+
+*The hivemind in action: a user asks one question in one channel — SupportBot answers, DevOpsBot adds the ops angle, and every other persona decides to stay silent (selective engagement).*
 
 *   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and Telegram from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus an inbound webhook ingress.
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.

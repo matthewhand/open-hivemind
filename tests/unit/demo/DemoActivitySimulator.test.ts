@@ -1,5 +1,9 @@
 import { DemoActivitySimulatorService } from '../../../src/services/demo/DemoActivitySimulator';
-import type { DemoBot } from '../../../src/services/demo/DemoConstants';
+import {
+  SHOWCASE_CHANNEL,
+  SHOWCASE_CONVERSATION,
+  type DemoBot,
+} from '../../../src/services/demo/DemoConstants';
 import * as secureRandomModule from '../../../src/utils/secureRandom';
 
 function makeDemoBot(overrides: Partial<DemoBot> = {}): DemoBot {
@@ -178,6 +182,53 @@ describe('DemoActivitySimulatorService', () => {
     it('should record response times during seeding', () => {
       service.seedHistoricalData();
       expect(mockMetricsCollector.recordResponseTime).toHaveBeenCalled();
+    });
+
+    it('should seed the showcase conversation into one channel with multiple personas', () => {
+      service.seedHistoricalData();
+
+      const showcaseEvents = mockWsService.recordMessageFlow.mock.calls
+        .map(([event]: [any]) => event)
+        .filter((event: any) => event.channelId === SHOWCASE_CHANNEL.id);
+
+      expect(showcaseEvents).toHaveLength(SHOWCASE_CONVERSATION.length);
+
+      // Every showcase event renders as a readable transcript line.
+      for (const event of showcaseEvents) {
+        expect(event.channelName).toBe(SHOWCASE_CHANNEL.name);
+        expect(event.content).toBeTruthy();
+        expect(event.userName).toBeTruthy();
+        expect(event.status).toBe('success');
+      }
+
+      // Strictly chronological timestamps, all in the past.
+      const times = showcaseEvents.map((e: any) => new Date(e.timestamp).getTime());
+      for (let i = 1; i < times.length; i++) {
+        expect(times[i]).toBeGreaterThan(times[i - 1]);
+      }
+      expect(times[times.length - 1]).toBeLessThanOrEqual(Date.now());
+
+      // Selective engagement: more than one persona responds, but not every bot.
+      const respondingBots = new Set(
+        showcaseEvents.filter((e: any) => e.messageType === 'outgoing').map((e: any) => e.botName)
+      );
+      expect(respondingBots.size).toBeGreaterThanOrEqual(2);
+      expect(respondingBots.has('SupportBot')).toBe(true);
+      expect(respondingBots.has('DevOpsBot')).toBe(true);
+      expect(respondingBots.has('AnalyticsBot')).toBe(false);
+
+      // The conversation shows momentum: a user follow-up after bot replies.
+      const incomingIndexes = showcaseEvents
+        .map((e: any, i: number) => (e.messageType === 'incoming' ? i : -1))
+        .filter((i: number) => i >= 0);
+      expect(incomingIndexes.length).toBeGreaterThanOrEqual(2);
+      expect(incomingIndexes[incomingIndexes.length - 1]).toBeGreaterThan(0);
+
+      // The showcase transcript is also persisted to the ActivityLogger.
+      const loggedShowcase = mockActivityLogger.log.mock.calls
+        .map(([event]: [any]) => event)
+        .filter((event: any) => event.channelId === SHOWCASE_CHANNEL.id);
+      expect(loggedShowcase).toHaveLength(SHOWCASE_CONVERSATION.length);
     });
 
     it('should tolerate ActivityLogger not being initialized', () => {
