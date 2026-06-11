@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { Shortcut } from '../hooks/useKeyboardShortcuts';
 import { Kbd, SimpleTable } from './DaisyUI';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
@@ -39,6 +40,11 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   onClose,
   shortcuts,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useFocusTrap(isOpen, dialogRef, closeButtonRef);
+
   if (!isOpen) return null;
 
   return (
@@ -52,14 +58,17 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
       {/* Dialog */}
       <div
+        ref={dialogRef}
         className="relative w-full max-w-md bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
         role="dialog"
+        aria-modal="true"
         aria-label="Keyboard shortcuts"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-base-300">
           <h2 className="text-lg font-bold">Keyboard Shortcuts</h2>
           <button
+            ref={closeButtonRef}
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
             aria-label="Close shortcuts help"
