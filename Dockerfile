@@ -56,7 +56,9 @@ RUN apk add --no-cache sqlite-dev make g++ python3 && \
     { echo "WARN: sqlite3 native build failed — will use fallback"; }
 
 ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
-RUN pnpm run build || echo "Build completed with warnings"
+# Hard-fail the image build if compilation fails — a tsx-at-runtime fallback
+# cannot boot within small-VM memory limits (e.g. Fly 256MB).
+RUN pnpm run build
 
 # Link workspace package dist dirs
 RUN for pkg in packages/*/; do \
@@ -80,4 +82,8 @@ USER node
 RUN mkdir -p config/uploads data logs
 
 EXPOSE 3028
-CMD ["node", "--import", "tsx", "src/index.ts"]
+# Run the compiled backend. tsx runtime compilation needs >256MB at boot and
+# OOM-thrashes on small VMs; compiled JS boots fast and lean.
+# NODE_ENV=production also activates module-alias (dist/ path aliases).
+ENV NODE_ENV=production
+CMD ["node", "dist/src/index.js"]

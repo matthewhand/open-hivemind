@@ -6,6 +6,9 @@
 app = 'open-hivemind'
 primary_region = 'syd'
 
+# 256MB is not enough headroom for boot spikes on the free tier; swap absorbs them.
+swap_size_mb = 512
+
 [build]
   image = 'mhand79/open-hivemind'
   [build.args]
@@ -13,6 +16,7 @@ primary_region = 'syd'
 
 [env]
   PORT = '5005'
+  NODE_ENV = 'production'
 
 [http_service]
   internal_port = 5005
