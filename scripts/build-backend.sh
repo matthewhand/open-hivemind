@@ -9,6 +9,11 @@ echo "==> Building backend (tsc -> dist/)"
 rm -rf dist tsconfig.tsbuildinfo
 node_modules/.bin/tsc -p tsconfig.build.json
 
+# Rewrite tsconfig path aliases (@src/*, @hivemind/*, ...) to relative paths
+# so the compiled output runs on plain node with no runtime alias resolver
+# (module-alias was removed in 189dd5220).
+node_modules/.bin/tsc-alias -p tsconfig.build.json
+
 if [ ! -f dist/src/index.js ]; then
   echo "ERROR: backend build produced no dist/src/index.js" >&2
   exit 1
