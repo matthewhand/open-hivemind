@@ -67,8 +67,12 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
       const listRes = await request.get('/api/bots', { headers: apiHeaders });
       expect(listRes.ok(), `bot list returned ${listRes.status()}`).toBeTruthy();
       const body = await listRes.json();
-      const bots: Array<{ id: string; name: string }> =
-        body?.data?.bots ?? body?.bots ?? (Array.isArray(body) ? body : []);
+      // /api/bots responds with ApiResponse.success(<array>) → { data: [...] }
+      const bots: Array<{ id: string; name: string }> = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+          ? body.data
+          : (body?.data?.bots ?? body?.bots ?? []);
       for (const bot of bots) {
         if (STALE_BOT_RE.test(bot.name)) {
           const del = await request.delete(`/api/bots/${bot.id}`, { headers: apiHeaders });

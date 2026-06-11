@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiService, type Bot, type StatusResponse } from '../services/api';
+import { apiService, type StatusResponse } from '../services/api';
+import type { BotConfig } from '../types/bot';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
@@ -46,7 +47,8 @@ const Dashboard: React.FC = () => {
         return '🤖';
     }
   }, []);
-  const [bots, setBots] = useState<Bot[]>([]);
+  const [bots, setBots] = useState<BotConfig[]>([]);
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -104,17 +106,35 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const [configResult, statusResult, healthResult] = await Promise.allSettled([
-        apiService.getConfig(),
+      const [botsResult, statusResult, healthResult, profilesResult] = await Promise.allSettled([
+        apiService.getBots(),
         apiService.getStatus(),
         apiService.get('/api/health'),
+        apiService.getLlmProfiles(),
       ]);
-      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
       const healthPayload = healthResult.status === 'fulfilled' ? healthResult.value : null;
-      // In demo mode, use status bots (which include fake demo data) as the bot list
-      const isDemoMode = (statusData as any)?.isDemoMode === true;
-      setBots(isDemoMode ? (statusData as any)?.bots ?? [] : configData?.bots ?? []);
+
+      // Read the same source as the Bots page (/api/bots) so the hero stats
+      // and the Agents panel never disagree with the bot list elsewhere.
+      const rawBots: any = botsResult.status === 'fulfilled' ? botsResult.value : null;
+      const botsList: BotConfig[] = Array.isArray(rawBots) ? rawBots
+        : Array.isArray(rawBots?.data) ? rawBots.data
+        : rawBots?.data?.bots ?? rawBots?.bots ?? [];
+
+      // Fall back to status bots only when /api/bots yields nothing
+      // (e.g. older servers); normalize the shape the cards expect.
+      const fallbackBots: BotConfig[] = (statusData?.bots ?? []).map((b: any) => ({
+        ...b,
+        id: b.id ?? b.name,
+        messageProvider: b.messageProvider ?? b.provider ?? '',
+      }));
+      setBots(botsList.length > 0 ? botsList : fallbackBots);
+
+      // Providers stat reads the same LLM profile list as the Bots page.
+      const profilesData: any = profilesResult.status === 'fulfilled' ? profilesResult.value : null;
+      const profiles = profilesData?.llm || profilesData?.profiles?.llm || [];
+      setLlmProfiles(Array.isArray(profiles) ? profiles : []);
       setStatus(statusData);
       setHealthData(healthPayload);
       setToastMessage('Dashboard refreshed successfully!');
@@ -146,25 +166,27 @@ const Dashboard: React.FC = () => {
   }, [status]);
 
   // ⚡ Bolt Optimization: Combined multiple O(N) filtering and reduce passes into a single pass.
+  // Stats derive from the same /api/bots + llm-profiles data the Bots page
+  // shows, so the hero never contradicts the rest of the admin UI.
   const { activeBots, totalMessages, uptimeSeconds, uptimeDays, uptimeHours, uptimeMinutes, totalProviders } = useMemo(() => {
-    if (!status && !healthData) {
-      return { activeBots: 0, totalMessages: 0, uptimeSeconds: 0, uptimeDays: 0, uptimeHours: 0, uptimeMinutes: 0, totalProviders: 0 };
-    }
-
     let activeCount = 0;
     let messageSum = 0;
     const providerSet = new Set<string>();
 
-    if (status?.bots) {
-      for (let i = 0; i < status.bots.length; i++) {
-        const bot = status.bots[i];
-        if (bot.status === 'active') {
-          activeCount++;
-        }
-        messageSum += (bot.messageCount || 0);
-        if (bot.provider) providerSet.add(bot.provider);
-        if (bot.llmProvider) providerSet.add(bot.llmProvider);
+    for (const bot of bots) {
+      const botStatus = (bot.status || '').toLowerCase();
+      if (botStatus === 'active' || botStatus === 'running' || bot.connected) {
+        activeCount++;
       }
+      messageSum += (bot.messageCount || 0);
+      const messageProvider = bot.messageProvider || bot.provider;
+      if (messageProvider) providerSet.add(messageProvider.toLowerCase());
+      if (bot.llmProvider) providerSet.add(bot.llmProvider.toLowerCase());
+    }
+
+    for (const profile of llmProfiles) {
+      const key = profile?.provider || profile?.key || profile?.name;
+      if (key) providerSet.add(String(key).toLowerCase());
     }
 
     const totalSeconds = healthData?.uptime ?? status?.uptime ?? 0;
@@ -177,7 +199,7 @@ const Dashboard: React.FC = () => {
       uptimeMinutes: Math.floor((totalSeconds % 3600) / 60),
       totalProviders: providerSet.size,
     };
-  }, [status, healthData]);
+  }, [bots, llmProfiles, status, healthData]);
 
   const hasUptime = uptimeSeconds > 0;
   const uptimeDisplay = uptimeDays > 0
@@ -389,7 +411,20 @@ const Dashboard: React.FC = () => {
                     <DashboardBotCard
                       key={bot.name}
                       bot={bot}
-                      botStatusData={botStatusMap.get(bot.id)}
+                      botStatusData={
+                        botStatusMap.get(bot.id) ??
+                        (bot.status
+                          ? {
+                              name: bot.name,
+                              provider: bot.provider ?? bot.messageProvider ?? '',
+                              llmProvider: bot.llmProvider ?? '',
+                              status: bot.status,
+                              connected: bot.connected,
+                              messageCount: bot.messageCount,
+                              errorCount: bot.errorCount,
+                            }
+                          : undefined)
+                      }
                       rating={botRatings[bot.name] || 0}
                       onRatingChange={handleRatingChange}
                       getProviderIcon={getProviderIcon}
