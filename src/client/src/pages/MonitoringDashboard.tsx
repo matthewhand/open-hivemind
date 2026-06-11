@@ -30,6 +30,7 @@ import DistributedTraceWaterfall, { TraceSpan } from '../components/Monitoring/D
 import BotActivityWaterfallMonitor from '../components/Monitoring/BotActivityWaterfallMonitor';
 import { apiService } from '../services/api';
 import type { StatusResponse, Bot } from '../services/api';
+import type { BotConfig } from '../types/bot';
 import type { PipelineTrace } from '../services/api/monitoring';
 import Debug from 'debug';
 const debug = Debug('app:client:components:Monitoring:MonitoringDashboard');
@@ -93,7 +94,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const [isStatusLoading, setIsStatusLoading] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState<StatusResponse | null>(null);
-  const [configBots, setConfigBots] = useState<Bot[]>([]);
+  const [apiHealth, setApiHealth] = useState<{ overall?: { status?: 'healthy' | 'warning' | 'error' } } | null>(null);
+  const [configBots, setConfigBots] = useState<BotConfig[]>([]);
   const [bots, setBots] = useState<BotWithStatus[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [refreshInterval, setRefreshInterval] = useState(initialRefreshInterval);
@@ -113,8 +115,18 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const fetchStatus = useCallback(async () => {
     setIsStatusLoading(true);
     try {
-      const systemData = await apiService.getStatus();
-      setSystemMetrics(systemData);
+      const [systemResult, apiHealthResult] = await Promise.allSettled([
+        apiService.getStatus(),
+        // Same source as the Infrastructure Health panel below, so the
+        // Ecosystem Status hero always agrees with it.
+        apiService.getApiEndpointsStatus(),
+      ]);
+      if (systemResult.status === 'fulfilled') {
+        setSystemMetrics(systemResult.value);
+      }
+      if (apiHealthResult.status === 'fulfilled' && apiHealthResult.value) {
+        setApiHealth(apiHealthResult.value);
+      }
       setLastRefresh(new Date());
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -128,12 +140,17 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const fetchConfig = useCallback(async () => {
     setIsConfigLoading(true);
     try {
-      const configData = await apiService.getConfig();
-      setConfigBots(configData.bots || []);
+      // Read the same /api/bots source as the Bots page so the hero counts
+      // include database-backed (and demo) bots, not just file-config bots.
+      const rawBots: any = await apiService.getBots();
+      const botsList: BotConfig[] = Array.isArray(rawBots) ? rawBots
+        : Array.isArray(rawBots?.data) ? rawBots.data
+        : rawBots?.data?.bots ?? rawBots?.bots ?? [];
+      setConfigBots(botsList);
       setLastRefresh(new Date());
       if (onRefresh) onRefresh();
     } catch (err) {
-      debug('ERROR:', '[Monitoring] getConfig failed:', err);
+      debug('ERROR:', '[Monitoring] getBots failed:', err);
     } finally {
       lastConfigUpdate.current = Date.now(); // Always update on completion to avoid retry loops
       setIsConfigLoading(false);
@@ -169,11 +186,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     return map;
   }, [systemMetrics]);
 
-  // Derive bots with status combining config and system data independently.
-  // When no status has been reported for a bot yet, show an honest
-  // "unknown / no data" state instead of fabricated numbers.
+  // Derive bots with status combining /api/bots and system data independently.
+  // The /api/bots payload already carries an honest status per bot; the
+  // status endpoint only refines it when it has reported something.
   useEffect(() => {
-    const botsWithStatus = configBots.map((bot: Bot) => {
+    const botsWithStatus = configBots.map((bot: BotConfig) => {
       const statusBot = systemMetricsMap.get(bot.name);
       return {
         ...bot,
@@ -187,10 +204,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
           uptime: 0, // Not in StatusResponse
           lastActivity: undefined, // Not in StatusResponse
         } : {
-          status: 'unknown',
-          connected: false,
-          messageCount: 0,
-          errorCount: 0,
+          status: bot.status || 'unknown',
+          connected: bot.connected || false,
+          messageCount: bot.messageCount || 0,
+          errorCount: bot.errorCount || 0,
           responseTime: 0,
           uptime: 0,
           lastActivity: undefined,
@@ -266,23 +283,25 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     [selectedTrace],
   );
 
+  // Ecosystem status agrees with the Infrastructure Health panel: it is the
+  // worst of the API-endpoint health and the per-bot statuses. We only fall
+  // back to "starting" when no health data of any kind has arrived yet --
+  // never a literal "unknown" alongside healthy infrastructure data.
   const getOverallHealthStatus = () => {
-    if (!bots.length) { return 'unknown'; }
+    const apiStatus = apiHealth?.overall?.status;
+    const hasBotError = bots.some(bot => bot.statusData?.status === 'error');
+    const hasBotWarning = bots.some(bot => bot.statusData?.status === 'warning');
 
-    const botHealthIssues = bots.filter(bot =>
-      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
-    ).length;
+    if (apiStatus === 'error' || hasBotError) { return 'error'; }
+    if (apiStatus === 'warning' || hasBotWarning) { return 'warning'; }
 
-    if (botHealthIssues > 0) {
-      const hasError = bots.some(bot => bot.statusData?.status === 'error');
-      return hasError ? 'error' : 'warning';
-    }
+    const hasBotData = bots.some(
+      bot => bot.statusData?.status && bot.statusData.status !== 'unknown',
+    );
+    if (apiStatus === 'healthy' || hasBotData) { return 'healthy'; }
 
-    // If no bot has reported real status data yet, the truth is "unknown".
-    if (bots.every(bot => bot.statusData?.status === 'unknown')) {
-      return 'unknown';
-    }
-    return 'healthy';
+    // No health or bot data yet (e.g. server still booting).
+    return 'starting';
   };
 
   const getHealthColor = (status: string) => {
@@ -314,8 +333,12 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     {
       id: 'active',
       title: 'Active Bots',
-      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
-      description: 'Connected / Total',
+      value: `${bots.filter(bot =>
+        bot.statusData?.connected ||
+        bot.statusData?.status === 'active' ||
+        bot.statusData?.status === 'running',
+      ).length}/${bots.length}`,
+      description: 'Active / Total',
       icon: <Cpu className="w-8 h-8" />,
       color: 'primary' as const,
     },
