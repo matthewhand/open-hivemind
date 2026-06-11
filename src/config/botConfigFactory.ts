@@ -231,6 +231,12 @@ export function createBotConfig(
 
   applyUserOverrides(botName, config, userConfigStore);
 
+  // Profiles must apply even when the bot has no user-config override entry
+  // (applyUserOverrides early-returns in that case).
+  applyLlmProfile(config);
+  applyGuardrailProfile(config);
+  applyMcpServerProfile(config);
+
   return config;
 }
 
@@ -287,8 +293,4 @@ function applyUserOverrides(botName: string, config: BotConfig, userConfigStore:
   if (!config.mcpServers) {
     config.mcpServers = [];
   }
-
-  applyLlmProfile(config);
-  applyGuardrailProfile(config);
-  applyMcpServerProfile(config);
 }
