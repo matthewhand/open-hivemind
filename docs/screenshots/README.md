@@ -42,6 +42,7 @@ The spec auto-detects sentinel API keys (`/^(test\|dummy\|mock\|fake\|sk-test)-/
 
 | Screenshot | Description |
 |---|---|
+| ![hivemind-showcase](hivemind-showcase.png) | The hivemind money shot: the Activity page's Conversations view showing one channel (`#community-support`) where a user's question is answered by two demo personas (SupportBot, then DevOpsBot adding the ops angle) over about a minute, with chronological timestamps and per-reply LLM latency — every other persona stays silent (selective engagement). Demo-mode data; regenerate with `npm run test:journey:showcase`. |
 | ![activity-monitor](activity-monitor.png) | Real-time activity monitor showing live system events |
 | ![activity-page](activity-page.png) | Activity page overview with event timeline |
 | ![activity-page-filters](activity-page-filters.png) | Activity page with filter controls applied |

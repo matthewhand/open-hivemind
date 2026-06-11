@@ -91,7 +91,9 @@ Sam invites both Discord applications to the community server and watches `#supp
 
 The first real exchange: a member asks "how do I fix a node version mismatch?", HelpfulHive replies with a step-by-step, and BuzzBee stays quiet — exactly the division of labor Sam configured in the response profiles.
 
-*(No screenshot for this step yet — see [Screenshots wanted](#screenshots-wanted).)*
+> **What that looks like:** the Activity page's **Conversations** view replays exactly this behavior. Below, one user question in `#community-support` draws an answer from SupportBot, an ops tip from DevOpsBot, and silence from every other persona — selective engagement, recorded with chronological timestamps and per-reply latency. (Demo-mode personas shown; regenerate with `npm run test:journey:showcase`.)
+
+![Hivemind showcase — multiple personas, one channel, selective engagement](screenshots/hivemind-showcase.png)
 
 ## 7. Watching the swarm work
 
@@ -142,6 +144,6 @@ Steps in this tour that don't yet have a matching screenshot in the journey set 
 
 | Step | Wanted screenshot |
 |---|---|
-| [6. Going live in a real channel](#6-going-live-in-a-real-channel) | A real platform channel (Discord) showing a member's question and a bot's reply — or the Live Chat Monitor rendering that exchange. |
+| [6. Going live in a real channel](#6-going-live-in-a-real-channel) | A real platform channel (Discord) showing a member's question and a bot's reply. (The admin-side view of this exchange now exists: `hivemind-showcase.png`, the Conversations-view transcript embedded in that step.) |
 | [9. Extending with an MCP tool (with approval)](#9-extending-with-an-mcp-tool-with-approval) | The human-in-the-loop approval prompt for a pending MCP tool invocation, and/or the guard profile's tool-permission editor with approval enabled. |
 | [3. Two bots, two personas](#3-two-bots-two-personas) | The Bots page showing **two** bots with different personas side by side (journey-04 shows a single created bot). |
