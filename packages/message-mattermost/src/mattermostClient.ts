@@ -419,6 +419,33 @@ export default class MattermostClient {
   }
 
   /**
+   * Sets the bot's custom status (the short text + emoji shown next to the
+   * user in Mattermost). Used to surface the active LLM model.
+   *
+   * Maps to `PUT /api/v4/users/me/status/custom`. Best-effort: any failure
+   * (unsupported server version, missing scope, network error) is swallowed
+   * and logged at debug level so it can never disrupt message handling.
+   *
+   * @param text  Status text (truncated to 100 chars to match Mattermost limits).
+   * @param emoji Emoji name without colons (defaults to "robot_face").
+   */
+  async setCustomStatus(text: string, emoji = 'robot_face'): Promise<void> {
+    if (!this.connected) {
+      return;
+    }
+    try {
+      await this.api.put('/users/me/status/custom', {
+        emoji,
+        text: text.slice(0, 100),
+      });
+    } catch (error: unknown) {
+      logger.debug('Mattermost custom status update failed', {
+        error: isHttpError(error) ? error.message : error,
+      });
+    }
+  }
+
+  /**
    * Best-effort typing indicator.
    *
    * Prefers the realtime WebSocket channel (Mattermost `user_typing` action),

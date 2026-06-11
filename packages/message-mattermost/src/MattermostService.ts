@@ -34,6 +34,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     botConfig: any
   ) => Promise<string | null>;
   private subscribedBots = new Set<string>();
+  private lastModelActivity = new Map<string, string>();
 
   public supportsChannelPrioritization: boolean = true;
 
@@ -727,10 +728,49 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
+  /**
+   * Surfaces the active LLM model as the bot's Mattermost custom status
+   * (the short text + emoji shown next to the user).
+   *
+   * Opt-in: set `MATTERMOST_ENABLE_STATUS_UPDATES=true` to enable. This is
+   * gated because updating a bot's custom status requires the token to be a
+   * full user/bot account with status scope, which not every deployment has;
+   * leaving it off keeps the previous no-op behavior.
+   *
+   * Best-effort and self-deduplicating: repeated calls with the same modelId
+   * for the same bot make no API call, and any API failure is swallowed (the
+   * underlying client logs it at debug level) so model selection never breaks
+   * message handling.
+   */
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
-    void modelId;
-    void senderKey;
-    return;
+    if (process.env.MATTERMOST_ENABLE_STATUS_UPDATES !== 'true') {
+      return;
+    }
+    if (!modelId) {
+      return;
+    }
+
+    const botName = senderKey || Array.from(this.clients.keys())[0];
+    if (!botName) {
+      return;
+    }
+
+    if (this.lastModelActivity.get(botName) === modelId) {
+      return;
+    }
+
+    const client = this.clients.get(botName);
+    if (!client || typeof client.setCustomStatus !== 'function') {
+      return;
+    }
+
+    try {
+      await client.setCustomStatus(`Model: ${modelId}`);
+      this.lastModelActivity.set(botName, modelId);
+      debug(`[${botName}] Set Mattermost custom status: Model: ${modelId}`);
+    } catch (error) {
+      debug(`Mattermost setModelActivity failed for ${botName}:`, error);
+    }
   }
 
   public async shutdown(): Promise<void> {
@@ -743,6 +783,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
     this.subscribedBots.clear();
+    this.lastModelActivity.clear();
     this.messageHandler = undefined;
     MattermostService.instance = undefined;
   }
