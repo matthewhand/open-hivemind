@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import { getEnvProfiles } from './envProfiles';
 import { Logger } from '@common/logger';
 
 const logger = Logger.withContext('memoryProfiles');
@@ -76,6 +77,8 @@ export const MemoryProfileSchema = z
     /** Cross-reference: bots currently using this profile (read-only echo). */
     inUseBy: z.array(z.string()).optional(),
     config: MemoryProfileConfigSchema.default({}),
+    /** 'env' profiles come from environment variables and are read-only. */
+    source: z.enum(['env', 'file']).optional(),
   })
   // Forward-compat: tolerate fields added to the wire format before the
   // schema catches up, instead of silently stripping them on round-trip.
@@ -135,8 +138,38 @@ const DEFAULT_MEMORY_PROFILES: MemoryProfiles = {
   memory: [],
 };
 
+/** Config keys the zod schema types as numbers; env values arrive as strings. */
+const numericConfigKeys = new Set(['timeoutMs', 'timeout', 'maxRetries', 'limit']);
+
+const envMemoryProfiles = (): MemoryProfile[] => {
+  const validated: MemoryProfile[] = [];
+  for (const [index, envProfile] of getEnvProfiles('memory').entries()) {
+    const config: Record<string, unknown> = { ...envProfile.config };
+    for (const key of numericConfigKeys) {
+      if (typeof config[key] === 'string' && config[key] !== '' && !isNaN(Number(config[key]))) {
+        config[key] = Number(config[key]);
+      }
+    }
+    const profile = validateMemoryProfile(
+      {
+        key: envProfile.key,
+        name: envProfile.name,
+        description: envProfile.description,
+        provider: envProfile.provider,
+        config,
+        source: 'env',
+      },
+      index
+    );
+    if (profile) {
+      validated.push(profile);
+    }
+  }
+  return validated;
+};
+
 export const loadMemoryProfiles = (): MemoryProfiles => {
-  return loadProfiles<MemoryProfiles>({
+  const fromFile = loadProfiles<MemoryProfiles>({
     filename: 'memory-profiles.json',
     defaultData: DEFAULT_MEMORY_PROFILES,
     profileType: 'memory',
@@ -158,10 +191,27 @@ export const loadMemoryProfiles = (): MemoryProfiles => {
       return { memory: validated };
     },
   });
+
+  // Env-defined profiles overlay file profiles (env wins on key collision)
+  // and are never persisted to disk.
+  const envProfiles = envMemoryProfiles();
+  if (envProfiles.length === 0) {
+    return fromFile;
+  }
+  const envKeys = new Set(envProfiles.map((p) => p.key));
+  return {
+    memory: [
+      ...envProfiles,
+      ...fromFile.memory.filter((p) => !envKeys.has(p.key.toLowerCase())),
+    ],
+  };
 };
 
 export const saveMemoryProfiles = (profiles: MemoryProfiles): void => {
-  saveProfiles('memory-profiles.json', profiles);
+  // Never persist env-defined profiles (they carry secrets sourced from env).
+  saveProfiles('memory-profiles.json', {
+    memory: profiles.memory.filter((p) => p.source !== 'env'),
+  });
 };
 
 export const getMemoryProfileByKey = (key: string): MemoryProfile | undefined => {

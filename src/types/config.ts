@@ -203,6 +203,8 @@ export interface BotConfig {
   name: string;
   /** Message provider type */
   messageProvider: MessageProvider;
+  /** Message provider profile name (credentials sourced from message profiles) */
+  messageProfile?: string;
   /** LLM provider type */
   llmProvider: LlmProvider;
   /** LLM provider profile name */
@@ -599,6 +601,8 @@ export interface BotOverride {
   disabled?: boolean;
   /** Message provider override */
   messageProvider?: MessageProvider;
+  /** Message provider profile override */
+  messageProfile?: string;
   /** LLM provider override */
   llmProvider?: LlmProvider;
   /** LLM provider profile override */

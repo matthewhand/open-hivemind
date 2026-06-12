@@ -226,6 +226,11 @@ const ProfilesTab: React.FC<{
                           <Badge variant="secondary" size="small" style="outline">
                             {profile.provider}
                           </Badge>
+                          {profile.source === 'env' && (
+                            <Badge variant="info" size="small" style="outline">
+                              env
+                            </Badge>
+                          )}
                           <Badge
                             variant={
                               normalizeModelType(profile.modelType) === 'embedding'
@@ -269,18 +274,22 @@ const ProfilesTab: React.FC<{
                           <ChatIcon className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
-                        <EditIcon className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-error hover:bg-error/10"
-                        aria-label={`Delete ${profile.name} profile`}
-                        onClick={() => onDeleteProfile(profile.key)}
-                      >
-                        <DeleteIcon className="w-4 h-4" />
-                      </Button>
+                      {profile.source !== 'env' && (
+                        <>
+                          <Button size="sm" variant="ghost" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
+                            <EditIcon className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-error hover:bg-error/10"
+                            aria-label={`Delete ${profile.name} profile`}
+                            onClick={() => onDeleteProfile(profile.key)}
+                          >
+                            <DeleteIcon className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"

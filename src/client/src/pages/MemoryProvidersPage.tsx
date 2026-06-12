@@ -317,6 +317,9 @@ const MemoryProvidersPage: React.FC = () => {
                         </h2>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
+                          {profile.source === 'env' && (
+                            <Badge variant="info" size="sm" className="badge-outline">env</Badge>
+                          )}
                           {profile.config?.baseUrl && (
                             <span className="flex items-center gap-1 text-xs opacity-60">
                               <UrlIcon className="w-3 h-3" />
@@ -343,8 +346,12 @@ const MemoryProvidersPage: React.FC = () => {
                         <TestIcon className="w-4 h-4" />
                         <span className="ml-1 text-xs">Test</span>
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                      <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                      {profile.source !== 'env' && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                        </>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                         {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                       </Button>

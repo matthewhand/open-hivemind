@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { botSchema } from './botSchema';
 import { type UserConfigStore } from './UserConfigStore';
-import { applyLlmProfile, applyGuardrailProfile, applyMcpServerProfile } from './botProfileHelpers';
+import { applyLlmProfile, applyGuardrailProfile, applyMcpServerProfile, applyMessageProfile } from './botProfileHelpers';
 import { ConfigurationError } from '../types/errorClasses';
 import { type TTLCache } from '../utils/TTLCache';
 
@@ -125,6 +125,7 @@ export function createBotConfig(
   const config: BotConfig = {
     name: botName,
     messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
+    messageProfile: (botConfig.get('MESSAGE_PROFILE') as string) || undefined,
     llmProvider,
     llmModel,
     llmProfile: (botConfig.get('LLM_PROFILE') as string) || undefined,
@@ -233,6 +234,7 @@ export function createBotConfig(
 
   // Profiles must apply even when the bot has no user-config override entry
   // (applyUserOverrides early-returns in that case).
+  applyMessageProfile(config, { providerExplicit: hasEnvOverride(botName, 'MESSAGE_PROVIDER') });
   applyLlmProfile(config);
   applyGuardrailProfile(config);
   applyMcpServerProfile(config);
@@ -276,6 +278,7 @@ function applyUserOverrides(botName: string, config: BotConfig, userConfigStore:
   };
 
   assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
+  assignIfAllowed('messageProfile', 'MESSAGE_PROFILE');
   assignIfAllowed('llmProvider', 'LLM_PROVIDER');
   assignIfAllowed('llmProfile', 'LLM_PROFILE');
   assignIfAllowed('responseProfile', 'RESPONSE_PROFILE');

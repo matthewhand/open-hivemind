@@ -7,9 +7,11 @@ import Debug from 'debug';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
 import { getMcpServerProfileByKey } from './mcpServerProfiles';
+import { getMessageProfileByKey } from './messageProfiles';
 
 import type {
   BotConfig,
+  MessageProvider,
   McpServerConfig,
   McpGuardConfig,
 } from '@src/types/config';
@@ -140,6 +142,142 @@ function normalizeOpenSwarmProfile(profileConfig: Record<string, unknown>): Reco
     apiKey: readString(profileConfig, 'apiKey'),
     team: readString(profileConfig, 'team'),
   };
+}
+
+/**
+ * Apply a message provider profile (config.messageProfile) to the bot config.
+ *
+ * Profile config keys follow the WebUI camelCase convention (botToken,
+ * appToken, signingSecret, …); a few alias spellings are accepted. Values are
+ * merged with mergeMissing(), so explicit BOTS_<NAME>_* env values always win.
+ *
+ * If the bot's messageProvider was never explicitly set (convict default is
+ * 'discord'), the profile's provider is adopted; if it was explicit and
+ * mismatches, the profile is skipped.
+ */
+export function applyMessageProfile(
+  config: BotConfig,
+  opts: { providerExplicit?: boolean } = {}
+): void {
+  const profileName = config.messageProfile;
+  if (!profileName) {
+    return;
+  }
+
+  const profile = getMessageProfileByKey(profileName);
+  if (!profile) {
+    debug(`Unknown message provider profile "${profileName}"`);
+    return;
+  }
+
+  if (profile.provider !== config.messageProvider) {
+    if (opts.providerExplicit) {
+      debug(
+        `Message profile "${profileName}" provider "${profile.provider}" does not match ` +
+          `bot provider "${config.messageProvider}" — skipping`
+      );
+      return;
+    }
+    config.messageProvider = profile.provider as MessageProvider;
+  }
+
+  const profileConfig = ensureProfileConfig(profile.config);
+  applyMessageProfileConfig(config, profileName, profileConfig);
+}
+
+function applyMessageProfileConfig(
+  config: BotConfig,
+  profileName: string,
+  profileConfig: Record<string, unknown>
+): void {
+  const str = (...keys: string[]): string | undefined => {
+    for (const key of keys) {
+      const value = readString(profileConfig, key);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+    return undefined;
+  };
+
+  if (config.messageProvider === 'discord') {
+    const token = str('botToken', 'token');
+    if (!config.discord && !token) {
+      debug(`Message profile "${profileName}" has no discord botToken — skipping`);
+      return;
+    }
+    if (!config.discord) {
+      config.discord = { token: '' };
+    }
+    mergeMissing(config.discord as unknown as Record<string, unknown>, {
+      token,
+      clientId: str('clientId'),
+      guildId: str('guildId'),
+      channelId: str('channelId'),
+      voiceChannelId: str('voiceChannelId'),
+    });
+    return;
+  }
+
+  if (config.messageProvider === 'slack') {
+    const botToken = str('botToken', 'token');
+    if (!config.slack && !botToken) {
+      debug(`Message profile "${profileName}" has no slack botToken — skipping`);
+      return;
+    }
+    if (!config.slack) {
+      config.slack = { botToken: '', signingSecret: '' };
+    }
+    // Literal mode wins over the WebUI's socketMode boolean.
+    let mode = str('mode') as 'socket' | 'rtm' | undefined;
+    if (mode !== 'socket' && mode !== 'rtm') {
+      mode = undefined;
+    }
+    if (mode === undefined && typeof profileConfig.socketMode === 'boolean') {
+      mode = profileConfig.socketMode ? 'socket' : 'rtm';
+    }
+    mergeMissing(config.slack as unknown as Record<string, unknown>, {
+      botToken,
+      appToken: str('appToken'),
+      signingSecret: str('signingSecret'),
+      joinChannels: str('joinChannels'),
+      defaultChannelId: str('defaultChannelId', 'channelId'),
+      mode,
+    });
+    return;
+  }
+
+  if (config.messageProvider === 'mattermost') {
+    const token = str('token', 'botToken');
+    if (!config.mattermost && !token) {
+      debug(`Message profile "${profileName}" has no mattermost token — skipping`);
+      return;
+    }
+    if (!config.mattermost) {
+      config.mattermost = { serverUrl: '', token: '' };
+    }
+    mergeMissing(config.mattermost as unknown as Record<string, unknown>, {
+      serverUrl: str('serverUrl'),
+      token,
+      channel: str('channel', 'channelId'),
+    });
+    return;
+  }
+
+  if (config.messageProvider === 'telegram') {
+    const botToken = str('botToken', 'token');
+    if (!config.telegram && !botToken) {
+      debug(`Message profile "${profileName}" has no telegram botToken — skipping`);
+      return;
+    }
+    if (!config.telegram) {
+      config.telegram = { botToken: '' };
+    }
+    mergeMissing(config.telegram as unknown as Record<string, unknown>, {
+      botToken,
+      chatId: str('chatId', 'channelId'),
+    });
+  }
 }
 
 export function applyGuardrailProfile(config: BotConfig): void {
