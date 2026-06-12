@@ -143,26 +143,26 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       title: 'Basic Information',
       icon: <Info className="w-5 h-5" />,
       content: (
-        <div className="space-y-3">
+        <dl className="space-y-3">
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Name:</span>
-            <span className="text-sm">{bot.name}</span>
+            <dt className="text-sm font-semibold min-w-[120px]">Name:</dt>
+            <dd className="text-sm">{bot.name}</dd>
           </div>
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Message Provider:</span>
-            <span className="text-sm">{bot.messageProvider}</span>
+            <dt className="text-sm font-semibold min-w-[120px]">Message Provider:</dt>
+            <dd className="text-sm">{bot.messageProvider}</dd>
           </div>
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">LLM Provider:</span>
-            <span className="text-sm">{bot.llmProvider}</span>
+            <dt className="text-sm font-semibold min-w-[120px]">LLM Provider:</dt>
+            <dd className="text-sm">{bot.llmProvider}</dd>
           </div>
           {bot.persona && (
             <div className="flex gap-4">
-              <span className="text-sm font-semibold min-w-[120px]">Persona:</span>
-              <span className="text-sm">{bot.persona}</span>
-            </div>
+            <dt className="text-sm font-semibold min-w-[120px]">Persona:</dt>
+            <dd className="text-sm">{bot.persona}</dd>
+          </div>
           )}
-        </div>
+        </dl>
       ),
     },
     {
@@ -170,25 +170,25 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       title: 'Status Information',
       icon: <Activity className="w-5 h-5" />,
       content: (
-        <div className="space-y-3">
+        <dl className="space-y-3">
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Status:</span>
+            <dt className="text-sm font-semibold min-w-[120px]">Status:</dt>
             <div className="flex items-center gap-2">
               {getStatusIcon(statusData?.status || 'unknown')}
               <span className="text-sm">{statusData?.status || 'Unknown'}</span>
             </div>
           </div>
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Connected:</span>
-            <span className="text-sm">
+            <dt className="text-sm font-semibold min-w-[120px]">Connected:</dt>
+            <dd className="text-sm">
               {statusData?.connected ? 'Yes' : 'No'}
-            </span>
+            </dd>
           </div>
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Health Score:</span>
-            <span className="text-sm">{healthScore}%</span>
+            <dt className="text-sm font-semibold min-w-[120px]">Health Score:</dt>
+            <dd className="text-sm">{healthScore}%</dd>
           </div>
-        </div>
+        </dl>
       ),
     },
     {
@@ -196,16 +196,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       title: 'Performance Metrics',
       icon: <Zap className="w-5 h-5" />,
       content: (
-        <div className="space-y-3">
+        <dl className="space-y-3">
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Messages:</span>
-            <span className="text-sm">{statusData?.messageCount || 0}</span>
+            <dt className="text-sm font-semibold min-w-[120px]">Messages:</dt>
+            <dd className="text-sm">{statusData?.messageCount || 0}</dd>
           </div>
           <div className="flex gap-4">
-            <span className="text-sm font-semibold min-w-[120px]">Errors:</span>
-            <span className="text-sm text-error">
+            <dt className="text-sm font-semibold min-w-[120px]">Errors:</dt>
+            <dd className="text-sm text-error">
               {statusData?.errorCount || 0}
-            </span>
+            </dd>
           </div>
           <div className="flex gap-4">
             <span className="text-sm font-semibold min-w-[120px]">Response Time:</span>
@@ -219,7 +219,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               {formatUptime(statusData?.uptime || 0)}
             </span>
           </div>
-        </div>
+        </dl>
       ),
     },
     ...(statusData?.healthDetails ? [{
@@ -227,16 +227,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       title: 'Health Details',
       icon: <Activity className="w-5 h-5" />,
       content: (
-        <div className="space-y-3">
+        <dl className="space-y-3">
           {Object.entries(statusData.healthDetails).map(([key, value]) => (
             <div key={key} className="flex gap-4">
-              <span className="text-sm font-semibold min-w-[120px]">{key}:</span>
-              <span className="text-sm">
+              <dt className="text-sm font-semibold min-w-[120px]">{key}:</dt>
+              <dd className="text-sm">
                 {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-              </span>
+              </dd>
             </div>
           ))}
-        </div>
+        </dl>
       ),
     }] : []),
     {
@@ -244,7 +244,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
       title: 'Configuration',
       icon: <Settings className="w-5 h-5" />,
       content: (
-        <div className="space-y-3">
+        <dl className="space-y-3">
           {bot.systemInstruction && (
             <div>
               <p className="text-sm font-semibold mb-2">System Instruction:</p>
@@ -261,7 +261,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               </p>
             </div>
           )}
-        </div>
+        </dl>
       ),
     },
   ];
@@ -362,7 +362,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
-              aria-label={`View details for ${bot.name}`}
+              aria-label={String(`View details for ${bot.name}`)}
             >
               <Settings className="w-4 h-4" />
               Details
@@ -373,7 +373,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
               disabled={loading} aria-busy={loading}
-              aria-label={`Refresh status for ${bot.name}`}
+              aria-label={String(`Refresh status for ${bot.name}`)}
             >
               {loading ? <LoadingSpinner size="xs" /> : <RotateCcw className="w-4 h-4" />}
               Refresh
