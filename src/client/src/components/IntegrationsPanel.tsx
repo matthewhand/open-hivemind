@@ -401,7 +401,7 @@ const IntegrationsPanel: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-square btn-xs"
-                        aria-label={`Edit ${profile.name} provider`}
+                        aria-label={String(`Edit ${profile.name} provider`)}
                         onClick={() =>
                           setProviderModalState({
                             isOpen: true,
@@ -425,7 +425,7 @@ const IntegrationsPanel: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-square btn-xs text-error"
-                        aria-label={`Delete ${profile.name} provider`}
+                        aria-label={String(`Delete ${profile.name} provider`)}
                         onClick={() => handleDeleteProfile(profile.key)}
                         loading={deletingKey === profile.key}
                       >
@@ -478,11 +478,12 @@ const IntegrationsPanel: React.FC = () => {
               })}
 
               {!advancedMode && (
-                <div className="col-span-full text-center py-2">
+                <section aria-labelledby="default-llm-empty-state" className="col-span-full text-center py-2">
+                  <h3 id="default-llm-empty-state" className="sr-only">No Default LLMs</h3>
                   <Button variant="ghost" size="xs" onClick={() => (window as any).location.href = '/admin/settings'} className="text-[10px] opacity-50 hover:opacity-100">
                     <ExternalLink className="w-3 h-3 mr-1" /> Enable "Advanced Mode" for more options
                   </Button>
-                </div>
+                </section>
               )}
             </div>
           </Collapse>
@@ -556,7 +557,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${key} configuration`} onClick={() => openEditModal(key)}>
+                    <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={String(`Edit ${key} configuration`)} onClick={() => openEditModal(key)}>
                       <PencilSquareIcon className="w-4 h-4" />
                     </Button>
                   </div>
