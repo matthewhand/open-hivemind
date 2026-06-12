@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
  
 import { Router } from 'express';
+import type { Response } from 'express';
 import { getLlmDefaultStatus } from '../../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles } from '../../../config/llmProfiles';
 import { getMessageProfiles, saveMessageProfiles } from '../../../config/messageProfiles';
@@ -34,7 +35,7 @@ function isEnvProfile(profile: unknown): boolean {
   return !!profile && typeof profile === 'object' && (profile as { source?: string }).source === 'env';
 }
 
-function envProfileReadonlyResponse(res: import('express').Response, kind: string, key: string) {
+function envProfileReadonlyResponse(res: Response, kind: string, key: string) {
   return res
     .status(HTTP_STATUS.FORBIDDEN)
     .json(
