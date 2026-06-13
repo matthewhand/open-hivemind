@@ -55,6 +55,7 @@ const Menu: React.FC<MenuProps> = ({
 }) => {
   const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const getMenuClasses = () => {
     const baseClasses = 'menu';
@@ -71,6 +72,37 @@ const Menu: React.FC<MenuProps> = ({
     };
 
     return `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${compact ? 'menu-compact' : ''} ${className}`.trim();
+  };
+
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
+    const focusableItems = Array.from(
+      e.currentTarget.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')
+    ) as HTMLElement[];
+
+    if (!focusableItems.length) return;
+
+    const currentIndex = focusableItems.indexOf(document.activeElement as HTMLElement);
+
+    let nextIndex = currentIndex;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (currentIndex + 1) % focusableItems.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (currentIndex - 1 + focusableItems.length) % focusableItems.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIndex = focusableItems.length - 1;
+    }
+
+    if (nextIndex !== currentIndex && focusableItems[nextIndex]) {
+      focusableItems[nextIndex].focus();
+    }
   };
 
   const toggleExpanded = useCallback((itemId: string) => {
@@ -128,7 +160,7 @@ const Menu: React.FC<MenuProps> = ({
     ].filter(Boolean).join(' ');
 
     return (
-      <li key={item.id} className={liClasses} role="none">
+      <li key={item.id} className={liClasses} role="presentation">
         <a
           href={item.href || '#'}
           className={itemClasses}
@@ -136,7 +168,8 @@ const Menu: React.FC<MenuProps> = ({
           aria-expanded={hasChildren ? isExpanded : undefined}
           aria-disabled={item.disabled}
           role="menuitem" aria-haspopup={hasChildren ? 'true' : undefined}
-          tabIndex={item.disabled ? -1 : 0}
+          tabIndex={item.disabled ? -1 : (focusedId === item.id || (!focusedId && items.length > 0 && items[0].id === item.id) ? 0 : -1)}
+          onFocus={() => setFocusedId(item.id)}
         >
           {/* Icon */}
           {item.icon && (
@@ -181,6 +214,7 @@ const Menu: React.FC<MenuProps> = ({
       className={getMenuClasses()}
       role="menu"
       aria-label="Navigation menu"
+      onKeyDown={handleKeyDown}
     >
       {items.map(item => renderMenuItem(item))}
     </ul>
