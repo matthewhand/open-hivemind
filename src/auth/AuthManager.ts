@@ -93,17 +93,27 @@ export class AuthManager {
       }
     }
 
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_PRODUCTION !== 'true') {
       if (!envJwtSecret && !secureJwtSecret) {
         throw new Error(
-          'CRITICAL: JWT_SECRET environment variable or secure config is required in production.'
+          'CRITICAL: JWT_SECRET environment variable or secure config is required in production. ' +
+            'Set it, or set ALLOW_INSECURE_PRODUCTION=true to auto-generate an ephemeral secret (tokens reset on restart).'
         );
       }
       if (!envJwtRefreshSecret && !secureJwtRefreshSecret) {
         throw new Error(
-          'CRITICAL: JWT_REFRESH_SECRET environment variable or secure config is required in production.'
+          'CRITICAL: JWT_REFRESH_SECRET environment variable or secure config is required in production. ' +
+            'Set it, or set ALLOW_INSECURE_PRODUCTION=true to auto-generate an ephemeral secret (tokens reset on restart).'
         );
       }
+    } else if (
+      process.env.NODE_ENV === 'production' &&
+      ((!envJwtSecret && !secureJwtSecret) || (!envJwtRefreshSecret && !secureJwtRefreshSecret))
+    ) {
+      console.warn(
+        '[SECURITY] ALLOW_INSECURE_PRODUCTION=true — JWT secret(s) missing; auto-generating ephemeral secrets. ' +
+          'All sessions/tokens will be invalidated on every restart. Set JWT_SECRET and JWT_REFRESH_SECRET for stable auth.'
+      );
     }
 
     if (process.env.NODE_ENV === 'test') {
@@ -297,8 +307,14 @@ export class AuthManager {
     let password = process.env.ADMIN_PASSWORD;
 
     if (!password) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('CRITICAL: ADMIN_PASSWORD environment variable is required in production.');
+      if (
+        process.env.NODE_ENV === 'production' &&
+        process.env.ALLOW_INSECURE_PRODUCTION !== 'true'
+      ) {
+        throw new Error(
+          'CRITICAL: ADMIN_PASSWORD environment variable is required in production. ' +
+            'Set it, or set ALLOW_INSECURE_PRODUCTION=true to auto-generate a temporary password (logged at startup).'
+        );
       }
 
       password = crypto.randomBytes(16).toString('hex');
