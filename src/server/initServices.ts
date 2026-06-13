@@ -509,11 +509,21 @@ export async function initServices(
     });
 
     messengerServices = await messengerProviderModule.getMessengerProvider();
+    appLogger.info('📡 Messenger services loaded', {
+      count: messengerServices.length,
+      services: messengerServices.map((s) => ({
+        providerName: s.providerName,
+        provider: s.provider,
+        constructor: s.constructor?.name,
+      })),
+    });
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
     const filteredMessengers = messengerServices.filter((service) => {
       // Check both providerName and provider (getMessengerProvider sets .provider)
       const providerName = service.providerName || service.provider || 'slack';
-      return messageProviders.includes(providerName.toLowerCase());
+      const matches = messageProviders.includes(providerName.toLowerCase());
+      appLogger.info('📡 Filtering messenger', { providerName, matches, messageProviders });
+      return matches;
     });
 
     // Register messenger services with ShutdownCoordinator
