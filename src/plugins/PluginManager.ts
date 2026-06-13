@@ -434,9 +434,10 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
 
 if (!PLUGIN_SIGNING_KEY) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_PRODUCTION !== 'true') {
     throw new Error(
-      'CRITICAL: HIVEMIND_PLUGIN_SIGNING_KEY environment variable is required in production.'
+      'CRITICAL: HIVEMIND_PLUGIN_SIGNING_KEY environment variable is required in production. ' +
+        'Set it, or set ALLOW_INSECURE_PRODUCTION=true to auto-generate an ephemeral key (existing plugin signatures will fail verification).'
     );
   }
 
