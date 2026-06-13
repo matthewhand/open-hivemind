@@ -51,8 +51,8 @@ const StatsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+        <button type="button" tabIndex={0} aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</button>
+        <ul tabIndex={0} role="menu" aria-label="Widget actions" className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
           <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
         </ul>
@@ -82,8 +82,8 @@ const ChartWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+        <button type="button" tabIndex={0} aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</button>
+        <ul tabIndex={0} role="menu" aria-label="Widget actions" className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
           <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
         </ul>
@@ -120,8 +120,8 @@ const ActivityWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdat
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+        <button type="button" tabIndex={0} aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</button>
+        <ul tabIndex={0} role="menu" aria-label="Widget actions" className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
           <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
         </ul>
@@ -158,8 +158,8 @@ const QuickActionsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onU
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+        <button type="button" tabIndex={0} aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</button>
+        <ul tabIndex={0} role="menu" aria-label="Widget actions" className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
           <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
         </ul>
@@ -195,8 +195,8 @@ const SystemHealthWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onU
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+        <button type="button" tabIndex={0} aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</button>
+        <ul tabIndex={0} role="menu" aria-label="Widget actions" className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
           <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
         </ul>
