@@ -35,7 +35,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [fetchState, setFetchState] = useState<'idle' | 'testing' | 'loadingAvatar'>('idle');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [healthStatus, setHealthStatus] = useState<Record<string, boolean | null>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -177,7 +177,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     // Create new AbortController for this test
     const controller = new AbortController();
     setAbortController(controller);
-    setIsLoading(true);
+    setFetchState('testing');
     setTestResult(null);
 
     try {
@@ -197,7 +197,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       }
     } finally {
       if (!controller.signal.aborted) {
-        setIsLoading(false);
+        setFetchState('idle');
         setAbortController(null);
       }
     }
@@ -207,7 +207,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     if (abortController) {
       abortController.abort();
       setAbortController(null);
-      setIsLoading(false);
+      setFetchState('idle');
       setTestResult({
         success: false,
         message: 'Connection test cancelled',
@@ -218,7 +218,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoading(true);
+    setFetchState('loadingAvatar');
     setAvatarUrl(null);
 
     try {
@@ -230,7 +230,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoading(false);
+      setFetchState('idle');
     }
   };
 
@@ -579,18 +579,18 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 pt-4 border-t">
+      <div className="flex flex-wrap gap-3 pt-4 border-t" aria-busy={fetchState !== 'idle'} aria-live="polite">
         {onTestConnection && (
           <>
             <Button
               variant="primary"
               onClick={handleTestConnection}
-              loading={isLoading && !abortController}
-              disabled={isLoading && !abortController}
+              loading={fetchState === 'testing'}
+              disabled={fetchState !== 'idle'}
             >
               Test Connection
             </Button>
-            {isLoading && abortController && (
+            {fetchState === 'testing' && abortController && (
               <Button
                 variant="error"
                 onClick={handleCancelTest}
@@ -605,8 +605,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Button
             variant="secondary"
             onClick={handleLoadAvatar}
-            loading={isLoading && !abortController}
-            disabled={isLoading && !abortController}
+            loading={fetchState === 'loadingAvatar'}
+            disabled={fetchState !== 'idle'}
           >
             Load Avatar
           </Button>
