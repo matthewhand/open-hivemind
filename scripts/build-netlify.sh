@@ -11,4 +11,5 @@ echo "Removing conflicting redirect/header files to rely on netlify.toml..."
 rm -f src/client/dist/_redirects
 rm -f src/client/dist/_headers
 
+
 echo "Netlify build complete."
