@@ -1,6 +1,7 @@
 import {
   envFieldToCamel,
   getEnvProfiles,
+  hasEnvMessageProfileForProvider,
   resetEnvProfilesCache,
 } from '../../src/config/envProfiles';
 
@@ -154,5 +155,40 @@ describe('envProfiles parser', () => {
 
     resetEnvProfilesCache();
     expect(getEnvProfiles('message')).toHaveLength(2);
+  });
+
+  describe('hasEnvMessageProfileForProvider', () => {
+    it('returns true when a profile exists with botToken', () => {
+      process.env.MESSAGE_PROFILE_DISCOMAIN_PROVIDER = 'discord';
+      process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN = 'tok-123';
+      resetEnvProfilesCache();
+
+      expect(hasEnvMessageProfileForProvider('discord')).toBe(true);
+      expect(hasEnvMessageProfileForProvider('Discord')).toBe(true); // case-insensitive
+      expect(hasEnvMessageProfileForProvider('slack')).toBe(false);
+    });
+
+    it('returns true when a profile exists with token (alias)', () => {
+      process.env.MESSAGE_PROFILE_MATT_PROVIDER = 'mattermost';
+      process.env.MESSAGE_PROFILE_MATT_TOKEN = 'mmost-tok';
+      resetEnvProfilesCache();
+
+      expect(hasEnvMessageProfileForProvider('mattermost')).toBe(true);
+    });
+
+    it('returns false when token is empty', () => {
+      process.env.MESSAGE_PROFILE_DISCOMAIN_PROVIDER = 'discord';
+      process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN = '   ';
+      resetEnvProfilesCache();
+
+      expect(hasEnvMessageProfileForProvider('discord')).toBe(false);
+    });
+
+    it('returns false when no profiles exist', () => {
+      resetEnvProfilesCache();
+
+      expect(hasEnvMessageProfileForProvider('discord')).toBe(false);
+      expect(hasEnvMessageProfileForProvider('slack')).toBe(false);
+    });
   });
 });

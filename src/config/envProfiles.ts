@@ -140,3 +140,21 @@ export function getEnvProfiles(type: EnvProfileType): EnvProfile[] {
 export function resetEnvProfilesCache(): void {
   cache = null;
 }
+
+/**
+ * Check if any MESSAGE_PROFILE env var defines a profile for the given provider
+ * with a non-empty token (BOT_TOKEN or TOKEN field).
+ *
+ * This is useful for startup diagnostics and health checks that need to know
+ * whether a messenger provider is "configured" via the new env-profile scheme.
+ */
+export function hasEnvMessageProfileForProvider(providerType: string): boolean {
+  const profiles = getEnvProfiles('message');
+  const normalizedType = providerType.toLowerCase();
+  return profiles.some(
+    (p) =>
+      p.provider === normalizedType &&
+      (typeof p.config.botToken === 'string' && p.config.botToken.trim() !== '' ||
+        typeof p.config.token === 'string' && p.config.token.trim() !== '')
+  );
+}

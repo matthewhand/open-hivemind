@@ -7,6 +7,7 @@
  */
 import debug from 'debug';
 import type { IMessage } from '@hivemind/shared-types';
+import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
 import { loadLlmProfiles } from '@src/config/llmProfiles';
 import { loadMemoryProfiles } from '@src/config/memoryProfiles';
 import { loadToolProfiles } from '@src/config/toolProfiles';
@@ -37,6 +38,28 @@ import { reloadGlobalConfigs } from './routes/config';
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
+
+/**
+ * Derive the list of message providers from configured bot configs.
+ * Used as a fallback when MESSAGE_PROVIDER is not explicitly set.
+ */
+function deriveMessageProvidersFromBots(): string[] {
+  try {
+    const bots = BotConfigurationManager.getInstance().getAllBots();
+    const providers = new Set<string>();
+    for (const bot of bots) {
+      if (bot.messageProvider) {
+        providers.add(bot.messageProvider.toLowerCase());
+      }
+    }
+    if (providers.size > 0) {
+      return Array.from(providers);
+    }
+  } catch {
+    // BotConfigurationManager not yet initialized or error
+  }
+  return [];
+}
 
 interface ConvictConfig {
   get(key: string): unknown;
@@ -291,12 +314,14 @@ export async function initServices(
   // Initialize SyncProviderRegistry for fast synchronous lookups in the hot path
   try {
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+    // Derive message providers: explicit env var > bot configs > empty (rely on bot config)
+    const derivedFromBotsForRegistry = deriveMessageProvidersFromBots();
     const messengerTypes = (
       typeof rawMessageProviders === 'string'
         ? rawMessageProviders.split(',').map((v: string) => v.trim())
-        : Array.isArray(rawMessageProviders)
+        : Array.isArray(rawMessageProviders) && rawMessageProviders.length > 0
           ? rawMessageProviders
-          : []
+          : derivedFromBotsForRegistry
     ) as string[];
 
     const registry = SyncProviderRegistry.getInstance();
@@ -461,20 +486,33 @@ export async function initServices(
   } else {
     appLogger.info('\ud83d\udce1 Initializing messenger services');
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+    // Derive message providers: explicit env var > bot configs > fallback to slack
+    const derivedFromBots = deriveMessageProvidersFromBots();
     const messageProviders = (
       typeof rawMessageProviders === 'string'
         ? rawMessageProviders.split(',').map((v: string) => v.trim())
-        : Array.isArray(rawMessageProviders)
+        : Array.isArray(rawMessageProviders) && rawMessageProviders.length > 0
           ? rawMessageProviders
-          : ['slack']
+          : derivedFromBots.length > 0
+            ? derivedFromBots
+            : ['slack']
     ) as string[];
-    appLogger.info('\ud83d\udce1 Message providers configured', { providers: messageProviders });
+    appLogger.info('\ud83d\udce1 Message providers configured', {
+      providers: messageProviders,
+      source:
+        typeof rawMessageProviders === 'string' ||
+        (Array.isArray(rawMessageProviders) && rawMessageProviders.length > 0)
+          ? 'MESSAGE_PROVIDER env'
+          : derivedFromBots.length > 0
+            ? 'derived from bot configs'
+            : 'default fallback',
+    });
 
     messengerServices = await messengerProviderModule.getMessengerProvider();
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
     const filteredMessengers = messengerServices.filter((service) => {
-      // If providerName is not defined, assume 'slack' by default.
-      const providerName = service.providerName || 'slack';
+      // Check both providerName and provider (getMessengerProvider sets .provider)
+      const providerName = service.providerName || service.provider || 'slack';
       return messageProviders.includes(providerName.toLowerCase());
     });
 

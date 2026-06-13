@@ -3,6 +3,7 @@ import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { optionalAuth } from '../../../auth/middleware';
+import { hasEnvMessageProfileForProvider } from '../../../config/envProfiles';
 import { UserConfigStore } from '../../../config/UserConfigStore';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../../services/ApiMonitorService';
@@ -224,8 +225,10 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
       details: `${activeMsgCount}/${msgCount} providers connected`,
     });
   } catch {
-    const hasDiscord = !!process.env.DISCORD_BOT_TOKEN;
-    const hasSlack = !!process.env.SLACK_BOT_TOKEN;
+    // Check both flat env vars (legacy) and MESSAGE_PROFILE env vars (new scheme)
+    const hasDiscord =
+      !!process.env.DISCORD_BOT_TOKEN || hasEnvMessageProfileForProvider('discord');
+    const hasSlack = !!process.env.SLACK_BOT_TOKEN || hasEnvMessageProfileForProvider('slack');
     const hasAny = hasDiscord || hasSlack;
     services.push({
       name: 'Message Providers',
