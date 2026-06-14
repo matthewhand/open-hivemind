@@ -257,6 +257,8 @@ export interface BotConfig {
   letta?: LettaConfig;
   /** Whether the bot is enabled */
   enabled?: boolean;
+  /** Whether the bot is active (matches database isActive field) */
+  isActive?: boolean;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }

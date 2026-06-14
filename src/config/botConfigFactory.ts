@@ -136,6 +136,8 @@ export function createBotConfig(
     mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
     mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined,
     memoryProfile: (botConfig.get('MEMORY_PROFILE') as string) || undefined,
+    // Default to enabled; database sync will override if persisted as disabled
+    isActive: true,
   };
 
 
