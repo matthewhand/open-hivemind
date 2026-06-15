@@ -129,6 +129,7 @@ const Modal: React.FC<ModalProps> = ({
             {title && <h3 id="modal-dialog-title" className="font-bold text-lg">{title}</h3>}
             {showCloseButton && closable && (
               <button
+                type="button"
                 ref={closeBtnRef}
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={onClose}
@@ -150,6 +151,7 @@ const Modal: React.FC<ModalProps> = ({
           <div className="modal-action">
             {actions.map((action, index) => (
               <button
+                type="button"
                 key={index}
                 className={`btn ${getVariantClass(action.variant)}`}
                 onClick={action.onClick}

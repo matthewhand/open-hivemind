@@ -423,12 +423,14 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
             <span>Previewing: {themeOptions.find(t => t.value === previewTheme)?.label}</span>
             <div className="flex gap-1">
               <button
+                type="button"
                 className="btn btn-xs btn-success"
                 onClick={() => confirmThemeChange(previewTheme)}
               >
                 Apply
               </button>
               <button
+                type="button"
                 className="btn btn-xs btn-ghost"
                 onClick={cancelPreview}
               >
@@ -484,8 +486,9 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         {/* Favorite Button */}
         {!compact && (
           <button
+            type="button"
             className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-warning' : 'text-base-content/30'
-              } ${isFavorite || 'opacity-0 group-hover:opacity-100'}`}
+              } ${isFavorite || 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(theme.value);
