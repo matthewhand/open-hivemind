@@ -3,6 +3,9 @@
 Thanks for your interest in contributing! This guide covers everything you need to get a
 development environment running and a pull request merged.
 
+> Before diving in, skim the [Vision](docs/VISION.md) for what the project is building toward and an
+> honest snapshot of what's done vs. remaining, and the [Roadmap](ROADMAP.md) for concrete next steps.
+
 ## Development setup
 
 **Prerequisites:** Node.js 22 (an `.nvmrc` is provided) and [pnpm](https://pnpm.io/).
