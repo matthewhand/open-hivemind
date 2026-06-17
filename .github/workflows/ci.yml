@@ -54,7 +54,11 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        run: pnpm run test:playwright
+        # Scope to the smoke + core-pages suites (matching the dedicated
+        # Playwright Tests workflow). The unscoped full suite (~all specs x 3
+        # browsers) exceeded 60 min and never produced a verdict; the broader
+        # e2e coverage lives in playwright.yml.
+        run: pnpm run test:playwright -- --grep "smoke|core-pages" --reporter=line
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
