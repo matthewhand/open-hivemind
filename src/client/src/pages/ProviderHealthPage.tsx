@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, RefreshCw, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Activity, RefreshCw, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
@@ -202,6 +202,7 @@ const ProviderHealthPage: React.FC = () => {
   const [data, setData] = useState<ProviderHealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notImplemented, setNotImplemented] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -215,10 +216,19 @@ const ProviderHealthPage: React.FC = () => {
       setData(resp.data);
       setLastRefresh(new Date());
       setError(null);
+      setNotImplemented(false);
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ?? 'Unable to fetch provider health data.';
-      setError(msg);
+      // The endpoint returns 501 by design when ENABLE_MOCK_PROVIDER_HEALTH is
+      // unset. Show a friendly explanation rather than the raw JSON envelope.
+      if (/\b501\b|PROVIDER_HEALTH_NOT_IMPLEMENTED|not implemented/i.test(msg)) {
+        setNotImplemented(true);
+        setError(null);
+      } else {
+        setNotImplemented(false);
+        setError(msg);
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -295,6 +305,18 @@ const ProviderHealthPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Not-implemented banner (501 by design when ENABLE_MOCK_PROVIDER_HEALTH is unset) */}
+      {notImplemented && (
+        <div className="alert bg-base-200 text-base-content border border-base-300 shadow-sm">
+          <Info className="w-5 h-5 text-info shrink-0" />
+          <span>
+            Provider health metrics aren&apos;t collected in this build. Set{' '}
+            <code>ENABLE_MOCK_PROVIDER_HEALTH=true</code> to preview this dashboard with
+            simulated data.
+          </span>
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (
