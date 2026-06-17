@@ -1,166 +1,86 @@
-# Netlify Deployment Guide for Open Hivemind
+# Serverless Preview Deployments (Netlify & Vercel)
 
-## Quick Start
+Netlify and Vercel host **stateless preview deployments** of Open Hivemind: the
+built WebUI is served from the CDN and the real Express API runs inside a
+single serverless function in **demo mode** (`DEMO_MODE=true`,
+`SKIP_MESSENGERS=true`). Previews show the admin dashboard with simulated
+bots and activity. Fly.io / Docker remain the targets for full production
+deployments (messengers, websockets, persistent SQLite).
 
-### 1. Install Dependencies
+## Shared architecture
+
+Both adapters wrap the same app factory:
+
+- `src/server/serverlessApp.ts` — builds the Express app (same middleware and
+  routes as `src/index.ts`) without `listen()`, without messengers/websocket
+  timers, and with serverless env defaults (SQLite at `/tmp/hivemind.db`,
+  ephemeral secrets, demo mode). Initialization is memoized per warm container.
+- `scripts/bundle-serverless.mjs` — esbuild-bundles the function entry at
+  build time, resolving the tsconfig path aliases (`@src/*`,
+  `@hivemind/* → packages/*/src`) that no serverless runtime can resolve on
+  its own. Native modules (`better-sqlite3`, `bcrypt`) stay external and are
+  packaged from `node_modules` by each platform's tracer.
+
+## Netlify
+
+- Entry: `src/netlify/functions/server.ts` (wraps the app with
+  `serverless-http`).
+- Build: `pnpm run build:netlify` (`scripts/build-netlify.sh`) — vite-builds
+  the WebUI to `dist/client` (published) and bundles the function to
+  `dist/netlify/functions/server.js`.
+- Routing (`netlify.toml`): `/api/*` and `/health` → the function; everything
+  else falls back to `/index.html` (SPA). Security and cache headers are
+  defined in the same file.
+
+Local verification:
+
 ```bash
-npm install
+npx netlify-cli build --offline   # full build incl. function packaging
 ```
 
-### 2. Build for Netlify
+## Vercel
+
+- Entry: `src/vercel/index.ts` (exports the app as a Node request handler).
+- Build: `pnpm run build:vercel` (`scripts/build-vercel.mjs`) — emits the
+  [Build Output API v3](https://vercel.com/docs/build-output-api/v3) layout to
+  `.vercel/output/`: `static/` (WebUI), `functions/api.func/` (bundled app +
+  `@vercel/nft`-traced native deps) and `config.json` (routing: `/api/*` and
+  `/health` → function, SPA fallback otherwise).
+- `vercel.json` only sets install/build commands; routing lives in the
+  generated `config.json`.
+
+Local verification:
+
 ```bash
-npm run build:netlify
+pnpm run build:vercel
+node -e "
+const http = require('http');
+const h = require('./.vercel/output/functions/api.func/index.js').default;
+http.createServer((req, res) => h(req, res)).listen(3032);
+"
+curl http://localhost:3032/health
 ```
 
-### 3. Deploy to Netlify
+## Environment variables (optional overrides)
 
-**Option A: Using Netlify CLI**
-```bash
-netlify deploy --prod --dir=dist/client --functions=dist/netlify/functions
-```
+All defaults below are applied by `applyServerlessEnvDefaults()` and can be
+overridden in the platform dashboard:
 
-**Option B: Using Git (Recommended)**
-1. Push your code to a Git repository
-2. Connect your repository to Netlify
-3. Netlify will automatically detect the `netlify.toml` configuration
+| Variable | Serverless default | Notes |
+|----------|--------------------|-------|
+| `SKIP_MESSENGERS` | `true` | Messengers can never run in a function |
+| `DEMO_MODE` | `true` | Dashboard shows simulated data |
+| `DATABASE_PATH` | `/tmp/hivemind.db` | Only writable path; wiped on cold start |
+| `HTTP_ALLOW_ALL_IPS` | `true` | Platform proxy IPs would fail the local-IP guard |
+| `SESSION_SECRET` / `JWT_SECRET` / `JWT_REFRESH_SECRET` | random per cold start | Set real values to keep sessions valid across cold starts |
+| `ADMIN_PASSWORD` | _(unset)_ | Set it to be able to log in to the preview dashboard |
 
-### 4. Configure Environment Variables
-In the Netlify dashboard, set these environment variables:
-- `NODE_ENV=production`
-- `CORS_ORIGIN=https://your-domain.netlify.app`
-- Any other required API keys or configuration values
+## Known limitations
 
-## Architecture Overview
-
-### Build Process
-1. **Backend Build**: TypeScript compilation to `dist/src/`
-2. **Frontend Build**: Vite builds React app to `src/client/dist/`
-3. **Asset Copy**: Frontend assets copied to `dist/client/`
-4. **Serverless Function**: Compiled to `dist/netlify/functions/server.js`
-
-### Runtime Architecture
-- **Static Assets**: Served directly from `dist/client/`
-- **API Routes**: Routed to serverless function at `/.netlify/functions/server`
-- **SPA Fallback**: All other routes serve `index.html` for React Router
-
-## Configuration Files
-
-### `netlify.toml`
-```toml
-[build]
-  command = "npm run build:netlify"
-  functions = "dist/netlify/functions"
-  publish = "dist/client"
-
-[dev]
-  command = "npm run dev"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/webui/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/health/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-
-### Serverless Function (`netlify/functions/server.ts`)
-- Wraps Express app with `serverless-http`
-- Handles basic health checks and API documentation
-- Serves static files for `/admin` and `/webui` routes
-- Implements SPA fallbacks
-
-## Important Considerations
-
-### ⚠️ WebSocket Limitations
-WebSocket functionality is **not supported** in Netlify Functions due to their stateless nature. The application will need to:
-1. Use polling instead of WebSocket for real-time features
-2. Integrate with a third-party WebSocket service (Pusher, Ably, etc.)
-3. Disable real-time features in Netlify deployment
-
-### Database Considerations
-- SQLite database will not work in serverless environment
-- Consider using Netlify's serverless database options or external database services
-
-### File Uploads
-- File uploads may have limitations in serverless functions
-- Consider using Netlify's large media handling or external storage services
-
-## Testing the Deployment
-
-After deployment, test these endpoints:
-- `https://your-domain.netlify.app/` - Should serve React app
-- `https://your-domain.netlify.app/health` - Should return health status
-- `https://your-domain.netlify.app/api` - Should return API documentation
-- `https://your-domain.netlify.app/webui/` - Should serve WebUI interface
-- `https://your-domain.netlify.app/admin/` - Should serve admin interface
-
-## Troubleshooting
-
-### Common Issues
-1. **Function not found**: Ensure build process completed successfully
-2. **Static assets 404**: Check that publish directory is correct
-3. **API routes 404**: Verify redirects in `netlify.toml` are correct
-4. **CORS errors**: Ensure `CORS_ORIGIN` is set correctly in environment variables
-
-### Debugging
-- Check Netlify function logs in the dashboard
-- Use `netlify functions:serve` locally for testing
-- Verify build output structure matches expectations
-
-### Build Verification
-Run the test script to verify your build:
-```bash
-./scripts/test-netlify-build.sh
-```
-
-## Next Steps
-1. Test deployment thoroughly
-2. Implement WebSocket alternatives if needed
-3. Set up monitoring and error tracking
-4. Configure custom domain if needed
-5. Set up automated deployments from Git
-
-## File Structure After Build
-```
-dist/
-├── client/                 # Frontend assets (published)
-│   ├── index.html
-│   ├── assets/
-│   └── vite.svg
-├── netlify/
-│   └── functions/
-│       └── server.js     # Serverless function
-└── src/                  # Compiled backend
-    └── ...
-```
-
-## Environment Variables Reference
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `production` |
-| `CORS_ORIGIN` | Allowed CORS origins | `https://your-domain.netlify.app` |
-| `PORT` | Server port (for local testing) | `3000` |
-
-## Support
-For issues with the Netlify deployment:
-1. Check the Netlify documentation: https://docs.netlify.com/
-2. Review function logs in the Netlify dashboard
-3. Test locally using `netlify dev`
+- **No WebSockets** — Netlify/Vercel functions are stateless; real-time
+  features degrade to polling or stay empty.
+- **No persistence** — SQLite lives in `/tmp` and is lost on every cold start.
+- **No messengers/LLM calls** — demo mode only; configure secrets and use
+  Fly/Docker for a real deployment.
+- **Login requires `ADMIN_PASSWORD`** — the auto-generated admin password is
+  only printed to function logs and changes per cold start.
