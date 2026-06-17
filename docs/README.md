@@ -2,6 +2,11 @@
 
 This directory contains all documentation for Open Hivemind, organized by topic.
 
+## 🧭 Start here
+- [**Vision & honest status**](VISION.md) — what we're building toward + a truthful built-vs-remaining snapshot
+- [Feature Implementation Status](FEATURE_STATUS.md) — the per-feature audit (307 features, 10 domains)
+- [Roadmap](../ROADMAP.md) — code-audited checklist of shipped / partial / planned
+
 ## 🧭 Using Open Hivemind
 - [User Guide](USER_GUIDE.md)
 - [Bot Management](admin/bots.md)
@@ -14,6 +19,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Architecture Overview](architecture/overview.md)
 - [Server Architecture](architecture/unified-server.md)
 - [Development Guide](architecture/development.md)
+- [Legacy Architecture](architecture/legacy/README.md) - superseded designs (e.g. the monolithic message handler) and why they changed
 
 ## ⚙️ Operations & Deployment
 - [Setup & Bootstrapping](getting-started/setup-guide.md)
