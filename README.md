@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/matthewhand/open-hivemind)
 
-Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, Mattermost, and Telegram simultaneously.
+Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously (with outbound Telegram support).
 
 > 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — a code-audited, nested checklist of what's shipped, what's partial, and what's planned (also summarized [at the bottom of this README](#project-status--roadmap)). Quick gate-check: `npm run test:journey`.
 
@@ -35,12 +35,12 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 *The hivemind in action: a user asks one question in one channel — SupportBot answers, DevOpsBot adds the ops angle, and every other persona decides to stay silent (selective engagement).*
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, Mattermost, and Telegram from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus an inbound webhook ingress.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus outbound Telegram (send) and an inbound webhook ingress. (Telegram receive is not yet implemented — see [ROADMAP.md](ROADMAP.md).)
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
 *   **Shared Context & Memory**: Pluggable memory backends (Mem0, Mem4AI, MemVault, PostgreSQL) with retention/eviction, wired into the message pipeline per bot.
 *   **Flexible LLMs**: OpenAI, Flowise, OpenWebUI, Letta, and OpenSwarm — with function/tool calling, plus live model listing and response streaming for OpenAI.
 *   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required. Import/export config as JSON, YAML, or CSV.
-*   **Safety & Compliance**: Guard profiles (rate limiting, content filter, tool-access control), TOTP 2FA, account lockout, session management, and durable audit logging.
+*   **Safety & Guardrails**: Guard profiles (rate limiting, content filter, tool-access control), TOTP 2FA, account lockout, session management, and durable audit logging. (No formal compliance certifications — the enterprise compliance/governance APIs are stubs today.)
 *   **Observability**: Real-time activity feed, health checks, Prometheus-compatible metrics, and trace export (console/file/OTLP).
 *   **Extensible**: MCP server integration with tool execution, human-in-the-loop approval, and per-bot tool guards.
 

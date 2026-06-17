@@ -1,11 +1,11 @@
 # Open Hivemind Architecture Documentation
 
 **Version**: 1.1.0
-**Status**: Production-Ready
+**Status**: Beta — core paths are shipped and verified; several subsystems are partial or stubbed. See [FEATURE_STATUS.md](FEATURE_STATUS.md) for the per-feature audit and [VISION.md](VISION.md) for an honest built-vs-remaining summary.
 
 ## 🏗️ System Architecture Overview
 
-The Open Hivemind project is a full-stack enterprise application built with React, TypeScript, Node.js, and Express. It features a sophisticated AI bot management system with comprehensive monitoring, analytics, and infrastructure automation.
+The Open Hivemind project is a full-stack application built with React, TypeScript, Node.js, and Express. It provides an AI bot-management system with an activity feed, health checks, and Prometheus-compatible metrics. (Some "enterprise" surfaces — compliance/governance/cloud-provider APIs — are mock stubs today; see [FEATURE_STATUS.md](FEATURE_STATUS.md).)
 
 ### 📋 Core Components
 
