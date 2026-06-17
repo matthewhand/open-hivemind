@@ -12,31 +12,22 @@ on:
       - 'webui/client/**'
       - '.github/workflows/visual-regression.yml'
   schedule:
-    # Run daily at 2 AM UTC to catch any visual regressions
+    # Run daily at 2 AM UTC to catch any visual regressions (tests only; update via manual dispatch)
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       update_snapshots:
-        description: 'Update visual snapshots'
+        description: 'Update visual snapshots (creates commit on main)'
         required: false
-        default: 'false'
+        default: false
         type: boolean
-      test_browsers:
-        description: 'Select browsers to test'
-        required: true
-        default: 'chromium,firefox,webkit'
-        type: choice
-        options:
-          - 'chromium,firefox,webkit'
-          - 'chromium,firefox'
-          - 'chromium'
-          - 'all'
 
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +56,8 @@ jobs:
       with:
         node-version-file: '.nvmrc'
         cache: 'pnpm'
-        cache-dependency-path: webui/client/package-lock.json
+        cache-dependency-path: webui/client/pnpm-lock.yaml
+
     - name: Install dependencies
       run: |
         cd webui/client
@@ -74,30 +66,41 @@ jobs:
     - name: Install Playwright Browsers
       run: |
         cd webui/client
-        pnpm dlx playwright install chromium
+        pnpm dlx playwright install --with-deps ${{ matrix.browser }}
 
-    - name: Update baseline screenshots
+    - name: Run visual regression tests (fail on diff)
+      if: github.event_name != 'workflow_dispatch' || github.event.inputs.update_snapshots != 'true'
       run: |
         cd webui/client
         pnpm run build
         pnpm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
-        pnpm dlx playwright test --project=chromium --update-snapshots
+        pnpm dlx playwright test --project=${{ matrix.browser }}
 
-    - name: Commit updated baseline
+    - name: Update baseline screenshots (manual only)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true'
+      run: |
+        cd webui/client
+        pnpm run build
+        pnpm run preview &
+        sleep 10
+        timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
+        pnpm dlx playwright test --project=${{ matrix.browser }} --update-snapshots
+
+    - name: Commit updated baseline (manual update only)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add webui/client/tests/visual/screenshots/baseline/
-        git diff --staged --quiet || git commit -m "Update visual baseline screenshots [skip ci]"
+        git diff --staged --quiet || git commit -m "chore(visual): update ${{ matrix.browser-name }} baseline screenshots [skip ci]"
         git push
 
   notify-slack:
     runs-on: ubuntu-latest
     needs: visual-regression
     if: failure() && github.ref == 'refs/heads/main'
-    
     steps:
     - name: Notify Slack on failure
       if: env.SLACK_WEBHOOK_URL != ''
