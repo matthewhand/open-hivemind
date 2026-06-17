@@ -27,6 +27,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Deployment Configuration](operations/deployment.md)
 - [Netlify Frontend Deployment](operations/deployment-netlify.md)
 - [Maintenance Guide](operations/maintenance.md)
+- [File & Directory Locations](operations/file-locations.md) - where config/data/db/backups/logs live, env overrides, and the proposed XDG support
 - [Security Incident Response](operations/security.md)
 
 ## API Reference
