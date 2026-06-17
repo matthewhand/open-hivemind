@@ -6,6 +6,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [**Vision & honest status**](VISION.md) — what we're building toward + a truthful built-vs-remaining snapshot
 - [Feature Implementation Status](FEATURE_STATUS.md) — the per-feature audit (307 features, 10 domains)
 - [Roadmap](../ROADMAP.md) — code-audited checklist of shipped / partial / planned
+- [Glossary](GLOSSARY.md) — core terms (hivemind, persona, guard profile, swarm mode, MCP, pipeline stage, HITL) defined as the code uses them
 
 ## 🧭 Using Open Hivemind
 - [User Guide](USER_GUIDE.md)
