@@ -8,6 +8,7 @@
 
 Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously (with outbound Telegram support).
 
+> 🧭 **Vision & honest status:** see [docs/VISION.md](docs/VISION.md) — what we're building toward and a truthful built-vs-remaining snapshot.
 > 🗺️ **Roadmap & status:** see [ROADMAP.md](ROADMAP.md) — a code-audited, nested checklist of what's shipped, what's partial, and what's planned (also summarized [at the bottom of this README](#project-status--roadmap)). Quick gate-check: `npm run test:journey`.
 
 Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.

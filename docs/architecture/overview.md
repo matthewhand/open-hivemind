@@ -1,5 +1,8 @@
 # Open-Hivemind Architecture
 
+> New here? Read the [Vision](../VISION.md) first for *why* the system is shaped this way, and the
+> [Legacy Architecture](legacy/README.md) section for designs this one replaced.
+
 ## System Overview
 
 Open-Hivemind is a full-stack monorepo with a React frontend, Express.js backend, and plugin-based provider architecture.

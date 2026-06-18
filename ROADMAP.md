@@ -6,7 +6,8 @@
 > Statuses reflect what the code actually does, not aspirations.
 > `[x]` = verified working in code. Nested items show partial progress.
 
-**Snapshot:** ~232 features complete · ~44 partial · ~20 stubs · 0 known-broken.
+**Snapshot:** see [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) for the authoritative per-feature
+totals (currently **218 complete · 64 partial · 20 stub · 5 planned · 0 broken** across 307 features).
 The platform core (multi-bot Discord/Slack/Mattermost, OpenAI/Flowise/Letta/OpenSwarm/OpenWebUI
 LLM providers, 5-stage message pipeline, persona system, guard profiles, MCP tool execution
 with HITL approval, SQLite/Postgres persistence, WebUI admin with 35+ pages, TOTP 2FA,
