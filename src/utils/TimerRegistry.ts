@@ -114,6 +114,8 @@ export class TimerRegistry {
     this.enforceMaxTimers();
 
     const handle = setInterval(callback, intervalMs);
+    // Registered intervals shouldn't keep the process alive on their own.
+    handle.unref?.();
 
     const record: TimerRecord = {
       id,
@@ -268,6 +270,7 @@ export class TimerRegistry {
     this.cleanupInterval = setInterval(() => {
       this.cleanupOldTimers();
     }, this.CLEANUP_INTERVAL_MS);
+    this.cleanupInterval?.unref?.();
   }
 
   /**
