@@ -36,6 +36,15 @@ if (isServerless) {
   // works (it is sha256-normalized). A real configured key always wins.
   process.env.DATABASE_ENCRYPTION_KEY =
     process.env.DATABASE_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+  // AuthManager (and friends) likewise throw CRITICAL at module load when
+  // NODE_ENV=production and these are unset. applyServerlessEnvDefaults() mints
+  // them too, but that runs after AuthMiddleware has already loaded — so mint
+  // them here (pre-import) as well. Real configured secrets always win.
+  for (const key of ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'] as const) {
+    if (!process.env[key] || process.env[key]!.trim().length < 32) {
+      process.env[key] = crypto.randomBytes(32).toString('hex');
+    }
+  }
   try {
     for (const sub of ['', '/config', '/config/providers', '/config/user', '/data', '/uploads', '/logs']) {
       fs.mkdirSync(`${base}${sub}`, { recursive: true });
