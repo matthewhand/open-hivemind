@@ -40,7 +40,18 @@ if (isServerless) {
   // NODE_ENV=production and these are unset. applyServerlessEnvDefaults() mints
   // them too, but that runs after AuthMiddleware has already loaded — so mint
   // them here (pre-import) as well. Real configured secrets always win.
-  for (const key of ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'] as const) {
+  // JWT_SECRET/JWT_REFRESH_SECRET/SESSION_SECRET (AuthManager), ADMIN_PASSWORD
+  // (AuthManager.initializeDefaultAdminSync), and HIVEMIND_PLUGIN_SIGNING_KEY
+  // (PluginManager) all throw CRITICAL at module load under NODE_ENV=production.
+  // A random ADMIN_PASSWORD means the public demo has no usable admin login by
+  // design (browse-only); set a real one to enable login.
+  for (const key of [
+    'JWT_SECRET',
+    'JWT_REFRESH_SECRET',
+    'SESSION_SECRET',
+    'ADMIN_PASSWORD',
+    'HIVEMIND_PLUGIN_SIGNING_KEY',
+  ] as const) {
     if (!process.env[key] || process.env[key]!.trim().length < 32) {
       process.env[key] = crypto.randomBytes(32).toString('hex');
     }
