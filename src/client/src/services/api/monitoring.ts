@@ -276,7 +276,9 @@ export function monitoringMixin(api: ApiService) {
     },
 
     getAnomalies(): Promise<{ success: boolean; data: { anomalies: any[] } }> {
-      return api.request('/api/admin/monitoring/anomalies');
+      // Route is mounted at /api/admin/anomalies (admin/monitoring.ts router is
+      // mounted at '/'); the '/monitoring/' segment 404s.
+      return api.request('/api/admin/anomalies');
     },
 
     getCostAnalytics(days: number = 7): Promise<{ 
