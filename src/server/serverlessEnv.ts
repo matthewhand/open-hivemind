@@ -19,6 +19,7 @@
  * don't need this pre-import timing.
  */
 import fs from 'fs';
+import crypto from 'crypto';
 
 const isServerless = !!(
   process.env.LAMBDA_TASK_ROOT ||
@@ -29,6 +30,12 @@ const isServerless = !!(
 
 if (isServerless) {
   const base = process.env.OH_SERVERLESS_BASE || '/tmp/open-hivemind';
+  // EncryptionService throws FATAL at module load when NODE_ENV=production and
+  // no key is set (Vercel sets NODE_ENV=production). Mint an ephemeral key for
+  // the stateless demo (the /tmp DB is wiped on cold start anyway); any value
+  // works (it is sha256-normalized). A real configured key always wins.
+  process.env.DATABASE_ENCRYPTION_KEY =
+    process.env.DATABASE_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
   try {
     for (const sub of ['', '/config', '/config/providers', '/config/user', '/data', '/uploads', '/logs']) {
       fs.mkdirSync(`${base}${sub}`, { recursive: true });
