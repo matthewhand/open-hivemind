@@ -19,6 +19,9 @@
  *   - Ephemeral generated secrets mean sessions/JWTs reset on cold starts
  *     unless SESSION_SECRET / JWT_SECRET / JWT_REFRESH_SECRET are configured.
  */
+// MUST be first: redirects writable paths to /tmp before any manager's
+// module-load mkdir runs on read-only serverless runtimes.
+import './serverlessEnv';
 import 'reflect-metadata';
 import crypto from 'crypto';
 import express from 'express';
