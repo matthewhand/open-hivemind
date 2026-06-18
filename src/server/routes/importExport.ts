@@ -33,9 +33,23 @@ type _AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 const router = Router();
 const logger = createLogger('importExportRouter');
 
-// Configure multer for file uploads
+// Configure multer for file uploads.
+// The dest is resolved at module load (multer mkdir's it in its constructor),
+// so it must be writable in whatever runtime imports this module. On
+// serverless platforms the working dir is read-only and only /tmp is writable;
+// detect those via runtime-provided env vars (set before module load, unlike
+// applyServerlessEnvDefaults which runs later) and fall back to /tmp/uploads.
+// UPLOAD_DIR overrides everything for explicit configuration.
+const UPLOAD_DIR =
+  process.env.UPLOAD_DIR ||
+  (process.env.LAMBDA_TASK_ROOT ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.VERCEL ||
+  process.env.NETLIFY
+    ? '/tmp/uploads'
+    : 'config/uploads/');
 const upload = multer({
-  dest: 'config/uploads/',
+  dest: UPLOAD_DIR,
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
