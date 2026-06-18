@@ -1,0 +1,46 @@
+/**
+ * Serverless filesystem bootstrap — MUST be imported before any app/route
+ * module so it runs before their module-load side effects.
+ *
+ * Several managers create config/data/log directories in their constructors
+ * (e.g. ProviderConfigManager, webUIStorage, auditLogger, PerformanceProfiler),
+ * resolving paths from `__dirname`, `process.cwd()`, or `NODE_CONFIG_DIR`. On
+ * Lambda-style runtimes (Netlify/Vercel functions) the deploy directory is
+ * READ-ONLY and only `/tmp` is writable, so those `mkdirSync` calls crash the
+ * function at cold start (`ENOENT: mkdir 'config/...'`) and 502 the whole API.
+ *
+ * This module — imported first by serverlessApp.ts — points every writable
+ * path at a `/tmp` base and chdir's there, so both `cwd`-relative and
+ * `NODE_CONFIG_DIR`-based writes land in writable space. It is a no-op off
+ * serverless, and every assignment respects an explicitly-configured value.
+ *
+ * applyServerlessEnvDefaults() (in serverlessApp.ts) still sets the non-path
+ * defaults (DEMO_MODE, SKIP_MESSENGERS, secrets) which are read later and so
+ * don't need this pre-import timing.
+ */
+import fs from 'fs';
+
+const isServerless = !!(
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.VERCEL ||
+  process.env.NETLIFY
+);
+
+if (isServerless) {
+  const base = process.env.OH_SERVERLESS_BASE || '/tmp/open-hivemind';
+  try {
+    for (const sub of ['', '/config', '/config/providers', '/config/user', '/data', '/uploads', '/logs']) {
+      fs.mkdirSync(`${base}${sub}`, { recursive: true });
+    }
+    // __dirname/NODE_CONFIG_DIR-based managers (e.g. ProviderConfigManager).
+    process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || `${base}/config`;
+    process.env.DATABASE_PATH = process.env.DATABASE_PATH || `${base}/data/hivemind.db`;
+    process.env.UPLOAD_DIR = process.env.UPLOAD_DIR || `${base}/uploads`;
+    // cwd-relative writers (webUIStorage, auditLogger, PerformanceProfiler).
+    process.chdir(base);
+  } catch {
+    // Best-effort: individual managers keep their own fallbacks; never let the
+    // bootstrap itself throw at module load.
+  }
+}
