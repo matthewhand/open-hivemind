@@ -111,6 +111,7 @@ export interface ConfigResponse {
 
 export interface StatusResponse {
   bots: Array<{
+    id?: string;
     name: string;
     provider: string;
     llmProvider: string;
@@ -121,6 +122,8 @@ export interface StatusResponse {
     errorCount?: number;
   }>;
   uptime: number;
+  environment?: string;
+  version?: string;
 }
 
 export interface ConfigFile {
