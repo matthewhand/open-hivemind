@@ -113,19 +113,19 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
           </div>
 
         {/* Provider badges */}
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          <Badge variant="neutral" size="small">
+        <ul className="flex flex-wrap gap-1.5 mt-3" aria-label="Bot Providers">
+          <li><Badge variant="neutral" size="small">
             {bot.messageProvider}
-          </Badge>
+          </Badge></li>
           {bot.llmProvider && (
-            <Badge variant="secondary" size="small">
+            <li><Badge variant="secondary" size="small">
               {bot.llmProvider}
-            </Badge>
+            </Badge></li>
           )}
-          <Badge variant="neutral" style="outline" className="text-xs">
+          <li><Badge variant="neutral" style="outline" className="text-xs">
             📱 {bot.messageProvider.toUpperCase()}
-          </Badge>
-        </div>
+          </Badge></li>
+        </ul>
 
         {/* Error alert (only when errors exist) */}
         {(botStatusData?.errorCount ?? 0) > 0 && (
@@ -136,7 +136,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Actions */}
         <div className="card-actions justify-end mt-3">
-          <Button variant="outline" size="sm" aria-label={`View details for ${bot.name}`}>
+          <Button variant="outline" size="sm" aria-label={String(`View details for ${bot.name}`)}>
             Details
           </Button>
         </div>
