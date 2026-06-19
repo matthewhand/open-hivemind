@@ -30,7 +30,7 @@ const DashboardPage: React.FC = () => {
 
   // Fetch announcement text
   useEffect(() => {
-    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
+    apiService.get('/api/dashboard/announcement')
       .then((data: any) => {
         const text = data?.announcement || '';
         if (text) {
@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const checkOnboarding = async (): Promise<void> => {
       try {
-        const data = await apiService.get<any>('/api/onboarding/status');
+        const data = await apiService.get('/api/onboarding/status') as any;
         const completed = data?.completed ?? data?.data?.completed ?? false;
         if (!completed) {
           navigate('/onboarding', { replace: true });
@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
         // Even if onboarding is "completed", check if LLM is actually configured.
         // This catches the case where bots exist from env but no LLM key is set.
         try {
-          const configStatus = await apiService.get<any>('/api/dashboard/config-status');
+          const configStatus = await apiService.get('/api/dashboard/config-status') as any;
           const status = configStatus?.data || configStatus;
           const anyIncomplete = !status.llmConfigured || !status.botConfigured || !status.messengerConfigured;
           setShowWelcome(anyIncomplete);

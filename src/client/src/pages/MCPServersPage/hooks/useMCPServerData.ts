@@ -50,7 +50,7 @@ export const useMCPServerData = (): {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.get<any>('/api/admin/mcp-servers');
+      const data = await apiService.get('/api/admin/mcp-servers') as any;
 
       const connectedServers: MCPServer[] = (Array.isArray(data.data?.servers) ? data.data.servers : []).map(
         (server: any, index: number) => ({

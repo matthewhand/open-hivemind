@@ -214,7 +214,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
         <div className="flex items-center gap-2">
           <Button
-            variant={demoMode ? 'warning' : 'ghost'}
+            variant={demoMode ? 'accent' : 'ghost'}
             size="sm"
             onClick={handleToggleDemoMode}
             disabled={isLoading('demo')}

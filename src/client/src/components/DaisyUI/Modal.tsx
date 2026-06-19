@@ -13,12 +13,13 @@ export interface ModalAction {
 interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   position?: 'center' | 'top' | 'bottom';
   closable?: boolean;
   className?: string;
+  ariaLabelledBy?: string;
 }
 
 interface ModalProps extends BaseModalProps {
@@ -32,6 +33,7 @@ interface ConfirmModalProps extends Omit<BaseModalProps, 'children'> {
   cancelText?: string;
   confirmVariant?: ModalAction['variant'];
   onConfirm: () => void;
+  onCancel?: () => void;
   loading?: boolean;
 }
 
@@ -129,7 +131,6 @@ const Modal: React.FC<ModalProps> = ({
             {title && <h3 id="modal-dialog-title" className="font-bold text-lg">{title}</h3>}
             {showCloseButton && closable && (
               <button
-                type="button"
                 ref={closeBtnRef}
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={onClose}
@@ -151,7 +152,6 @@ const Modal: React.FC<ModalProps> = ({
           <div className="modal-action">
             {actions.map((action, index) => (
               <button
-                type="button"
                 key={index}
                 className={`btn ${getVariantClass(action.variant)}`}
                 onClick={action.onClick}
@@ -173,6 +173,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
+  onCancel,
   title = 'Confirm Action',
   message,
   confirmText = 'Confirm',
@@ -184,7 +185,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const actions: ModalAction[] = [
     {
       label: cancelText,
-      onClick: onClose,
+      onClick: onCancel ?? onClose,
       variant: 'ghost',
       disabled: loading,
     },

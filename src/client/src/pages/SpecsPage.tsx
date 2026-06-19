@@ -123,10 +123,7 @@ const SpecsPage: React.FC = () => {
 
     setCreating(true);
     try {
-      const response = await apiService.post<{ success: boolean; error?: string }>(
-        '/api/specs',
-        payload
-      );
+      const response = await apiService.post('/api/specs', payload) as { success: boolean; error?: string };
       if (!response.success) {
         throw new Error(response.error || 'Failed to create specification');
       }

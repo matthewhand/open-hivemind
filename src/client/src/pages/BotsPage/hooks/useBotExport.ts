@@ -21,7 +21,7 @@ export const useBotExport = (
 
   const handleExportAll = useCallback(async () => {
     try {
-      const data = await apiService.get<any>('/api/bots/export');
+      const data = await apiService.get('/api/bots/export') as any;
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -38,7 +38,7 @@ export const useBotExport = (
   const handleExportSingleBot = useCallback(
     async (bot: BotConfig) => {
       try {
-        const data = await apiService.get<any>(`/api/bots/${bot.id}/export`);
+        const data = await apiService.get(`/api/bots/${bot.id}/export`) as any;
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

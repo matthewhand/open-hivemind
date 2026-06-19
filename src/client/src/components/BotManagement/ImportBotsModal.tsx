@@ -121,7 +121,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     if (!bundle) return;
     setImporting(true);
     try {
-      const data = await apiService.post<any>('/api/bots/import', bundle);
+      const data = await apiService.post('/api/bots/import', bundle) as any;
       setReport(data.report);
       setStep('result');
       setFeedbackState({ state: 'success', message: 'Import Successful!' });

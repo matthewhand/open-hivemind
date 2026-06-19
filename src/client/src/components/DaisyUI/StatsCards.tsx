@@ -274,7 +274,7 @@ export const useSystemStats = () => {
       try {
         setIsLoading(true);
 
-        const data = await apiService.get<any>('/api/webui/system-status');
+        const data = await apiService.get('/api/webui/system-status') as any;
 
         const mockStats: StatItem[] = [
           {

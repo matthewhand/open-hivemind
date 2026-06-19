@@ -11,7 +11,7 @@ const useSpec = (id: string) => {
   } = useQuery<SpecDetailResponse | null>({
     queryKey: ['spec', id],
     queryFn: async () => {
-      const json = await apiService.get<any>(`/api/specs/${id}`);
+      const json = await apiService.get(`/api/specs/${id}`);
       if (json.success && json.data) {
         return json.data;
       }

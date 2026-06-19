@@ -13,18 +13,18 @@ export const useHealthBadges = (): HealthBadges => {
     const {
         data: healthData,
         isLoading: healthLoading,
-    } = useQuery<any>({
+    } = useQuery({
         queryKey: ['health', 'detailed'],
-        queryFn: () => apiService.get<any>('/api/health/detailed'),
+        queryFn: () => apiService.get('/api/health/detailed'),
         refetchInterval: 30_000,
     });
 
     const {
         data: llmData,
         isLoading: llmLoading,
-    } = useQuery<any>({
+    } = useQuery({
         queryKey: ['config', 'llm-status'],
-        queryFn: () => apiService.get<any>('/api/config/llm-status'),
+        queryFn: () => apiService.get('/api/config/llm-status'),
         refetchInterval: 30_000,
     });
 
