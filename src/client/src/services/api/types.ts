@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { Bot } from '../../types/bot';
 // Re-export canonical Persona and Bot from types/bot.ts
 export type { Persona, Bot } from '../../types/bot';
 

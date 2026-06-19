@@ -85,6 +85,8 @@ export interface Persona {
   bots?: string[];
   /** Whether this persona is locked by an environment variable and cannot be edited */
   isEnvLocked?: boolean;
+  /** URL-safe identifier key for this persona (e.g. used as React list key or select value) */
+  key?: string;
   responseBehavior?: PersonaResponseBehavior;
   isBuiltIn?: boolean;
   usageCount?: number;
@@ -122,7 +124,7 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
+  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm' | 'memory' | 'tool';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
   botId?: string | null;

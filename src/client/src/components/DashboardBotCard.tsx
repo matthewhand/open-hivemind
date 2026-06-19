@@ -122,7 +122,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Actions */}
         <div className="card-actions justify-end mt-3">
-          <Button variant="outline" size="sm" aria-label={`View details for ${bot.name}`} onClick={() => setIsDiagnosticOpen(true)}>
+          <Button variant="ghost" size="sm" aria-label={`View details for ${bot.name}`} onClick={() => setIsDiagnosticOpen(true)}>
             Details
           </Button>
         </div>

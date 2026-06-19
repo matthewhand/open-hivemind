@@ -33,14 +33,16 @@ export const useHealthBadges = (): HealthBadges => {
     let monitoringStatus: HealthBadges['monitoringStatus'] = null;
     let monitoringBadge: string | null = null;
 
-    if (healthData) {
-        const status = healthData.status as 'healthy' | 'degraded' | 'unhealthy';
+    if (healthData && typeof healthData === 'object') {
+        const status = (healthData as Record<string, unknown>).status as 'healthy' | 'degraded' | 'unhealthy';
         monitoringStatus = status;
         if (status === 'unhealthy') { monitoringBadge = '!'; }
         else if (status === 'degraded') { monitoringBadge = '⚠'; }
     }
 
-    const configWarning = llmData ? !llmData.defaultConfigured : false;
+    const configWarning = llmData && typeof llmData === 'object'
+        ? !(llmData as Record<string, unknown>).defaultConfigured
+        : false;
 
     return {
         monitoringStatus,
