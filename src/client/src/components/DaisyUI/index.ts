@@ -104,7 +104,7 @@ export { default as Chat } from './Chat';
 export { default as CodeBlock } from './CodeBlock';
 export { default as ConfigKeyValueCard } from './ConfigKeyValueCard';
 export { EnhancedErrorAlert } from './EnhancedErrorAlert';
-export { default as FormField } from './FormField';
+export { default as FormFieldComponent } from './FormField';
 export { default as ModelAutocomplete } from './ModelAutocomplete';
 export { default as RateLimitIndicator } from './RateLimitIndicator';
 export { default as ResponsiveNavigation } from './ResponsiveNavigation';

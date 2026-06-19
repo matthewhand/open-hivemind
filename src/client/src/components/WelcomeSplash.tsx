@@ -60,7 +60,7 @@ const WelcomeSplash: React.FC = () => {
   // Fetch configuration status
   const fetchConfigStatus = useCallback(async () => {
     try {
-      const data = await apiService.get<any>('/api/dashboard/config-status');
+      const data = await apiService.get('/api/dashboard/config-status') as ConfigStatus & { data?: ConfigStatus };
       setConfigStatus(data?.data || data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch config status');
@@ -236,7 +236,7 @@ const WelcomeSplash: React.FC = () => {
                           <p className="text-sm text-base-content/70">{tip.description}</p>
                         </div>
                       </div>
-                      <Alert status="info" className="bg-base-200 border-0" compact>
+                      <Alert status="info" className="bg-base-200 border-0">
                         <Lightbulb className="w-4 h-4 text-warning flex-shrink-0" />
                         <span className="text-xs">{tip.tip}</span>
                       </Alert>

@@ -100,7 +100,7 @@ const IntegrationsPanel: React.FC = () => {
     isOpen: false,
     isEdit: false,
     providerType: 'llm',
-    provider: null,
+    mode: 'create',
   });
 
   // Confirm modal state
@@ -348,7 +348,7 @@ const IntegrationsPanel: React.FC = () => {
             size="sm"
             className="gap-2"
             onClick={() =>
-              setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', provider: null })
+              setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', mode: 'create' })
             }
           >
             <PlusIcon className="w-4 h-4" /> Add LLM Provider
@@ -406,6 +406,7 @@ const IntegrationsPanel: React.FC = () => {
                           setProviderModalState({
                             isOpen: true,
                             isEdit: true,
+                            mode: 'edit',
                             providerType: 'llm',
                             provider: {
                               id: profile.key,
@@ -413,6 +414,7 @@ const IntegrationsPanel: React.FC = () => {
                               type: profile.provider,
                               config: profile.config,
                               modelType: profile.modelType,
+                              enabled: profile.enabled ?? true,
                             },
                           })
                         }

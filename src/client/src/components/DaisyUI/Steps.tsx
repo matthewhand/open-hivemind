@@ -4,15 +4,15 @@
 
 import React from 'react';
 
-interface Step {
+export interface StepItem {
   title: string;
   description?: string;
   status?: 'pending' | 'active' | 'completed' | 'error';
   icon?: React.ReactNode;
 }
 
-interface StepsProps {
-  steps: Step[];
+export interface StepsProps {
+  steps: StepItem[];
   currentStep: number;
   orientation?: 'horizontal' | 'vertical';
   className?: string;
@@ -26,7 +26,7 @@ const Steps: React.FC<StepsProps> = ({
   className = '',
   onStepClick
 }) => {
-  const getStepClasses = (index: number, step: Step) => {
+  const getStepClasses = (index: number, step: StepItem) => {
     const baseClasses = 'step';
     const statusClasses = {
       completed: 'step-primary',

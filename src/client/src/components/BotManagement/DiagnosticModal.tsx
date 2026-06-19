@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
 import { LoadingSpinner } from '../DaisyUI/Loading';
-import Timeline from '../DaisyUI/Timeline';
 import Badge from '../DaisyUI/Badge';
 import { 
   CheckCircle, 
@@ -86,7 +85,7 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       >
         {loading && !results ? (
           <div className="py-12 text-center space-y-4">
-             <LoadingSpinner lg />
+             <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
         ) : error ? (
@@ -104,11 +103,11 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
           </div>
         ) : results ? (
           <div className="space-y-6 py-2">
-             <Timeline>
-                <Timeline.Item 
-                  start="Provider"
-                  middle={getStatusIcon(results.messageProvider.status)}
-                  end={
+             <ul className="timeline timeline-vertical">
+                <li>
+                  <div className="timeline-start">Provider</div>
+                  <div className="timeline-middle">{getStatusIcon(results.messageProvider.status)}</div>
+                  <div className="timeline-end timeline-box">
                     <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
                        <div className="flex justify-between items-center">
                           <span className="font-bold text-sm flex items-center gap-2"><MessageSquare className="w-3 h-3" /> Connection</span>
@@ -116,13 +115,15 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
                        </div>
                        <p className="text-xs opacity-60">{results.messageProvider.details || 'Verifying token and socket state...'}</p>
                     </div>
-                  }
-                />
-                
-                <Timeline.Item 
-                  start="LLM API"
-                  middle={getStatusIcon(results.llm.status)}
-                  end={
+                  </div>
+                  <hr />
+                </li>
+
+                <li>
+                  <hr />
+                  <div className="timeline-start">LLM API</div>
+                  <div className="timeline-middle">{getStatusIcon(results.llm.status)}</div>
+                  <div className="timeline-end timeline-box">
                     <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
                        <div className="flex justify-between items-center">
                           <span className="font-bold text-sm flex items-center gap-2"><Brain className="w-3 h-3" /> Inference</span>
@@ -130,15 +131,16 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
                        </div>
                        <p className="text-xs opacity-60">{results.llm.details || 'Attempting ping request...'}</p>
                     </div>
-                  }
-                />
+                  </div>
+                  {results.mcp && results.mcp.length > 0 && <hr />}
+                </li>
 
-                {results.mcp && results.mcp.length > 0 && results.mcp.map((m: MCPResult) => (
-                  <Timeline.Item 
-                    key={m.name}
-                    start="MCP"
-                    middle={getStatusIcon(m.status)}
-                    end={
+                {results.mcp && results.mcp.length > 0 && results.mcp.map((m: MCPResult, idx: number) => (
+                  <li key={m.name}>
+                    <hr />
+                    <div className="timeline-start">MCP</div>
+                    <div className="timeline-middle">{getStatusIcon(m.status)}</div>
+                    <div className="timeline-end timeline-box">
                       <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
                         <div className="flex justify-between items-center">
                             <span className="font-bold text-sm flex items-center gap-2"><Puzzle className="w-3 h-3" /> {m.name}</span>
@@ -146,10 +148,11 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
                         </div>
                         <p className="text-xs opacity-60">{m.status === 'ok' ? 'Server is responding and tools listed' : (m.details || 'Connection timeout')}</p>
                       </div>
-                    }
-                  />
+                    </div>
+                    {idx < results.mcp.length - 1 && <hr />}
+                  </li>
                 ))}
-             </Timeline>
+             </ul>
 
              <div className="pt-4 border-t border-base-300 flex justify-between items-center">
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>

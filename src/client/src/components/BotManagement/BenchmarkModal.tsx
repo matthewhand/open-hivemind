@@ -86,7 +86,7 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
                 <Cpu className="w-16 h-16 text-primary animate-pulse" />
                 <Zap className="w-6 h-6 text-warning absolute -top-1 -right-1 animate-bounce" />
              </div>
-             <LoadingSpinner lg />
+             <LoadingSpinner size="lg" />
              <p className="text-sm font-bold opacity-60 uppercase tracking-widest">Executing Standardized IQ & Latency Suite...</p>
           </div>
         ) : error ? (
@@ -101,20 +101,20 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
              <Stats className="bg-base-200 border-none shadow-inner rounded-3xl overflow-hidden">
                 <Stat 
                   title="Standardized IQ" 
-                  value={data.iqScore} 
-                  icon={<Brain className="w-5 h-5 text-secondary" />}
+                  value={data.iqScore}
+                  figure={<Brain className="w-5 h-5 text-secondary" />}
                   description="Logic & Reasoning"
                 />
                 <Stat 
                   title="Avg Latency" 
-                  value={`${data.avgLatency}ms`} 
-                  icon={<Timer className="w-5 h-5 text-primary" />}
+                  value={`${data.avgLatency}ms`}
+                  figure={<Timer className="w-5 h-5 text-primary" />}
                   description="End-to-end response"
                 />
                 <Stat 
                   title="Provider" 
-                  value={data.provider.toUpperCase()} 
-                  icon={<Zap className="w-5 h-5 text-warning" />}
+                  value={data.provider.toUpperCase()}
+                  figure={<Zap className="w-5 h-5 text-warning" />}
                   description="Engine efficiency"
                 />
              </Stats>

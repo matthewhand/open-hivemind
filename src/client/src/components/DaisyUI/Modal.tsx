@@ -13,12 +13,14 @@ export interface ModalAction {
 interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   position?: 'center' | 'top' | 'bottom';
   closable?: boolean;
   className?: string;
+  /** id of the element that labels the dialog (overrides the default title id) */
+  ariaLabelledBy?: string;
 }
 
 interface ModalProps extends BaseModalProps {
@@ -47,6 +49,7 @@ const Modal: React.FC<ModalProps> = ({
   closable = true,
   showCloseButton = true,
   className = '',
+  ariaLabelledBy,
 }) => {
   const modalRef = useRef<HTMLDialogElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -117,7 +120,7 @@ const Modal: React.FC<ModalProps> = ({
       className={`modal ${getPositionClass()} ${className}`}
       onClick={handleBackdropClick}
       aria-modal="true"
-      aria-labelledby={title ? 'modal-dialog-title' : undefined}
+      aria-labelledby={ariaLabelledBy ?? (title ? 'modal-dialog-title' : undefined)}
       // DaisyUI uses modal-open class for visibility control
       // Do NOT set open={isOpen} — showModal() manages the open attribute.
       // Setting both causes double backdrop and layout shift.

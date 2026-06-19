@@ -8,8 +8,9 @@ import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { logger } from '../../utils/logger';
 
 export interface Persona extends ApiPersona {
-  assignedBotNames: string[];
-  assignedBotIds: string[];
+  assignedBotNames?: string[];
+  assignedBotIds?: string[];
+  isEnvLocked?: boolean;
 }
 
 export function usePersonasLogic() {
@@ -63,7 +64,7 @@ export function usePersonasLogic() {
     error: personasError,
   } = useQuery<ApiPersona[]>({
     queryKey: ['personasLogic', 'personas'],
-    queryFn: () => apiService.get<ApiPersona[]>('/api/personas'),
+    queryFn: () => apiService.getPersonas(),
   });
 
   const loading = botsLoading || personasLoading || mutating;
@@ -99,27 +100,18 @@ export function usePersonasLogic() {
 
     const rawPersonas = personasResponse || [];
 
-    // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
-    // This reduces the time complexity of the persona mapping from O(P * B) to O(P + B)
-    const botNameMap = new Map(filledBots.map((b: any) => [b.id, b.name]));
-
-    const mappedPersonas = rawPersonas.map((p) => {
-      const assignedIds = Array.isArray(p.bots) ? p.bots : [];
-      const assignedNames = assignedIds.map((bid: string) => {
-        const foundName = botNameMap.get(bid);
-        return foundName || bid;
-      });
+    const mappedPersonas: Persona[] = rawPersonas.map((p) => {
+      const assigned = filledBots.filter(
+        (b: any) => b.persona === p.id || b.persona === p.name,
+      );
       return {
         ...p,
-        assignedBotIds: assignedIds,
-        assignedBotNames: assignedNames,
+        assignedBotIds: assigned.map((b: any) => b.id),
+        assignedBotNames: assigned.map((b: any) => b.name),
       };
     });
     setPersonas(mappedPersonas);
   }, [configResponse, personasResponse, botsLoading, personasLoading, botsError, personasError]);
-
-  const bulkSelection = useBulkSelection(personas);
-  const dragAndDrop = useDragAndDrop(personas, 'id');
 
   const filteredPersonas = useMemo(() => {
     let result = personas;
@@ -129,7 +121,7 @@ export function usePersonasLogic() {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q) ||
-          p.prompt.toLowerCase().includes(q)
+          p.systemPrompt.toLowerCase().includes(q)
       );
     }
     if (selectedCategory && selectedCategory !== 'all') {
@@ -137,8 +129,6 @@ export function usePersonasLogic() {
     }
     return result;
   }, [personas, searchQuery, selectedCategory]);
-
-  dragAndDrop.items = filteredPersonas;
 
   const handlePersonaReorder = useCallback(async (reordered: Persona[]) => {
     try {
@@ -149,9 +139,12 @@ export function usePersonasLogic() {
     }
   }, [errorToast, fetchData]);
 
-  useEffect(() => {
-    dragAndDrop.onReorder = handlePersonaReorder;
-  }, [handlePersonaReorder]);
+  const bulkSelection = useBulkSelection(personas.map((p) => p.id));
+  const dragAndDrop = useDragAndDrop<Persona>({
+    items: filteredPersonas,
+    idAccessor: (p) => p.id,
+    onReorder: handlePersonaReorder,
+  });
 
   const handleBulkDeletePersonas = async () => {
     if (bulkSelection.selectedIds.size === 0) return;
@@ -188,8 +181,8 @@ export function usePersonasLogic() {
     setEditingPersona(null);
     setPersonaName(`${persona.name} (Copy)`);
     setPersonaDescription(persona.description || '');
-    setPersonaPrompt(persona.prompt);
-    setSelectedBotIds(persona.assignedBotIds);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds ?? []);
     setPersonaCategory(persona.category || 'general');
     setIsViewMode(false);
     setShowCreateModal(true);
@@ -212,8 +205,8 @@ export function usePersonasLogic() {
     setEditingPersona(persona);
     setPersonaName(persona.name);
     setPersonaDescription(persona.description || '');
-    setPersonaPrompt(persona.prompt);
-    setSelectedBotIds(persona.assignedBotIds);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds ?? []);
     setPersonaCategory(persona.category || 'general');
     setIsViewMode(false);
     setShowEditModal(true);
@@ -223,8 +216,8 @@ export function usePersonasLogic() {
     setEditingPersona(persona);
     setPersonaName(persona.name);
     setPersonaDescription(persona.description || '');
-    setPersonaPrompt(persona.prompt);
-    setSelectedBotIds(persona.assignedBotIds);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds ?? []);
     setPersonaCategory(persona.category || 'general');
     setIsViewMode(true);
     setShowEditModal(true);
@@ -245,8 +238,7 @@ export function usePersonasLogic() {
       const payload: Partial<ApiPersona> = {
         name: personaName.trim(),
         description: personaDescription.trim() || undefined,
-        prompt: personaPrompt.trim(),
-        bots: selectedBotIds,
+        systemPrompt: personaPrompt.trim(),
         category: personaCategory,
       };
 

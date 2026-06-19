@@ -4,7 +4,7 @@ import { useToolRegistry } from './useToolRegistry';
 import { useToolExecution } from './useToolExecution';
 import { useToolHistory } from './useToolHistory';
 
-export function useMCPTools(): Record<string, unknown> {
+export function useMCPTools() {
   const [alert, setAlert] = useState<AlertState | null>(null);
 
   const registry = useToolRegistry({ setAlert });

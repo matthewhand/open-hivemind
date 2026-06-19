@@ -240,13 +240,13 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               onChange={handlePersonaChange}
               disabled={personasLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.isOverridden)}
               options={personas.map((p) => ({
-                value: p.key,
+                value: p.id,
                 label: p.name,
                 disabled: false,
               }))}
             >
               {personas.map((p) => (
-                <option key={p.key} value={p.key}>
+                <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
               ))}

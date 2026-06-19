@@ -26,7 +26,7 @@ const PendingActions: React.FC = () => {
   const fetchActions = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiService.get<any>('/api/admin/pending-actions');
+      const res = await apiService.get('/api/admin/pending-actions') as { data?: PendingAction[] };
       setActions(res.data || []);
     } catch (err) {
       console.error('Failed to fetch pending actions:', err);
@@ -98,17 +98,17 @@ const PendingActions: React.FC = () => {
                   </h4>
                 </div>
                 <div className="flex gap-1">
-                  <Button 
-                    size="xs" 
-                    variant="success"
+                  <Button
+                    size="xs"
+                    className="btn-success"
                     onClick={() => handleResolve(action.id, true)}
                     title="Approve"
                   >
                     <Check className="w-3 h-3" />
                   </Button>
-                  <Button 
-                    size="xs" 
-                    variant="error"
+                  <Button
+                    size="xs"
+                    className="btn-error"
                     onClick={() => handleResolve(action.id, false)}
                     title="Deny"
                   >

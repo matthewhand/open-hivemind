@@ -50,7 +50,7 @@ export class IntegrationLoader {
   private loadedIntegrations: Map<string, IntegrationUIComponent[]> = new Map();
   private manifestCache: Map<string, IntegrationManifest> = new Map();
 
-  private constructor() {}
+  public constructor() {}
 
   public static getInstance(): IntegrationLoader {
     if (!IntegrationLoader.instance) {
@@ -117,7 +117,7 @@ export class IntegrationLoader {
 
       if (manifest.ui?.components) {
         const componentPromises = Object.entries(manifest.ui.components).map(
-          async ([componentId, componentInfo]) => {
+          async ([componentId, componentInfo]): Promise<IntegrationUIComponent | null> => {
             try {
               const component = await this.loadComponent(integrationId, componentInfo.path);
 
@@ -219,7 +219,7 @@ export class IntegrationLoader {
         'Status',
       ];
 
-      const discoveryPromises = commonComponentPaths.map(async (componentPath) => {
+      const discoveryPromises = commonComponentPaths.map(async (componentPath): Promise<IntegrationUIComponent | null> => {
         try {
           const component = await this.loadComponent(integrationId, componentPath);
 
@@ -251,7 +251,7 @@ export class IntegrationLoader {
   /**
    * Dynamically load a React component from an integration
    */
-  private async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  public async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> { // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       // Try to dynamically import the component
       const modulePath = `../../integrations/${integrationId}/${componentPath}`;
@@ -356,6 +356,7 @@ export function LazyIntegrationComponent({
   const LazyComponent = lazy(() =>
     loader
       .loadComponent(integrationId, componentPath)
+      .then(component => ({ default: component }))
       .catch(error => {
         debug('ERROR:', `Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import ToolResultModal from '../../components/ToolResultModal';
+import type { ToolResult } from './types';
 import { ToolRegistryPanel, ToolExecutionPanel } from '../../components/mcp-tools';
 import ToolResultHistory from '../../components/ToolResultHistory';
 import { useMCPTools } from './hooks/useMCPTools';
@@ -23,6 +24,10 @@ const MCPToolsPage: React.FC = () => {
     handleToggleFavorite, handleRunTool,
   } = useMCPTools();
 
+  // Result selected from the recent-results history list (distinct from the
+  // execution-flow result owned by the hook, which has no exported setter).
+  const [viewedResult, setViewedResult] = useState<ToolResult | null>(null);
+
   return (
     <div className="p-6">
       <PageHeader 
@@ -30,7 +35,7 @@ const MCPToolsPage: React.FC = () => {
         description="Browse and manage tools available from your MCP servers"
         icon={Wrench}
         actions={
-          <Button variant="outline" size="sm" onClick={() => { setShowHistory(true); fetchHistory(); }}>
+          <Button buttonStyle="outline" size="sm" onClick={() => { setShowHistory(true); fetchHistory(); }}>
             <Clock className="w-4 h-4 mr-1" /> Execution History
           </Button>
         }
@@ -52,7 +57,7 @@ const MCPToolsPage: React.FC = () => {
       <div className="mt-8">
         <ToolResultHistory
           results={recentResults}
-          onViewResult={(result) => { setSelectedResult(result); setShowResultModal(true); }}
+          onViewResult={(result) => { setViewedResult(result); }}
           onClear={() => setRecentResults([])}
         />
       </div>
@@ -65,6 +70,7 @@ const MCPToolsPage: React.FC = () => {
         />
       )}
       {selectedResult && <ToolResultModal isOpen={showResultModal} onClose={() => setShowResultModal(false)} result={selectedResult} />}
+      {viewedResult && <ToolResultModal isOpen={!!viewedResult} onClose={() => setViewedResult(null)} result={viewedResult} />}
     </div>
   );
 };

@@ -53,7 +53,18 @@ export type {
 // with all domain mixin return values.
 const core = new ApiService();
 
-export const apiService = Object.assign(
+// Explicitly type the composed service. `Object.assign` loses precise typing
+// (and falls back to `any`) once it is given more than four source arguments,
+// which would strip the generic signatures of `ApiService` (e.g. `get<T>`).
+// Spelling out the intersection keeps those generics available to callers.
+export const apiService: ApiService &
+  ReturnType<typeof botsMixin> &
+  ReturnType<typeof configMixin> &
+  ReturnType<typeof personasMixin> &
+  ReturnType<typeof secureConfigsMixin> &
+  ReturnType<typeof monitoringMixin> &
+  ReturnType<typeof adminMixin> &
+  ReturnType<typeof authMixin> = Object.assign(
   core,
   botsMixin(core),
   configMixin(core),
