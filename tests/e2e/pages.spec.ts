@@ -13,16 +13,16 @@ import {
 
 const ALL_PAGES = [
   { path: '/admin/overview', label: 'Dashboard' },
-  { path: '/admin/providers/llm', label: 'LLM Providers' },
-  { path: '/admin/providers/message', label: 'Message Providers' },
+  { path: '/admin/llm', label: 'LLM Providers' },
+  { path: '/admin/message', label: 'Message Providers' },
   { path: '/admin/bots', label: 'Bots' },
   { path: '/admin/personas', label: 'Personas' },
   { path: '/admin/guards', label: 'Guards' },
   { path: '/admin/settings', label: 'Settings' },
-  { path: '/admin/monitoring', label: 'Monitoring' },
+  { path: '/admin/overview?tab=monitoring', label: 'Monitoring' },
   { path: '/admin/configuration', label: 'Configuration' },
-  { path: '/admin/showcase', label: 'Showcase' },
-  { path: '/admin/sitemap', label: 'Sitemap' },
+  { path: '/admin/developer?tab=showcase', label: 'Showcase' },
+  { path: '/admin/developer?tab=sitemap', label: 'Sitemap' },
 ];
 
 const mockBots = [
@@ -111,8 +111,10 @@ async function mockAllEndpoints(page: import('@playwright/test').Page) {
     });
   });
 
-  // Mock all /api/* endpoints
-  await page.route('**/api/**', (route) => {
+  // Mock all /api/* endpoints. Match only paths rooted at the host (//host/api/…)
+  // so Vite source modules such as /src/services/api/bots.ts are NOT intercepted
+  // and rejected as non-JS module scripts.
+  await page.route(/\/\/[^/]+\/api\//, (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
 

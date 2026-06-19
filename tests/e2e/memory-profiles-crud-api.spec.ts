@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 
 /**
  * API-level CRUD e2e for memory profiles.
@@ -10,9 +10,21 @@ import { expect, test } from '@playwright/test';
  *
  * Auth: ALLOW_TEST_BYPASS=true is set on the webServer command so any
  * request is treated as an admin user. No JWT shenanigans needed.
+ *
+ * CSRF: mutating routes (POST/PUT/DELETE) are CSRF-protected independently of
+ * auth — `csrfHeaders()` fetches a token from GET /api/csrf-token (which also
+ * sets the session cookie in this test's request context) and returns the
+ * `x-csrf-token` header to send on the mutation.
  */
 
 const ROUTE = '/api/config/memory-profiles';
+
+/** Fetch a CSRF token (and seed the session cookie) for a mutating request. */
+async function csrfHeaders(request: APIRequestContext): Promise<Record<string, string>> {
+  const res = await request.get('/api/csrf-token');
+  const { csrfToken } = await res.json();
+  return { 'x-csrf-token': csrfToken };
+}
 
 const newProfile = (suffix: string) => ({
   key: `e2e-test-${suffix}-${Date.now()}`,
@@ -43,7 +55,7 @@ test.describe('Memory profiles CRUD (API)', () => {
     const profile = newProfile('create');
     createdKey = profile.key;
 
-    const res = await request.post(ROUTE, { data: profile });
+    const res = await request.post(ROUTE, { data: profile, headers: await csrfHeaders(request) });
     expect(res.status(), `body: ${await res.text()}`).toBeLessThan(400);
 
     // Confirm via list
@@ -60,13 +72,13 @@ test.describe('Memory profiles CRUD (API)', () => {
   // server-side MemoryProfileSchema not declaring `type`. Fixed in this PR.
   test('GET response preserves `type` field set on create', async ({ request }) => {
     const profile = newProfile('type-roundtrip');
-    await request.post(ROUTE, { data: profile });
+    await request.post(ROUTE, { data: profile, headers: await csrfHeaders(request) });
     try {
       const list = await (await request.get(ROUTE)).json();
       const found = list.data.memory.find((p: { key: string }) => p.key === profile.key);
       expect(found?.type).toBe(profile.type);
     } finally {
-      await request.delete(`${ROUTE}/${profile.key}`);
+      await request.delete(`${ROUTE}/${profile.key}`, { headers: await csrfHeaders(request) });
     }
   });
 
@@ -75,6 +87,7 @@ test.describe('Memory profiles CRUD (API)', () => {
 
     const updateRes = await request.put(`${ROUTE}/${createdKey}`, {
       data: { name: 'E2E Updated Name', config: { host: 'redis.updated.local', port: 6380 } },
+      headers: await csrfHeaders(request),
     });
     expect(updateRes.status(), `body: ${await updateRes.text()}`).toBeLessThan(400);
 
@@ -86,7 +99,9 @@ test.describe('Memory profiles CRUD (API)', () => {
   test('DELETE removes the profile', async ({ request }) => {
     test.skip(!createdKey, 'depends on previous create');
 
-    const delRes = await request.delete(`${ROUTE}/${createdKey}`);
+    const delRes = await request.delete(`${ROUTE}/${createdKey}`, {
+      headers: await csrfHeaders(request),
+    });
     expect(delRes.status()).toBeLessThan(400);
 
     const listBody = await (await request.get(ROUTE)).json();
@@ -97,6 +112,7 @@ test.describe('Memory profiles CRUD (API)', () => {
   test('PUT on non-existent key returns 4xx (not silent success)', async ({ request }) => {
     const res = await request.put(`${ROUTE}/does-not-exist-${Date.now()}`, {
       data: { name: 'should fail' },
+      headers: await csrfHeaders(request),
     });
     // Spec is vague between 404 and 422; either is acceptable, 200/2xx is not.
     expect(res.status()).toBeGreaterThanOrEqual(400);
@@ -106,6 +122,7 @@ test.describe('Memory profiles CRUD (API)', () => {
     const res = await request.post(ROUTE, {
       // Missing required fields (key, type, provider).
       data: { name: 'bad' },
+      headers: await csrfHeaders(request),
     });
     expect(res.status()).toBeGreaterThanOrEqual(400);
     expect(res.status()).toBeLessThan(500);
@@ -114,11 +131,11 @@ test.describe('Memory profiles CRUD (API)', () => {
   test('POST with smuggled __proto__ key does not pollute', async ({ request }) => {
     // Schema validation should strip unknown keys, but assert defense-in-depth.
     const profile = { ...newProfile('proto'), __proto__: { polluted: true } };
-    const res = await request.post(ROUTE, { data: profile });
+    const res = await request.post(ROUTE, { data: profile, headers: await csrfHeaders(request) });
     // We accept the body either being rejected or accepted-and-stripped.
     if (res.status() < 400) {
       // Cleanup
-      await request.delete(`${ROUTE}/${profile.key}`);
+      await request.delete(`${ROUTE}/${profile.key}`, { headers: await csrfHeaders(request) });
     }
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });

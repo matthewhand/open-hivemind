@@ -182,6 +182,9 @@ test.describe('Settings CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/settings');
+    // Wait for the lazy-loaded settings form to render before interacting —
+    // otherwise the count()>0 guards below race the loading skeleton and silently skip.
+    await page.getByRole('heading', { name: 'General Settings' }).waitFor({ state: 'visible' });
 
     const generalTab = page
       .locator(
@@ -219,8 +222,10 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     // Verify maintenance mode was toggled in the saved payload
     await expect(savedPayload).not.toBeNull();
-    await expect(savedPayload).toHaveProperty('app.maintenanceMode', true);
-    await expect(currentConfig.maintenanceMode).toBe(true);
+    // The config payload uses flat dotted keys, e.g. the literal key "app.maintenanceMode"
+    // (not a nested app.maintenanceMode), so use the array form to avoid path traversal.
+    await expect(savedPayload).toHaveProperty(['app.maintenanceMode'], true);
+    await expect((currentConfig as Record<string, unknown>)['app.maintenanceMode']).toBe(true);
   });
 
   test('Messaging tab: view messaging provider settings', async ({ page }) => {

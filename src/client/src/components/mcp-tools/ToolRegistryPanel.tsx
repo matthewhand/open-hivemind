@@ -51,6 +51,7 @@ const getCategoryColor = (category: string) => {
     filesystem: 'badge-info',
     network: 'badge-success',
     ai: 'badge-warning',
+    search: 'badge-accent',
     utility: 'badge-ghost',
   };
   return colors[category] || 'badge-ghost';

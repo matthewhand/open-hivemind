@@ -123,7 +123,7 @@ test.describe('Bot CRUD Lifecycle', () => {
     // Verify the bot appears in the list
     await expect(page.getByRole('heading', { name: 'My Test Bot' })).toBeVisible();
     // Verify the Create New Bot button is present in the header
-    await expect(page.locator('button', { hasText: 'Create New Bot' }).first()).toBeVisible();
+    await expect(page.locator('button', { hasText: 'Create Bot' }).first()).toBeVisible();
   });
 
   test('edit bot changes name', async ({ page }) => {
@@ -371,9 +371,9 @@ test.describe('Bot CRUD Lifecycle', () => {
       page.getByText('Start by creating your first specialized AI agent.')
     ).toBeVisible();
     // The header "Create New Bot" button should be present
-    await expect(page.locator('button', { hasText: 'Create New Bot' }).first()).toBeVisible();
+    await expect(page.locator('button', { hasText: 'Create Bot' }).first()).toBeVisible();
     // The search bar and filter dropdown should be visible
-    await expect(page.getByPlaceholder('Search...')).toBeVisible();
+    await expect(page.getByPlaceholder(/Search/i)).toBeVisible();
   });
 
   test('delete confirmation modal cancel does not delete', async ({ page }) => {

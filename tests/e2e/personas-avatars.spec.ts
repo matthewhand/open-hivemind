@@ -104,7 +104,7 @@ test.describe('Persona Management & Avatars', () => {
     await page.goto('/admin/personas');
 
     // Wait for the page header to confirm we landed on the right page
-    await expect(page.getByText('Persona Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
 
     // Verify all three persona cards render
     await expect(page.getByText('Default Assistant')).toBeVisible();
@@ -127,7 +127,7 @@ test.describe('Persona Management & Avatars', () => {
 
   test('category filter is NOT shown on the page', async ({ page }) => {
     await page.goto('/admin/personas');
-    await expect(page.getByText('Persona Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
 
     // The category dropdown / filter should NOT be visible
     // (it was hidden — roadmap: user-defined categories)
@@ -137,7 +137,7 @@ test.describe('Persona Management & Avatars', () => {
 
   test('opens create persona modal with avatar picker', async ({ page }) => {
     await page.goto('/admin/personas');
-    await expect(page.getByText('Persona Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
 
     // Click the "Create Persona" button
     const createBtn = page.getByRole('button', { name: /Create Persona/i });
@@ -173,7 +173,7 @@ test.describe('Persona Management & Avatars', () => {
 
   test('persona cards show assigned bot badges', async ({ page }) => {
     await page.goto('/admin/personas');
-    await expect(page.getByText('Persona Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
 
     // The "Built-in" badge should appear on the default persona
     await expect(page.getByText('Built-in').first()).toBeVisible();
@@ -186,7 +186,7 @@ test.describe('Persona Management & Avatars', () => {
 
   test('search bar filters personas', async ({ page }) => {
     await page.goto('/admin/personas');
-    await expect(page.getByText('Persona Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
 
     // The search input should be present
     const searchInput = page.getByPlaceholder(/Search personas/i);

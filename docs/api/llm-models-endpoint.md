@@ -397,6 +397,6 @@ any failure.
 
 ## See Also
 
-- [LLM Providers Configuration](./llm-providers.md)
-- [Model Autocomplete Component](../components/ModelAutocomplete.md)
-- [Bot Configuration API](./bot-config.md)
+- [LLM Providers Configuration](../concepts/llm-providers.md)
+- [Model Autocomplete Component](../configuration/dynamic-model-fetching.md)
+- [Bot Configuration API](./bot-and-system-endpoints.md)

@@ -52,7 +52,7 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('displays plugin security page with correct structure', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Verify page container
@@ -63,7 +63,7 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('displays plugin statistics', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Should show stats section
@@ -71,7 +71,7 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('displays plugins list', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Should show plugins
@@ -84,35 +84,35 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('displays trust badges correctly', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Should show Trusted badge
     await expect(page.getByText('Trusted', { exact: true }).first()).toBeVisible();
 
-    // Should show Untrusted badge
-    await expect(page.getByText('Untrusted', { exact: true })).toBeVisible();
+    // Should show Untrusted badge (.first() — also appears in stats card + filter)
+    await expect(page.getByText('Untrusted', { exact: true }).first()).toBeVisible();
 
     // Should show Built-in badge
-    await expect(page.getByText('Built-in', { exact: true })).toBeVisible();
+    await expect(page.getByText('Built-in', { exact: true }).first()).toBeVisible();
   });
 
   test('displays signature status badges', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
-    // Should show Valid badge
-    await expect(page.getByText('Valid', { exact: true })).toBeVisible();
+    // Should show Valid badge (.first() — signature status also appears in stats/filter)
+    await expect(page.getByText('Valid', { exact: true }).first()).toBeVisible();
 
     // Should show Invalid badge
-    await expect(page.getByText('Invalid', { exact: true })).toBeVisible();
+    await expect(page.getByText('Invalid', { exact: true }).first()).toBeVisible();
 
     // Should show No Signature badge
-    await expect(page.getByText('No Signature', { exact: true })).toBeVisible();
+    await expect(page.getByText('No Signature', { exact: true }).first()).toBeVisible();
   });
 
   test('has filter tabs functional', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Click on Untrusted filter
@@ -124,7 +124,7 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('has refresh button', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Refresh button should exist
@@ -135,15 +135,15 @@ test.describe('Plugin Security Page', () => {
   });
 
   test('shows capabilities correctly', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
-    // Should show granted capabilities
-    await expect(page.getByText('read', { exact: true })).toBeVisible();
-    await expect(page.getByText('write', { exact: true })).toBeVisible();
+    // Should show granted capabilities (.first() — capabilities repeat across plugins)
+    await expect(page.getByText('read', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('write', { exact: true }).first()).toBeVisible();
 
     // Should show denied capabilities
-    await expect(page.getByText('execute', { exact: true })).toBeVisible();
+    await expect(page.getByText('execute', { exact: true }).first()).toBeVisible();
   });
 
   test('handles API errors gracefully', async ({ page }) => {
@@ -154,7 +154,7 @@ test.describe('Plugin Security Page', () => {
       });
     });
 
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
     // Page should still render
@@ -189,30 +189,31 @@ test.describe('Plugin Security Trust Actions', () => {
   });
 
   test('shows trust button for untrusted plugins', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
-    // Should show Trust Plugin button
-    await expect(page.getByRole('button', { name: /trust plugin/i })).toBeVisible();
+    // Should show Trust Plugin button (aria-label is "Trust <pluginName>"; the
+    // trailing space distinguishes it from the "Trusted" filter tab).
+    await expect(page.getByRole('button', { name: /^trust /i })).toBeVisible();
   });
 
   test('shows re-verify button', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
-    // Should show Re-verify button
-    await expect(page.getByRole('button', { name: /re-verify/i })).toBeVisible();
+    // Should show the verify button (aria-label "Verify <pluginName>")
+    await expect(page.getByRole('button', { name: /^verify /i })).toBeVisible();
   });
 
   test('opens confirmation modal on trust click', async ({ page }) => {
-    await page.goto('/admin/plugins/security');
+    await page.goto('/admin/plugin-security');
     await page.waitForLoadState('networkidle');
 
-    // Click trust button
-    await page.getByRole('button', { name: /trust plugin/i }).click();
+    // Click trust button (aria-label "Trust <pluginName>")
+    await page.getByRole('button', { name: /^trust /i }).click();
 
-    // Should open confirmation modal
-    await expect(page.locator('[role="dialog"], .modal')).toBeVisible();
+    // Should open confirmation modal (:visible — other modals are always in the DOM)
+    await expect(page.locator('.modal-box:visible').first()).toBeVisible();
     await expect(page.getByText(/are you sure/i)).toBeVisible();
   });
 });

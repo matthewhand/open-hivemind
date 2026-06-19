@@ -48,15 +48,13 @@ test.describe('Bot Creation Form Validation', () => {
       });
     });
 
-    // Navigate to the bots page
-    await page.goto('/admin');
-    await page.getByText('Bots', { exact: true }).click();
+    // Navigate directly to the bots page (robust; matches other specs) rather
+    // than relying on a fragile sidebar text-click that can race the nav render.
+    await page.goto('/admin/bots');
+    await page.waitForURL('**/admin/bots');
 
-    // Wait for the bots page to load completely before clicking Create New Bot
-    await page.waitForURL('/admin/bots');
-
-    // Click Create New Bot to open modal
-    const createBtn = page.getByRole('button', { name: 'Create New Bot' });
+    // Click the "Create Bot" trigger to open the "Create New Bot" wizard modal
+    const createBtn = page.getByRole('button', { name: 'Create Bot' });
     await createBtn.click();
 
     // Ensure modal is open and visible
@@ -85,7 +83,9 @@ test.describe('Bot Creation Form Validation', () => {
   test('should allow advancing when required fields are filled', async ({ page }) => {
     // Fill required fields in Step 1
     await page.getByPlaceholder('e.g. HelpBot').fill('Test Bot');
-    await page.locator('select').first().selectOption({ label: 'Discord' });
+    // Target the wizard's provider select by its label — a bare select.first()
+    // grabs the bots-page status filter sitting behind the modal.
+    await page.getByLabel('Message provider').selectOption({ label: 'Discord' });
 
     // Click Next
     const nextBtn = page.getByRole('button', { name: 'Next →' });

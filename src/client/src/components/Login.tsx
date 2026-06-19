@@ -79,7 +79,7 @@ const Login: React.FC = () => {
           )}
 
           {error && (
-            <Alert status="error" message={error} className="mb-4" />
+            <Alert status="error" message={error} className="mb-4" aria-live="assertive" />
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +93,7 @@ const Login: React.FC = () => {
                 type="text"
                 value={formData.username}
                 onChange={handleInputChange}
-                placeholder="Enter 'admin'"
+                placeholder={isServerless ? "Enter 'admin'" : 'Username'}
                 disabled={isLoading}
                 required
                 autoComplete="username"
@@ -110,7 +110,7 @@ const Login: React.FC = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Enter password"
+                placeholder={isServerless ? 'Enter password' : 'Password'}
                 disabled={isLoading}
                 required
                 autoComplete="current-password"
@@ -144,11 +144,13 @@ const Login: React.FC = () => {
               )}
             </Button>
 
-            <div className="text-center mt-4">
-              <p className="text-sm text-base-content/70">
-                {isServerless ? 'Check deployment logs for password if not configured' : 'Enter your credentials'}
-              </p>
-            </div>
+            {isServerless && (
+              <div className="text-center mt-4">
+                <p className="text-sm text-base-content/70">
+                  Check deployment logs for password if not configured
+                </p>
+              </div>
+            )}
           </form>
 
           {isTrustedNetwork && (

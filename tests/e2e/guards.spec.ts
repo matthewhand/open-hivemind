@@ -80,7 +80,7 @@ test.describe('Guards Page', () => {
 
     // Find the delete button for the second profile (Development Profile)
     const card = page.locator('.card').filter({ hasText: 'Development Profile' });
-    const deleteBtn = card.locator('button.text-error');
+    const deleteBtn = card.getByRole('button', { name: 'Delete Development Profile' });
 
     await deleteBtn.click();
 
@@ -104,7 +104,7 @@ test.describe('Guards Page', () => {
     await navigateAndWaitReady(page, '/admin/guards');
 
     const card = page.locator('.card').filter({ hasText: 'Development Profile' });
-    const deleteBtn = card.locator('button.text-error');
+    const deleteBtn = card.getByRole('button', { name: 'Delete Development Profile' });
 
     await deleteBtn.click();
 
@@ -124,7 +124,7 @@ test.describe('Guards Page', () => {
     await navigateAndWaitReady(page, '/admin/guards');
 
     const card = page.locator('.card').filter({ hasText: 'Development Profile' });
-    const deleteBtn = card.locator('button.text-error');
+    const deleteBtn = card.getByRole('button', { name: 'Delete Development Profile' });
 
     await deleteBtn.click();
 

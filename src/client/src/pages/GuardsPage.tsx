@@ -769,7 +769,7 @@ const GuardsPage: React.FC = () => {
                   totalItems={profiles.length}
                   pageSize={pageSize}
                   onPageChange={setCurrentPage}
-                  style="standard"
+                  variant="standard"
                 />
               </div>
             </>
@@ -795,9 +795,14 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div>
-      <div className="px-6 pt-6 pb-2">
-        <h1 className="text-2xl font-bold">Guards</h1>
-        <p className="text-base-content/60 text-sm mt-1">Set up access control, rate limits, and content filters</p>
+      <div className="px-6 pt-6 pb-2 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Guards</h1>
+          <p className="text-base-content/60 text-sm mt-1">Set up access control, rate limits, and content filters</p>
+        </div>
+        <Button variant="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
+          <Plus className="w-4 h-4 mr-2" /> Create Profile
+        </Button>
       </div>
       <div className="px-6 pb-6">
         <Tabs

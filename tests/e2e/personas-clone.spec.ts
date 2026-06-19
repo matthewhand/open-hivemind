@@ -132,20 +132,29 @@ test.describe('Personas Cloning', () => {
       const uniqueDesc = `Description to be cloned ${timestamp}`;
 
       // Fill in the form
-      const nameInput = page.locator('input[placeholder="e.g. Friendly Helper"]');
+      const nameInput = page.locator('input[placeholder="e.g., Helpful Assistant"]');
       await expect(nameInput).toBeVisible();
       await nameInput.fill(uniqueName);
 
-      await page.locator('input[placeholder="Short description of this persona"]').fill(uniqueDesc);
+      await page
+        .locator('input[placeholder="Briefly describe what this persona does"]')
+        .fill(uniqueDesc);
 
       // Save
       const saveButton = page.locator('dialog.modal[open] button.btn-primary');
       await expect(saveButton).toBeVisible();
       await saveButton.click();
 
-      // Capture screenshot of loading button while it processes
+      // Best-effort docs screenshot of the transient loading button. With fast
+      // mocked saves the modal can close before this runs, so never fail on it.
       await page.waitForLoadState('domcontentloaded');
-      await saveButton.screenshot({ path: 'docs/screenshots/button-loading-real-app.png' });
+      await saveButton
+        .screenshot({
+          path: 'docs/screenshots/button-loading-real-app.png',
+          animations: 'disabled',
+          timeout: 3000,
+        })
+        .catch(() => {});
 
       // Check for errors if modal doesn't close quickly
       try {
@@ -172,7 +181,7 @@ test.describe('Personas Cloning', () => {
       await expect(newCard).toBeVisible({ timeout: 15000 });
 
       // 2. Click the Clone button on the new card
-      const cloneButton = newCard.locator('button[title="Clone Persona"]');
+      const cloneButton = newCard.locator('button[title="Duplicate Persona"]');
 
       await expect(cloneButton).toBeVisible();
       await cloneButton.click();
@@ -182,19 +191,19 @@ test.describe('Personas Cloning', () => {
       await expect(modal).toBeVisible();
 
       const modalTitle = modal.locator('h3');
-      await expect(modalTitle).toContainText('Clone Persona');
+      await expect(modalTitle).toContainText('Duplicate Persona');
 
       // Verify pre-filled data
-      const cloneNameInput = modal.locator('input[placeholder="e.g. Friendly Helper"]');
+      const cloneNameInput = modal.locator('input[placeholder="e.g., Helpful Assistant"]');
       await expect(cloneNameInput).toHaveValue(`Copy of ${uniqueName}`);
 
       const cloneDescInput = modal.locator(
-        'input[placeholder="Short description of this persona"]'
+        'input[placeholder="Briefly describe what this persona does"]'
       );
       await expect(cloneDescInput).toHaveValue(uniqueDesc);
 
       // 4. Submit the clone
-      const cloneSubmitButton = modal.locator('button:has-text("Clone Persona")');
+      const cloneSubmitButton = modal.locator('button:has-text("Create Persona")');
       await cloneSubmitButton.click();
 
       // 5. Verify the cloned persona exists

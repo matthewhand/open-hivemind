@@ -91,8 +91,8 @@ test.describe('System Management Page', () => {
     await page.getByTestId('create-backup-btn').click();
 
     // Should open modal
-    await expect(page.locator('[role="dialog"], .modal')).toBeVisible();
-    await expect(page.getByText(/create.*backup/i)).toBeVisible();
+    await expect(page.locator('[role="dialog"]:visible, .modal:visible').first()).toBeVisible();
+    await expect(page.getByText(/create.*backup/i).first()).toBeVisible();
   });
 
   test('displays management tabs', async ({ page }) => {
@@ -104,7 +104,8 @@ test.describe('System Management Page', () => {
   });
 
   test('handles API errors gracefully', async ({ page }) => {
-    await page.route('**/api/**', async (route) => {
+    // Host-rooted match so Vite /src/**/api/*.ts modules aren't intercepted.
+    await page.route(/\/\/[^/]+\/api\//, async (route) => {
       await route.fulfill({
         status: 500,
         json: { success: false, error: 'Server error' },
@@ -186,8 +187,12 @@ test.describe('System Management Backup Operations', () => {
       // Enter password
       await keyInput.fill('test-password-123');
 
-      // Submit
-      await page.getByRole('button', { name: /create backup/i }).click();
+      // Submit — scope to the open dialog so we hit the modal's submit button,
+      // not the page's "Create Backup" trigger (both match /create backup/i).
+      await page
+        .locator('[role="dialog"]:visible, .modal:visible')
+        .getByRole('button', { name: /create backup/i })
+        .click();
     }
   });
 
@@ -211,7 +216,7 @@ test.describe('System Management Backup Operations', () => {
       await restoreBtn.click();
 
       // Should open confirmation modal
-      await expect(page.locator('[role="dialog"], .modal')).toBeVisible();
+      await expect(page.locator('[role="dialog"]:visible, .modal:visible').first()).toBeVisible();
     }
   });
 
@@ -237,7 +242,7 @@ test.describe('System Management Backup Operations', () => {
       await deleteBtn.click();
 
       // Should open confirmation modal
-      await expect(page.locator('[role="dialog"], .modal')).toBeVisible();
+      await expect(page.locator('[role="dialog"]:visible, .modal:visible').first()).toBeVisible();
     }
   });
 });

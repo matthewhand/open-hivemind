@@ -151,7 +151,7 @@ test.describe('Integrations Page CRUD', () => {
 
   test.describe('Error Handling', () => {
     test('handles API errors gracefully', async ({ page }) => {
-      await page.route('**/api/**', async (route) => {
+      await page.route(/\/\/[^/]+\/api\//, async (route) => {
         await route.fulfill({
           status: 500,
           json: { success: false, error: 'Internal server error' },
@@ -166,7 +166,7 @@ test.describe('Integrations Page CRUD', () => {
     });
 
     test('handles network timeout', async ({ page }) => {
-      await page.route('**/api/**', async (route) => {
+      await page.route(/\/\/[^/]+\/api\//, async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 30000));
         await route.abort();
       });

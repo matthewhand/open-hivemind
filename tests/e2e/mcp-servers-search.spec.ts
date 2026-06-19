@@ -100,7 +100,7 @@ test.describe('MCP Servers Search and Filter', () => {
     await expect(page.getByText('Stopped Server')).toBeVisible();
 
     // Test Search
-    const searchInput = page.getByPlaceholder('Search servers...');
+    const searchInput = page.getByPlaceholder(/Search servers/i);
     await searchInput.fill('Running');
     await expect(page.getByText('Running Server')).toBeVisible();
     await expect(page.getByText('Stopped Server')).not.toBeVisible();

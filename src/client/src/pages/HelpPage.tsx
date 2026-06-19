@@ -57,10 +57,10 @@ const faqItems = [
       <div className="space-y-2">
         <p>Currently supported providers:</p>
         <div className="flex flex-wrap gap-2">
-          <Badge color="primary">OpenAI</Badge>
-          <Badge color="secondary">Anthropic</Badge>
-          <Badge color="accent">Flowise</Badge>
-          <Badge color="info">Ollama</Badge>
+          <Badge variant="primary">OpenAI</Badge>
+          <Badge variant="secondary">Anthropic</Badge>
+          <Badge variant="accent">Flowise</Badge>
+          <Badge variant="info">Ollama</Badge>
           <Badge>Perplexity</Badge>
           <Badge>Replicate</Badge>
           <Badge>n8n</Badge>

@@ -99,7 +99,7 @@ test.describe('Empty States', () => {
     await expect(page.getByText('Test Bot')).toBeVisible();
 
     // Search for non-existent bot
-    await page.getByPlaceholder('Search...').fill('NonExistentBot');
+    await page.getByPlaceholder(/Search/i).fill('NonExistentBot');
 
     // Verify search empty state
     await expect(page.getByText('No agents found')).toBeVisible();
@@ -117,10 +117,10 @@ test.describe('Empty States', () => {
     // Verify empty state
     await expect(page.getByText('No Guard Profiles')).toBeVisible();
     await expect(
-      page.getByText('Create a guard profile to enforce security policies')
+      page.getByText('Create your first guard profile to secure your bots')
     ).toBeVisible();
-    // Use last() because there is also a "New Profile" button in the page header
-    await expect(page.getByRole('button', { name: 'New Profile' }).last()).toBeVisible();
+    // Use last() because there is also a "Create Profile" button in the page header
+    await expect(page.getByRole('button', { name: 'Create Profile' }).last()).toBeVisible();
   });
 
   test('Personas Page shows empty state when no personas', async ({ page }) => {
@@ -135,7 +135,7 @@ test.describe('Empty States', () => {
     await page.goto('/admin/personas');
 
     // Verify empty state
-    await expect(page.getByText('No personas configured')).toBeVisible();
+    await expect(page.getByText('No personas yet')).toBeVisible();
     await expect(page.getByText('Create your first persona to get started')).toBeVisible();
     // Use last() because there is also a "Create Persona" button in the page header
     await expect(page.getByRole('button', { name: 'Create Persona' }).last()).toBeVisible();
@@ -169,7 +169,7 @@ test.describe('Empty States', () => {
     await expect(page.getByRole('heading', { name: 'Test Persona' })).toBeVisible();
 
     // Search for non-existent persona
-    await page.getByPlaceholder('Search personas...').fill('NonExistent');
+    await page.getByPlaceholder(/Search personas/i).fill('NonExistent');
 
     // Verify search empty state (secondary variant)
     await expect(page.getByText('No personas found')).toBeVisible();

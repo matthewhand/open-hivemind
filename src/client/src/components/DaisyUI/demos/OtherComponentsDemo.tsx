@@ -1235,10 +1235,10 @@ export const PaginationDemo: React.FC = () => {
         <p className="mt-2 text-sm text-base-content/60">Current page: {page}</p>
       </Section>
       <Section title="Compact Pagination">
-        <Pagination currentPage={page} totalItems={100} pageSize={10} onPageChange={setPage} style="compact" />
+        <Pagination currentPage={page} totalItems={100} pageSize={10} onPageChange={setPage} variant="compact" />
       </Section>
       <Section title="Extended Pagination">
-        <Pagination currentPage={page} totalItems={200} pageSize={10} onPageChange={setPage} style="extended" />
+        <Pagination currentPage={page} totalItems={200} pageSize={10} onPageChange={setPage} variant="extended" />
       </Section>
     </div>
   );

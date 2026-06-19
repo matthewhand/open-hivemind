@@ -1,8 +1,10 @@
-import { Copy, Edit2, Settings, Trash2, Users } from 'lucide-react';
+import { Copy, Edit2, Plus, Search, Settings, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert } from '../../components/DaisyUI/Alert';
 import PageHeader from '../../components/DaisyUI/PageHeader';
+import Button from '../../components/DaisyUI/Button';
+import EmptyState from '../../components/DaisyUI/EmptyState';
 import { Badge } from '../../components/DaisyUI/Badge';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -65,6 +67,7 @@ const PersonasPage: React.FC = () => {
     openCreateModal,
     openEditModal,
     openCloneModal,
+    handleCopyPrompt,
     handleDeletePersona,
     // Modal state and form state for rendering PersonaModal
     showCreateModal,
@@ -138,9 +141,14 @@ const PersonasPage: React.FC = () => {
         description="Define and manage persona presets for your bots."
         icon={Users}
         gradient="primary"
+        actions={
+          <Button variant="primary" onClick={openCreateModal}>
+            <Plus className="w-4 h-4 mr-2" /> Create Persona
+          </Button>
+        }
       />
 
-      {displayError && <Alert type="error" message={displayError} onClose={() => setError(null)} />}
+      {displayError && <Alert status="error" message={displayError} onClose={() => setError(null)} />}
 
       <Tabs
         variant="lifted"
@@ -172,6 +180,8 @@ const PersonasPage: React.FC = () => {
                       bulkDeleting={bulkDeleting}
                       handleBulkDeletePersonas={handleBulkDeletePersonas}
                       openEditModal={openEditModal}
+                      openCloneModal={openCloneModal}
+                      handleCopyPrompt={handleCopyPrompt}
                       onSelectPersona={setSelectedPersona}
                       isMobile={isMobile}
                       onDragStart={onDragStart}
@@ -179,6 +189,20 @@ const PersonasPage: React.FC = () => {
                       onDragEnd={onDragEnd}
                       onDrop={onDrop}
                       getItemStyle={getItemStyle}
+                    />
+                  )}
+                  {!displayError && filteredPersonas.length === 0 && (
+                    <EmptyState
+                      icon={Search}
+                      variant="noResults"
+                      title={personas.length === 0 ? 'No personas yet' : 'No personas found'}
+                      description={
+                        personas.length === 0
+                          ? 'Create your first persona to get started.'
+                          : 'No personas match your search. Try adjusting your search or filters.'
+                      }
+                      actionLabel={personas.length === 0 ? 'Create Persona' : 'Clear Filters'}
+                      onAction={personas.length === 0 ? openCreateModal : () => setSearchQuery('')}
                     />
                   )}
                 </Card>

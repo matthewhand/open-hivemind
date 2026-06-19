@@ -72,12 +72,14 @@ test.describe('Error Recovery and Resilience', () => {
     const failedText = page.getByText(/failed|error|retry/i).first();
 
     // Either an error element or a failure text should eventually be visible
-    await expect(errorEl.or(failedText)).toBeVisible({ timeout: 10000 });
+    // (.first() — the triangle-alert icon class also matches [class*="alert"]).
+    await expect(errorEl.or(failedText).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('API returns 500 then retry succeeds', async ({ page }) => {
     let callCount = 0;
-    await page.route('**/api/config', async (route) => {
+    // The bots page fetches /api/bots (not /api/config) — mock the retried endpoint.
+    await page.route('**/api/bots', async (route) => {
       callCount++;
       if (callCount <= 1) {
         await route.fulfill({ status: 500, json: { error: 'Internal Server Error' } });
@@ -122,12 +124,14 @@ test.describe('Error Recovery and Resilience', () => {
 
     await page.goto('/admin/bots');
 
-    // Try clicking retry if available
+    // React Query (retry: 1, see App.tsx) auto-retries the failed request: the first
+    // /api/bots returns 500, the retry returns 200, so the bot recovers without a
+    // manual "Retry" button. If an error affordance does surface first, click it too.
     const retryBtn = page.locator('button:has-text("Retry"), button:has-text("Try Again")').first();
-    await expect(retryBtn).toBeVisible({ timeout: 10000 });
-
-    await retryBtn.click();
-    await expect(page.getByText('Recovered Bot')).toBeVisible({ timeout: 10000 });
+    if (await retryBtn.isVisible().catch(() => false)) {
+      await retryBtn.click();
+    }
+    await expect(page.getByText('Recovered Bot')).toBeVisible({ timeout: 15000 });
   });
 
   test('API returns 429 rate limited — shows rate limit message', async ({ page }) => {
@@ -245,18 +249,19 @@ test.describe('Error Recovery and Resilience', () => {
       localStorage.removeItem('auth_user');
     });
 
-    // Override config route to return 401
-    await page.route('**/api/config', (route) =>
+    // The bots page fetches /api/bots — return 401 to simulate the expired token.
+    // apiService auto-heals on 401 (services/api/core.ts): it clears the stale
+    // tokens and redirects to /login.
+    await page.route('**/api/bots', (route) =>
       route.fulfill({ status: 401, json: { error: 'Token expired' } })
     );
 
-    // Trigger a navigation or action that calls the API
+    // Trigger a navigation that calls the API with the now-expired session.
     await page.goto('/admin/bots');
 
-    // Should redirect to login or show auth error
-    // We'll wait for the auth error message or a redirect
-    const hasAuthError = page.locator('text=/login|sign in|unauthorized|session expired/i').first();
-    await expect(hasAuthError).toBeVisible({ timeout: 10000 });
+    // Should redirect to the login page.
+    await page.waitForURL(/\/login/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('rapid navigation between pages — no crashes', async ({ page }) => {
@@ -325,7 +330,11 @@ test.describe('Error Recovery and Resilience', () => {
     await expect(createBtn).toBeVisible({ timeout: 10000 });
     await createBtn.click();
 
-    const modal = page.locator('.modal-box, [role="dialog"]').first();
+    // Scope to a visible modal-box: the BotsPage always renders a hidden
+    // DetailDrawer <aside role="dialog" aria-label="Bot Details">, so a bare
+    // [role="dialog"] would resolve to that hidden element. The CreateBotWizard
+    // renders a DaisyUI <Modal> whose inner box is .modal-box.
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Fill some data
@@ -386,7 +395,11 @@ test.describe('Error Recovery and Resilience', () => {
     await expect(createBtn).toBeVisible({ timeout: 10000 });
     await createBtn.click();
 
-    const modal = page.locator('.modal-box, [role="dialog"]').first();
+    // Scope to a visible modal-box: the BotsPage always renders a hidden
+    // DetailDrawer <aside role="dialog" aria-label="Bot Details">, so a bare
+    // [role="dialog"] would resolve to that hidden element. The CreateBotWizard
+    // renders a DaisyUI <Modal> whose inner box is .modal-box.
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Fill required fields

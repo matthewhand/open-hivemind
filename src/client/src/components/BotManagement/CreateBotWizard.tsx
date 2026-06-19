@@ -16,6 +16,7 @@ import Toggle from '../DaisyUI/Toggle';
 import Select from '../DaisyUI/Select';
 import Textarea from '../DaisyUI/Textarea';
 import Mockup from '../DaisyUI/Mockup';
+import Collapse from '../DaisyUI/Collapse';
 import LlmTestChat from '../LlmTestChat';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 

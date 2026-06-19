@@ -32,8 +32,9 @@ test('verify SpecsPage UX', async ({ page }) => {
     }
   }
 
-  // Assert that the toast actually appears
-  await expect(page.getByText('Coming Soon')).toBeVisible({ timeout: 5000 });
+  // Create-spec is now implemented (was a "Coming Soon" placeholder): clicking
+  // opens the Create Specification modal.
+  await expect(page.locator('.modal-box:visible').first()).toBeVisible({ timeout: 5000 });
 
   // Take a screenshot to show the result of clicking
   await page.screenshot({ path: 'docs/screenshots/specs-action-clicked.png', fullPage: true });

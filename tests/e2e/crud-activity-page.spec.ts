@@ -142,7 +142,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   }
 
   test('load activity events in table view', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -153,20 +153,20 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('toggle to timeline view and back', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
     await page.goto('/admin/activity');
     await expect(page.getByRole('table').first()).toBeVisible();
 
-    // Look for timeline toggle
-    const timelineBtn = page.getByRole('button', { name: 'Timeline' });
+    // Look for timeline toggle (.first() — the view toggle renders in two places)
+    const timelineBtn = page.getByRole('button', { name: 'Timeline' }).first();
     if ((await timelineBtn.count()) > 0) {
       await timelineBtn.click();
 
       // Toggle back to table
-      const tableBtn = page.getByRole('button', { name: 'Table' });
+      const tableBtn = page.getByRole('button', { name: 'Table' }).first();
       if ((await tableBtn.count()) > 0) {
         await tableBtn.click();
         await expect(page.getByRole('table').first()).toBeVisible();
@@ -175,7 +175,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('search/filter events by query text', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -189,7 +189,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('filter by bot dropdown', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -203,7 +203,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('filter by message provider dropdown', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -217,7 +217,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('filter by date range', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -234,7 +234,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('clear all filters button resets everything', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -260,7 +260,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('export to CSV button triggers download', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -278,7 +278,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
 
   test('auto-refresh toggle on and off', async ({ page }) => {
     let fetchCount = 0;
-    await page.route('**/api/dashboard/api/activity*', (route) => {
+    await page.route('**/api/dashboard/activity*', (route) => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockActivityResponse });
     });
@@ -298,7 +298,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
 
   test('manual refresh button', async ({ page }) => {
     let fetchCount = 0;
-    await page.route('**/api/dashboard/api/activity*', (route) => {
+    await page.route('**/api/dashboard/activity*', (route) => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockActivityResponse });
     });
@@ -321,7 +321,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('stats cards display correct values', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -349,7 +349,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       agentMetrics: [],
     };
 
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: emptyResponse })
     );
 
@@ -362,7 +362,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
   });
 
   test('combined filters: bot + provider + date range', async ({ page }) => {
-    await page.route('**/api/dashboard/api/activity*', (route) =>
+    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 

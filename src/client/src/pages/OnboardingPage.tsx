@@ -126,7 +126,7 @@ const modelSuggestions: Record<string, string[]> = {
 };
 
 const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }) => {
-  const { control, watch, formState: { errors } } = form;
+  const { control, register, watch, formState: { errors } } = form;
   const llmProvider = watch('llmProvider');
 
   return (
@@ -168,6 +168,19 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
           Manage LLM Providers ↗
         </a>
       </div>
+
+      <FormField
+        label="API Key"
+        error={errors.apiKey}
+        hint="Optional for local providers like Ollama."
+      >
+        <Input
+          id="onboarding-llm-api-key"
+          type="password"
+          placeholder="Paste your provider API key"
+          {...register('apiKey')}
+        />
+      </FormField>
 
       {llmProvider && (
         <FormField label="Model" error={errors.model}>
@@ -420,14 +433,14 @@ interface DoneStepProps {
   llmProvider: string;
   botName: string;
   messenger: string;
+  onFinish: () => void;
+  saving: boolean;
   onAutoRedirect?: () => void;
 }
 
 const DONE_STEP_COUNTDOWN_MS = 30_000; // 30 seconds auto-redirect
 
-const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) => {
-  const navigate = useNavigate();
-
+const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger, onFinish, saving }) => {
   return (
     <div className="text-center space-y-6 py-4">
       <div className="flex justify-center">
@@ -458,7 +471,13 @@ const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) 
           </div>
       </Card>
 
-      <Button variant="primary" size="lg" onClick={() => navigate('/admin/overview')}>
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={onFinish}
+        disabled={saving}
+        loading={saving}
+      >
         Go to Dashboard <ArrowRight className="w-5 h-5 ml-1" />
       </Button>
 
@@ -700,6 +719,8 @@ const OnboardingPage: React.FC = () => {
                 llmProvider={llmProvider}
                 botName={botName}
                 messenger={messenger}
+                onFinish={handleFinish}
+                saving={saving}
               />
             )}
           </div>

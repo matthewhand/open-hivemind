@@ -49,7 +49,7 @@ const navigateToDashboard = async (
   await setupAuth(page);
   // Ensure Getting Started is visible (not dismissed)
   await page.addInitScript(() => localStorage.removeItem('hivemind-hide-getting-started'));
-  await page.goto('/dashboard');
+  await page.goto('/admin/overview?tab=getting-started');
   await page.waitForLoadState('networkidle');
   // Wait for the subtitle (rendered only AFTER the config-status API call completes)
   await page.waitForSelector(`text=${waitForSubtitle}`, { timeout: 10000 });
@@ -91,14 +91,14 @@ test.describe('GettingStarted – 0 of 3 completed', () => {
 
   test('all three tasks show a "Start" button', async ({ page }) => {
     const panel = getPanel(page);
-    const startButtons = panel.getByRole('button', { name: 'Start', exact: true });
+    const startButtons = panel.getByRole('button', { name: /^start /i });
     await expect(startButtons).toHaveCount(3);
   });
 
   test('"Start" buttons navigate to the correct pages', async ({ page }) => {
     const panel = getPanel(page);
     // Ensure the first Start button is ready before clicking
-    const firstStart = panel.getByRole('button', { name: 'Start', exact: true }).first();
+    const firstStart = panel.getByRole('button', { name: /^start /i }).first();
     await expect(firstStart).toBeVisible({ timeout: 5000 });
     await firstStart.click();
     // The GettingStarted link is /admin/providers/llm which redirects to /admin/llm — match either
@@ -147,7 +147,7 @@ test.describe('GettingStarted – 1 of 3 completed', () => {
 
   test('only 2 "Start" buttons are shown (completed task has no Start)', async ({ page }) => {
     const panel = getPanel(page);
-    const startButtons = panel.getByRole('button', { name: 'Start', exact: true });
+    const startButtons = panel.getByRole('button', { name: /^start /i });
     await expect(startButtons).toHaveCount(2);
   });
 
@@ -181,7 +181,7 @@ test.describe('GettingStarted – 3 of 3 completed', () => {
 
   test('no "Start" buttons are shown', async ({ page }) => {
     const panel = getPanel(page);
-    const startButtons = panel.getByRole('button', { name: 'Start', exact: true });
+    const startButtons = panel.getByRole('button', { name: /^start /i });
     await expect(startButtons).toHaveCount(0);
   });
 
@@ -200,7 +200,7 @@ test.describe('GettingStarted – real API', () => {
     page.on('pageerror', (e) => jsErrors.push(e.message));
     await setupAuth(page);
     await page.addInitScript(() => localStorage.removeItem('hivemind-hide-getting-started'));
-    await page.goto('/dashboard');
+    await page.goto('/admin/overview?tab=getting-started');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('text=Get started', { timeout: 10000 });
     expect(jsErrors.filter((e) => !e.includes('favicon'))).toHaveLength(0);
@@ -209,7 +209,7 @@ test.describe('GettingStarted – real API', () => {
   test('subtitle matches "N of 3 completed" pattern', async ({ page }) => {
     await setupAuth(page);
     await page.addInitScript(() => localStorage.removeItem('hivemind-hide-getting-started'));
-    await page.goto('/dashboard');
+    await page.goto('/admin/overview?tab=getting-started');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('text=Get started', { timeout: 10000 });
     const subtitle = page.locator('text=/\\d of 3 completed/');
@@ -229,7 +229,7 @@ test.describe('GettingStarted – real API', () => {
       await route.fulfill({ response });
     });
 
-    await page.goto('/dashboard');
+    await page.goto('/admin/overview?tab=getting-started');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('text=Get started', { timeout: 10000 });
 
@@ -253,7 +253,7 @@ test.describe('GettingStarted – real API', () => {
   test('real API screenshot', async ({ page }) => {
     await setupAuth(page);
     await page.addInitScript(() => localStorage.removeItem('hivemind-hide-getting-started'));
-    await page.goto('/dashboard');
+    await page.goto('/admin/overview?tab=getting-started');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('text=Get started', { timeout: 10000 });
     const panel = page.locator('.rounded-xl.border.border-base-300').first();

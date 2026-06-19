@@ -60,7 +60,7 @@ test.describe('Personas Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/personas');
 
-    const searchInput = page.locator('input[placeholder="Search personas..."]');
+    const searchInput = page.locator('input[placeholder*="Search personas"]');
     await expect(searchInput).toBeVisible();
 
     await searchInput.fill('Alpha');
@@ -75,7 +75,10 @@ test.describe('Personas Search and Filter', () => {
     await assertNoErrors(errors, 'Persona search');
   });
 
-  test('can filter personas by category', async ({ page }) => {
+  // Skipped: the category filter is intentionally hidden pending the
+  // user-defined-categories roadmap item (see PersonasPage/index.tsx —
+  // "Category filter hidden — roadmap"). Re-enable when the filter ships.
+  test.skip('can filter personas by category', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/personas');
 
@@ -100,7 +103,7 @@ test.describe('Personas Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/personas');
 
-    const searchInput = page.locator('input[placeholder="Search personas..."]');
+    const searchInput = page.locator('input[placeholder*="Search personas"]');
     await searchInput.fill('Zeta NonExistent');
 
     await expect(page.locator('text=Try adjusting your search or filters')).toBeVisible();

@@ -60,7 +60,7 @@ test('API Rate Limiting UI', async ({ page }) => {
   await editButton.click();
 
   // Wait for modal
-  const editModal = page.locator('.modal-box').filter({ hasText: 'Edit Guard Profile' });
+  const editModal = page.locator('.modal-box').filter({ hasText: 'Edit Profile' });
   await expect(editModal).toBeVisible();
 
   // Find the Rate Limiter section and open it

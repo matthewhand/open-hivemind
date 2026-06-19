@@ -50,7 +50,8 @@ test.describe('Settings Screenshots', () => {
 
     // 1. Navigate to default settings page (General tab)
     await page.goto('/admin/settings');
-    await page.waitForSelector('h5:has-text("General Settings")');
+    // Heading is tag-agnostic (General Settings is an <h2>, others <h5>)
+    await page.getByRole('heading', { name: 'General Settings' }).waitFor({ state: 'visible' });
 
     // Screenshot initial state
     await page.screenshot({ path: 'docs/screenshots/settings-general.png' });
@@ -61,8 +62,8 @@ test.describe('Settings Screenshots', () => {
     // Trigger the save action
     await saveButton.click();
 
-    // Wait for the button to have the loading class applied
-    await expect(saveButton).toHaveClass(/loading/);
+    // Button signals loading via aria-busy (a child spinner), not a class on the button
+    await expect(saveButton).toHaveAttribute('aria-busy', 'true');
 
     // Screenshot while loading
     await page.screenshot({ path: 'docs/screenshots/settings-general-loading.png' });
@@ -70,12 +71,12 @@ test.describe('Settings Screenshots', () => {
     // Resolve the promise to let the request complete
     resolvePutPromise!();
 
-    // Wait for the loading class to be removed, indicating the request completed
-    await expect(saveButton).not.toHaveClass(/loading/);
+    // Loading cleared once the request completes
+    await expect(saveButton).toHaveAttribute('aria-busy', 'false');
 
     // Check Secure Configuration Manager on Security tab
     await page.goto('/admin/settings?tab=security');
-    await page.waitForSelector('h5:has-text("Security Settings")');
+    await page.getByRole('heading', { name: 'Security Settings' }).waitFor({ state: 'visible' });
 
     // Screenshot Security Tab
     await page.screenshot({ path: 'docs/screenshots/settings-security.png', fullPage: true });

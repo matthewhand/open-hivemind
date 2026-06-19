@@ -13,6 +13,17 @@ test.describe('Factory Reset E2E', () => {
     // 1. Setup Auth and Error collection
     await setupTestWithErrorDetection(page);
 
+    // Mock the destructive reset endpoint so this test verifies the full UI flow
+    // (phrase + password + confirm modal + success toast) WITHOUT actually wiping
+    // the shared dev DB. apiService.resetSystem -> POST /api/admin/system/reset.
+    await page.route('**/api/admin/system/reset', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, message: 'System has been successfully reset.' }),
+      })
+    );
+
     // 2. Navigate to System Management
     await page.goto('/admin/system-management', { waitUntil: 'networkidle' });
 
@@ -38,6 +49,10 @@ test.describe('Factory Reset E2E', () => {
     // 6. Type confirmation phrase
     const confirmInput = page.getByPlaceholder(/type the confirmation phrase/i);
     await confirmInput.fill('confirm-factory-reset');
+
+    // 6b. Fill the admin password — the reset button stays disabled until BOTH the
+    // confirmation phrase and a password are provided (MaintenanceTab.tsx:87).
+    await page.getByPlaceholder(/enter your admin password/i).fill('test-admin-password');
 
     // 7. Click Reset
     const resetBtn = page.getByRole('button', { name: /perform factory reset/i });

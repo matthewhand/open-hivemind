@@ -238,7 +238,7 @@ const SpecsPage: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center">
-          <Pagination current={page} total={totalPages} onPageChange={setPage} />
+          <Pagination currentPage={page} totalItems={filteredSpecs.length} pageSize={pageSize} onPageChange={setPage} />
         </div>
       )}
 

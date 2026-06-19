@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
+import {
+  assertNoErrors,
+  navigateAndWaitReady,
+  registerViteSourceBypass,
+  setupTestWithErrorDetection,
+} from './test-utils';
 
 /**
  * RBAC E2E Tests with Strict Error Detection
@@ -48,6 +53,11 @@ test.describe('Role-Based Access Control', () => {
         route.fulfill({ status: 200, json: { data: { bots: [] } } })
       ),
     ]);
+
+    // Registered LAST (→ highest priority) so Vite source modules such as
+    // /src/services/api/bots.ts pass through instead of being caught by the
+    // broad **/api/** mock and rejected as non-JS module scripts.
+    await registerViteSourceBypass(page);
   }
 
   test('admin can access all pages without errors', async ({ page }) => {
