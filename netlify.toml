@@ -1,7 +1,7 @@
 [build]
   command = "pnpm install --frozen-lockfile && pnpm run build:netlify"
   functions = "dist/netlify/functions"
-  publish = "dist/client"
+  publish = "src/client/dist"
 
 [build.environment]
   NODE_VERSION = "22"
