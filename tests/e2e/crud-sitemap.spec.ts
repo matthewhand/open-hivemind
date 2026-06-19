@@ -381,12 +381,9 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.goto('/admin/sitemap');
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
-    // Look for open/visit URL button or link on a row
-    const openBtn = page
-      .locator(
-        'a[target="_blank"], a[href*="/admin/dashboard"], button[title*="Open"], button[title*="Visit"]'
-      )
-      .first();
+    // Look for the open/visit link for the /admin/dashboard row specifically.
+    // (A broad `a[target="_blank"]` first-match grabbed the external GitHub link.)
+    const openBtn = page.locator('a[href*="/admin/dashboard"]').first();
     if ((await openBtn.count()) > 0) {
       // Verify it has the correct href or action
       const href = await openBtn.getAttribute('href');

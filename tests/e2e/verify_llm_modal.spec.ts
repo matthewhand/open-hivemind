@@ -17,7 +17,7 @@ test('capture LLM modal', async ({ page }) => {
   await expect(page.locator('.card').first()).toBeVisible({ timeout: 10000 });
 
   await page.getByRole('button', { name: 'Create Profile' }).first().click();
-  await expect(page.locator('.modal-box')).toBeVisible();
+  await expect(page.locator('.modal-box:visible').first()).toBeVisible();
 
   // Wait for rendering
   await page.waitForLoadState('domcontentloaded');

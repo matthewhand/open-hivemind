@@ -137,9 +137,9 @@ test.describe('Specs Page', () => {
     await page.goto('/admin/specs');
     await page.waitForLoadState('networkidle');
 
-    // Should show tag badges
-    await expect(page.getByText('functional', { exact: true })).toBeVisible();
-    await expect(page.getByText('integration', { exact: true })).toBeVisible();
+    // Should show tag badges (.first() — the same tag appears on multiple spec cards)
+    await expect(page.getByText('functional', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('integration', { exact: true }).first()).toBeVisible();
   });
 
   test('handles API errors gracefully', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { registerViteSourceBypass, setupAuth } from './test-utils';
 
 test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await setupAuth(page);
@@ -42,6 +42,9 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await page.route('**/api/bots', (route) =>
     route.fulfill({ status: 200, json: { data: { bots: [] } } })
   );
+  // Registered LAST so Vite source modules (/src/services/api/*.ts) aren't caught
+  // by the broad **/api/** catch-all above and served JSON → blank page.
+  await registerViteSourceBypass(page);
 
   // Go to the bot create page where AIAssistButton may be used
   await page.goto('/admin/bots/create');

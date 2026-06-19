@@ -462,7 +462,7 @@ Each package must implement `ILlmProvider` (llm) or `IMessengerService` (message
 **Status**: 🔴 Not Started
 **Estimated Effort**: Small (2-4 hours)
 **Files to Create**:
-- [`docs/api/README.md`](docs/api/README.md)
+- [`docs/api/README.md`](README.md)
 
 **Description**: Generate OpenAPI/Swagger documentation for all API endpoints.
 

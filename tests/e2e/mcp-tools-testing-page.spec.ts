@@ -2,13 +2,18 @@ import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 /**
- * MCP Tools Testing Page E2E Tests
+ * MCP Tools Page E2E Tests
  *
- * Tests the dedicated MCP Tools Testing Page (/admin/mcp/tools/testing)
- * which allows users to test MCP tools with interactive parameter configuration
- * and execution history tracking before deploying to bots.
+ * Tests the MCP Tools page (/admin/mcp/tools), which lists tools discovered
+ * from connected MCP servers as cards and lets users run a tool via the
+ * "Run Tool" modal (ToolExecutionPanel + ToolConfigPanel), with results shown
+ * in the ToolResultModal.
+ *
+ * NOTE: This spec was rewritten to match the current card + modal UI. The
+ * previous version targeted a removed inline "Testing Page" design (clickable
+ * tool buttons, inline "Test Tool" + result cards) and was fully stale.
  */
-test.describe('MCP Tools Testing Page', () => {
+test.describe('MCP Tools Page', () => {
   test.setTimeout(90000);
 
   // Mock MCP servers with various tool configurations for comprehensive testing
@@ -166,7 +171,33 @@ test.describe('MCP Tools Testing Page', () => {
       page.route('**/api/demo/status', (route) =>
         route.fulfill({ status: 200, json: { active: false } })
       ),
+      // MCP tools registry preferences/persistence endpoints — keep deterministic
+      // so a 401 from the dev server can't trigger a redirect to /login mid-test.
+      page.route('**/api/mcp/tools/favorites', (route) =>
+        route.fulfill({ status: 200, json: { data: {} } })
+      ),
+      page.route('**/api/mcp/tools/preferences', (route) =>
+        route.fulfill({ status: 200, json: { success: true, data: {} } })
+      ),
+      page.route('**/api/mcp/tools/history', (route) =>
+        route.fulfill({ status: 200, json: { data: [] } })
+      ),
     ]);
+  }
+
+  // Open a tool's "Run Tool" modal from its registry card.
+  async function openToolModal(page: import('@playwright/test').Page, toolName: string) {
+    const runButton = page.getByRole('button', { name: `Run ${toolName} tool` });
+    await expect(runButton).toBeVisible({ timeout: 15000 });
+    await runButton.click();
+    await expect(page.getByRole('heading', { name: `Run Tool: ${toolName}` })).toBeVisible();
+  }
+
+  // The modal's execute action button. Card "Run X tool" buttons carry an
+  // aria-label so their accessible name is NOT "Run Tool" — only the modal
+  // action button matches exactly.
+  function modalRunButton(page: import('@playwright/test').Page) {
+    return page.getByRole('button', { name: 'Run Tool', exact: true });
   }
 
   test.beforeEach(async ({ page }) => {
@@ -179,12 +210,12 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
     // Check page title and description
-    await expect(page.getByText('MCP Tools Testing')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'MCP Tools' })).toBeVisible({ timeout: 10000 });
     await expect(
-      page.getByText('Test MCP tools with custom parameters before using them in bots')
+      page.getByText('Browse and manage tools available from your MCP servers')
     ).toBeVisible();
   });
 
@@ -193,7 +224,7 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
     // Verify all tools are listed in the registry
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
@@ -202,9 +233,12 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('no_params_tool').first()).toBeVisible();
     await expect(page.getByText('web_search').first()).toBeVisible();
 
-    // Verify server names are displayed
-    await expect(page.getByText('test-server').first()).toBeVisible();
-    await expect(page.getByText('production-server').first()).toBeVisible();
+    // Verify server names are displayed on the tool cards (scope to the badge —
+    // the server-filter <select> also contains hidden <option> matches).
+    await expect(page.locator('.badge').filter({ hasText: 'test-server' }).first()).toBeVisible();
+    await expect(
+      page.locator('.badge').filter({ hasText: 'production-server' }).first()
+    ).toBeVisible();
   });
 
   test('should show empty state when no tools are available', async ({ page }) => {
@@ -212,35 +246,27 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: [] } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
     // Check for empty state message
-    await expect(page.getByText('No tools available. Connect MCP servers first.')).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByText('No tools found')).toBeVisible({ timeout: 10000 });
   });
 
-  test('should select a tool and display its information', async ({ page }) => {
+  test('should open the run modal and display tool information', async ({ page }) => {
     await page.route('**/api/mcp/servers', (route) =>
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    // Wait for tools to load
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
+    await openToolModal(page, 'calculator');
 
-    // Click on the calculator tool
-    const calculatorButton = page.locator('button').filter({ hasText: 'calculator' }).first();
-    await calculatorButton.click();
-
-    // Verify tool information is displayed
-    await expect(page.getByText('Perform basic mathematical calculations')).toBeVisible();
-    await expect(page.getByText('Input Schema')).toBeVisible();
-    await expect(page.getByText('Test Parameters')).toBeVisible();
-
-    // Verify the button is highlighted/active
-    await expect(calculatorButton).toHaveClass(/btn-primary/);
+    // Verify tool information is displayed in the modal (scope to the modal —
+    // the description also appears on the registry card behind it).
+    const modal = page.locator('.modal-box');
+    await expect(modal.getByText('Perform basic mathematical calculations')).toBeVisible();
+    await expect(modal.getByText('Input Schema')).toBeVisible();
+    await expect(modal.getByText('Arguments Form')).toBeVisible();
   });
 
   test('should display tool input schema', async ({ page }) => {
@@ -248,12 +274,9 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    await openToolModal(page, 'calculator');
 
     // Verify schema is displayed in a code block
     const schemaBlock = page.locator('.mockup-code').first();
@@ -271,20 +294,17 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    await openToolModal(page, 'calculator');
 
     // Verify form fields are rendered
     await expect(page.locator('input[placeholder*="Enter operation"]')).toBeVisible();
     await expect(page.locator('input[type="number"]').first()).toBeVisible();
 
-    // Verify required field indicators
-    const requiredIndicators = page.locator('.text-error').filter({ hasText: '*' });
-    await expect(requiredIndicators).toHaveCount(3); // Three required fields
+    // Verify required field indicators (operation, num1, num2)
+    const requiredIndicators = page.locator('.modal-box .text-error').filter({ hasText: '*' });
+    await expect(requiredIndicators).toHaveCount(3);
   });
 
   test('should handle string input fields correctly', async ({ page }) => {
@@ -292,12 +312,9 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('string_formatter').first()).toBeVisible({ timeout: 10000 });
-
-    // Select string_formatter tool
-    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
+    await openToolModal(page, 'string_formatter');
 
     // Fill in string input
     const textInput = page.locator('input[placeholder*="Enter text"]');
@@ -313,12 +330,9 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    await openToolModal(page, 'calculator');
 
     // Fill in number inputs
     const numberInputs = page.locator('input[type="number"]');
@@ -335,12 +349,9 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('string_formatter').first()).toBeVisible({ timeout: 10000 });
-
-    // Select string_formatter tool (has boolean field)
-    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
+    await openToolModal(page, 'string_formatter');
 
     // Find and toggle the boolean field
     const toggle = page.locator('.toggle-primary').first();
@@ -355,27 +366,26 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(toggle).not.toBeChecked();
   });
 
-  test('should handle array input fields with JSON textarea', async ({ page }) => {
+  test('should handle array input fields via JSON mode', async ({ page }) => {
     await page.route('**/api/mcp/servers', (route) =>
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('array_processor').first()).toBeVisible({ timeout: 10000 });
+    await openToolModal(page, 'array_processor');
 
-    // Select array_processor tool
-    await page.locator('button').filter({ hasText: 'array_processor' }).first().click();
+    // Switch to Raw JSON mode to edit array arguments directly
+    await page.getByRole('button', { name: 'Raw JSON' }).click();
 
-    // Find the textarea for array input
-    const arrayTextarea = page.locator('textarea').first();
-    await expect(arrayTextarea).toBeVisible();
+    const argsTextarea = page.locator('.modal-box textarea').first();
+    await expect(argsTextarea).toBeVisible();
 
     // Fill in JSON array
-    await arrayTextarea.fill('["item1", "item2", "item3"]');
+    await argsTextarea.fill('{ "items": ["item1", "item2", "item3"] }');
 
     // Verify value is set
-    await expect(arrayTextarea).toHaveValue('["item1", "item2", "item3"]');
+    await expect(argsTextarea).toHaveValue('{ "items": ["item1", "item2", "item3"] }');
   });
 
   test('should execute tool successfully and display results', async ({ page }) => {
@@ -387,30 +397,20 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: mockSuccessResult })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select and configure calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    await openToolModal(page, 'calculator');
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
     await page.locator('input[type="number"]').first().fill('5');
     await page.locator('input[type="number"]').nth(1).fill('3');
 
-    // Click Test Tool button
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
+    // Execute the tool
+    await modalRunButton(page).click();
 
-    // Verify success message
-    await expect(page.getByText('Tool executed successfully!')).toBeVisible({ timeout: 10000 });
-
-    // Verify test result is displayed
-    await expect(page.getByText('Test Successful')).toBeVisible();
-    await expect(page.locator('.mockup-code').last()).toBeVisible();
-
-    // Verify execution time is shown
-    await expect(page.locator('text=/\\d+ms/')).toBeVisible();
+    // Verify the result modal opens with a success status
+    await expect(page.getByText('Tool Execution Result')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.badge-success').filter({ hasText: 'Success' })).toBeVisible();
   });
 
   test('should show loading state during tool execution', async ({ page }) => {
@@ -428,28 +428,24 @@ test.describe('MCP Tools Testing Page', () => {
       await route.fulfill({ status: 200, json: mockSuccessResult });
     });
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
+    await openToolModal(page, 'calculator');
 
-    // Select and configure calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    const operationInput = page.locator('input[placeholder*="Enter operation"]');
+    await operationInput.fill('add');
 
-    await page.locator('input[placeholder*="Enter operation"]').fill('add');
+    // Execute the tool
+    await modalRunButton(page).click();
 
-    // Click Test Tool button
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
-
-    // Verify loading state
-    await expect(page.getByText('Testing...')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.loading-spinner')).toBeVisible();
+    // While running the form inputs are disabled
+    await expect(operationInput).toBeDisabled({ timeout: 5000 });
 
     // Resolve execution
     resolveExecution!();
 
-    // Wait for completion
-    await expect(page.getByText('Tool executed successfully!')).toBeVisible({ timeout: 10000 });
+    // Wait for completion — result modal appears
+    await expect(page.getByText('Tool Execution Result')).toBeVisible({ timeout: 10000 });
   });
 
   test('should handle tool execution errors gracefully', async ({ page }) => {
@@ -461,27 +457,18 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 400, json: mockErrorResult })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select and configure calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    await openToolModal(page, 'calculator');
 
     await page.locator('input[placeholder*="Enter operation"]').fill('invalid');
 
-    // Click Test Tool button
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
+    // Execute the tool
+    await modalRunButton(page).click();
 
-    // Verify error message is displayed
-    await expect(
-      page.getByText('Test failed: Tool execution failed: Invalid parameter')
-    ).toBeVisible({ timeout: 10000 });
-
-    // Verify error result card
-    await expect(page.getByText('Test Failed')).toBeVisible();
-    await expect(page.locator('.alert-error')).toBeVisible();
+    // Verify the result modal opens with an error status
+    await expect(page.getByText('Tool Execution Result')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.badge-error').filter({ hasText: 'Error' })).toBeVisible();
   });
 
   test('should handle tools with no parameters', async ({ page }) => {
@@ -493,51 +480,46 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: mockSuccessResult })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('no_params_tool').first()).toBeVisible({ timeout: 10000 });
-
-    // Select no_params_tool
-    await page.locator('button').filter({ hasText: 'no_params_tool' }).first().click();
+    await openToolModal(page, 'no_params_tool');
 
     // Verify message about no parameters
-    await expect(page.getByText('This tool does not require any parameters.')).toBeVisible();
+    await expect(page.getByText('No arguments required or schema not available.')).toBeVisible();
 
     // Should still be able to execute
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
+    await modalRunButton(page).click();
 
     // Verify success
-    await expect(page.getByText('Tool executed successfully!')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Tool Execution Result')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.badge-success').filter({ hasText: 'Success' })).toBeVisible();
   });
 
-  test('should clear form data when switching between tools', async ({ page }) => {
+  test('should reset form data when reopening a tool', async ({ page }) => {
     await page.route('**/api/mcp/servers', (route) =>
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator and fill in data
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
-
+    // Open calculator and fill in data
+    await openToolModal(page, 'calculator');
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
     await page.locator('input[type="number"]').first().fill('5');
 
-    // Switch to string_formatter
-    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
+    // Cancel the modal
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByRole('heading', { name: 'Run Tool: calculator' })).not.toBeVisible();
 
-    // Switch back to calculator
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
+    // Reopen calculator
+    await openToolModal(page, 'calculator');
 
-    // Verify form is cleared
+    // Verify form is reset
     const operationInput = page.locator('input[placeholder*="Enter operation"]');
     await expect(operationInput).toHaveValue('');
   });
 
-  test('should clear test results when switching tools', async ({ page }) => {
+  test('should display execution timestamp in result', async ({ page }) => {
     await page.route('**/api/mcp/servers', (route) =>
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
@@ -546,92 +528,16 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: mockSuccessResult })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator, execute, and verify results
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
-
+    await openToolModal(page, 'calculator');
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
 
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
+    await modalRunButton(page).click();
 
-    await expect(page.getByText('Test Successful')).toBeVisible({ timeout: 10000 });
-
-    // Switch to another tool
-    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
-
-    // Verify test results are cleared
-    await expect(page.getByText('Test Successful')).not.toBeVisible();
-  });
-
-  test('should disable form inputs during tool execution', async ({ page }) => {
-    let resolveExecution: () => void;
-    const executionPromise = new Promise<void>((resolve) => {
-      resolveExecution = resolve;
-    });
-
-    await page.route('**/api/mcp/servers', (route) =>
-      route.fulfill({ status: 200, json: { servers: mockServers } })
-    );
-
-    await page.route('**/api/mcp/servers/test-server/call-tool', async (route) => {
-      await executionPromise;
-      await route.fulfill({ status: 200, json: mockSuccessResult });
-    });
-
-    await page.goto('/admin/mcp/tools/testing');
-
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
-
-    const operationInput = page.locator('input[placeholder*="Enter operation"]');
-    await operationInput.fill('add');
-
-    // Click Test Tool button
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
-
-    // Verify inputs are disabled during execution
-    await expect(operationInput).toBeDisabled();
-
-    // Resolve execution
-    resolveExecution!();
-
-    // Wait for completion
-    await expect(page.getByText('Tool executed successfully!')).toBeVisible({ timeout: 10000 });
-
-    // Verify inputs are re-enabled
-    await expect(operationInput).toBeEnabled();
-  });
-
-  test('should display execution timestamp', async ({ page }) => {
-    await page.route('**/api/mcp/servers', (route) =>
-      route.fulfill({ status: 200, json: { servers: mockServers } })
-    );
-
-    await page.route('**/api/mcp/servers/test-server/call-tool', (route) =>
-      route.fulfill({ status: 200, json: mockSuccessResult })
-    );
-
-    await page.goto('/admin/mcp/tools/testing');
-
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
-
-    // Select and execute calculator
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
-
-    await page.locator('input[placeholder*="Enter operation"]').fill('add');
-
-    const testButton = page.locator('button').filter({ hasText: 'Test Tool' });
-    await testButton.click();
-
-    // Verify timestamp is displayed
-    await expect(page.getByText(/Executed at:/)).toBeVisible({ timeout: 10000 });
+    // Result modal shows a timestamp section
+    await expect(page.getByText('Tool Execution Result')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Timestamp')).toBeVisible();
   });
 
   test('should display proper alert for API errors', async ({ page }) => {
@@ -639,10 +545,10 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 500, json: { error: 'Internal server error' } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
     // Verify error alert is shown
-    await expect(page.getByText('Failed to load MCP tools')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Failed to load tools')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show correct field descriptions from schema', async ({ page }) => {
@@ -650,36 +556,38 @@ test.describe('MCP Tools Testing Page', () => {
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
+    await openToolModal(page, 'calculator');
 
-    // Select calculator tool
-    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
-
-    // Verify field descriptions are displayed
-    await expect(page.getByText('The mathematical operation to perform')).toBeVisible();
-    await expect(page.getByText('First number')).toBeVisible();
-    await expect(page.getByText('Second number')).toBeVisible();
+    // Verify field descriptions are displayed (exact — the same strings appear
+    // inside the Input Schema JSON code block).
+    await expect(
+      page.getByText('The mathematical operation to perform', { exact: true })
+    ).toBeVisible();
+    await expect(page.getByText('First number', { exact: true })).toBeVisible();
+    await expect(page.getByText('Second number', { exact: true })).toBeVisible();
   });
 
-  test('should handle JSON parse errors for array/object fields', async ({ page }) => {
+  test('should accept raw JSON input including invalid JSON for later validation', async ({
+    page,
+  }) => {
     await page.route('**/api/mcp/servers', (route) =>
       route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
-    await page.goto('/admin/mcp/tools/testing');
+    await page.goto('/admin/mcp/tools');
 
-    await expect(page.getByText('array_processor').first()).toBeVisible({ timeout: 10000 });
+    await openToolModal(page, 'array_processor');
 
-    // Select array_processor tool
-    await page.locator('button').filter({ hasText: 'array_processor' }).first().click();
+    // Switch to Raw JSON mode
+    await page.getByRole('button', { name: 'Raw JSON' }).click();
 
-    // Fill in invalid JSON
-    const arrayTextarea = page.locator('textarea').first();
-    await arrayTextarea.fill('invalid json {not an array}');
+    const argsTextarea = page.locator('.modal-box textarea').first();
+    await expect(argsTextarea).toBeVisible();
 
-    // The field should accept the input (error will be handled on execution)
-    await expect(arrayTextarea).toHaveValue('invalid json {not an array}');
+    // Fill in invalid JSON — the field should accept it (validated on execute)
+    await argsTextarea.fill('invalid json {not an array}');
+    await expect(argsTextarea).toHaveValue('invalid json {not an array}');
   });
 });

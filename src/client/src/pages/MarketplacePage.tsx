@@ -37,12 +37,8 @@ const MarketplacePage: React.FC = () => {
   const [githubUrl, setGithubUrl] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
-
-  // Handle star rating click
-  const handleRating = useCallback((pkgName: string, starValue: number) => {
-    setRatings((prev) => ({ ...prev, [pkgName]: starValue }));
-  }, []);
+  const [confirmInstallPkg, setConfirmInstallPkg] = useState<MarketplacePackage | null>(null);
+  const [confirmUninstallName, setConfirmUninstallName] = useState<string | null>(null);
 
   const fetchPackages = useCallback(async () => {
     setLoading(true);
@@ -97,11 +93,33 @@ const MarketplacePage: React.FC = () => {
     }
   }, [githubUrl, fetchPackages]);
 
-  // Install a specific package (from card button)
+  // Install a specific package (from card button) — open confirmation
   const handleInstall = useCallback((pkg: MarketplacePackage) => {
-    setGithubUrl(pkg.repoUrl || '');
-    setInstallModalOpen(true);
+    setConfirmInstallPkg(pkg);
   }, []);
+
+  // Install a specific catalog package directly via its repo URL
+  const handleInstallPackage = useCallback(async (pkg: MarketplacePackage) => {
+    setConfirmInstallPkg(null);
+    if (!pkg.repoUrl) {
+      setActionMessage({ type: 'error', text: `No repository URL available for ${pkg.displayName}` });
+      return;
+    }
+
+    setActionInProgress(`install-${pkg.name}`);
+    setActionMessage(null);
+
+    try {
+      const result: any = await apiService.post('/api/marketplace/install', { repoUrl: pkg.repoUrl });
+      const data = result?.data || result;
+      setActionMessage({ type: 'success', text: `Installed ${data?.package?.displayName || pkg.displayName} successfully!` });
+      await fetchPackages();
+    } catch (err: unknown) {
+      setActionMessage({ type: 'error', text: (err instanceof Error ? err.message : String(err)) || 'Installation failed' });
+    } finally {
+      setActionInProgress(null);
+    }
+  }, [fetchPackages]);
 
   // Update package
   const handleUpdate = useCallback(async (name: string) => {
@@ -120,9 +138,14 @@ const MarketplacePage: React.FC = () => {
     }
   }, [fetchPackages]);
 
-  // Uninstall package
-  const handleUninstall = useCallback(async (name: string) => {
-    if (!confirm(`Are you sure you want to uninstall ${name}?`)) return;
+  // Uninstall package (from card button) — open confirmation
+  const handleUninstall = useCallback((name: string) => {
+    setConfirmUninstallName(name);
+  }, []);
+
+  // Uninstall package after confirmation
+  const handleUninstallConfirmed = useCallback(async (name: string) => {
+    setConfirmUninstallName(null);
 
     setActionInProgress(`uninstall-${name}`);
     setActionMessage(null);
@@ -237,8 +260,6 @@ const MarketplacePage: React.FC = () => {
               pkg={pkg}
               isBusy={actionInProgress === `install-${pkg.name}` || actionInProgress === `update-${pkg.name}` || actionInProgress === `uninstall-${pkg.name}`}
               actionInProgress={actionInProgress}
-              userRating={ratings[pkg.name]}
-              onRate={handleRating}
               onInstall={handleInstall}
               onUpdate={handleUpdate}
               onUninstall={handleUninstall}
@@ -246,6 +267,33 @@ const MarketplacePage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Install Package Confirmation */}
+      <ConfirmModal
+        isOpen={confirmInstallPkg !== null}
+        onClose={() => setConfirmInstallPkg(null)}
+        onConfirm={() => confirmInstallPkg && handleInstallPackage(confirmInstallPkg)}
+        title="Install Package"
+        message={
+          confirmInstallPkg
+            ? `Install ${confirmInstallPkg.displayName} from ${confirmInstallPkg.repoUrl || 'its repository'}?`
+            : ''
+        }
+        confirmText="Install"
+        loading={confirmInstallPkg ? actionInProgress === `install-${confirmInstallPkg.name}` : false}
+      />
+
+      {/* Uninstall Confirmation */}
+      <ConfirmModal
+        isOpen={confirmUninstallName !== null}
+        onClose={() => setConfirmUninstallName(null)}
+        onConfirm={() => confirmUninstallName && handleUninstallConfirmed(confirmUninstallName)}
+        title="Uninstall Package"
+        message={confirmUninstallName ? `Are you sure you want to uninstall ${confirmUninstallName}?` : ''}
+        confirmText="Uninstall"
+        confirmVariant="error"
+        loading={confirmUninstallName ? actionInProgress === `uninstall-${confirmUninstallName}` : false}
+      />
 
       {/* Install from URL Modal */}
       {installModalOpen && (

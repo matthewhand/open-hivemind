@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Copy, GitFork, Trash2 } from 'lucide-react';
 import React from 'react';
 import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
@@ -15,6 +15,8 @@ interface PersonaListProps {
   bulkDeleting: boolean;
   handleBulkDeletePersonas: () => void;
   openEditModal: (persona: Persona) => void;
+  openCloneModal: (persona: Persona) => void;
+  handleCopyPrompt: (text: string) => Promise<void>;
   onSelectPersona: (persona: Persona) => void;
   isMobile: boolean;
   onDragStart: (index: number) => (e: React.DragEvent) => void;
@@ -31,6 +33,8 @@ export const PersonaList: React.FC<PersonaListProps> = ({
   bulkDeleting,
   handleBulkDeletePersonas,
   openEditModal,
+  openCloneModal,
+  handleCopyPrompt,
   onSelectPersona,
   isMobile,
   onDragStart,
@@ -71,6 +75,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
           return (
             <div
               key={persona.id}
+              data-testid="persona-card"
               className="relative"
               draggable={!isMobile}
               onDragStart={onDragStart(index)}
@@ -107,16 +112,35 @@ export const PersonaList: React.FC<PersonaListProps> = ({
                       {/* Category badge hidden — roadmap: user-defined categories */}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     {persona.isBuiltIn && <Badge variant="ghost" size="sm">Built-in</Badge>}
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="w-fit"
-                      onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Copy System Prompt"
+                        aria-label={`Copy ${persona.name} system prompt`}
+                        onClick={(e) => { e.stopPropagation(); handleCopyPrompt(persona.systemPrompt); }}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Duplicate Persona"
+                        aria-label={`Duplicate ${persona.name}`}
+                        onClick={(e) => { e.stopPropagation(); openCloneModal(persona); }}
+                      >
+                        <GitFork className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>

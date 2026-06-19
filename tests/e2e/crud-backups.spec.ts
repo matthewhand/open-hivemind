@@ -51,7 +51,7 @@ test.describe('Backups Page', () => {
   });
 
   test('displays backups page with correct structure', async ({ page }) => {
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Verify page container
@@ -62,16 +62,16 @@ test.describe('Backups Page', () => {
   });
 
   test('displays backup list with data', async ({ page }) => {
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
-    // Should show backup names
-    await expect(page.getByText('Daily Backup')).toBeVisible();
-    await expect(page.getByText('Manual Backup')).toBeVisible();
+    // Should show backup names (exact — the descriptions contain "... daily backup")
+    await expect(page.getByText('Daily Backup', { exact: true })).toBeVisible();
+    await expect(page.getByText('Manual Backup', { exact: true })).toBeVisible();
   });
 
   test('has create backup button', async ({ page }) => {
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Create button should be visible and enabled
@@ -81,7 +81,7 @@ test.describe('Backups Page', () => {
   });
 
   test('has refresh backups button', async ({ page }) => {
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Refresh button should be visible
@@ -98,14 +98,14 @@ test.describe('Backups Page', () => {
       }
     });
 
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Click create button
     await page.getByTestId('create-backup-btn').click();
 
-    // Should open create modal
-    await expect(page.locator('.modal, [role="dialog"]')).toBeVisible();
+    // Should open create modal (:visible — other ConfirmModals are always in the DOM)
+    await expect(page.locator('.modal-box:visible').first()).toBeVisible();
   });
 
   test('shows empty state when no backups', async ({ page }) => {
@@ -115,11 +115,11 @@ test.describe('Backups Page', () => {
       });
     });
 
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
-    // Should show empty state message
-    await expect(page.getByText(/no backups|create your first/i)).toBeVisible();
+    // Should show empty state message (.first() — heading + description both match)
+    await expect(page.getByText(/no backups|create your first/i).first()).toBeVisible();
   });
 
   test('handles API errors gracefully', async ({ page }) => {
@@ -130,7 +130,7 @@ test.describe('Backups Page', () => {
       });
     });
 
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Page should still render
@@ -138,7 +138,7 @@ test.describe('Backups Page', () => {
   });
 
   test('displays backup encryption status', async ({ page }) => {
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Should show encrypted badge for encrypted backup
@@ -157,7 +157,7 @@ test.describe('Backups Page Accessibility', () => {
       await route.fulfill({ json: { success: true, data: [] } });
     });
 
-    await page.goto('/admin/backups');
+    await page.goto('/admin/export');
     await page.waitForLoadState('networkidle');
 
     // Check key buttons have aria-labels or text content

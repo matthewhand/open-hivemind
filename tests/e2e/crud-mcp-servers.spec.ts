@@ -117,9 +117,9 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/servers');
-    await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
-    await expect(page.locator('.card', { hasText: 'Staging MCP' })).toBeVisible();
-    await expect(page.locator('.card', { hasText: 'Dev MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Production MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Staging MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Dev MCP' })).toBeVisible();
   });
 
   test('add new server via modal', async ({ page }) => {
@@ -274,9 +274,9 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Production MCP' })).toBeVisible();
 
-    const card = page.locator('.card', { hasText: 'Production MCP' });
+    const card = page.locator('.card.shadow-xl', { hasText: 'Production MCP' });
     const editBtn = card
       .locator('button[title*="Edit"], button[title*="Configure"], button:has-text("Edit")')
       .first();
@@ -300,7 +300,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    const stoppedCard = page.locator('.card', { hasText: 'Staging MCP' });
+    const stoppedCard = page.locator('.card.shadow-xl', { hasText: 'Staging MCP' });
     await expect(stoppedCard).toBeVisible();
 
     const startBtn = stoppedCard
@@ -329,7 +329,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    const runningCard = page.locator('.card', { hasText: 'Production MCP' });
+    const runningCard = page.locator('.card.shadow-xl', { hasText: 'Production MCP' });
     await expect(runningCard).toBeVisible();
 
     const stopBtn = runningCard.getByTitle('Stop Server');
@@ -356,7 +356,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    const runningCard = page.locator('.card', { hasText: 'Production MCP' });
+    const runningCard = page.locator('.card.shadow-xl', { hasText: 'Production MCP' });
     await expect(runningCard).toBeVisible();
 
     const restartBtn = runningCard
@@ -389,7 +389,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    const card = page.locator('.card', { hasText: 'Staging MCP' });
+    const card = page.locator('.card.shadow-xl', { hasText: 'Staging MCP' });
     await expect(card).toBeVisible();
 
     const deleteBtn = card.getByTitle('Delete Server');
@@ -404,7 +404,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/servers');
-    await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Production MCP' })).toBeVisible();
 
     const searchInput = page
       .locator(
@@ -414,7 +414,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('Production');
 
-      await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
+      await expect(page.locator('.card.shadow-xl', { hasText: 'Production MCP' })).toBeVisible();
     }
   });
 
@@ -424,7 +424,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/servers');
-    await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
+    await expect(page.locator('.card.shadow-xl', { hasText: 'Production MCP' })).toBeVisible();
 
     const statusFilter = page
       .locator('select:has(option[value="running"]), select:has(option:has-text("Running"))')
@@ -456,7 +456,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/mcp/servers');
-    const card = page.locator('.card', { hasText: 'Production MCP' });
+    const card = page.locator('.card.shadow-xl', { hasText: 'Production MCP' });
     await expect(card).toBeVisible();
 
     const toolsBtn = card

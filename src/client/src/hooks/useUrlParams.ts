@@ -78,37 +78,46 @@ export function useUrlParams<S extends ParamSchema>(schema: S) {
   const schemaRef = useRef(schema);
   schemaRef.current = schema;
 
+  // Track the latest committed searchParams in a ref. A debounced write fires
+  // in a setTimeout long after its scheduling render; react-router's functional
+  // setSearchParams(prev => …) can hand that late callback a STALE `prev` (a
+  // baseline from a render before an intervening immediate write committed),
+  // which silently resurrects params the user already cleared (e.g. a status
+  // filter reappearing after a debounced search write). Building `next` from
+  // this always-current ref instead of `prev` keeps debounced and immediate
+  // writes from clobbering each other.
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
   const setValue: SetterFn<S> = useCallback(
     (key, value) => {
       const config = schemaRef.current[key];
       if (!config) return;
 
       const applyUpdate = () => {
-        setSearchParams((prev) => {
-          const next = new URLSearchParams(prev);
+        const next = new URLSearchParams(searchParamsRef.current);
 
-          // Serialize the value
-          let serialized: string;
-          if (config.type === 'string[]') {
-            serialized = (value as string[]).filter(Boolean).join(',');
-          } else {
-            serialized = String(value);
-          }
+        // Serialize the value
+        let serialized: string;
+        if (config.type === 'string[]') {
+          serialized = (value as string[]).filter(Boolean).join(',');
+        } else {
+          serialized = String(value);
+        }
 
-          // Only set param if it differs from the default; remove if it matches default
-          const defaultSerialized =
-            config.type === 'string[]'
-              ? (config.default as string[]).join(',')
-              : String(config.default);
+        // Only set param if it differs from the default; remove if it matches default
+        const defaultSerialized =
+          config.type === 'string[]'
+            ? (config.default as string[]).join(',')
+            : String(config.default);
 
-          if (serialized === defaultSerialized) {
-            next.delete(key);
-          } else {
-            next.set(key, serialized);
-          }
+        if (serialized === defaultSerialized) {
+          next.delete(key);
+        } else {
+          next.set(key, serialized);
+        }
 
-          return next;
-        }, { replace: true });
+        setSearchParams(next, { replace: true });
       };
 
       if (config.debounce) {

@@ -21,13 +21,15 @@ test.describe('Providers API', () => {
     // If the server is running and the route is mounted, we get a JSON response.
     if (res.status() === 200) {
       const body = await res.json();
-      expect(body).toHaveProperty('count');
-      expect(body).toHaveProperty('providers');
-      expect(typeof body.count).toBe('number');
-      expect(Array.isArray(body.providers)).toBe(true);
+      // Response is wrapped in the standard { success, data } envelope.
+      const payload = body.data ?? body;
+      expect(payload).toHaveProperty('count');
+      expect(payload).toHaveProperty('providers');
+      expect(typeof payload.count).toBe('number');
+      expect(Array.isArray(payload.providers)).toBe(true);
 
       // Validate each provider entry if any exist
-      for (const provider of body.providers) {
+      for (const provider of payload.providers) {
         expect(provider).toHaveProperty('name');
         expect(provider).toHaveProperty('id');
         expect(provider).toHaveProperty('label');
@@ -45,13 +47,14 @@ test.describe('Providers API', () => {
 
     if (res.status() === 200) {
       const body = await res.json();
-      expect(body).toHaveProperty('count');
-      expect(body).toHaveProperty('providers');
-      expect(typeof body.count).toBe('number');
-      expect(Array.isArray(body.providers)).toBe(true);
+      const payload = body.data ?? body;
+      expect(payload).toHaveProperty('count');
+      expect(payload).toHaveProperty('providers');
+      expect(typeof payload.count).toBe('number');
+      expect(Array.isArray(payload.providers)).toBe(true);
 
       // Validate each tool provider entry if any exist
-      for (const provider of body.providers) {
+      for (const provider of payload.providers) {
         expect(provider).toHaveProperty('name');
         expect(provider).toHaveProperty('id');
         expect(provider).toHaveProperty('label');
@@ -76,13 +79,14 @@ test.describe('Providers API', () => {
     }
 
     const list = await listRes.json();
+    const listData = list.data ?? list;
 
-    if (list.count === 0 || list.providers.length === 0) {
+    if (listData.count === 0 || listData.providers.length === 0) {
       test.skip(true, 'No memory providers registered');
       return;
     }
 
-    const providerName = list.providers[0].name;
+    const providerName = listData.providers[0].name;
     const testRes = await request.post(`${baseURL}/api/providers/memory/${providerName}/test`, {
       data: { userId: 'playwright-e2e' },
     });

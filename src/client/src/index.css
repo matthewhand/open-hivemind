@@ -31,6 +31,29 @@ html[data-density="spacious"] { --density-base: 1.25; }
 
 html[data-compact-density="true"] { --density-scale: calc(var(--density-base) * 0.85); }
 
+/* Register --density-scale as a typed custom property so the compact-density
+   calc() composition resolves to a real number — both in the cascade and for
+   getComputedStyle readers. An *unregistered* custom property keeps the literal
+   "calc(var(--density-base) * 0.85)" string (custom props aren't calc-evaluated),
+   which silently breaks any numeric consumer of the scale. */
+@property --density-scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+/* Consume the density scale so the control actually reflows the UI instead of
+   being a dead setting: card/modal/table padding scales with --density-scale.
+   scale=1 (comfortable) preserves the current defaults, so only compact/spacious
+   /compact-density visibly change. The transitions above are gated to fire only
+   while density is changing. */
+.card-body { padding: calc(1.5rem * var(--density-scale)); }
+.modal-box { padding: calc(1.5rem * var(--density-scale)); }
+/* TODO(roadmap: density coverage): extend the scale to table cells, list rows,
+   the sidebar, and main content padding so density reflows the whole shell, not
+   just cards/modals. Deferred here to avoid guessing per-component base paddings
+   (regression risk); do it deliberately with measured bases. */
+
 /* Smooth out density-driven padding/min-height changes so toggling
    the slider or navbar density button doesn't snap-jump. Wrapped in
    prefers-reduced-motion: no-preference so vestibular-sensitive users

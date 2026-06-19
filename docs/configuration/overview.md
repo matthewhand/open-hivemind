@@ -94,4 +94,4 @@ DEBUG=app:BotConfigurationManager npm run dev
 
 For deeper dives into multi-instance orchestration, read
 [`multi-instance-setup.md`](multi-instance-setup.md) and the
-[`PACKAGE.md`](../../PACKAGE.md) capability matrix.
+[`PACKAGE.md`](../reference/package.md) capability matrix.

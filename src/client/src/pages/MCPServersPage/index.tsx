@@ -65,6 +65,7 @@ const MCPServersPage: React.FC = () => {
   const [viewingTools, setViewingTools] = useState<Tool[]>([]);
   const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const { showStamp } = useSavedStamp();
   const [confirmModal, setConfirmModal] = useState<{
@@ -102,6 +103,15 @@ const MCPServersPage: React.FC = () => {
 
   const { handleServerAction, handleTestConnection, isTesting, handleSaveServer } =
     useMCPServerActions(servers, setServers, fetchServers, setAlert, showStamp);
+
+  const handleRefreshTools = async (serverId: string) => {
+    setRefreshingId(serverId);
+    try {
+      await fetchServers();
+    } finally {
+      setRefreshingId(null);
+    }
+  };
   const { handleBulkDeleteServers, handleDeleteServer, bulkDeleting } = useMCPServerDelete(
     bulk,
     fetchServers,

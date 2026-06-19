@@ -92,7 +92,7 @@ test.describe('Personas Page Screenshots', () => {
     await page.goto('/admin/personas');
 
     // Wait for key elements to be visible
-    await expect(page.getByText('Personas (Beta)', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Customer Support' })).toBeVisible();
 
     // Wait for data to load

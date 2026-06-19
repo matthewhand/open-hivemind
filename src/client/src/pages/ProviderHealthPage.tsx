@@ -50,6 +50,7 @@ const STATUS_CONFIG: Record<
     icon: typeof CheckCircle;
     color: string;
     bg: string;
+    border: string;
     badge: 'success' | 'warning' | 'error';
     label: string;
   }
@@ -58,6 +59,7 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle,
     color: 'text-success',
     bg: 'bg-success/10',
+    border: 'border-success/30',
     badge: 'success',
     label: 'Healthy',
   },
@@ -65,6 +67,7 @@ const STATUS_CONFIG: Record<
     icon: AlertTriangle,
     color: 'text-warning',
     bg: 'bg-warning/10',
+    border: 'border-warning/30',
     badge: 'warning',
     label: 'Degraded',
   },
@@ -72,6 +75,7 @@ const STATUS_CONFIG: Record<
     icon: XCircle,
     color: 'text-error',
     bg: 'bg-error/10',
+    border: 'border-error/30',
     badge: 'error',
     label: 'Down',
   },
@@ -127,7 +131,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
 
   return (
     <div
-      className={`rounded-xl border p-4 ${statusCfg.bg} border-${statusCfg.badge}/30 flex flex-col gap-3`}
+      className={`rounded-xl border p-4 ${statusCfg.bg} ${statusCfg.border} flex flex-col gap-3`}
     >
       {/* Header: name + status */}
       <div className="flex items-center justify-between">

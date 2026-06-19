@@ -12,8 +12,9 @@ test.describe('Bot Deletion Protection', () => {
 
     // Mock API responses
 
-    // Catch-all for API requests (registered first, lower priority)
-    await page.route('**/api/**', async (route) => {
+    // Catch-all for API requests. Host-rooted match (//host/api/…) so Vite
+    // source modules like /src/services/api/bots.ts aren't caught and broken.
+    await page.route(/\/\/[^/]+\/api\//, async (route) => {
       await route.fulfill({ status: 200, body: '{}', contentType: 'application/json' });
     });
 

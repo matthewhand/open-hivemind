@@ -1,5 +1,12 @@
 # Open-Hivemind Architecture
 
+> This is the **how it's built** map. For *what it's for* and *why*, start with the
+> [Vision](../VISION.md) and the concept docs — [Society of Agents](../concepts/society-of-agents.md),
+> [Personas](../concepts/personas.md), [Guards](../concepts/guards.md),
+> [Memory](../concepts/memory.md), [MCP Tools](../concepts/mcp.md),
+> [LLM Providers](../concepts/llm-providers.md). Where files live at runtime:
+> [Data Directories](../reference/data-directories.md).
+
 ## System Overview
 
 Open-Hivemind is a full-stack monorepo with a React frontend, Express.js backend, and plugin-based provider architecture.

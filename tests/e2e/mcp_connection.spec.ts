@@ -76,7 +76,7 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await page.locator('input[placeholder="mcp://server-host:port"]').fill('http://localhost:3000');
 
     // Click Test Connection
-    const testBtn = page.getByRole('button', { name: /Test Connection/i });
+    const testBtn = page.getByRole('button', { name: 'Test', exact: true });
     await expect(testBtn).toBeVisible();
     await testBtn.click();
 
@@ -112,13 +112,17 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await page.locator('input[placeholder="mcp://server-host:port"]').fill('http://localhost:3000');
 
     // Click Test Connection
-    const testBtn = page.getByRole('button', { name: /Test Connection/i });
+    const testBtn = page.getByRole('button', { name: 'Test', exact: true });
     await expect(testBtn).toBeVisible();
     await testBtn.click();
 
-    // Verify error message
-    await expect(page.getByText(/failed|error|could not connect/i).first()).toBeVisible({
-      timeout: 5000,
-    });
+    // Verify error message (scope to the .alert — a hidden <option value="error">
+    // Error</option> in the status filter also matches /error/i).
+    await expect(
+      page
+        .locator('.alert')
+        .filter({ hasText: /fail|error|could not connect/i })
+        .first()
+    ).toBeVisible({ timeout: 5000 });
   });
 });

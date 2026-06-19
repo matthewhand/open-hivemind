@@ -36,6 +36,8 @@ export interface ToolResult {
     stack?: string;
   };
   isError: boolean;
+  /** Server-reported execution time in ms (falls back to client-measured). */
+  executionTime?: number;
 }
 
 export interface RecentToolUsage {

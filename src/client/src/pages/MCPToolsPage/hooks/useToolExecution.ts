@@ -62,7 +62,9 @@ export function useToolExecution({ setAlert, setUsageCounts, setRecentlyUsed }: 
         serverName: tool.serverName,
         arguments: args,
         result: json.result,
-        isError: false
+        isError: false,
+        // Prefer the server-reported time; fall back to the client-measured round-trip.
+        executionTime: typeof json.executionTime === 'number' ? json.executionTime : Date.now() - start
       };
 
       setSelectedResult(successResult);

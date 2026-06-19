@@ -8,6 +8,7 @@ import {
   Plus,
   Trash2,
   RotateCcw,
+  RefreshCw,
   Search,
   HardDrive,
   Clock,
@@ -213,7 +214,7 @@ const ExportPage: React.FC = () => {
     );
   }, [backups, searchQuery]);
 
-  const backupColumns: Column<Backup>[] = [
+  const backupColumns: RDVColumn<Backup>[] = [
     {
       key: 'name',
       title: 'Name',
@@ -339,7 +340,7 @@ const ExportPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="backups-page">
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
@@ -373,8 +374,17 @@ const ExportPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto">
               <Button
+                variant="ghost"
+                onClick={fetchBackups}
+                aria-label="Refresh backups"
+                data-testid="refresh-backups-btn"
+              >
+                <RefreshCw className="w-4 h-4" /> Refresh
+              </Button>
+              <Button
                 variant="primary"
                 onClick={() => setCreateModalOpen(true)}
+                data-testid="create-backup-btn"
               >
                 <Plus className="w-4 h-4 mr-2" /> Create Backup
               </Button>
@@ -510,14 +520,14 @@ const ExportPage: React.FC = () => {
 
       <Modal
         isOpen={feedbackState.state !== 'idle'}
-        onClose={() => setFeedbackState({ state: 'idle' })}
+        onClose={() => setFeedbackState({ state: 'idle', message: '' })}
         title=""
         size="sm"
       >
         <VisualFeedback
           state={feedbackState.state}
           message={feedbackState.message}
-          onComplete={() => setFeedbackState({ state: 'idle' })}
+          onComplete={() => setFeedbackState({ state: 'idle', message: '' })}
           duration={3000}
         />
       </Modal>

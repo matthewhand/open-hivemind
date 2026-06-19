@@ -357,6 +357,7 @@ const BotsPage: React.FC = () => {
               />
               <span className="text-xs text-base-content/60">Select all</span>
             </div>
+            {bulk.selectedCount > 0 && (
             <BulkActionBar
               selectedCount={bulk.selectedCount}
               onClearSelection={bulk.clearSelection}
@@ -392,6 +393,7 @@ const BotsPage: React.FC = () => {
                 },
               ]}
             />
+            )}
             <BotListGrid
               filteredBots={filteredBots}
               previewBot={previewBot}

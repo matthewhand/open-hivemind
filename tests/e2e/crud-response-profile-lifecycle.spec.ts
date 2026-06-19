@@ -185,12 +185,13 @@ test.describe('Swarm Orchestration Mode', () => {
    * Open the create profile modal and fill in the basic fields.
    */
   async function openCreateModal(page: import('@playwright/test').Page) {
-    const createBtn = page.getByRole('button', { name: 'Create Profile' });
+    // .first() — the header "Create Profile" button and the empty-state one both match.
+    const createBtn = page.getByRole('button', { name: 'Create Profile' }).first();
     await expect(createBtn).toBeVisible({ timeout: 15000 });
     await createBtn.click();
 
     // Wait for modal to appear
-    const modal = page.locator('[role="dialog"], dialog.modal[open], .modal[open], .modal-box');
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
     return modal;
   }
@@ -217,7 +218,11 @@ test.describe('Swarm Orchestration Mode', () => {
     page: import('@playwright/test').Page,
     action: 'Create' | 'Update' = 'Create'
   ) {
-    const submitBtn = page.getByRole('button', { name: action });
+    // Scope to the open modal + exact — the page header and empty-state both
+    // expose a "Create Profile" button that substring-matches "Create".
+    const submitBtn = page
+      .locator('.modal-box:visible')
+      .getByRole('button', { name: action, exact: true });
     await submitBtn.click();
     // Give the API a moment to respond
     await page.waitForTimeout(300);
@@ -327,36 +332,15 @@ test.describe('Swarm Orchestration Mode', () => {
       fullPage: false,
     });
 
-    // Click the edit button on the card
-    const editBtn = profileCard.locator('button').filter({ hasText: '' }).first();
-    // Find edit button more precisely - it's the one with the Edit icon
-    const editButtons = profileCard.locator('button');
-    const editBtnCount = await editButtons.count();
-    // The edit button is typically the first non-expand button
-    let foundEdit = false;
-    for (let i = 0; i < editBtnCount; i++) {
-      const btn = editButtons.nth(i);
-      const text = await btn.textContent().catch(() => '');
-      // Edit button might not have text, look for svg icon
-      if ((await btn.locator('svg').count()) > 0) {
-        // Try clicking and see if modal opens
-        await btn.click();
-        const modal = page.locator('[role="dialog"], dialog.modal[open], .modal[open], .modal-box');
-        if (await modal.isVisible({ timeout: 3000 }).catch(() => false)) {
-          foundEdit = true;
-          break;
-        }
-      }
-    }
+    // Click the card's Edit button by its precise aria-label. The previous
+    // button-probing loop scanned `profileCard.locator('button')`, but the broad
+    // `[class*="bg-base-300"]`/`bg-base-100` card selector can resolve to a wrapper
+    // that also contains the page header's "Create Profile" button — so the loop
+    // opened the CREATE modal and submitModal('Update') then timed out.
+    await page.getByRole('button', { name: 'Edit response profile Edit Mode Test' }).click();
 
-    if (!foundEdit) {
-      // Fallback: try the first button
-      await editButtons.first().click();
-      await page.waitForTimeout(500);
-    }
-
-    // Wait for modal
-    const modal = page.locator('[role="dialog"], dialog.modal[open], .modal[open], .modal-box');
+    // Wait for the edit modal
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Verify current mode is exclusive (card should be highlighted)

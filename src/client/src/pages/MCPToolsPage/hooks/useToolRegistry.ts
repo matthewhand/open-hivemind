@@ -11,6 +11,24 @@ interface MCPFavoritesPayload {
   usageCounts?: Record<string, number>;
 }
 
+/**
+ * Derive a tool category from its name/description when the server doesn't
+ * provide one. Categories align with getCategoryColor() in ToolRegistryPanel
+ * (git/database/filesystem/network/ai/search/utility) and are rendered
+ * title-cased by ToolFilters. Previously every tool was hardcoded 'utility',
+ * which made the category filter and per-category color badges dead UI.
+ */
+export function categorizeTool(name: string, description = ''): string {
+  const h = `${name} ${description}`.toLowerCase();
+  if (/search|google|web|browse|crawl|scrape|lookup/.test(h)) return 'search';
+  if (/file|read_file|write_file|\bfs\b|directory|filesystem|path|disk/.test(h)) return 'filesystem';
+  if (/\bgit\b|commit|repo|branch|pull request|github|gitlab/.test(h)) return 'git';
+  if (/\bdb\b|\bsql\b|database|postgres|mongo|sqlite|table|schema/.test(h)) return 'database';
+  if (/http|fetch|\bapi\b|request|webhook|endpoint|\burl\b|network/.test(h)) return 'network';
+  if (/\bai\b|\bllm\b|model|embed|generate|completion|prompt|inference/.test(h)) return 'ai';
+  return 'utility';
+}
+
 interface UseToolRegistryProps {
   setAlert: (alert: AlertState | null) => void;
 }
@@ -113,7 +131,7 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
                 serverId: server.name,
                 serverName: server.name,
                 description: t.description || 'No description available',
-                category: 'utility',
+                category: t.category || categorizeTool(t.name, t.description),
                 inputSchema: t.inputSchema,
                 outputSchema: t.outputSchema || t.output_schema || {},
                 usageCount: usageCounts[toolId] || 0,

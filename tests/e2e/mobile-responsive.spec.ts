@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { registerViteSourceBypass, setupAuth } from './test-utils';
 
 /**
  * Mobile Responsive E2E Tests
@@ -51,8 +51,8 @@ test.describe('Mobile Responsive Layout', () => {
     },
   ];
 
-  function mockCommonEndpoints(page: import('@playwright/test').Page) {
-    return Promise.all([
+  async function mockCommonEndpoints(page: import('@playwright/test').Page) {
+    await Promise.all([
       page.route('**/api/health/detailed', (route) =>
         route.fulfill({ status: 200, json: { status: 'healthy' } })
       ),
@@ -112,6 +112,10 @@ test.describe('Mobile Responsive Layout', () => {
         route.fulfill({ status: 200, json: { status: 'healthy', services: [] } })
       ),
     ]);
+    // Registered LAST (highest priority) so Vite source modules like
+    // /src/services/api/monitoring.ts aren't caught by the broad **/api/X** mocks
+    // above (which match the literal substring) and served JSON → blank page.
+    await registerViteSourceBypass(page);
   }
 
   test.beforeEach(async ({ page }) => {

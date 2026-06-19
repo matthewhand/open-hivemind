@@ -2,88 +2,60 @@ import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 /**
- * Analytics Dashboard CRUD E2E Tests
- * Exercises stats cards, time range selector, refresh, charts,
- * bot performance table, loading state, and empty state with full API mocking.
+ * Analytics Dashboard E2E Tests (/admin/analytics)
+ *
+ * Exercises the AnalyticsDashboard: stats cards, time-range selector, refresh,
+ * charts, bot-performance table, loading state, and empty state.
+ *
+ * NOTE: rewritten to match the current page. The previous version navigated to
+ * /admin/monitoring (which redirects to the monitoring overview tab) and mocked
+ * a removed `/api/dashboard/analytics` contract with fixed totals. The real page
+ * derives everything from getActivity (`/api/dashboard/activity`),
+ * getCostAnalytics (`/api/monitoring/costs`), and getAnomalies
+ * (`/api/admin/monitoring/anomalies`).
  */
 test.describe('Analytics Dashboard CRUD Lifecycle', () => {
   test.setTimeout(90000);
 
-  const mockAnalytics = {
-    totalMessages: 12543,
-    totalResponses: 11987,
-    avgResponseTime: 1.45,
-    activeUsers: 328,
-    errorRate: 0.04,
-    uptime: 99.97,
-    messageVolume: [
-      { timestamp: '2026-03-26T00:00:00Z', count: 120 },
-      { timestamp: '2026-03-26T01:00:00Z', count: 95 },
-      { timestamp: '2026-03-26T02:00:00Z', count: 60 },
-      { timestamp: '2026-03-26T03:00:00Z', count: 45 },
-      { timestamp: '2026-03-26T04:00:00Z', count: 80 },
-      { timestamp: '2026-03-26T05:00:00Z', count: 150 },
+  // events.length → "Total Messages"; unique userId → "Active Users";
+  // filters.agents.length → "Active Bots"; agentMetrics → "Bot Performance" table.
+  const mockActivity = {
+    events: [
+      { id: 'e1', userId: 'u1', botName: 'AlphaBot', timestamp: '2026-06-10T00:00:00Z' },
+      { id: 'e2', userId: 'u2', botName: 'AlphaBot', timestamp: '2026-06-10T00:01:00Z' },
+      { id: 'e3', userId: 'u1', botName: 'BetaBot', timestamp: '2026-06-10T00:02:00Z' },
     ],
-    responseTimeSeries: [
-      { timestamp: '2026-03-26T00:00:00Z', avgMs: 1200 },
-      { timestamp: '2026-03-26T01:00:00Z', avgMs: 1350 },
-      { timestamp: '2026-03-26T02:00:00Z', avgMs: 980 },
-      { timestamp: '2026-03-26T03:00:00Z', avgMs: 1100 },
-      { timestamp: '2026-03-26T04:00:00Z', avgMs: 1500 },
-      { timestamp: '2026-03-26T05:00:00Z', avgMs: 1250 },
+    timeline: [
+      { timestamp: '2026-06-10T00:00:00Z', messageProviders: { discord: 2 } },
+      { timestamp: '2026-06-10T01:00:00Z', messageProviders: { discord: 1 } },
     ],
-    botPerformance: [
-      {
-        name: 'SupportBot',
-        messages: 5200,
-        avgResponseTime: 1.2,
-        errorRate: 0.02,
-        status: 'healthy',
-      },
-      {
-        name: 'SalesBot',
-        messages: 3800,
-        avgResponseTime: 1.6,
-        errorRate: 0.05,
-        status: 'healthy',
-      },
-      {
-        name: 'CodingAssistant',
-        messages: 2100,
-        avgResponseTime: 2.1,
-        errorRate: 0.08,
-        status: 'degraded',
-      },
-      {
-        name: 'OnboardingBot',
-        messages: 1443,
-        avgResponseTime: 0.9,
-        errorRate: 0.01,
-        status: 'healthy',
-      },
+    agentMetrics: [
+      { botName: 'AlphaBot', totalMessages: 2, errors: 0, events: 2 },
+      { botName: 'BetaBot', totalMessages: 1, errors: 1, events: 1 },
     ],
-    timeRange: '24h',
+    filters: { agents: ['AlphaBot', 'BetaBot'] },
   };
 
-  const mockAnalytics7d = {
-    ...mockAnalytics,
-    totalMessages: 87250,
-    totalResponses: 83100,
-    avgResponseTime: 1.52,
-    activeUsers: 1205,
-    timeRange: '7d',
+  const emptyActivity = {
+    events: [],
+    timeline: [],
+    agentMetrics: [],
+    filters: { agents: [] },
   };
 
-  const mockStatus = {
-    bots: [
-      { name: 'SupportBot', status: 'online', uptime: 99.99 },
-      { name: 'SalesBot', status: 'online', uptime: 99.95 },
-      { name: 'CodingAssistant', status: 'degraded', uptime: 98.5 },
-      { name: 'OnboardingBot', status: 'online', uptime: 99.98 },
-    ],
-    uptime: 99.97,
-    version: '2.5.0',
+  const mockCosts = {
+    success: true,
+    data: {
+      historical: [],
+      daily: [
+        { date: '2026-06-09', cost: 1.23 },
+        { date: '2026-06-10', cost: 2.34 },
+      ],
+      summary: { totalCost: 3.57, days: 7 },
+    },
   };
+
+  const mockAnomalies = { success: true, data: { anomalies: [] } };
 
   function mockCommonEndpoints(page: import('@playwright/test').Page) {
     return Promise.all([
@@ -119,248 +91,124 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     ]);
   }
 
+  // Register the three analytics data endpoints. `activity` is the only one that
+  // varies between tests; cost/anomalies stay constant.
+  async function mockAnalyticsApi(
+    page: import('@playwright/test').Page,
+    activity: unknown = mockActivity,
+    opts: { activityDelayMs?: number } = {}
+  ) {
+    await page.route('**/api/dashboard/activity*', async (route) => {
+      if (opts.activityDelayMs) await new Promise((r) => setTimeout(r, opts.activityDelayMs));
+      await route.fulfill({ status: 200, json: activity });
+    });
+    await page.route('**/api/monitoring/costs*', (route) =>
+      route.fulfill({ status: 200, json: mockCosts })
+    );
+    await page.route('**/api/admin/monitoring/anomalies', (route) =>
+      route.fulfill({ status: 200, json: mockAnomalies })
+    );
+  }
+
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
     await mockCommonEndpoints(page);
   });
 
   test('stats cards render with correct values', async ({ page }) => {
-    await page.route('**/api/dashboard/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/api/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
+    await mockAnalyticsApi(page);
+    await page.goto('/admin/analytics');
 
-    await page.goto('/admin/monitoring');
+    await expect(page.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible({
+      timeout: 15000,
+    });
 
-    // Verify stats cards are visible with key metric values
-    const totalMessagesText = page.getByText('12,543').or(page.getByText('12543'));
-    await expect(totalMessagesText.first()).toBeVisible({ timeout: 10000 });
+    // The four usage-metric cards
+    await expect(page.getByText('Total Messages')).toBeVisible();
+    await expect(page.getByText('Active Users')).toBeVisible();
+    await expect(page.getByText('Active Bots')).toBeVisible();
 
-    const avgResponseText = page.getByText('1.45').or(page.getByText('1.45s'));
-    await expect(avgResponseText.first()).toBeVisible({ timeout: 10000 });
-
-    const activeUsersText = page.getByText('328');
-    await expect(activeUsersText.first()).toBeVisible({ timeout: 10000 });
+    // Total Messages = events.length = 3 (scope to the card to avoid clashing 3s)
+    const totalCard = page.locator('.card', { hasText: 'Total Messages' }).first();
+    await expect(totalCard).toContainText('3');
   });
 
   test('time range selector changes displayed data (1h, 24h, 7d, 30d)', async ({ page }) => {
-    await page.route('**/api/dashboard/analytics*', (route) => {
-      const url = route.request().url();
-      if (url.includes('7d') || url.includes('7days') || url.includes('range=7')) {
-        return route.fulfill({ status: 200, json: mockAnalytics7d });
-      }
-      return route.fulfill({ status: 200, json: mockAnalytics });
-    });
-    await page.route('**/api/dashboard/api/analytics*', (route) => {
-      const url = route.request().url();
-      if (url.includes('7d') || url.includes('7days') || url.includes('range=7')) {
-        return route.fulfill({ status: 200, json: mockAnalytics7d });
-      }
-      return route.fulfill({ status: 200, json: mockAnalytics });
-    });
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
+    await mockAnalyticsApi(page);
+    await page.goto('/admin/analytics');
 
-    await page.goto('/admin/monitoring');
+    const selector = page.getByLabel('Time range');
+    await expect(selector).toBeVisible({ timeout: 15000 });
 
-    // Wait for the page to render
-    await page.waitForLoadState('domcontentloaded');
+    // Changing the range triggers a re-fetch of activity for the new window.
+    const refetch = page.waitForResponse((r) => r.url().includes('/api/dashboard/activity'));
+    await selector.selectOption('7d');
+    await refetch;
 
-    // Look for time range buttons or select
-    // Since this is a test environment, the UI should be deterministic. We expect buttons.
-    const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
-    await expect(btn7d).toBeVisible({ timeout: 10000 });
-    await btn7d.click();
-
-    const text7d = page.getByText('87,250').or(page.getByText('87250')).first();
-    await expect(text7d).toBeVisible({ timeout: 10000 });
-
-    const btn1h = page.locator('button:has-text("1h"), button:has-text("1 hour")').first();
-    await btn1h.click();
-
-    const text1h = page.getByText('12,543').or(page.getByText('12543')).first();
-    await expect(text1h).toBeVisible({ timeout: 10000 });
-
-    const btn30d = page.locator('button:has-text("30d"), button:has-text("30 days")').first();
-    await btn30d.click();
-
-    // Just verify it doesn't crash, actual state depends on implementation details
-    await page.waitForLoadState('domcontentloaded');
+    await expect(selector).toHaveValue('7d');
+    // Dashboard still renders after the change
+    await expect(page.getByText('Total Messages')).toBeVisible();
   });
 
   test('refresh button triggers re-fetch', async ({ page }) => {
-    let fetchCount = 0;
-    // The monitoring page calls apiService.getStatus() -> /api/dashboard/status
-    // and apiService.getConfig() -> /api/config
-    await page.route('**/api/dashboard/status', (route) => {
-      fetchCount++;
-      return route.fulfill({ status: 200, json: mockStatus });
+    await mockAnalyticsApi(page);
+    await page.goto('/admin/analytics');
+
+    await expect(page.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible({
+      timeout: 15000,
     });
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: mockStatus.bots } })
-    );
 
-    await page.goto('/admin/monitoring');
+    const refetch = page.waitForResponse((r) => r.url().includes('/api/dashboard/activity'));
+    await page.getByRole('button', { name: /refresh/i }).click();
+    await refetch;
 
-    // Wait for initial load
-    await page.waitForLoadState('domcontentloaded');
-
-    const initialCount = fetchCount;
-    const refreshBtn = page.locator('button:has-text("Refresh")').first();
-
-    await expect(refreshBtn).toBeVisible({ timeout: 10000 });
-
-    // Use response wait instead of hardcoded timeout
-    const responsePromise = page.waitForResponse('**/api/dashboard/status');
-    await refreshBtn.click();
-    await responsePromise;
-    expect(fetchCount).toBeGreaterThan(initialCount);
+    await expect(page.getByText('Total Messages')).toBeVisible();
   });
 
-  test('charts render (message volume, response time)', async ({ page }) => {
-    await page.route('**/api/dashboard/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/api/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
+  test('charts render (message volume, cost, response time)', async ({ page }) => {
+    await mockAnalyticsApi(page);
+    await page.goto('/admin/analytics');
 
-    await page.goto('/admin/monitoring');
-
-    // Wait for the page to render
-    await page.waitForLoadState('domcontentloaded');
-
-    // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
-    const charts = page.locator(
-      'canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]'
-    );
-    await expect(charts.first()).toBeVisible({ timeout: 10000 });
-
-    // Look for chart headings
-    const messageVolumeHeading = page
-      .getByText(/message.*volume/i)
-      .or(page.getByText(/messages.*over.*time/i))
-      .first();
-    await expect(messageVolumeHeading).toBeVisible({ timeout: 10000 });
-
-    const responseTimeHeading = page.getByText(/response.*time/i).first();
-    await expect(responseTimeHeading).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Message Volume').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Cost Trend').first()).toBeVisible();
+    await expect(page.getByText('Response Time (Live)').first()).toBeVisible();
   });
 
   test('bot performance table with data', async ({ page }) => {
-    // The monitoring page calls apiService.getStatus() -> /api/dashboard/status
-    // and apiService.getConfig() -> /api/config (bots array)
-    // It then renders bot status in the "Bot Status" tab
-    await page.route('**/api/dashboard/status', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: mockStatus.bots } })
-    );
+    await mockAnalyticsApi(page);
+    await page.goto('/admin/analytics');
 
-    await page.goto('/admin/monitoring');
-
-    // Wait for the page to render
-    await page.waitForLoadState('domcontentloaded');
-
-    // Click on "Bot Status" tab to see bot names
-    const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
-    // Wait for the tab to appear and be clickable
-    await expect(botStatusTab).toBeVisible({ timeout: 10000 });
-    await botStatusTab.click();
-
-    // Verify bot names appear
-    await expect(page.getByText('SupportBot').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('SalesBot').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Bot Performance' })).toBeVisible({
+      timeout: 15000,
+    });
+    // agentMetrics rows render with bot names
+    await expect(page.getByText('AlphaBot').first()).toBeVisible();
+    await expect(page.getByText('BetaBot').first()).toBeVisible();
   });
 
   test('loading state during fetch', async ({ page }) => {
-    let resolveStatusPromise: () => void;
-    const statusPromise = new Promise<void>((resolve) => {
-      resolveStatusPromise = resolve;
-    });
+    // Delay the activity response so the StatsCards skeleton is observable.
+    await mockAnalyticsApi(page, mockActivity, { activityDelayMs: 1500 });
+    await page.goto('/admin/analytics');
 
-    // Delay the status response to observe loading state
-    await page.route('**/api/dashboard/status', async (route) => {
-      await statusPromise;
-      await route.fulfill({ status: 200, json: mockStatus });
-    });
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    // Skeleton placeholders (animate-pulse) show while isLoading
+    await expect(page.locator('.animate-pulse').first()).toBeVisible({ timeout: 5000 });
 
-    await page.goto('/admin/monitoring');
-
-    // The page should render immediately (no full-page loading state)
-    // Just verify the page loads and eventually shows content
-    await expect(page.getByText('System Monitoring')).toBeVisible({ timeout: 5000 });
-
-    // Let the data load
-    resolveStatusPromise!();
-
-    // Wait for data to populate the UI (e.g. body is visible and stats change)
-    await page.waitForLoadState('domcontentloaded');
-
-    const supportBot = page.getByText('SupportBot').first();
-    await expect(supportBot).toBeVisible({ timeout: 10000 });
+    // After the response resolves, real values render
+    await expect(page.getByText('Total Messages')).toBeVisible({ timeout: 15000 });
+    const totalCard = page.locator('.card', { hasText: 'Total Messages' }).first();
+    await expect(totalCard).toContainText('3');
   });
 
   test('empty state when no data for time range', async ({ page }) => {
-    const emptyAnalytics = {
-      totalMessages: 0,
-      totalResponses: 0,
-      avgResponseTime: 0,
-      activeUsers: 0,
-      errorRate: 0,
-      uptime: 0,
-      messageVolume: [],
-      responseTimeSeries: [],
-      botPerformance: [],
-      timeRange: '1h',
-    };
+    await mockAnalyticsApi(page, emptyActivity);
+    await page.goto('/admin/analytics');
 
-    await page.route('**/api/dashboard/analytics*', (route) =>
-      route.fulfill({ status: 200, json: emptyAnalytics })
-    );
-    await page.route('**/api/dashboard/api/analytics*', (route) =>
-      route.fulfill({ status: 200, json: emptyAnalytics })
-    );
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: { bots: [], uptime: 0, version: '2.5.0' } })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: { bots: [], uptime: 0, version: '2.5.0' } })
-    );
-
-    await page.goto('/admin/monitoring');
-
-    // Should show zeros or empty state messaging
-    await page.waitForLoadState('domcontentloaded');
-    const emptyText = page
-      .locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i')
-      .first();
-    await expect(emptyText).toBeVisible({ timeout: 10000 });
-
-    // Stats should show zero values
-    const zeroValue = page.getByText('0').first();
-    await expect(zeroValue).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible({
+      timeout: 15000,
+    });
+    // Bot Performance + Recent Activity both show their empty states
+    await expect(page.getByText('No bot activity')).toBeVisible();
+    await expect(page.getByText('No recent activity')).toBeVisible();
   });
 });

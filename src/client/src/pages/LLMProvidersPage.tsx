@@ -74,6 +74,24 @@ const isEmbeddingCapable = (profile: any): boolean => {
   return modelType === 'embedding' || modelType === 'both';
 };
 
+// Derive a simple connection-status badge from config presence. There is no
+// live per-profile LLM health endpoint, so "Configured" means the profile has
+// at least one credential/endpoint field, mirroring MessageProvidersPage.
+const LLM_CREDENTIAL_KEYS = ['apiKey', 'token', 'accessToken', 'baseUrl', 'endpoint', 'host'];
+
+const deriveLlmStatus = (
+  profile: any,
+): { variant: 'success' | 'warning'; label: string; description: string } => {
+  const config = (profile?.config || {}) as Record<string, unknown>;
+  const configured = LLM_CREDENTIAL_KEYS.some((key) => {
+    const value = config[key];
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+  return configured
+    ? { variant: 'success', label: 'Configured', description: 'Credentials present — connection not yet verified' }
+    : { variant: 'warning', label: 'Not Configured', description: 'Missing credentials — edit the profile to add a key' };
+};
+
 // ---------------------------------------------------------------------------
 // Profiles Tab Content
 // ---------------------------------------------------------------------------
@@ -226,6 +244,16 @@ const ProfilesTab: React.FC<{
                           <Badge variant="secondary" size="small" style="outline">
                             {profile.provider}
                           </Badge>
+                          {(() => {
+                            const status = deriveLlmStatus(profile);
+                            return (
+                              <div className="tooltip tooltip-bottom" data-tip={status.description}>
+                                <Badge variant={status.variant} size="small">
+                                  {status.label}
+                                </Badge>
+                              </div>
+                            );
+                          })()}
                           <Badge
                             variant={
                               normalizeModelType(profile.modelType) === 'embedding'

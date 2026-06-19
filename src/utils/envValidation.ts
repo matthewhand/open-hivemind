@@ -19,7 +19,12 @@ const envSchema = z
   })
   .passthrough() // Allow other environment variables
   .superRefine((env, ctx) => {
-    if (env.NODE_ENV === 'production') {
+    // ALLOW_INSECURE_PRODUCTION=true opts out of the production-required checks so
+    // the app boots lean (degraded features) instead of failing closed. Mirrors the
+    // inline guards in EncryptionService / AuthManager / PluginManager. Base-schema
+    // validations (PORT format, non-empty tokens) still apply regardless.
+    const allowInsecure = process.env.ALLOW_INSECURE_PRODUCTION === 'true';
+    if (env.NODE_ENV === 'production' && !allowInsecure) {
       if (!env.OPENAI_API_KEY || env.OPENAI_API_KEY.trim().length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -100,6 +105,14 @@ const envSchema = z
  * Throws an error if validation fails, allowing the caller to decide how to handle it.
  */
 export function validateRequiredEnvVars(): void {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_PRODUCTION === 'true') {
+    Logger.warn(
+      '[SECURITY] ALLOW_INSECURE_PRODUCTION=true — skipping production env-var requirements ' +
+        '(OPENAI_API_KEY, SESSION_SECRET, JWT/signing secrets, admin password, messaging token). ' +
+        'The app will boot with degraded/disabled features. Configure these for a secure deployment.'
+    );
+  }
+
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
