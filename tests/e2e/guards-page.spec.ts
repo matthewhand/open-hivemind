@@ -42,8 +42,8 @@ test.describe('Guards Page', () => {
     await expect(page.getByText('Strict production settings')).toBeVisible();
     // Use exact: true to avoid matching the description text
     await expect(page.getByText('Access Control', { exact: true })).toBeVisible();
-    await expect(page.getByText('Rate Limit')).toBeVisible();
-    await expect(page.getByText('Content Filter')).toBeVisible();
+    await expect(page.getByText('Rate Limit', { exact: true })).toBeVisible();
+    await expect(page.getByText('Content Filter', { exact: true })).toBeVisible();
 
     await assertNoErrors([], 'Profile display');
   });
@@ -102,12 +102,14 @@ test.describe('Guards Page', () => {
     const nameInput = modal.locator('input[placeholder="e.g. Strict Production"]');
     await expect(nameInput).toHaveValue('Copy of Production Guard');
 
-    // Save
-    await modal.getByRole('button', { name: 'Create Profile' }).click();
-    await page.waitForResponse(
+    // Save — register the response wait BEFORE the click to avoid a race where
+    // the POST resolves before waitForResponse is set up (flaky 60s timeout).
+    const postResponse = page.waitForResponse(
       (resp) =>
         resp.url().includes('/api/admin/guard-profiles') && resp.request().method() === 'POST'
     );
+    await modal.getByRole('button', { name: 'Create Profile' }).click();
+    await postResponse;
 
     // Verify POST was called with correct data
     expect(createdProfile).toBeDefined();

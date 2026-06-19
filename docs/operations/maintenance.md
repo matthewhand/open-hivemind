@@ -317,6 +317,11 @@ rm data/hivemind.db
 npm run start
 ```
 
+> **Where things live:** the SQLite DB (`data/hivemind.db`), config, secrets, and
+> backup targets — plus the env overrides that relocate them — are documented once in
+> [Data Directories & Filesystem Layout](../reference/data-directories.md). Back up the
+> **state** class (`data/` + `config/user/` + secrets), not the reproducible config.
+
 #### Performance Issues
 **Problem**: Slow startup
 ```bash
@@ -437,7 +442,7 @@ npm outdated
 
 ### Resources
 - [GitHub Issues](https://github.com/matthewhand/open-hivemind/issues)
-- [Documentation](./README.md)
+- [Documentation](../README.md)
 - [Release Notes](./RELEASE_SUMMARY.md)
 
 ### Commands Reference

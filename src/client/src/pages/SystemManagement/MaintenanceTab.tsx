@@ -47,7 +47,7 @@ const MaintenanceTab: React.FC = () => {
             <div>
               <h3 className="text-lg font-bold text-error">Factory Reset</h3>
               <p className="text-sm opacity-80 mt-1">
-                This action is **irreversible**. It will wipe all data from the database, including:
+                This action is <strong>irreversible</strong>. It will wipe all data from the database, including:
               </p>
               <ul className="list-disc list-inside text-xs mt-2 space-y-1 opacity-70 grid grid-cols-2">
                 <li>User Messages</li>

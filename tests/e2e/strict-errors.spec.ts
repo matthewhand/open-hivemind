@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   assertNoErrors,
   navigateAndWaitReady,
+  registerViteSourceBypass,
   SELECTORS,
   setupAuth,
   setupTestWithErrorDetection,
@@ -229,6 +230,9 @@ test.describe('Strict Error Detection Tests', () => {
       );
       // Catch-all for any remaining API calls to prevent "Failed to fetch" errors
       await page.route('**/api/**', async (route) => route.fulfill({ json: {} }));
+      // Registered LAST so Vite source modules (/src/services/api/*.ts) pass through
+      // instead of being caught by the **/api/** catch-all and served JSON → blank page.
+      await registerViteSourceBypass(page);
 
       const pages = [
         '/admin/overview',
@@ -281,8 +285,11 @@ test.describe('Strict Error Detection Tests', () => {
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
 
-        // Verify modal opened
-        const modal = page.locator(SELECTORS.modal).first();
+        // Verify modal opened — scope to the *visible* dialog; the page keeps
+        // other modal containers (detail drawer, etc.) hidden in the DOM.
+        const modal = page
+          .locator('.modal:visible, [role="dialog"]:visible, .modal-box:visible')
+          .first();
         if ((await modal.count()) > 0) {
           await expect(modal).toBeVisible();
 

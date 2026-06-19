@@ -243,6 +243,6 @@ The content filter is highly optimized:
 
 ## Related Features
 
-- **Rate Limiting**: Control message frequency (see [Rate Limiting](./rate-limiting.md))
-- **MCP Guard**: Control tool access (see [MCP Guard](./mcp-guard.md))
-- **Guardrail Profiles**: Bundle multiple guards together (see [Guardrail Profiles](./guardrail-profiles.md))
+- **Rate Limiting**: Control message frequency (see [Rate Limiting](../concepts/guards.md))
+- **MCP Guard**: Control tool access (see [MCP Guard](../concepts/guards.md))
+- **Guardrail Profiles**: Bundle multiple guards together (see [Guardrail Profiles](../concepts/guards.md))

@@ -82,7 +82,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
       {/* MAIN CONTENT WRAPPER - Offset for sidebar */}
       <div
-        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-60'}`}
+        className={`flex-1 min-w-0 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-60'}`}
       >
         {/* Rate limit indicator and Demo Mode Banner */}
         {!isMobile && (

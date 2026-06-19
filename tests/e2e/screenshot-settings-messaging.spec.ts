@@ -38,8 +38,10 @@ test.describe('Settings Messaging Screenshots', () => {
     );
 
     // Navigate to settings messaging page
-    await page.goto('/admin/settings?tab=messaging');
-    await page.waitForSelector('h5:has-text("Messaging Behavior")');
+    // Messaging settings moved from /admin/settings?tab=messaging to the
+    // Message Providers page settings tab (SystemSettings flags the old path stale).
+    await page.goto('/admin/message?tab=settings');
+    await page.getByRole('heading', { name: 'Messaging Behavior' }).waitFor({ state: 'visible' });
 
     // Screenshot initial state
     await page.screenshot({ path: 'docs/screenshots/settings-messaging.png', fullPage: true });

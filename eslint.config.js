@@ -70,7 +70,7 @@ module.exports = [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-empty-function': 'off',
-      'eqeqeq': 'warn',
+      'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'curly': ['warn', 'all'],
       'no-console': 'off',
 
@@ -116,7 +116,7 @@ module.exports = [
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-debugger': 'error',
-      'eqeqeq': 'warn',
+      'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'curly': ['warn', 'all'],
     },
   },

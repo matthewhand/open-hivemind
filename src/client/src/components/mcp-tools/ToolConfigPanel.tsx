@@ -2,6 +2,11 @@ import React from 'react';
 import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 import Tooltip from '../DaisyUI/Tooltip';
+import { Alert } from '../DaisyUI/Alert';
+import Input from '../DaisyUI/Input';
+import Join from '../DaisyUI/Join';
+import Mockup from '../DaisyUI/Mockup';
+import Select from '../DaisyUI/Select';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;

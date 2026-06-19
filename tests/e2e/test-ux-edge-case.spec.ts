@@ -13,22 +13,21 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
         status: 200,
         json: {
           success: true,
-          data: {
-            bots: [
-              {
-                id: 'bot-1',
-                name: superLongName,
-                status: 'active',
-                connected: true,
-                messageProvider: 'discord',
-                llmProvider: 'openai',
-                messageCount: 0,
-                errorCount: 0,
-                provider: 'discord',
-                persona: 'default',
-              },
-            ],
-          },
+          // BotsPage reads the bot array directly from `data` (not data.bots).
+          data: [
+            {
+              id: 'bot-1',
+              name: superLongName,
+              status: 'active',
+              connected: true,
+              messageProvider: 'discord',
+              llmProvider: 'openai',
+              messageCount: 0,
+              errorCount: 0,
+              provider: 'discord',
+              persona: 'default',
+            },
+          ],
         },
       });
     });
@@ -69,7 +68,7 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
 
     await page.goto('/admin/bots');
 
-    await expect(page.locator('.card-title').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(superLongName).first()).toBeVisible({ timeout: 10000 });
 
     await page.screenshot({ path: '.jules/after-ux-fix.png', fullPage: true });
   });

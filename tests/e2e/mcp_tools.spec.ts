@@ -45,7 +45,7 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
     await page.goto('/admin/mcp/tools');
 
     // Find the Run Tool button for test-tool
-    const runButton = page.getByRole('button', { name: /Run Tool/i }).first();
+    const runButton = page.getByRole('button', { name: /^Run test-tool tool$/i }).first();
     await expect(runButton).toBeVisible();
     await runButton.click();
 
@@ -61,7 +61,7 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
     await page.goto('/admin/mcp/tools');
 
     await page
-      .getByRole('button', { name: /Run Tool/i })
+      .getByRole('button', { name: /^Run test-tool tool$/i })
       .first()
       .click();
 
@@ -104,7 +104,7 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
     await page.goto('/admin/mcp/tools');
 
     await page
-      .getByRole('button', { name: /Run Tool/i })
+      .getByRole('button', { name: /^Run test-tool tool$/i })
       .first()
       .click();
 
@@ -119,11 +119,8 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
     const modalRunButton = page.locator('.modal-action button', { hasText: 'Run Tool' });
     await modalRunButton.click();
 
-    // Verify modal closes (dialog not visible)
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-
-    // Verify success alert
-    await expect(page.getByText('Tool executed! Result:')).toBeVisible();
+    // The Run-Tool modal closes and the ToolResultModal opens with the result.
+    await expect(page.getByText('Tool Execution Result')).toBeVisible();
 
     expect(apiCalled).toBe(true);
   });

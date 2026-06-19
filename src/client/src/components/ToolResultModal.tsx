@@ -22,6 +22,7 @@ interface ToolResult {
     stack?: string;
   };
   isError: boolean;
+  executionTime?: number;
 }
 
 interface ToolResultModalProps {
@@ -111,6 +112,12 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               </span>
             </div>
           </div>
+          {typeof result.executionTime === 'number' && (
+            <div>
+              <div className="text-xs text-base-content/60 uppercase tracking-wide mb-1">Execution Time</div>
+              <div className="font-mono text-sm">{result.executionTime}ms</div>
+            </div>
+          )}
         </div>
 
         {/* Arguments */}

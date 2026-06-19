@@ -389,7 +389,7 @@ See `tests/message/handlers/contentFilter.integration.test.ts` for comprehensive
 
 - [Content Filtering Guide](../features/content-filtering.md)
 - [Setup Examples](../../examples/content-filter-setup.md)
-- [Guardrail Profiles](../features/guardrail-profiles.md)
+- [Guardrail Profiles](../concepts/guards.md)
 
 ## Migration Notes
 

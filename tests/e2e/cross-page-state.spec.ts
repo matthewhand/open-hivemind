@@ -91,13 +91,15 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/bots');
       await expect(page.getByText('No bots configured'))
         .toBeVisible({ timeout: 10000 })
-        .catch(() => { });
+        .catch(() => {});
 
       // Create a bot
       const createBtn = page.getByRole('button', { name: 'Create Bot' }).last();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        const modal = page.locator('.modal-box, [role="dialog"]').first();
+        // :visible — the page also renders a hidden `<aside role="dialog" aria-hidden>`
+        // Bot Details drawer that the bare selector would grab first.
+        const modal = page.locator('.modal-box:visible, [role="dialog"]:visible').first();
         await expect(modal).toBeVisible();
         await modal.locator('input').first().fill('Cross-Page Bot');
         const selects = modal.locator('select');
@@ -165,7 +167,7 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/bots');
       await expect(page.getByText('Chat-Ready Bot'))
         .toBeVisible({ timeout: 10000 })
-        .catch(() => { });
+        .catch(() => {});
 
       // Navigate to chat page
       await page.goto('/admin/chat');
@@ -578,7 +580,7 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/personas');
       await expect(page.getByText('Original Persona'))
         .toBeVisible({ timeout: 10000 })
-        .catch(() => { });
+        .catch(() => {});
 
       // Navigate to bots - persona name should reflect across pages
       await page.goto('/admin/bots');
@@ -649,7 +651,7 @@ test.describe('Cross-Page State', () => {
       const personaText = page.getByText('Deletable Persona');
       await expect(personaText)
         .toHaveCount(0)
-        .catch(() => { });
+        .catch(() => {});
       expect(page.url()).toContain('/admin/bots');
     });
   });
@@ -871,7 +873,7 @@ test.describe('Cross-Page State', () => {
       if ((await modalAfter.count()) > 0) {
         await expect(modalAfter)
           .not.toBeVisible()
-          .catch(() => { });
+          .catch(() => {});
       }
     });
 

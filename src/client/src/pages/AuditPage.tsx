@@ -36,6 +36,10 @@ interface AuditEvent {
   result: 'success' | 'failure' | 'warning';
   details: string;
   ipAddress?: string;
+  oldValue?: unknown;
+  newValue?: unknown;
+  userAgent?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface AuditResponse {
@@ -193,6 +197,15 @@ const AuditPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('all');
   const [resultFilter, setResultFilter] = useState('all');
+
+  // Row expansion
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleRow = (id: string) =>
+    setExpandedRows((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
 
   const fetchAuditEvents = useCallback(async () => {
     try {

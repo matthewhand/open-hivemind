@@ -99,7 +99,7 @@ test.describe('Guards Page Screenshots', () => {
     await page.goto('/admin/guards');
 
     // Wait for content to load
-    await expect(page.getByText('Guard Profiles')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Guards' })).toBeVisible();
 
     // Wait for cards
     await expect(page.locator('.card').first()).toBeVisible();
@@ -107,8 +107,8 @@ test.describe('Guards Page Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/guards-page.png', fullPage: true });
 
-    // Open "New Profile" modal
-    await page.getByRole('button', { name: 'New Profile' }).click();
+    // Open the create-profile modal (button label is "Create Profile")
+    await page.getByRole('button', { name: 'Create Profile' }).click();
 
     // Wait for modal
     const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });

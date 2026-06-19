@@ -142,6 +142,17 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/demo/status', (route) =>
         route.fulfill({ status: 200, json: { active: false } })
       ),
+      // The MCP Tools page also fetches these on mount; leaving them unmocked
+      // lets a dev-server 401 trigger a redirect to /login (no tools render).
+      page.route('**/api/mcp/tools/favorites', (route) =>
+        route.fulfill({ status: 200, json: { data: {} } })
+      ),
+      page.route('**/api/mcp/tools/preferences', (route) =>
+        route.fulfill({ status: 200, json: { success: true, data: {} } })
+      ),
+      page.route('**/api/mcp/tools/history', (route) =>
+        route.fulfill({ status: 200, json: { data: [] } })
+      ),
     ]);
   }
 
@@ -227,7 +238,7 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     // Find toggle for a specific tool (send_email which is disabled via connected=false on Staging MCP)
-    const toolCard = page.locator('.card').filter({ hasText: 'send_email' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'send_email' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const toggleBtn = toolCard
@@ -246,16 +257,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     // Click run/execute button on web_search tool
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
   });
 
@@ -273,17 +282,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
+
+    // The modal opens in Form Builder mode; switch to Raw JSON for the textarea.
+    await modal.locator('button[aria-label="Raw JSON"]').first().click();
 
     // Find JSON textarea or editor
     const jsonInput = modal
@@ -312,20 +322,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to Form mode
-    const formModeBtn = modal.locator('button[title="Form Builder"]').first();
+    const formModeBtn = modal.locator('button[aria-label="Form Builder"]').first();
     await expect(formModeBtn).toBeVisible({ timeout: 10000 });
     await formModeBtn.click();
 
@@ -348,25 +356,23 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to JSON mode
-    const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
+    const jsonModeBtn = modal.locator('button[aria-label="Raw JSON"]').first();
     await expect(jsonModeBtn).toBeVisible({ timeout: 10000 });
     await jsonModeBtn.click();
 
     // Switch to Form mode
-    const formModeBtn = modal.locator('button[title="Form Builder"]').first();
+    const formModeBtn = modal.locator('button[aria-label="Form Builder"]').first();
     await expect(formModeBtn).toBeVisible({ timeout: 10000 });
     await formModeBtn.click();
 
@@ -392,16 +398,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     const executeBtn = modal.locator('button:has-text("Run Tool")').first();
@@ -436,16 +440,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     const executeBtn = modal.locator('button:has-text("Run Tool")').first();
@@ -473,14 +475,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
     await page.goto('/admin/mcp/tools');
 
-    // Should show empty state
+    // Should show empty state ("No tools found")
     await page.waitForLoadState('domcontentloaded');
-    const emptyText = page
-      .locator(
-        'text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i'
-      )
-      .first();
-    await expect(emptyText).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/no tools found/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('invalid JSON shows error in modal', async ({ page }) => {
@@ -491,20 +488,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card.shadow-xl').filter({ hasText: 'web_search' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
     const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page
-      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
-      .first();
+    const modal = page.locator('.modal-box:visible').first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to JSON mode
-    const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
+    const jsonModeBtn = modal.locator('button[aria-label="Raw JSON"]').first();
     await expect(jsonModeBtn).toBeVisible({ timeout: 10000 });
     await jsonModeBtn.click();
 

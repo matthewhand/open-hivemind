@@ -47,7 +47,10 @@ test.describe('Personas Management', () => {
         .first();
       if ((await createButton.count()) > 0) {
         await createButton.click();
-        const modal = page.locator('[class*="modal"], [role="dialog"]').first();
+        // Target the *open* modal specifically — the page renders several modal
+        // containers (detail drawer, delete confirm) that sit hidden in the DOM,
+        // so an unfiltered .first() can resolve to a hidden one.
+        const modal = page.locator('[class*="modal"]:visible, [role="dialog"]:visible').first();
         await expect(modal).toBeVisible({ timeout: 5000 });
         await page.screenshot({
           path: 'test-results/personas-03-create-modal.png',

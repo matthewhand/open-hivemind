@@ -157,21 +157,21 @@ const PluginSecurityPage: React.FC = () => {
 
   const getSignatureStatusBadge = (signatureValid: boolean | null) => {
     if (signatureValid === null) {
-      return <Badge color="neutral" size="sm">No Signature</Badge>;
+      return <Badge variant="neutral" size="sm">No Signature</Badge>;
     } else if (signatureValid) {
-      return <Badge color="success" size="sm"><CheckCircle className="w-3 h-3 mr-1" />Valid</Badge>;
+      return <Badge variant="success" size="sm"><CheckCircle className="w-3 h-3 mr-1" />Valid</Badge>;
     } else {
-      return <Badge color="error" size="sm"><XCircle className="w-3 h-3 mr-1" />Invalid</Badge>;
+      return <Badge variant="error" size="sm"><XCircle className="w-3 h-3 mr-1" />Invalid</Badge>;
     }
   };
 
   const getTrustBadge = (trustLevel: 'trusted' | 'untrusted', isBuiltIn: boolean) => {
     if (isBuiltIn) {
-      return <Badge color="info" size="sm"><ShieldCheck className="w-3 h-3 mr-1" />Built-in</Badge>;
+      return <Badge variant="info" size="sm"><ShieldCheck className="w-3 h-3 mr-1" />Built-in</Badge>;
     } else if (trustLevel === 'trusted') {
-      return <Badge color="success" size="sm"><ShieldCheck className="w-3 h-3 mr-1" />Trusted</Badge>;
+      return <Badge variant="success" size="sm"><ShieldCheck className="w-3 h-3 mr-1" />Trusted</Badge>;
     } else {
-      return <Badge color="warning" size="sm"><ShieldAlert className="w-3 h-3 mr-1" />Untrusted</Badge>;
+      return <Badge variant="warning" size="sm"><ShieldAlert className="w-3 h-3 mr-1" />Untrusted</Badge>;
     }
   };
 
@@ -320,7 +320,7 @@ const PluginSecurityPage: React.FC = () => {
                       {plugin.grantedCapabilities.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {plugin.grantedCapabilities.map((cap) => (
-                            <Badge key={cap} color="success" size="sm">
+                            <Badge key={cap} variant="success" size="sm">
                               {cap}
                             </Badge>
                           ))}
@@ -337,7 +337,7 @@ const PluginSecurityPage: React.FC = () => {
                       {plugin.deniedCapabilities.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {plugin.deniedCapabilities.map((cap) => (
-                            <Badge key={cap} color="error" size="sm">
+                            <Badge key={cap} variant="error" size="sm">
                               {cap}
                             </Badge>
                           ))}
@@ -354,7 +354,7 @@ const PluginSecurityPage: React.FC = () => {
                       {plugin.requiredCapabilities.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {plugin.requiredCapabilities.map((cap) => (
-                            <Badge key={cap} color="neutral" size="sm">
+                            <Badge key={cap} variant="neutral" size="sm">
                               {cap}
                             </Badge>
                           ))}
@@ -371,7 +371,7 @@ const PluginSecurityPage: React.FC = () => {
                     <>
                       <Button
                         size="sm"
-                        variant="outline"
+                        buttonStyle="outline"
                         onClick={() => handleVerifyPlugin(plugin.pluginName)}
                         disabled={actionInProgress === plugin.pluginName}
                         aria-label={`Verify ${plugin.pluginName}`}
@@ -425,7 +425,7 @@ const PluginSecurityPage: React.FC = () => {
             totalItems={filteredPlugins.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            style="standard"
+            variant="standard"
           />
         </div>
         </>
@@ -437,7 +437,7 @@ const PluginSecurityPage: React.FC = () => {
         title={confirmModal.title}
         message={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
-        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         confirmText="Confirm"
         cancelText="Cancel"
       />

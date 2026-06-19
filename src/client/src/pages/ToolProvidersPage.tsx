@@ -34,6 +34,24 @@ import { useSavedStamp } from '../contexts/SavedStampContext';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 
+// Derive a simple connection-status badge from config presence. There is no
+// live per-profile tool health endpoint, so "Configured" means the profile has
+// at least one credential/endpoint field, mirroring MessageProvidersPage.
+const TOOL_CREDENTIAL_KEYS = ['apiKey', 'token', 'accessToken', 'baseUrl', 'endpoint', 'url', 'host', 'serverUrl'];
+
+const deriveToolStatus = (
+  profile: any,
+): { variant: 'success' | 'warning'; label: string; description: string } => {
+  const config = (profile?.config || {}) as Record<string, unknown>;
+  const configured = TOOL_CREDENTIAL_KEYS.some((key) => {
+    const value = config[key];
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+  return configured
+    ? { variant: 'success', label: 'Configured', description: 'Credentials present — connection not yet verified' }
+    : { variant: 'warning', label: 'Not Configured', description: 'Missing credentials — edit the profile to add details' };
+};
+
 const ToolProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
@@ -201,7 +219,17 @@ const ToolProvidersPage: React.FC = () => {
                         {profile.name}
                         <span className="text-xs font-normal opacity-80 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h2>
-                      <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
+                        {(() => {
+                          const status = deriveToolStatus(profile);
+                          return (
+                            <div className="tooltip tooltip-bottom" data-tip={status.description}>
+                              <Badge variant={status.variant} size="sm">{status.label}</Badge>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>

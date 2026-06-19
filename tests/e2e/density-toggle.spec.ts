@@ -42,7 +42,7 @@ function scaleNum(s: string): number {
 async function findDensitySelect(page: Page) {
   const select = page
     .locator('select')
-    .filter({ has: page.locator('option', { hasText: /Compact \(Maximum info\)/ }) })
+    .filter({ has: page.locator('option', { hasText: /Comfortable/ }) })
     .first();
   await expect(select).toBeVisible({ timeout: 10000 });
   return select;
@@ -53,12 +53,17 @@ test.describe('UI Density Toggle - live CSS reflow', () => {
 
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
-    // Always start from a clean slate so reload-persistence tests aren't
-    // contaminated by previous test state.
+    // Start from a clean slate ONCE (first load) so reload-persistence tests
+    // aren't contaminated by previous state — but do NOT re-clear on reload, or
+    // the persistence test would wipe its own saved value before the app reads
+    // it. A sessionStorage sentinel (survives reloads in the same tab) gates it.
     await page.addInitScript(() => {
       try {
-        localStorage.removeItem('density');
-        localStorage.removeItem('compactDensity');
+        if (!sessionStorage.getItem('__density_test_cleared')) {
+          localStorage.removeItem('density');
+          localStorage.removeItem('compactDensity');
+          sessionStorage.setItem('__density_test_cleared', '1');
+        }
       } catch (_) {
         /* noop */
       }

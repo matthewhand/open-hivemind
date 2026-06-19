@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
 
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
@@ -32,6 +32,7 @@ const CONFIG_LIMITS = {
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { status: llmStatus } = useLlmStatus();
   const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
   const _defaultProviderName = llmStatus?.defaultProviders?.[0]?.name;
@@ -86,6 +87,26 @@ const BotCreatePage: React.FC = () => {
       }
     };
     fetchData();
+  }, []);
+
+  // Prefill the form from a template passed via navigation state (e.g. "Use Template").
+  useEffect(() => {
+    const template = (location.state as any)?.template;
+    if (!template) return;
+
+    setFormData(prev => ({
+      ...prev,
+      ...(template.name != null ? { name: template.name } : {}),
+      ...(template.description != null ? { description: template.description } : {}),
+      ...(template.platform != null ? { platform: template.platform } : {}),
+      ...(template.persona != null ? { persona: template.persona } : {}),
+      ...(template.llmProvider != null ? { llmProvider: template.llmProvider } : {}),
+      ...(Array.isArray(template.mcpServers) ? { mcpServers: template.mcpServers } : {}),
+    }));
+
+    // Clear history state so a refresh doesn't re-prefill.
+    window.history.replaceState({}, document.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 

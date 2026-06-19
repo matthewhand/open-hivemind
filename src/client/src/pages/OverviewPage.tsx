@@ -27,6 +27,23 @@ const OverviewPage: React.FC = () => {
     return saved === 'widget';
   });
 
+  // Bumped by QuickActions (e.g. toggling demo mode) to force the dashboard to refetch.
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Getting Started panel dismissal — persisted to localStorage so it stays hidden
+  // across sessions (same key/behavior as the Dashboard page's panel).
+  const [showGettingStarted, setShowGettingStarted] = useState(
+    () => localStorage.getItem('hivemind-hide-getting-started') !== 'true'
+  );
+  const dismissGettingStarted = () => {
+    localStorage.setItem('hivemind-hide-getting-started', 'true');
+    setShowGettingStarted(false);
+  };
+  const restoreGettingStarted = () => {
+    localStorage.removeItem('hivemind-hide-getting-started');
+    setShowGettingStarted(true);
+  };
+
   const tabs = useMemo(() => [
     { key: 'overview',      label: 'Overview'       },
     { key: 'activity',      label: 'Activity'       },
@@ -71,9 +88,9 @@ const OverviewPage: React.FC = () => {
             </div>
           </div>
 
-          <QuickActions onRefresh={() => {}} />
+          <QuickActions onRefresh={() => setRefreshKey((k) => k + 1)} />
 
-          <div className="animate-in fade-in duration-300">
+          <div className="animate-in fade-in duration-300" key={refreshKey}>
             {useWidgetLayout ? <DashboardWidgetSystem /> : <Dashboard />}
           </div>
 
@@ -100,7 +117,16 @@ const OverviewPage: React.FC = () => {
       )}
 
       {activeTab === 'getting-started' && (
-        <GettingStarted />
+        showGettingStarted ? (
+          <GettingStarted onDismiss={dismissGettingStarted} />
+        ) : (
+          <div className="text-center text-base-content/60 py-12">
+            <p className="mb-3">You&apos;ve dismissed the setup guide.</p>
+            <button className="btn btn-sm btn-ghost border border-base-300" onClick={restoreGettingStarted}>
+              Show getting started
+            </button>
+          </div>
+        )
       )}
     </div>
   );

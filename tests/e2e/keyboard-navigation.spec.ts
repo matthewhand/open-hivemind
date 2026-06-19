@@ -259,18 +259,19 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through page content after navigation', async ({ page }) => {
       await page.goto('/admin/bots');
+      await page.getByRole('heading', { name: 'Bots' }).first().waitFor({ state: 'visible' });
 
-      // Tab multiple times to move through sidebar into main content
-      for (let i = 0; i < 10; i++) {
+      // Tab generously to move through the sidebar nav into main content,
+      // checking after each press so we stop once focus lands in main.
+      let focusedInMain = false;
+      for (let i = 0; i < 40 && !focusedInMain; i++) {
         await page.keyboard.press('Tab');
+        focusedInMain = await page.evaluate(() => {
+          const active = document.activeElement;
+          const main = document.querySelector('main, [class*="content"]');
+          return !!active && active !== document.body && (main?.contains(active) ?? false);
+        });
       }
-
-      // Verify focus is somewhere in the main content area
-      const focusedInMain = await page.evaluate(() => {
-        const active = document.activeElement;
-        const main = document.querySelector('main, [class*="content"]');
-        return main?.contains(active) ?? false;
-      });
 
       // Focus should eventually reach main content
       expect(focusedInMain).toBeTruthy();
@@ -431,9 +432,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through settings form fields', async ({ page }) => {
       await page.goto('/admin/settings');
+      // Wait for the lazy-loaded settings form before tabbing (else 0 fields are found).
+      await page.getByRole('heading', { name: 'General Settings' }).waitFor({ state: 'visible' });
 
       const focusedElements: string[] = [];
-      for (let i = 0; i < 12; i++) {
+      // Tab generously — sidebar/nav anchors come before the form fields.
+      for (let i = 0; i < 40; i++) {
         await page.keyboard.press('Tab');
         const tag = await page.evaluate(() => document.activeElement?.tagName ?? '');
         focusedElements.push(tag);

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth, waitForPageReady } from './test-utils';
+import { registerViteSourceBypass, setupAuth, waitForPageReady } from './test-utils';
 
 /**
  * Network Resilience E2E Tests
@@ -203,6 +203,9 @@ test.describe('Network Resilience', () => {
       await page.route('**/api/**', (route) =>
         route.fulfill({ status: 503, json: { error: 'Service Unavailable' } })
       );
+      // Let Vite source modules load (real JS) so only API *data* returns 503 —
+      // otherwise the **/api/** mock 503s /src/services/api/*.ts and the app can't boot.
+      await registerViteSourceBypass(page);
 
       await page.goto('/admin/overview');
       await page.waitForTimeout(3000);

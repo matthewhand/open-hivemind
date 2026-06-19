@@ -59,8 +59,9 @@ test.describe('Monitoring page', () => {
       return route.fulfill({ status: 200, json: {} });
     });
 
-    // Mock all /api/* endpoints
-    await page.route('**/api/**', (route) => {
+    // Mock all /api/* endpoints. Host-rooted match (//host/api/…) so Vite source
+    // modules like /src/services/api/bots.ts aren't caught and broken.
+    await page.route(/\/\/[^/]+\/api\//, (route) => {
       const url = new URL(route.request().url());
       const path = url.pathname;
 

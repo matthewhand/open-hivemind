@@ -98,9 +98,10 @@ test.describe('Memory Providers Page', () => {
     await expect(page.locator('text=Redis Cache Main').first()).toBeVisible();
     await expect(page.locator('text=Pinecone Vector DB').first()).toBeVisible();
 
-    // Verify provider badges appear
-    await expect(page.locator('text=mem0').first()).toBeVisible();
-    await expect(page.locator('text=mem4ai').first()).toBeVisible();
+    // Verify provider badges appear (scope to .badge — the type/provider filter
+    // <select> also contains hidden <option value="mem0"> matches).
+    await expect(page.locator('.badge').filter({ hasText: 'mem0' }).first()).toBeVisible();
+    await expect(page.locator('.badge').filter({ hasText: 'mem4ai' }).first()).toBeVisible();
 
     // Take screenshot of the initial loaded state
     await page.screenshot({
@@ -152,8 +153,8 @@ test.describe('Memory Providers Page', () => {
     // Click the "Create Profile" button
     await page.getByRole('button', { name: 'Create Profile' }).click();
 
-    // Wait for the modal to appear
-    await expect(page.locator('.modal-box')).toBeVisible();
+    // Wait for the modal to appear (:visible — the Delete ConfirmModal is always in the DOM)
+    await expect(page.locator('.modal-box:visible').first()).toBeVisible();
     await expect(page.locator('text=Create Memory Profile').first()).toBeVisible();
 
     // Verify the form fields are present

@@ -277,7 +277,7 @@ const WelcomeSplash: React.FC = () => {
                       {tip.title}
                     </span>
                   </div>
-                  <Badge size="sm" color="success">
+                  <Badge size="sm" variant="success">
                     Done
                   </Badge>
                 </div>
