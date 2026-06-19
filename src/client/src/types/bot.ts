@@ -79,6 +79,12 @@ export interface Persona {
   category: PersonaCategory | string;
   traits: PersonaTrait[];
   systemPrompt: string;
+  /** System prompt string (API alias for systemPrompt) */
+  prompt?: string;
+  /** Bot IDs assigned to this persona */
+  bots?: string[];
+  /** Whether this persona is locked by an environment variable and cannot be edited */
+  isEnvLocked?: boolean;
   responseBehavior?: PersonaResponseBehavior;
   isBuiltIn?: boolean;
   usageCount?: number;

@@ -20,7 +20,7 @@ export interface TabItem {
 /** @deprecated Use TabItem */
 type Tab = TabItem;
 
-interface TabsProps {
+export interface TabsProps {
   tabs: Tab[];
   defaultTab?: string;
   /** Controlled active tab id */
