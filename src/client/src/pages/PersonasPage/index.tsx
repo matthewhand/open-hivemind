@@ -254,7 +254,7 @@ const PersonasPage: React.FC = () => {
               </button>
               <button
                 className="text-error hover:bg-error/10 transition-colors"
-                onClick={() => handleDeletePersona(selectedPersona.id)}
+                onClick={() => handleDeletePersona(selectedPersona.id, (msg) => setError(msg))}
                 title="Delete Persona"
               >
                 <Trash2 className="w-5 h-5" />
@@ -304,7 +304,7 @@ const PersonasPage: React.FC = () => {
         isOpen={showCreateModal || showEditModal}
         onClose={closeModals}
         isViewMode={false}
-        editingPersona={editingPersona}
+        editingPersona={editingPersona as any}
         cloningPersonaId={cloningPersonaId}
         personaName={personaName}
         setPersonaName={setPersonaName}

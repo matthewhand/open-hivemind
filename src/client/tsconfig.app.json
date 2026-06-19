@@ -13,6 +13,11 @@
       "@webui/*": ["webui/src/*"]
     },
 
+    /* Interop */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["vite/client"],
+
     /* Bundler mode */
     "moduleResolution": "node",
     "allowImportingTsExtensions": false,

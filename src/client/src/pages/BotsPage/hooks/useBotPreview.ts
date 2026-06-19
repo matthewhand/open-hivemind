@@ -31,9 +31,9 @@ export const useBotPreview = (): {
     setActivityError(null);
     try {
       const activityJson = await withRetry(() =>
-        apiService.get<any>(`/api/bots/${botId}/activity?limit=${limit}`)
+        apiService.get(`/api/bots/${botId}/activity?limit=${limit}`) as Promise<any>
       );
-      setActivityLogs(activityJson.data?.activity || []);
+      setActivityLogs((activityJson as any).data?.activity || []);
     } catch (err) {
       ErrorService.report(err, { botId, action: 'fetchActivityLogs' });
       setActivityError('Failed to load activity');
@@ -45,9 +45,9 @@ export const useBotPreview = (): {
     setChatError(null);
     try {
       const chatJson = await withRetry(() =>
-        apiService.get<any>(`/api/bots/${botId}/chat?limit=20`)
+        apiService.get(`/api/bots/${botId}/chat?limit=20`) as Promise<any>
       );
-      setChatHistory(chatJson.data?.messages || []);
+      setChatHistory((chatJson as any).data?.messages || []);
     } catch (err) {
       ErrorService.report(err, { botId, action: 'fetchChatHistory' });
       setChatError('Failed to load chat history');

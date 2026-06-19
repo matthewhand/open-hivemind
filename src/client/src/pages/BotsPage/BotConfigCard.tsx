@@ -48,12 +48,23 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
   // a glance (still readable and fully clickable).
   const isDisabledBot = status === 'disabled';
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onPreview && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onPreview(bot);
+    }
+  };
+
   return (
     <Card
       className={`shadow-xl border transition-shadow duration-200 cursor-pointer
         ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}
         ${isDisabledBot ? 'opacity-60 saturate-50 bg-base-200/60' : ''}`}
       onClick={onPreview ? () => onPreview(bot) : undefined}
+      onKeyDown={onPreview ? handleKeyDown : undefined}
+      role={onPreview ? 'button' : undefined}
+      tabIndex={onPreview ? 0 : undefined}
+      aria-label={onPreview ? bot.name : undefined}
     >
       <Card.Body>
         {/* Header */}

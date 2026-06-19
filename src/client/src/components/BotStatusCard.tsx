@@ -114,13 +114,15 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
 
   const healthScore = getHealthScore();
 
-  const handleRefreshClick = (e: React.MouseEvent) => {
+  const handleRefreshClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!onRefresh) { return; }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await onRefresh();
+    } finally {
       setLoading(false);
-      if (onRefresh) { onRefresh(); }
-    }, 1000);
+    }
   };
 
   const accordionItems = [
@@ -358,7 +360,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
-              disabled={loading} aria-busy={loading}
+              disabled={loading || !onRefresh} aria-busy={loading}
               aria-label={`Refresh status for ${bot.name}`}
             >
               {loading ? <LoadingSpinner size="xs" /> : <RotateCcw className="w-4 h-4" />}

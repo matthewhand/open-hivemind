@@ -61,7 +61,7 @@ export const usePersonasData = (): {
     refetch: tqRefetchPersonas,
   } = useQuery<ApiPersona[]>({
     queryKey: ['personas'],
-    queryFn: () => apiService.get<ApiPersona[]>('/api/personas'),
+    queryFn: () => apiService.get('/api/personas') as Promise<ApiPersona[]>,
     staleTime: 30_000,
     gcTime: 60_000,
   });
@@ -71,7 +71,7 @@ export const usePersonasData = (): {
     const filledBots = botList.map((b: any) => ({ ...b, id: b.id || b.name }));
     setBots(filledBots);
 
-    const rawPersonas = Array.isArray(personasResponse) ? personasResponse : (personasResponse?.data || []);
+    const rawPersonas = Array.isArray(personasResponse) ? personasResponse : ((personasResponse as any)?.data || []);
     const mappedPersonas = rawPersonas.map((p) => {
       const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
       return {
