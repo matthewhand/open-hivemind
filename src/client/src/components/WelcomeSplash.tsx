@@ -15,7 +15,7 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import { Badge } from './DaisyUI/Badge';
 import Steps from './DaisyUI/Steps';
-import { apiService } from '../services/api';
+import { apiService, type ApiEnvelope } from '../services/api';
 import TipRotator from './TipRotator';
 
 // ---------------------------------------------------------------------------
@@ -23,9 +23,9 @@ import TipRotator from './TipRotator';
 // ---------------------------------------------------------------------------
 
 interface ConfigStatus {
-  llmConfigured: boolean;
-  botConfigured: boolean;
-  messengerConfigured: boolean;
+  llmConfigured?: boolean;
+  botConfigured?: boolean;
+  messengerConfigured?: boolean;
 }
 
 interface ConfigTip {
@@ -60,7 +60,7 @@ const WelcomeSplash: React.FC = () => {
   // Fetch configuration status
   const fetchConfigStatus = useCallback(async () => {
     try {
-      const data = await apiService.get('/api/dashboard/config-status') as any;
+      const data = await apiService.get<ApiEnvelope<ConfigStatus> & ConfigStatus>('/api/dashboard/config-status');
       setConfigStatus(data?.data || data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch config status');

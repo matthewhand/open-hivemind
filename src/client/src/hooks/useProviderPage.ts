@@ -94,8 +94,11 @@ export function useProviderPage(config: UseProviderPageConfig): UseProviderPageR
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiService.get(apiPath);
-      setProfiles((res as any)[entityKey] || []);
+      // Provider responses are keyed by a dynamic entity name (e.g. "llmProviders",
+      // "messageProviders") whose profiles are dynamically shaped, so we type the
+      // envelope as a string-keyed record of arrays rather than casting to `any`.
+      const res = await apiService.get<Record<string, unknown[]>>(apiPath);
+      setProfiles(res[entityKey] || []);
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : String(err)) || `Failed to load ${entityKey} profiles`);
     } finally {

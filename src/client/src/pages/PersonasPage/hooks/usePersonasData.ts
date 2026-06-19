@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '../../../services/api';
+import { apiService, type ApiEnvelope } from '../../../services/api';
 import type { Bot, Persona as BasePersona } from '../../../types/bot';
 import useUrlParams from '../../../hooks/useUrlParams';
 import type { PersonaResponseBehavior } from '../../../types/bot';
@@ -54,14 +54,16 @@ export const usePersonasData = (): {
     staleTime: 30_000,
     gcTime: 60_000,
   });
+  // /api/personas returns a bare array, but defensively tolerate an enveloped
+  // `{ data: [...] }` variant too — hence the union type below.
   const {
     data: personasResponse,
     isLoading: personasLoading,
     error: personasError,
     refetch: tqRefetchPersonas,
-  } = useQuery<ApiPersona[]>({
+  } = useQuery<ApiPersona[] | ApiEnvelope<ApiPersona[]>>({
     queryKey: ['personas'],
-    queryFn: () => apiService.get('/api/personas') as Promise<ApiPersona[]>,
+    queryFn: () => apiService.get<ApiPersona[]>('/api/personas'),
     staleTime: 30_000,
     gcTime: 60_000,
   });
@@ -71,7 +73,9 @@ export const usePersonasData = (): {
     const filledBots = botList.map((b: any) => ({ ...b, id: b.id || b.name }));
     setBots(filledBots);
 
-    const rawPersonas = Array.isArray(personasResponse) ? personasResponse : ((personasResponse as any)?.data || []);
+    const rawPersonas: ApiPersona[] = Array.isArray(personasResponse)
+      ? personasResponse
+      : (personasResponse?.data || []);
     const mappedPersonas = rawPersonas.map((p) => {
       const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
       return {

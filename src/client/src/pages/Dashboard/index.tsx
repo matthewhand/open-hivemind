@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
-import { apiService } from '../../services/api';
+import { apiService, type ApiEnvelope } from '../../services/api';
 
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
@@ -15,6 +15,20 @@ import Button from '../../components/DaisyUI/Button';
 import Toggle from '../../components/DaisyUI/Toggle';
 
 const SystemHealth = lazy(() => import('../../components/SystemHealth'));
+
+// Shapes read from the dashboard/onboarding status endpoints. The handlers wrap
+// their payload in `{ success, data }`, but these callers also defensively read
+// the unwrapped payload, so we model both via `ApiEnvelope<T> & Partial<T>`.
+interface OnboardingStatus {
+  completed?: boolean;
+  step?: number;
+}
+
+interface ConfigStatus {
+  llmConfigured?: boolean;
+  botConfigured?: boolean;
+  messengerConfigured?: boolean;
+}
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +69,7 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const checkOnboarding = async (): Promise<void> => {
       try {
-        const data = await apiService.get('/api/onboarding/status') as any;
+        const data = await apiService.get<ApiEnvelope<OnboardingStatus> & OnboardingStatus>('/api/onboarding/status');
         const completed = data?.completed ?? data?.data?.completed ?? false;
         if (!completed) {
           navigate('/onboarding', { replace: true });
@@ -65,7 +79,7 @@ const DashboardPage: React.FC = () => {
         // Even if onboarding is "completed", check if LLM is actually configured.
         // This catches the case where bots exist from env but no LLM key is set.
         try {
-          const configStatus = await apiService.get('/api/dashboard/config-status') as any;
+          const configStatus = await apiService.get<ApiEnvelope<ConfigStatus> & ConfigStatus>('/api/dashboard/config-status');
           const status = configStatus?.data || configStatus;
           const anyIncomplete = !status.llmConfigured || !status.botConfigured || !status.messengerConfigured;
           setShowWelcome(anyIncomplete);

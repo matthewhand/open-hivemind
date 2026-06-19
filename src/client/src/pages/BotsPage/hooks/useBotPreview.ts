@@ -1,8 +1,13 @@
 import { useCallback, useState } from 'react';
-import { apiService } from '../../../services/api';
+import { apiService, type ApiEnvelope } from '../../../services/api';
 import { ErrorService } from '../../../services/ErrorService';
 import type { BotConfig } from '../../../types/bot';
 import { withRetry } from '../../../utils/withRetry';
+
+// Preview payloads are loosely-shaped log entries rendered generically, so the
+// inner lists are typed as `unknown[]` rather than cast to `any`.
+type ActivityPreviewResponse = ApiEnvelope<{ activity?: unknown[] }>;
+type ChatPreviewResponse = ApiEnvelope<{ messages?: unknown[] }>;
 
 export const useBotPreview = (): {
   previewBot: BotConfig | null;
@@ -31,9 +36,9 @@ export const useBotPreview = (): {
     setActivityError(null);
     try {
       const activityJson = await withRetry(() =>
-        apiService.get(`/api/bots/${botId}/activity?limit=${limit}`) as Promise<any>
+        apiService.get<ActivityPreviewResponse>(`/api/bots/${botId}/activity?limit=${limit}`)
       );
-      setActivityLogs((activityJson as any).data?.activity || []);
+      setActivityLogs(activityJson.data?.activity || []);
     } catch (err) {
       ErrorService.report(err, { botId, action: 'fetchActivityLogs' });
       setActivityError('Failed to load activity');
@@ -45,9 +50,9 @@ export const useBotPreview = (): {
     setChatError(null);
     try {
       const chatJson = await withRetry(() =>
-        apiService.get(`/api/bots/${botId}/chat?limit=20`) as Promise<any>
+        apiService.get<ChatPreviewResponse>(`/api/bots/${botId}/chat?limit=20`)
       );
-      setChatHistory((chatJson as any).data?.messages || []);
+      setChatHistory(chatJson.data?.messages || []);
     } catch (err) {
       ErrorService.report(err, { botId, action: 'fetchChatHistory' });
       setChatError('Failed to load chat history');

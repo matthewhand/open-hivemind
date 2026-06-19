@@ -45,6 +45,7 @@ export type {
   ActivityEvent,
   ActivityTimelineBucket,
   ActivityResponse,
+  ApiEnvelope,
   RateLimitInfo,
   RateLimitListener,
 } from './api/types';

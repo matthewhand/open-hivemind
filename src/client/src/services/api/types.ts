@@ -228,6 +228,18 @@ export interface ActivityResponse {
   }>;
 }
 
+/**
+ * Standard server response envelope, mirroring `ApiResponse.success(data)` on
+ * the backend (`{ success: true, data: T }`). Many endpoints wrap their payload
+ * this way; some legacy callers also read the unwrapped payload directly, so
+ * `data` is optional here to model both shapes without resorting to `as any`.
+ */
+export interface ApiEnvelope<T> {
+  success?: boolean;
+  data?: T;
+  error?: string;
+}
+
 export interface RateLimitInfo {
   limit: number;
   remaining: number;

@@ -98,7 +98,7 @@ const PersonasPage: React.FC = () => {
     setResponseBehavior,
   } = usePersonaActions(
     personas,
-    setPersonas as any,
+    setPersonas,
     bots,
     fetchData,
     successToast,
@@ -304,7 +304,7 @@ const PersonasPage: React.FC = () => {
         isOpen={showCreateModal || showEditModal}
         onClose={closeModals}
         isViewMode={false}
-        editingPersona={editingPersona as any}
+        editingPersona={editingPersona}
         cloningPersonaId={cloningPersonaId}
         personaName={personaName}
         setPersonaName={setPersonaName}
@@ -316,7 +316,7 @@ const PersonasPage: React.FC = () => {
         setPersonaCategory={setPersonaCategory}
         selectedBotIds={selectedBotIds}
         setSelectedBotIds={setSelectedBotIds}
-        bots={bots as any}
+        bots={bots}
         loading={saving}
         onSave={handleSave}
         avatarStyle={avatarStyle}
