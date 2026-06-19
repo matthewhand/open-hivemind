@@ -27,15 +27,15 @@ describe('Tooltip', () => {
       expect(root).toHaveAttribute('data-tip', 'Hello');
     });
 
-    it('exposes the tooltip role and live region for assistive tech', () => {
+    it('does not expose the tooltip role and live region on the wrapper to avoid a11y conflicts', () => {
       render(
         <Tooltip content="Hello">
           <button data-testid="child">Action</button>
         </Tooltip>
       );
       const root = getTooltipRoot();
-      expect(root).toHaveAttribute('role', 'tooltip');
-      expect(root).toHaveAttribute('aria-live', 'polite');
+      expect(root).not.toHaveAttribute('role', 'tooltip');
+      expect(root).not.toHaveAttribute('aria-live', 'polite');
     });
   });
 

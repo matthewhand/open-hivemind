@@ -48,8 +48,6 @@ const Tooltip: React.FC<TooltipProps> = ({
     <div
       className={classes}
       data-tip={content}
-      role="tooltip"
-      aria-live="polite"
     >
       {children}
     </div>
