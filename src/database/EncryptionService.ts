@@ -38,8 +38,14 @@ export class EncryptionService {
         this.encryptionKey = fs.readFileSync(keyPath);
         debug('Encryption key initialized from .key file');
       } else {
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error('FATAL: DATABASE_ENCRYPTION_KEY is required in production environment.');
+        if (
+          process.env.NODE_ENV === 'production' &&
+          process.env.ALLOW_INSECURE_PRODUCTION !== 'true'
+        ) {
+          throw new Error(
+            'FATAL: DATABASE_ENCRYPTION_KEY is required in production environment. ' +
+              'Set it to enable at-rest encryption, or set ALLOW_INSECURE_PRODUCTION=true to run degraded (plaintext).'
+          );
         }
 
         console.warn(
