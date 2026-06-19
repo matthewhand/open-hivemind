@@ -18,8 +18,8 @@
  * defaults (DEMO_MODE, SKIP_MESSENGERS, secrets) which are read later and so
  * don't need this pre-import timing.
  */
-import fs from 'fs';
 import crypto from 'crypto';
+import fs from 'fs';
 
 const isServerless = !!(
   process.env.LAMBDA_TASK_ROOT ||
@@ -57,7 +57,15 @@ if (isServerless) {
     }
   }
   try {
-    for (const sub of ['', '/config', '/config/providers', '/config/user', '/data', '/uploads', '/logs']) {
+    for (const sub of [
+      '',
+      '/config',
+      '/config/providers',
+      '/config/user',
+      '/data',
+      '/uploads',
+      '/logs',
+    ]) {
       fs.mkdirSync(`${base}${sub}`, { recursive: true });
     }
     // __dirname/NODE_CONFIG_DIR-based managers (e.g. ProviderConfigManager).
