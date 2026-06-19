@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Bot, User, MessageSquare, RefreshCw, AlertCircle, ChevronDown, ChevronUp, Zap, AtSign, MessageCircle } from 'lucide-react';
 import { Badge } from './DaisyUI/Badge';
 import Tooltip from './DaisyUI/Tooltip';
+import Button from './DaisyUI/Button';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -145,7 +146,7 @@ const TimelineEntry: React.FC<{ msg: ChatMessage; isLast: boolean }> = ({ msg, i
 
           {isLong && (
             <button
-              className="text-[10px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5"
+              className="text-[10px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none rounded"
               onClick={() => setExpanded(!expanded)}
               aria-label={expanded ? 'Show less of the message' : 'Show more of the message'}
               aria-expanded={expanded}
@@ -206,9 +207,9 @@ const BotResponseTimeline: React.FC<BotResponseTimelineProps> = ({
         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
         <p className="text-xs text-error mb-2">{chatError}</p>
         {onRetry && (
-          <button className="btn btn-ghost btn-xs" onClick={onRetry} aria-label="Retry loading messages">
+          <Button variant="ghost" size="xs" onClick={onRetry} aria-label="Retry loading messages">
             <RefreshCw className="w-3 h-3 mr-1" /> Retry
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -238,9 +239,9 @@ const BotResponseTimeline: React.FC<BotResponseTimelineProps> = ({
           <span className="text-[10px] uppercase tracking-wider font-bold text-base-content/40">
             Response History
           </span>
-          <button className="btn btn-ghost btn-xs btn-square" onClick={onRefresh} aria-label="Refresh">
+          <Button variant="ghost" size="xs" className="btn-square" onClick={onRefresh} aria-label="Refresh">
             <RefreshCw className="w-3 h-3" />
-          </button>
+          </Button>
         </div>
       )}
 
