@@ -6,6 +6,7 @@ import Badge from '../../components/DaisyUI/Badge';
 import Button from '../../components/DaisyUI/Button';
 import Dropdown from '../../components/DaisyUI/Dropdown';
 import { useUIStore } from '../../store/uiStore';
+import { botStatusLabel } from '../../utils/botStatus';
 
 interface BotConfigCardProps {
   bot: BotConfig;
@@ -16,6 +17,7 @@ interface BotConfigCardProps {
   onToggleStatus?: (bot: BotConfig) => void;
 }
 
+
 const STATUS_BADGE: Record<string, 'success' | 'ghost' | 'error' | 'info' | 'neutral'> = {
   active: 'success',
   running: 'success',
@@ -25,17 +27,6 @@ const STATUS_BADGE: Record<string, 'success' | 'ghost' | 'error' | 'info' | 'neu
   error: 'error',
   starting: 'info',
   stopping: 'ghost',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  active: 'Running',
-  running: 'Running',
-  inactive: 'Stopped',
-  stopped: 'Stopped',
-  disabled: 'Disabled',
-  error: 'Error',
-  starting: 'Starting',
-  stopping: 'Stopping',
 };
 
 const BotConfigCard: React.FC<BotConfigCardProps> = ({
@@ -51,7 +42,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
 
   const status = bot.status || 'inactive';
   const badgeVariant = STATUS_BADGE[status] ?? 'neutral';
-  const statusLabel = STATUS_LABEL[status] ?? status;
+  const statusLabel = botStatusLabel(status);
   const isActive = status === 'active' || status === 'running';
   // Disabled bots are visually muted so they stand apart from active ones at
   // a glance (still readable and fully clickable).

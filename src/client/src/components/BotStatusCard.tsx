@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { Bot as BotType } from '../services/api';
+import { botStatusVariant } from '../utils/botStatus';
 
 interface BotStatusCardProps {
   bot: BotType;
@@ -65,22 +66,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
     }
   };
 
-  const getStatusVariant = (status: string): 'success' | 'error' | 'warning' | 'neutral' => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-      case 'connected':
-      case 'healthy':
-        return 'success';
-      case 'error':
-      case 'disconnected':
-        return 'error';
-      case 'warning':
-      case 'connecting':
-        return 'warning';
-      default:
-        return 'neutral';
-    }
-  };
+  const getStatusVariant = botStatusVariant;
 
   const getProviderIcon = (provider: string) => {
     switch (provider?.toLowerCase()) {
@@ -362,7 +348,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
-              aria-label={String(`View details for ${bot.name}`)}
+              aria-label={`View details for ${bot.name}`}
             >
               <Settings className="w-4 h-4" />
               Details
@@ -373,7 +359,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
               disabled={loading} aria-busy={loading}
-              aria-label={String(`Refresh status for ${bot.name}`)}
+              aria-label={`Refresh status for ${bot.name}`}
             >
               {loading ? <LoadingSpinner size="xs" /> : <RotateCcw className="w-4 h-4" />}
               Refresh

@@ -10,6 +10,7 @@ import DiagnosticModal from './BotManagement/DiagnosticModal';
 import InsightsModal from './BotManagement/InsightsModal';
 import VersionHistoryModal from './BotManagement/VersionHistoryModal';
 import BenchmarkModal from './BotManagement/BenchmarkModal';
+import { botStatusVariant } from '../utils/botStatus';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -19,14 +20,6 @@ interface DashboardBotCardProps {
   getProviderIcon: (provider: string) => string;
   getStatusColor: (status: string) => string;
 }
-
-/** Map status strings to valid Badge variants. */
-const toBadgeVariant = (color: string): 'success' | 'warning' | 'error' | 'neutral' => {
-  if (color === 'success') return 'success';
-  if (color === 'warning') return 'warning';
-  if (color === 'error') return 'error';
-  return 'neutral';
-};
 
 const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   bot,
@@ -59,9 +52,8 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-warning focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsBenchmarkOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-warning"
                    aria-label={`Run performance benchmark for ${bot.name}`}
                  >
                     <Trophy className="w-4 h-4" />
@@ -71,9 +63,8 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-secondary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsHistoryOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-secondary"
                    aria-label={`View version history for ${bot.name}`}
                  >
                     <History className="w-4 h-4" />
@@ -83,9 +74,8 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsInsightsOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-primary"
                    aria-label={`View AI performance insights for ${bot.name}`}
                  >
                     <Sparkles className="w-4 h-4" />
@@ -95,16 +85,15 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                    onClick={() => setIsDiagnosticOpen(true)}
-                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-visible:opacity-100 hover:opacity-100 transition-opacity"
                    aria-label={`Run diagnostic for ${bot.name}`}
                  >
                     <Activity className="w-4 h-4" />
                  </Button>
                </Tooltip>
                <Badge
-                variant={toBadgeVariant(getStatusColor(botStatus))}
+                variant={botStatusVariant(botStatus)}
                 size="small"
               >
                 {botStatus.toUpperCase()}
@@ -115,16 +104,13 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         {/* Provider badges */}
         <ul className="flex flex-wrap gap-1.5 mt-3" aria-label="Bot Providers">
           <li><Badge variant="neutral" size="small">
-            {bot.messageProvider}
+            📱 {bot.messageProvider}
           </Badge></li>
           {bot.llmProvider && (
             <li><Badge variant="secondary" size="small">
-              {bot.llmProvider}
+              🤖 {bot.llmProvider}
             </Badge></li>
           )}
-          <li><Badge variant="neutral" style="outline" className="text-xs">
-            📱 {bot.messageProvider.toUpperCase()}
-          </Badge></li>
         </ul>
 
         {/* Error alert (only when errors exist) */}
@@ -136,7 +122,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Actions */}
         <div className="card-actions justify-end mt-3">
-          <Button variant="outline" size="sm" aria-label={String(`View details for ${bot.name}`)}>
+          <Button variant="outline" size="sm" aria-label={`View details for ${bot.name}`}>
             Details
           </Button>
         </div>
