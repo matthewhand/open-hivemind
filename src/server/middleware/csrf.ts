@@ -62,6 +62,9 @@ function startCleanupInterval() {
     },
     60 * 60 * 1000
   ); // Clean up every hour
+  // Don't let this hourly background timer keep the process alive (e.g. Jest
+  // open-handle leaks that force --forceExit and mask real teardown issues).
+  cleanupInterval?.unref?.();
 }
 
 startCleanupInterval();

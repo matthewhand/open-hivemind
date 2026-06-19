@@ -1,11 +1,7 @@
 # Open-Hivemind Architecture
 
-> This is the **how it's built** map. For *what it's for* and *why*, start with the
-> [Vision](../VISION.md) and the concept docs — [Society of Agents](../concepts/society-of-agents.md),
-> [Personas](../concepts/personas.md), [Guards](../concepts/guards.md),
-> [Memory](../concepts/memory.md), [MCP Tools](../concepts/mcp.md),
-> [LLM Providers](../concepts/llm-providers.md). Where files live at runtime:
-> [Data Directories](../reference/data-directories.md).
+> New here? Read the [Vision](../VISION.md) first for *why* the system is shaped this way, and the
+> [Legacy Architecture](legacy/README.md) section for designs this one replaced.
 
 ## System Overview
 

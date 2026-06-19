@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm install --no-frozen-lockfile && pnpm run build:netlify"
+  command = "pnpm install --frozen-lockfile && pnpm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
@@ -7,11 +7,23 @@
   NODE_VERSION = "22"
   PNPM_VERSION = "10.25.0"
 
+# dist/netlify/functions/server.js is already pre-bundled by esbuild
+# (scripts/bundle-serverless.mjs); nft tracing only needs to pick up the
+# externalized native modules (better-sqlite3, bcrypt) from node_modules.
+[functions]
+  node_bundler = "nft"
+
 [dev]
   command = "npm run dev"
 
 [[redirects]]
   from = "/api/*"
+  to = "/.netlify/functions/server"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
   to = "/.netlify/functions/server"
   status = 200
   force = true

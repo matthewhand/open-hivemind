@@ -591,17 +591,34 @@ const ActivityPage: React.FC = () => {
   // properties of undefined (reading 'forEach')". Normalize once, use everywhere.
   const safeFilteredEvents = filteredEvents ?? [];
 
-  // Group events into conversation threads (by channel + user)
+  // Group events into per-channel conversation threads. A channel can host
+  // several personas at once (the whole point of a hivemind), so the thread
+  // key is the channel — NOT channel+bot — and every bot that chimed in shows
+  // up inside the same transcript.
   const conversationThreads = useMemo(() => {
     const threads = new Map<string, ActivityEvent[]>();
     safeFilteredEvents.forEach(event => {
-      const threadKey = `${event.channelId}-${event.userId}-${event.botName}`;
+      const threadKey = event.channelName || event.channelId || 'unknown-channel';
       if (!threads.has(threadKey)) {
         threads.set(threadKey, []);
       }
       threads.get(threadKey)!.push(event);
     });
-    return threads;
+    return Array.from(threads.entries())
+      .map(([channelLabel, threadEvents]) => {
+        const sorted = [...threadEvents].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        return {
+          channelLabel,
+          events: sorted,
+          botNames: Array.from(
+            new Set(sorted.filter(e => e.messageType === 'outgoing').map(e => e.botName))
+          ),
+          lastActivity: new Date(sorted[sorted.length - 1].timestamp).getTime(),
+        };
+      })
+      .sort((a, b) => b.lastActivity - a.lastActivity);
   }, [safeFilteredEvents]);
 
   const timelineEvents = safeFilteredEvents.map(event => ({
@@ -1034,7 +1051,7 @@ const ActivityPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <p className="text-sm text-base-content/60">
           {viewMode === 'conversation'
-            ? `Grouped into ${conversationThreads.size} conversation${conversationThreads.size !== 1 ? 's' : ''}`
+            ? `Grouped into ${conversationThreads.length} conversation${conversationThreads.length !== 1 ? 's' : ''}`
             : `${safeFilteredEvents.length} event${safeFilteredEvents.length !== 1 ? 's' : ''}`}
         </p>
         <Join>
@@ -1088,60 +1105,67 @@ const ActivityPage: React.FC = () => {
             />
           ) : viewMode === 'conversation' ? (
             <div className="space-y-4 p-4">
-              {Array.from(conversationThreads.entries()).map(([threadKey, threadEvents]) => {
-                const [channelId, userId, botName] = threadKey.split('-');
-                return (
-                  <Card key={threadKey} compact>
-                    <div className="px-4 py-2 bg-base-200 border-b border-base-300 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="primary" size="xs">{botName}</Badge>
-                        <span className="text-base-content/60">User: {userId.slice(0, 8)}…</span>
-                        <span className="text-base-content/40">•</span>
-                        <span className="text-base-content/60">Channel: {channelId.slice(0, 8)}…</span>
-                      </div>
-                      <span className="text-xs text-base-content/50">{threadEvents.length} messages</span>
+              {conversationThreads.map((thread) => (
+                <Card key={thread.channelLabel} compact>
+                  <div className="px-4 py-2 bg-base-200 border-b border-base-300 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
+                      <span className="font-medium text-base-content/80">{thread.channelLabel}</span>
+                      {thread.botNames.length > 0 && (
+                        <>
+                          <span className="text-base-content/40">•</span>
+                          {thread.botNames.map((name) => (
+                            <Badge key={name} variant="primary" size="xs">{name}</Badge>
+                          ))}
+                        </>
+                      )}
                     </div>
-                    <div className="p-4 space-y-2 max-h-96 overflow-y-auto">
-                      {threadEvents.map((evt) => (
-                        <div
-                          key={evt.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg text-sm ${
-                            evt.messageType === 'incoming'
-                              ? 'bg-base-200'
-                              : evt.status === 'error' || evt.status === 'timeout'
-                              ? 'bg-error/10 border border-error/20'
-                              : 'bg-success/10'
-                          }`}
-                        >
-                          <div className={`w-2 h-2 rounded-full mt-1.5 ${
-                            evt.messageType === 'incoming' ? 'bg-primary' :
-                            evt.status === 'error' || evt.status === 'timeout' ? 'bg-error' : 'bg-success'
-                          }`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">
-                                {evt.messageType === 'incoming' ? 'User' : evt.botName}
-                              </span>
+                    <span className="text-xs text-base-content/50">{thread.events.length} messages</span>
+                  </div>
+                  <div className="p-4 space-y-2 max-h-[40rem] overflow-y-auto">
+                    {thread.events.map((evt) => (
+                      <div
+                        key={evt.id}
+                        className={`flex items-start gap-3 p-3 rounded-lg text-sm ${
+                          evt.messageType === 'incoming'
+                            ? 'bg-base-200'
+                            : evt.status === 'error' || evt.status === 'timeout'
+                            ? 'bg-error/10 border border-error/20'
+                            : 'bg-success/10'
+                        }`}
+                      >
+                        <div className={`w-2 h-2 rounded-full mt-1.5 ${
+                          evt.messageType === 'incoming' ? 'bg-primary' :
+                          evt.status === 'error' || evt.status === 'timeout' ? 'bg-error' : 'bg-success'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {evt.messageType === 'incoming' ? (evt.userName || 'User') : evt.botName}
+                            </span>
+                            <span className="text-xs text-base-content/40">
+                              {new Date(evt.timestamp).toLocaleTimeString()}
+                            </span>
+                            {evt.processingTime && (
                               <span className="text-xs text-base-content/40">
-                                {new Date(evt.timestamp).toLocaleTimeString()}
+                                ({evt.processingTime}ms)
                               </span>
-                              {evt.processingTime && (
-                                <span className="text-xs text-base-content/40">
-                                  ({evt.processingTime}ms)
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-base-content/60 mt-0.5">
-                              {evt.status === 'error' ? `Error: ${evt.errorMessage || 'Unknown'}` :
-                               evt.messageType} via {evt.provider} → {evt.llmProvider}
-                            </p>
+                            )}
                           </div>
+                          {evt.content && (
+                            <p className="text-sm text-base-content/90 mt-1">{evt.content}</p>
+                          )}
+                          <p className="text-xs text-base-content/60 mt-0.5">
+                            {evt.status === 'error' ? `Error: ${evt.errorMessage || 'Unknown'}` :
+                             evt.messageType} via {evt.provider}
+                            {/* Only bot replies went through an LLM. */}
+                            {evt.messageType === 'outgoing' && <> → {evt.llmProvider}</>}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </Card>
-                );
-              })}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ))}
             </div>
           ) : (
             <div className="p-4">

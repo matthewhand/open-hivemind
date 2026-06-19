@@ -330,7 +330,10 @@ export class DashboardService {
       ...event,
       userId: this.redactString(event.userId) ?? '',
       channelId: this.redactString(event.channelId) ?? '',
-      llmProvider: bot?.llmProvider || 'unknown',
+      // Prefer the configured bot's provider, but fall back to what the event
+      // itself recorded (e.g. demo-mode personas that aren't registered in
+      // BotConfigurationManager) before giving up with 'unknown'.
+      llmProvider: bot?.llmProvider || event.llmProvider || 'unknown',
     };
   }
 

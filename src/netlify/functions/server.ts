@@ -1,57 +1,25 @@
-import cors from 'cors';
-import express from 'express';
+/**
+ * Netlify Functions entry point.
+ *
+ * Wraps the real Express app (see src/server/serverlessApp.ts) with
+ * serverless-http. netlify.toml routes /api/* and /health here; the built
+ * WebUI is published to the CDN and served directly.
+ *
+ * This file is pre-bundled by scripts/build-netlify.sh (esbuild) into
+ * dist/netlify/functions/server.js so that tsconfig path aliases and
+ * TypeScript are resolved at build time.
+ */
 import serverless from 'serverless-http';
+import { getServerlessApp } from '../../server/serverlessApp';
 
-// Create Express app
-const app = express();
+type ServerlessHandler = (event: unknown, context: unknown) => Promise<unknown>;
 
-// Set up middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
-    credentials: true,
-  })
-);
+let cachedHandler: ServerlessHandler | null = null;
 
-// API documentation
-app.get('/api', (req, res) => {
-  res.json({
-    name: 'Hivemind WebUI API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      admin: '/api/admin',
-      agents: '/api/agents',
-      mcp: '/api/mcp',
-      activity: '/api/activity',
-      webui: '/api/webui',
-      dashboard: '/api/dashboard',
-      config: '/api/config',
-    },
-    documentation: '/api/docs',
-  });
-});
-
-// API health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
-// API fallback - return 404 for unknown API routes
-app.get('/api/*', (req, res) => {
-  res.status(404).json({ error: 'API endpoint not found' });
-});
-
-// Root handler for the function itself (if accessed directly)
-app.get('/', (req, res) => {
-  res.json({ status: 'Open-Hivemind API Function Operational' });
-});
-
-// Export handler for Netlify Functions
-export const handler = serverless(app);
+export const handler = async (event: unknown, context: unknown): Promise<unknown> => {
+  if (!cachedHandler) {
+    const app = await getServerlessApp();
+    cachedHandler = serverless(app) as ServerlessHandler;
+  }
+  return cachedHandler(event, context);
+};

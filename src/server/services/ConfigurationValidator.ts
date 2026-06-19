@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import { hasEnvMessageProfileForProvider } from '../../config/envProfiles';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { CONFIG_LIMITS } from '../../types/config';
 
@@ -579,6 +580,20 @@ export class ConfigurationValidator {
     if (config.messageProvider === 'discord') {
       if (process.env.DISCORD_BOT_TOKEN) {
         warnings.push('Discord token will be overridden by DISCORD_BOT_TOKEN environment variable');
+      } else if (hasEnvMessageProfileForProvider('discord')) {
+        warnings.push(
+          'Discord token may be overridden by MESSAGE_PROFILE_*_BOT_TOKEN environment variable'
+        );
+      }
+    }
+
+    if (config.messageProvider === 'slack') {
+      if (process.env.SLACK_BOT_TOKEN) {
+        warnings.push('Slack token will be overridden by SLACK_BOT_TOKEN environment variable');
+      } else if (hasEnvMessageProfileForProvider('slack')) {
+        warnings.push(
+          'Slack token may be overridden by MESSAGE_PROFILE_*_BOT_TOKEN environment variable'
+        );
       }
     }
 

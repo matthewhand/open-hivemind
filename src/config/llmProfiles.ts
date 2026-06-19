@@ -1,6 +1,7 @@
 import llmConfig from './llmConfig';
 import { UserConfigStore } from './UserConfigStore';
 import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import { getEnvProfiles } from './envProfiles';
 
 export type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -11,6 +12,8 @@ export interface ProviderProfile {
   provider: string;
   modelType?: LlmModelType;
   config: Record<string, unknown>;
+  /** 'env' profiles come from environment variables and are read-only. */
+  source?: 'env' | 'file';
 }
 
 export interface LlmProfiles {
@@ -58,7 +61,7 @@ const normalizeProfile = (profile: unknown): ProviderProfile | null => {
 };
 
 export const loadLlmProfiles = (): LlmProfiles => {
-  return loadProfiles<LlmProfiles>({
+  const fromFile = loadProfiles<LlmProfiles>({
     filename: 'llm-profiles.json',
     defaultData: DEFAULT_LLM_PROFILES,
     profileType: 'llm',
@@ -75,10 +78,32 @@ export const loadLlmProfiles = (): LlmProfiles => {
       };
     },
   });
+
+  // Env-defined profiles overlay file profiles (env wins on key collision)
+  // and are never persisted to disk.
+  const envProfiles: ProviderProfile[] = getEnvProfiles('llm').map((profile) => ({
+    key: profile.key,
+    name: profile.name,
+    description: profile.description,
+    provider: profile.provider,
+    modelType: normalizeModelType(profile.modelType ?? profile.config.modelType),
+    config: profile.config,
+    source: 'env',
+  }));
+  if (envProfiles.length === 0) {
+    return fromFile;
+  }
+  const envKeys = new Set(envProfiles.map((p) => p.key));
+  return {
+    llm: [...envProfiles, ...fromFile.llm.filter((p) => !envKeys.has(p.key.toLowerCase()))],
+  };
 };
 
 export const saveLlmProfiles = (profiles: LlmProfiles): void => {
-  saveProfiles('llm-profiles.json', profiles);
+  // Never persist env-defined profiles (they carry secrets sourced from env).
+  saveProfiles('llm-profiles.json', {
+    llm: profiles.llm.filter((p) => p.source !== 'env'),
+  });
 };
 
 export const getLlmProfileByKey = (key: string): ProviderProfile | undefined => {

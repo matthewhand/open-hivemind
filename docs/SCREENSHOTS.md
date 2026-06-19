@@ -4,8 +4,8 @@ A single tracking index of **every screenshot in the repository** — both the c
 [`docs/screenshots/`](screenshots/) and the previous versions in [`archive/screenshots/`](../archive/screenshots/).
 
 - **Regeneration:** the `journey-01…11` set is regenerated with `npm run test:journey:guide`
-  (demo-mode data, Playwright); other screenshots come from `tests/e2e/screenshot-*.spec.ts`
-  via `npm run generate-docs`.
+  (demo-mode data, Playwright); `hivemind-showcase.png` with `npm run test:journey:showcase`;
+  other screenshots come from `tests/e2e/screenshot-*.spec.ts` via `npm run generate-docs`.
 - **Convention:** naming and archival rules (plain kebab-case, current vs. archived directories,
   no suffixes) are documented in [CLAUDE.md](../CLAUDE.md).
 - **"Used by"** is determined by grepping these docs for each filename:
@@ -45,7 +45,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `button-loading-after-light.png` | current | none | Button loading state after fix, light theme variant |
 | `button-loading-real-app.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Button loading state in production context |
 | `button-loading.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Generic button loading state |
-| `chat-monitor.png` | current | USER_GUIDE.md, docs/screenshots/README.md, README.md (root) | Chat monitoring view for live message tracking |
+| `chat-monitor.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Chat monitoring view for live message tracking |
 | `chatpage-latency.png` | current | docs/screenshots/README.md | Chat page showing latency indicators |
 | `chatpage-offline.png` | current | docs/screenshots/README.md | Chat page in offline/disconnected state |
 | `chatpage-optimistic.png` | current | docs/screenshots/README.md | Chat page with optimistic message sending |
@@ -74,6 +74,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `health-dashboard.png` | current | none | Health dashboard view with service status |
 | `help-page-expanded.png` | current | USER_GUIDE.md | Help & FAQ page with a section expanded |
 | `help-page.png` | current | USER_GUIDE.md | Help & FAQ main page |
+| `hivemind-showcase.png` | current | README.md (root), GUIDED_TOUR.md, docs/screenshots/README.md | Multiple AI personas (SupportBot + DevOpsBot) answering one user in one channel — selective engagement in the Activity page's Conversations view |
 | `integrations-llm.png` | current | USER_GUIDE.md, docs/screenshots/README.md | LLM integrations overview panel |
 | `journey-01-onboarding.png` | current | USER_GUIDE.md, GUIDED_TOUR.md, docs/screenshots/README.md, archive/screenshots/README.md | The admin dashboard after first sign-in. |
 | `journey-02-discord-add.png` | current | USER_GUIDE.md, GUIDED_TOUR.md, docs/screenshots/README.md, archive/screenshots/README.md | The Message Providers page after creating a Discord profile. |

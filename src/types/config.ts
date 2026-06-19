@@ -203,6 +203,8 @@ export interface BotConfig {
   name: string;
   /** Message provider type */
   messageProvider: MessageProvider;
+  /** Message provider profile name (credentials sourced from message profiles) */
+  messageProfile?: string;
   /** LLM provider type */
   llmProvider: LlmProvider;
   /** LLM provider profile name */
@@ -255,6 +257,8 @@ export interface BotConfig {
   letta?: LettaConfig;
   /** Whether the bot is enabled */
   enabled?: boolean;
+  /** Whether the bot is active (matches database isActive field) */
+  isActive?: boolean;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }
@@ -599,6 +603,8 @@ export interface BotOverride {
   disabled?: boolean;
   /** Message provider override */
   messageProvider?: MessageProvider;
+  /** Message provider profile override */
+  messageProfile?: string;
   /** LLM provider override */
   llmProvider?: LlmProvider;
   /** LLM provider profile override */

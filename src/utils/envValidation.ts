@@ -85,15 +85,29 @@ const envSchema = z
           !!(env as Record<string, string>)[key]?.trim()
       );
 
+      // Also check env-defined message profiles (e.g., MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN)
+      const hasEnvMessageProfileToken = Object.keys(env).some(
+        (key) =>
+          /^MESSAGE_PROFILE_[A-Z0-9]+_(BOT_TOKEN|TOKEN)$/.test(key) &&
+          !!(env as Record<string, string>)[key]?.trim()
+      );
+
       // SKIP_MESSENGERS=true is an explicit operator choice to run without
       // messenger services (e.g. WebUI-only deployments) — requiring a
       // platform token in that mode contradicts the flag.
       const skipMessengers = env.SKIP_MESSENGERS?.trim().toLowerCase() === 'true';
-      if (!skipMessengers && !hasDiscord && !hasSlack && !hasMattermost && !hasDynamicBot) {
+      if (
+        !skipMessengers &&
+        !hasDiscord &&
+        !hasSlack &&
+        !hasMattermost &&
+        !hasDynamicBot &&
+        !hasEnvMessageProfileToken
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
-            'Production startup requires at least one messaging platform token to be configured (or SKIP_MESSENGERS=true for WebUI-only mode).',
+            'Production startup requires at least one messaging platform token to be configured (flat token, BOTS_<NAME>_* token, or MESSAGE_PROFILE_<KEY>_BOT_TOKEN; or SKIP_MESSENGERS=true for WebUI-only mode).',
           path: ['DISCORD_BOT_TOKEN'],
         });
       }

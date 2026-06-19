@@ -22,6 +22,7 @@ export class DemoStateService {
   private demoBots: DemoBot[] = [];
   private conversationManager = new DemoConversationManager();
   private activitySimulator?: DemoActivitySimulatorService;
+  private initializePromise?: Promise<void>;
 
   constructor(
     @inject('BotConfigurationManager') private botManager: BotConfigurationManager,
@@ -50,20 +51,33 @@ export class DemoStateService {
   }
 
   public async initialize(): Promise<void> {
-    if (this.detectDemoMode()) {
-      debug('Demo Mode active, seeding configuration...');
-      await this.seedDemoConfig();
-
-      this.activitySimulator = new DemoActivitySimulatorService(
-        this.demoBots,
-        this.metricsCollector,
-        this.activityLogger,
-        this.wsService
-      );
-
-      this.activitySimulator.seedHistoricalData();
-      this.activitySimulator.startActivitySimulation();
+    if (!this.detectDemoMode()) {
+      return;
     }
+    // Idempotency guard: initialize() is reached twice on startup (once via
+    // the explicit initServices call, once via detectDemoMode() →
+    // setDemoMode(true)). Without the guard everything seeds twice — bots,
+    // historical events, the showcase conversation — and two activity
+    // simulators end up running concurrently.
+    if (!this.initializePromise) {
+      this.initializePromise = this.initializeDemo();
+    }
+    return this.initializePromise;
+  }
+
+  private async initializeDemo(): Promise<void> {
+    debug('Demo Mode active, seeding configuration...');
+    await this.seedDemoConfig();
+
+    this.activitySimulator = new DemoActivitySimulatorService(
+      this.demoBots,
+      this.metricsCollector,
+      this.activityLogger,
+      this.wsService
+    );
+
+    this.activitySimulator.seedHistoricalData();
+    this.activitySimulator.startActivitySimulation();
   }
 
   public isInDemoMode(): boolean {
@@ -109,6 +123,7 @@ export class DemoStateService {
     this.activitySimulator?.reset();
     this.conversationManager.reset();
     this.demoBots = [];
+    this.initializePromise = undefined;
     debug('Demo mode reset');
   }
 

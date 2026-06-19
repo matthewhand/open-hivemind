@@ -118,4 +118,4 @@ Mattermost.
 - **Custom tooling** – extend MCC/MCP adapters or add bespoke REST/CLI tools
   through the same guard mechanism.
 
-For a feature-by-feature validation matrix, see [`PACKAGE.md`](../reference/package.md).
+For a feature-by-feature validation matrix, see [`package.md`](../reference/package.md).

@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { botSchema } from './botSchema';
 import { type UserConfigStore } from './UserConfigStore';
-import { applyLlmProfile, applyGuardrailProfile, applyMcpServerProfile } from './botProfileHelpers';
+import { applyLlmProfile, applyGuardrailProfile, applyMcpServerProfile, applyMessageProfile } from './botProfileHelpers';
 import { ConfigurationError } from '../types/errorClasses';
 import { type TTLCache } from '../utils/TTLCache';
 
@@ -125,6 +125,7 @@ export function createBotConfig(
   const config: BotConfig = {
     name: botName,
     messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
+    messageProfile: (botConfig.get('MESSAGE_PROFILE') as string) || undefined,
     llmProvider,
     llmModel,
     llmProfile: (botConfig.get('LLM_PROFILE') as string) || undefined,
@@ -135,6 +136,8 @@ export function createBotConfig(
     mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
     mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined,
     memoryProfile: (botConfig.get('MEMORY_PROFILE') as string) || undefined,
+    // Default to enabled; database sync will override if persisted as disabled
+    isActive: true,
   };
 
 
@@ -231,6 +234,13 @@ export function createBotConfig(
 
   applyUserOverrides(botName, config, userConfigStore);
 
+  // Profiles must apply even when the bot has no user-config override entry
+  // (applyUserOverrides early-returns in that case).
+  applyMessageProfile(config, { providerExplicit: hasEnvOverride(botName, 'MESSAGE_PROVIDER') });
+  applyLlmProfile(config);
+  applyGuardrailProfile(config);
+  applyMcpServerProfile(config);
+
   return config;
 }
 
@@ -270,6 +280,7 @@ function applyUserOverrides(botName: string, config: BotConfig, userConfigStore:
   };
 
   assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
+  assignIfAllowed('messageProfile', 'MESSAGE_PROFILE');
   assignIfAllowed('llmProvider', 'LLM_PROVIDER');
   assignIfAllowed('llmProfile', 'LLM_PROFILE');
   assignIfAllowed('responseProfile', 'RESPONSE_PROFILE');
@@ -287,8 +298,4 @@ function applyUserOverrides(botName: string, config: BotConfig, userConfigStore:
   if (!config.mcpServers) {
     config.mcpServers = [];
   }
-
-  applyLlmProfile(config);
-  applyGuardrailProfile(config);
-  applyMcpServerProfile(config);
 }

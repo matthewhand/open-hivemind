@@ -12,6 +12,14 @@ export const botSchema = {
     env: 'BOTS_{name}_MESSAGE_PROVIDER',
   },
 
+  // Message provider profile configuration
+  MESSAGE_PROFILE: {
+    doc: 'Message provider profile name (credentials sourced from message profiles)',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MESSAGE_PROFILE',
+  },
+
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',

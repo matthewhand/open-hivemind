@@ -4,7 +4,7 @@ Navigation: [Docs Index](../README.md) | [Layered Overview](layered-overview.md)
 
 
 ## Overview
-Open-Hivemind implements a revolutionary multi-agent architecture where each bot instance operates as a neuron in a digital consciousness. See [PACKAGE.md](../reference/package.md) for technical specifications.
+Open-Hivemind implements a revolutionary multi-agent architecture where each bot instance operates as a neuron in a digital consciousness. See [package.md](../reference/package.md) for technical specifications.
 
 ## Multi-Agent Modes
 
@@ -74,7 +74,7 @@ The WebUI provides comprehensive management capabilities:
 - **Env Override Awareness**: Locked fields clearly indicate environment-variable ownership with redacted previews
 - **OpenAPI Export**: Download JSON/YAML specs for all WebUI endpoints via `/webui/api/openapi`
 
-For implementation details, see the technical documentation in [PACKAGE.md](../reference/package.md).
+For implementation details, see the technical documentation in [package.md](../reference/package.md).
 
 ## Development Roadmap
 See [todo.md](../reference/todo.md) for upcoming features including:

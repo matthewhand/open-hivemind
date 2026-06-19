@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from '../common/logger';
 import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
+import { hasEnvMessageProfileForProvider } from '../config/envProfiles';
 
 const startupLog = Logger.withContext('startup:diagnostics');
 
@@ -269,20 +270,25 @@ export class StartupDiagnostics {
   private async logProviderConnectivity(): Promise<void> {
     startupLog.info('🤖 Provider Connectivity Status');
 
+    // Check both flat env vars (legacy) and MESSAGE_PROFILE env vars (new scheme)
     const providers: ProviderStatus[] = [
       {
         type: 'discord',
-        configured: !!process.env.DISCORD_BOT_TOKEN,
+        configured: !!process.env.DISCORD_BOT_TOKEN || hasEnvMessageProfileForProvider('discord'),
         connected: false, // Will be updated during actual initialization
       },
       {
         type: 'slack',
-        configured: !!(process.env.SLACK_BOT_TOKEN && process.env.SLACK_SIGNING_SECRET),
+        configured:
+          !!(process.env.SLACK_BOT_TOKEN && process.env.SLACK_SIGNING_SECRET) ||
+          hasEnvMessageProfileForProvider('slack'),
         connected: false,
       },
       {
         type: 'mattermost',
-        configured: !!(process.env.MATTERMOST_TOKEN && process.env.MATTERMOST_URL),
+        configured:
+          !!(process.env.MATTERMOST_TOKEN && process.env.MATTERMOST_URL) ||
+          hasEnvMessageProfileForProvider('mattermost'),
         connected: false,
       },
     ];

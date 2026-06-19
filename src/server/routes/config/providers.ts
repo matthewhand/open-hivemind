@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
  
 import { Router } from 'express';
+import type { Response } from 'express';
 import { getLlmDefaultStatus } from '../../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles } from '../../../config/llmProfiles';
 import { getMessageProfiles, saveMessageProfiles } from '../../../config/messageProfiles';
@@ -15,9 +16,11 @@ import {
   CreateToolProfileSchema,
   LlmProfileKeyParamSchema,
   MemoryProfileKeyParamSchema,
+  MessageProfileKeyParamSchema,
   ResponseProfileKeyParamSchema,
   ToolProfileKeyParamSchema,
   UpdateLlmProfileSchema,
+  UpdateMessageProfileSchema,
   UpdateResponseProfileSchema,
 } from '../../../validation/schemas/configProfilesSchema';
 import { validateRequest } from '../../../validation/validateRequest';
@@ -26,6 +29,23 @@ import { configLimiter } from '../../../middleware/rateLimiter';
 import { broadcastConfigUpdate } from './utils';
 
 const router = Router();
+
+/** Profiles defined via environment variables are read-only through the API. */
+function isEnvProfile(profile: unknown): boolean {
+  return !!profile && typeof profile === 'object' && (profile as { source?: string }).source === 'env';
+}
+
+function envProfileReadonlyResponse(res: Response, kind: string, key: string) {
+  return res
+    .status(HTTP_STATUS.FORBIDDEN)
+    .json(
+      ApiResponse.error(
+        `${kind} profile '${key}' is defined via environment variables and is read-only`,
+        'ENV_PROFILE_READONLY',
+        403
+      )
+    );
+}
 
 // GET /api/config/llm-status - Get LLM configuration status
 router.get('/llm-status', (req, res) => {
@@ -85,18 +105,23 @@ router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSche
     }
 
     const profiles = getLlmProfiles();
-    if (profiles.llm.find((p) => p.key.toLowerCase() === newProfile.key.toLowerCase())) {
+    const existing = profiles.llm.find((p) => p.key.toLowerCase() === newProfile.key.toLowerCase());
+    if (existing) {
       return res
         .status(HTTP_STATUS.CONFLICT)
         .json(
           ApiResponse.error(
-            `LLM profile with key '${newProfile.key}' already exists`,
+            isEnvProfile(existing)
+              ? `LLM profile with key '${newProfile.key}' is defined via environment variables`
+              : `LLM profile with key '${newProfile.key}' already exists`,
             'CONFLICT',
             409
           )
         );
     }
 
+    // 'source' is system-managed; never accept it from clients.
+    delete newProfile.source;
     const sanitizedProfile = {
       ...newProfile,
       modelType,
@@ -137,7 +162,11 @@ router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfile
         .status(HTTP_STATUS.NOT_FOUND)
         .json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
     }
+    if (isEnvProfile(profiles.llm[index])) {
+      return envProfileReadonlyResponse(res, 'LLM', key);
+    }
 
+    delete updates.source;
     const updatedProfile = {
       ...profiles.llm[index],
       ...updates,
@@ -176,6 +205,9 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
       return res
         .status(HTTP_STATUS.NOT_FOUND)
         .json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
+    }
+    if (isEnvProfile(profiles.llm[index])) {
+      return envProfileReadonlyResponse(res, 'LLM', key);
     }
 
     const [deletedProfile] = profiles.llm.splice(index, 1);
@@ -223,19 +255,26 @@ router.post('/message-profiles', configLimiter, validateRequest(CreateMessagePro
 
     const profiles = getMessageProfiles();
 
-    // Check if key already exists
-    if (profiles.message.find((p) => p.key === newProfile.key)) {
+    // Check if key already exists (case-insensitive)
+    const existing = profiles.message.find(
+      (p) => p.key.toLowerCase() === String(newProfile.key).toLowerCase()
+    );
+    if (existing) {
       return res
         .status(HTTP_STATUS.CONFLICT)
         .json(
           ApiResponse.error(
-            `Message profile with key '${newProfile.key}' already exists`,
+            isEnvProfile(existing)
+              ? `Message profile with key '${newProfile.key}' is defined via environment variables`
+              : `Message profile with key '${newProfile.key}' already exists`,
             'CONFLICT',
             409
           )
         );
     }
 
+    // 'source' is system-managed; never accept it from clients.
+    delete newProfile.source;
     profiles.message.push(newProfile);
     saveMessageProfiles(profiles);
 
@@ -250,6 +289,90 @@ router.post('/message-profiles', configLimiter, validateRequest(CreateMessagePro
         ApiResponse.error(
           ErrorUtils.getMessage(hivemindError),
           'MESSAGE_PROFILES_CREATE_ERROR',
+          statusCode
+        )
+      );
+  }
+});
+
+// PUT /api/config/message-profiles/:key - Update a message profile
+router.put('/message-profiles/:key', configLimiter, validateRequest(UpdateMessageProfileSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    const updates = req.body;
+
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+    const index = profiles.message.findIndex((p) => p.key.toLowerCase() === normalizedKey);
+
+    if (index === -1) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error(`Message profile with key '${key}' not found`, 'NOT_FOUND', 404));
+    }
+    if (isEnvProfile(profiles.message[index])) {
+      return envProfileReadonlyResponse(res, 'Message', key);
+    }
+
+    delete updates.source;
+    const updatedProfile = {
+      ...profiles.message[index],
+      ...updates,
+      key: profiles.message[index].key,
+    };
+    profiles.message[index] = updatedProfile;
+
+    saveMessageProfiles(profiles);
+
+    broadcastConfigUpdate('message-profiles', 'update', updatedProfile.key);
+    return res.json(ApiResponse.success({ profile: updatedProfile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'MESSAGE_PROFILES_UPDATE_ERROR',
+          statusCode
+        )
+      );
+  }
+});
+
+// DELETE /api/config/message-profiles/:key - Delete a message profile
+router.delete('/message-profiles/:key', configLimiter, validateRequest(MessageProfileKeyParamSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getMessageProfiles();
+    const index = profiles.message.findIndex(
+      (profile) => profile.key.toLowerCase() === key.toLowerCase()
+    );
+
+    if (index === -1) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error(`Message profile with key '${key}' not found`, 'NOT_FOUND', 404));
+    }
+    if (isEnvProfile(profiles.message[index])) {
+      return envProfileReadonlyResponse(res, 'Message', key);
+    }
+
+    const [deletedProfile] = profiles.message.splice(index, 1);
+    saveMessageProfiles(profiles);
+
+    broadcastConfigUpdate('message-profiles', 'delete', deletedProfile.key);
+    return res.json(ApiResponse.success({ profile: deletedProfile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'MESSAGE_PROFILES_DELETE_ERROR',
           statusCode
         )
       );
@@ -284,15 +407,23 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    if (profiles.memory.find((p: Record<string, unknown>) => p.key === newProfile.key))
+    const existing = profiles.memory.find(
+      (p: Record<string, unknown>) =>
+        String(p.key).toLowerCase() === String(newProfile.key).toLowerCase()
+    );
+    if (existing)
       return res
         .status(HTTP_STATUS.CONFLICT)
         .json(
           ApiResponse.error(
-            `Memory profile with key '${newProfile.key}' already exists`,
+            isEnvProfile(existing)
+              ? `Memory profile with key '${newProfile.key}' is defined via environment variables`
+              : `Memory profile with key '${newProfile.key}' already exists`,
             'CONFLICT',
           )
         );
+    // 'source' is system-managed; never accept it from clients.
+    delete newProfile.source;
     profiles.memory.push(newProfile);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'create', newProfile.key);
@@ -320,6 +451,10 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
       return res
         .status(HTTP_STATUS.NOT_FOUND)
         .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
+    if (isEnvProfile(profiles.memory[index])) {
+      return envProfileReadonlyResponse(res, 'Memory', key);
+    }
+    delete req.body.source;
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'update', key);
@@ -347,6 +482,9 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
       return res
         .status(HTTP_STATUS.NOT_FOUND)
         .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
+    if (isEnvProfile(profiles.memory[index])) {
+      return envProfileReadonlyResponse(res, 'Memory', key);
+    }
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'delete', key);

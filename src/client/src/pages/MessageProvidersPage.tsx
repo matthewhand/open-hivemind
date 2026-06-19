@@ -354,6 +354,11 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       </h2>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
+                        {profile.source === 'env' && (
+                          <Tooltip content="Defined via environment variables — read-only">
+                            <Badge variant="info" size="sm" style="outline">env</Badge>
+                          </Tooltip>
+                        )}
                         <Tooltip content={status.description}>
                           <Badge variant={STATUS_BADGE_VARIANTS[status.level]} size="sm">
                             <span
@@ -367,12 +372,16 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
-                      <EditIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
-                      <DeleteIcon className="w-4 h-4" />
-                    </Button>
+                    {profile.source !== 'env' && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                          <EditIcon className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                          <DeleteIcon className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>

@@ -61,11 +61,14 @@ ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
 RUN pnpm run build
 
 # Link workspace package dist dirs
+# Symlink (not copy): compiled package files contain relative requires into
+# the dist/ tree (e.g. ../../../src/config/...) that break if relocated.
+# Node resolves the symlink's real path, so requires stay inside dist/.
 RUN for pkg in packages/*/; do \
       name=$(basename "$pkg"); \
       if [ -d "dist/packages/$name/src" ]; then \
-        mkdir -p "$pkg/dist"; \
-        cp -r "dist/packages/$name/src/"* "$pkg/dist/"; \
+        rm -rf "$pkg/dist"; \
+        ln -sfn "/app/dist/packages/$name/src" "${pkg%/}/dist"; \
       fi; \
     done
 

@@ -8,6 +8,7 @@ on:
 jobs:
   audit-low:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +33,7 @@ jobs:
   dependency-bump-pr:
     runs-on: ubuntu-latest
     needs: audit-low
-    if: needs.audit-low.result == 'failure' || github.event_name == 'workflow_dispatch'
+    if: always() && (needs.audit-low.outcome == 'failure' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
       pull-requests: write

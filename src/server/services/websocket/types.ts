@@ -11,6 +11,15 @@ export interface MessageFlowEvent {
   processingTime?: number;
   status: 'success' | 'error' | 'timeout';
   errorMessage?: string;
+  /**
+   * Display-only enrichment fields. Currently populated only by demo-mode
+   * seeding (DemoActivitySimulator) so the Activity page's Conversations view
+   * can render a readable transcript. Real pipeline events omit them — never
+   * put real message content here without an explicit privacy decision.
+   */
+  userName?: string;
+  channelName?: string;
+  content?: string;
 }
 
 export interface PerformanceMetric {

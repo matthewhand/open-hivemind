@@ -34,7 +34,8 @@ describe('validateRequiredEnvVars', () => {
     for (const key of VALIDATED_ENV_VARS) {
       delete process.env[key];
     }
-    // Dynamic per-bot tokens (BOTS_*_{DISCORD,SLACK,MATTERMOST}_BOT_TOKEN) are also
+    // Dynamic per-bot tokens (BOTS_*_{DISCORD,SLACK,MATTERMOST}_BOT_TOKEN) and
+    // env-defined message profile tokens (MESSAGE_PROFILE_*_BOT_TOKEN) are also
     // honored by the validator via passthrough(); clear any that leaked in.
     for (const key of Object.keys(process.env)) {
       if (
@@ -43,6 +44,9 @@ describe('validateRequiredEnvVars', () => {
           key.endsWith('_SLACK_BOT_TOKEN') ||
           key.endsWith('_MATTERMOST_TOKEN'))
       ) {
+        delete process.env[key];
+      }
+      if (/^MESSAGE_PROFILE_[A-Z0-9]+_(BOT_TOKEN|TOKEN)$/.test(key)) {
         delete process.env[key];
       }
     }
@@ -163,6 +167,27 @@ describe('validateRequiredEnvVars', () => {
       delete process.env.DISCORD_BOT_TOKEN;
       process.env.BOTS_MYBOT_DISCORD_BOT_TOKEN = 'dynamic-token';
       expect(() => validateRequiredEnvVars()).not.toThrow();
+    });
+
+    it('should pass if an env-defined message profile token is provided', () => {
+      delete process.env.DISCORD_BOT_TOKEN;
+      process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN = 'profile-token';
+      expect(() => validateRequiredEnvVars()).not.toThrow();
+      delete process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN;
+    });
+
+    it('should pass if an env-defined message profile TOKEN (mattermost-style) is provided', () => {
+      delete process.env.DISCORD_BOT_TOKEN;
+      process.env.MESSAGE_PROFILE_MMMAIN_TOKEN = 'profile-token';
+      expect(() => validateRequiredEnvVars()).not.toThrow();
+      delete process.env.MESSAGE_PROFILE_MMMAIN_TOKEN;
+    });
+
+    it('should not accept an empty env-defined message profile token', () => {
+      delete process.env.DISCORD_BOT_TOKEN;
+      process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN = '   ';
+      expect(() => validateRequiredEnvVars()).toThrow(/at least one messaging platform token/);
+      delete process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN;
     });
   });
 
