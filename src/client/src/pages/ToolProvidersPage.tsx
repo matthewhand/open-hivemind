@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
@@ -11,13 +10,11 @@ import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { MarketplaceGrid } from '../components/Marketplace';
 import {
   Wrench as ToolIcon,
   Plus as AddIcon,
   Settings as ConfigIcon,
-
   Trash2 as DeleteIcon,
   Edit as EditIcon,
   ChevronDown as ExpandIcon,
@@ -26,13 +23,10 @@ import {
   RefreshCw,
   Store as StoreIcon,
 } from 'lucide-react';
-import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
-import useUrlParams from '../hooks/useUrlParams';
-import { useWebSocket } from '../contexts/WebSocketContext';
-import { useSavedStamp } from '../contexts/SavedStampContext';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
+import { useProviderPage } from '../hooks/useProviderPage';
 
 // Derive a simple connection-status badge from config presence. There is no
 // live per-profile tool health endpoint, so "Configured" means the profile has
@@ -53,142 +47,56 @@ const deriveToolStatus = (
 };
 
 const ToolProvidersPage: React.FC = () => {
-  const errorToast = useErrorToast();
-  const { showStamp } = useSavedStamp();
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.toolProviders.expandedProfile', null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
+  const {
+    profiles, loading, error, setError,
+    expandedProfile,
+    confirmModal, setConfirmModal,
+    formModal, setFormModal,
+    formData, setFormData,
+    selectedProvider, setSelectedProvider,
+    searchQuery, setSearchQuery,
+    filterType, setFilterType,
+    filteredProfiles, providerTypes,
+    fetchProfiles,
+    handleAddProfile, handleEditProfile, handleDeleteProfile, handleFormSubmit,
+    toggleExpand,
+  } = useProviderPage({
+    apiPath: '/api/config/tool-profiles',
+    entityKey: 'tool',
+    wsChangeType: 'tool-profiles',
+    localStorageKey: 'ui.toolProviders.expandedProfile',
   });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const filterType = urlParams.type;
-  const setFilterType = (v: string) => setUrlParam('type', v);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
-
-  const [formModal, setFormModal] = useState<{
-    isOpen: boolean; isEdit: boolean; profile: any | null;
-  }>({ isOpen: false, isEdit: false, profile: null });
-  const [formData, setFormData] = useState<Record<string, any>>({ name: '', provider: '', config: {} });
-  const [selectedProvider, setSelectedProvider] = useState('');
 
   const toolSchemas = useMemo(() => getProviderSchemasByType('tool'), []);
-
-  const fetchProfiles = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await apiService.get('/api/config/tool-profiles');
-      setProfiles((res as any).tool || []);
-    } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load tool profiles');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
-
-  // Auto-refresh when config changes are broadcast via WebSocket
-  const { configVersion, lastConfigChange } = useWebSocket();
-  const configVersionRef = React.useRef(configVersion);
-  useEffect(() => {
-    if (configVersionRef.current === configVersion) return;
-    configVersionRef.current = configVersion;
-    if (lastConfigChange?.type && lastConfigChange.type !== 'tool-profiles') return;
-    fetchProfiles();
-  }, [configVersion, lastConfigChange, fetchProfiles]);
-
-  const handleAddProfile = () => {
-    const defaultProvider = toolSchemas.length > 0 ? toolSchemas[0].providerType : '';
-    setSelectedProvider(defaultProvider);
-    setFormData({ name: '', provider: defaultProvider, config: {} });
-    setFormModal({ isOpen: true, isEdit: false, profile: null });
-  };
-
-  const handleEditProfile = (profile: any) => {
-    setSelectedProvider(profile.provider);
-    setFormData({ name: profile.name, provider: profile.provider, config: { ...profile.config } });
-    setFormModal({ isOpen: true, isEdit: true, profile });
-  };
-
-  const handleDeleteProfile = async (key: string) => {
-    setConfirmModal({
-      isOpen: true, title: 'Delete Profile', message: `Delete profile "${key}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          await apiService.delete(`/api/config/tool-profiles/${key}`);
-          fetchProfiles();
-        } catch (err: unknown) { errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`); }
-      },
-    });
-  };
-
-  const handleFormSubmit = async () => {
-    try {
-      const payload = {
-        key: formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        name: formData.name, provider: selectedProvider, config: formData.config,
-      };
-      if (formModal.isEdit && formModal.profile?.key) {
-        const oldKey = formModal.profile.key;
-        if (oldKey === payload.key) {
-          await apiService.put(`/api/config/tool-profiles/${oldKey}`, payload);
-        } else {
-          const backup = profiles.find((p) => p.key === oldKey);
-          await apiService.delete(`/api/config/tool-profiles/${oldKey}`);
-          try { await apiService.post('/api/config/tool-profiles', payload); }
-          catch (e: unknown) { if (backup) await apiService.post('/api/config/tool-profiles', backup).catch(() => { }); throw e; }
-        }
-      } else { await apiService.post('/api/config/tool-profiles', payload); }
-      setFormModal({ isOpen: false, isEdit: false, profile: null });
-      showStamp();
-      fetchProfiles();
-    } catch (err: unknown) { errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`); }
-  };
+  const currentSchema = useMemo(() => getProviderSchema(selectedProvider), [selectedProvider]);
 
   const getProviderIcon = (type: string) => {
     const schema = getProviderSchema(type);
     return schema?.icon || <ToolIcon className="w-5 h-5" />;
   };
 
-  const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
-
-  const filteredProfiles = useMemo(() =>
-    profiles.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.provider.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch && (filterType === 'all' || p.provider === filterType);
-    }), [profiles, searchQuery, filterType]);
-
-  const providerTypes = useMemo(() => {
-    const types = new Set(profiles.map(p => p.provider));
-    return Array.from(types).map(type => ({ label: type, value: type }));
-  }, [profiles]);
-
   const stats = [
     { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'wrench', color: 'primary' as const },
     { id: 'types', title: 'Provider Types', value: providerTypes.length, icon: 'cpu', color: 'secondary' as const },
   ];
 
-  const currentSchema = useMemo(() => getProviderSchema(selectedProvider), [selectedProvider]);
-
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profiles';
   const handleTabChange = (tabId: string) => setSearchParams({ tab: tabId });
 
-  const profilesContent = useMemo(() => (
+  const onAddProfile = () => {
+    const defaultProvider = toolSchemas.length > 0 ? toolSchemas[0].providerType : '';
+    handleAddProfile(defaultProvider);
+  };
+
+  const profilesContent = (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
-          <Button variant="primary" onClick={handleAddProfile}>
+          <Button variant="primary" onClick={onAddProfile}>
             <AddIcon className="w-4 h-4 mr-2" /> Create Profile
           </Button>
         </div>
@@ -201,7 +109,7 @@ const ToolProvidersPage: React.FC = () => {
       {loading ? (
         <SkeletonTableLayout rows={6} columns={4} />
       ) : profiles.length === 0 ? (
-        <EmptyState icon={ToolIcon} title="No Profiles Created" description="Create a profile to configure tool providers for your bots." actionLabel="Create Profile" actionIcon={AddIcon} onAction={handleAddProfile} variant="noData" />
+        <EmptyState icon={ToolIcon} title="No Profiles Created" description="Create a profile to configure tool providers for your bots." actionLabel="Create Profile" actionIcon={AddIcon} onAction={onAddProfile} variant="noData" />
       ) : filteredProfiles.length === 0 ? (
         <EmptyState icon={Search} title="No matching profiles" description="Try adjusting your search or filters." actionLabel="Clear Filters" onAction={() => { setSearchQuery(''); setFilterType('all'); }} variant="noResults" />
       ) : (
@@ -295,13 +203,7 @@ const ToolProvidersPage: React.FC = () => {
 
       <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} confirmVariant="error" confirmText="Delete" cancelText="Cancel" />
     </div>
-  ), [
-    profiles, filteredProfiles, providerTypes, stats, loading, error,
-    searchQuery, filterType, expandedProfile,
-    formModal, formData, selectedProvider, currentSchema, toolSchemas, confirmModal,
-    fetchProfiles, handleAddProfile, handleEditProfile, handleDeleteProfile,
-    handleFormSubmit, toggleExpand, setSearchQuery, setFilterType,
-  ]);
+  );
 
   const toolTabs = useMemo(() => [
     { id: 'profiles', label: 'Profiles', icon: <ToolIcon className="w-4 h-4" />, content: profilesContent },
