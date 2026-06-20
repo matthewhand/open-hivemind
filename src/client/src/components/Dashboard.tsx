@@ -407,9 +407,9 @@ const Dashboard: React.FC = () => {
               <>
                 {/* Bot Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {bots.map((bot) => (
+                  {bots.map((bot, botIdx) => (
                     <DashboardBotCard
-                      key={bot.name}
+                      key={bot.id ?? `${bot.name}-${botIdx}`}
                       bot={bot}
                       botStatusData={
                         botStatusMap.get(bot.id) ??
