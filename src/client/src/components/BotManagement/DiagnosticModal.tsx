@@ -83,12 +83,12 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         aria-busy={loading}
       >
         {loading && !results ? (
-          <div className="py-12 text-center space-y-4">
+          <div className="py-12 text-center space-y-4" role="status">
              <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
         ) : error ? (
-          <div className="alert alert-error">
+          <div className="alert alert-error" role="alert">
              <XCircle className="w-6 h-6" />
              <span>{error}</span>
              <button

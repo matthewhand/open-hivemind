@@ -52,7 +52,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-warning focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-within:opacity-100 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-warning"
                    onClick={() => setIsBenchmarkOpen(true)}
                    aria-label={`Run performance benchmark for ${bot.name}`}
                  >
@@ -63,7 +63,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-secondary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-within:opacity-100 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-secondary"
                    onClick={() => setIsHistoryOpen(true)}
                    aria-label={`View version history for ${bot.name}`}
                  >
@@ -74,7 +74,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-within:opacity-100 focus-visible:opacity-100 hover:opacity-100 transition-opacity text-primary"
                    onClick={() => setIsInsightsOpen(true)}
                    aria-label={`View AI performance insights for ${bot.name}`}
                  >
@@ -85,7 +85,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  <Button
                    variant="ghost"
                    size="xs"
-                   className="btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 focus-within:opacity-100 focus-visible:opacity-100 hover:opacity-100 transition-opacity"
                    onClick={() => setIsDiagnosticOpen(true)}
                    aria-label={`Run diagnostic for ${bot.name}`}
                  >

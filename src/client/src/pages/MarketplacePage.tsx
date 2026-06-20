@@ -11,7 +11,7 @@ import {
   X as CloseIcon,
 } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import Input from '../components/DaisyUI/Input';
 import MarketplaceCard from '../components/Marketplace/MarketplaceCard';
@@ -296,63 +296,49 @@ const MarketplacePage: React.FC = () => {
       />
 
       {/* Install from URL Modal */}
-      {installModalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Install Package from GitHub</h3>
-
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">GitHub Repository URL</span>
-              </label>
-              <Input
-                type="text"
-                placeholder="https://github.com/user/provider-package"
-                value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
-              />
-              <label className="label">
-                <span className="label-text-alt text-base-content/50">
-                  Enter the full GitHub URL of the provider package
-                </span>
-              </label>
-            </div>
-
-            <div className="modal-action">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setInstallModalOpen(false);
-                  setGithubUrl('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleInstallFromUrl}
-                disabled={!githubUrl.trim() || actionInProgress === 'install-url'}
-              >
-                {actionInProgress === 'install-url' ? (
-                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
-                ) : (
-                  <>
-                    <GitHubIcon className="w-4 h-4 mr-1" />
-                    Install
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
+      <Modal
+        isOpen={installModalOpen}
+        onClose={() => {
+          setInstallModalOpen(false);
+          setGithubUrl('');
+        }}
+        title="Install Package from GitHub"
+        actions={[
+          {
+            label: 'Cancel',
+            variant: 'ghost',
+            onClick: () => {
               setInstallModalOpen(false);
               setGithubUrl('');
-            }}
-          ></div>
-        </dialog>
-      )}
+            },
+            disabled: actionInProgress === 'install-url',
+          },
+          {
+            label: 'Install',
+            variant: 'primary',
+            onClick: handleInstallFromUrl,
+            disabled: !githubUrl.trim() || actionInProgress === 'install-url',
+            loading: actionInProgress === 'install-url',
+          },
+        ]}
+      >
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">GitHub Repository URL</span>
+          </label>
+          <Input
+            type="text"
+            placeholder="https://github.com/user/provider-package"
+            value={githubUrl}
+            onChange={(e) => setGithubUrl(e.target.value)}
+          />
+          <label className="label">
+            <span className="label-text-alt text-base-content/50">
+              Enter the full GitHub URL of the provider package
+            </span>
+          </label>
+        </div>
+      </Modal>
     </div>
   );
 };
