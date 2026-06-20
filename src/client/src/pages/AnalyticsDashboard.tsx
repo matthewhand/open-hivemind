@@ -10,8 +10,9 @@ import DataTable from '../components/DaisyUI/DataTable';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
-import { 
-  BarChart3, RefreshCw, MessageSquare, Users, Bot, 
+import Tabs from '../components/DaisyUI/Tabs';
+import {
+  BarChart3, RefreshCw, MessageSquare, Users, Bot,
   Activity, Clock, ArrowDown, ArrowUp, CheckCircle2, XCircle,
   AlertOctagon, TrendingUp, ExternalLink
 } from 'lucide-react';
@@ -40,6 +41,7 @@ const AnalyticsDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [analyticsTab, setAnalyticsTab] = useState('trends');
   const errorToast = useErrorToast();
 
   // Filter message flow for valid timestamps
@@ -64,7 +66,7 @@ const AnalyticsDashboard: React.FC = () => {
 
       setActivityData(activity);
       setCostData(costs.data?.daily || []);
-      
+
       const anomalyResponse = await apiService.getAnomalies();
       if (anomalyResponse.success) {
         setAnomalies(anomalyResponse.data.anomalies || []);
@@ -138,6 +140,208 @@ const AnalyticsDashboard: React.FC = () => {
     },
   ];
 
+  // ── Secondary detail is segmented into tabs so the page opens as a focused
+  //    KPI summary instead of one long scroll of stacked sections. Charts /
+  //    bot performance / activity each render only when their tab is active.
+  const chartsTab = (
+    <Suspense fallback={<div className="py-12 text-center text-base-content/50">Loading charts…</div>}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MetricChart
+          title="Message Volume"
+          onRefresh={fetchAnalyticsData}
+          data={messageVolumeData}
+          type="area"
+          color="var(--fallback-p,oklch(var(--p)/1))"
+          unit="msgs"
+          height={350}
+        />
+        <MetricChart
+          title="Cost Trend"
+          onRefresh={fetchAnalyticsData}
+          data={costData.map(d => ({
+            timestamp: d.date,
+            value: d.cost,
+            label: 'Cost'
+          }))}
+          type="line"
+          color="var(--fallback-su,oklch(var(--su)/1))"
+          unit="$"
+          height={350}
+        />
+        <MetricChart
+          title="Response Time (Live)"
+          onRefresh={fetchAnalyticsData}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.responseTime,
+            label: 'Latency'
+          }))}
+          type="line"
+          color="var(--fallback-er,oklch(var(--er)/1))"
+          unit="ms"
+          height={350}
+        />
+      </div>
+    </Suspense>
+  );
+
+  const performanceTab = (
+    <div className="space-y-6">
+      {/* Bot Performance */}
+      <Card>
+        <Card.Title tag="h3">Bot Performance</Card.Title>
+        {botStats.length === 0 ? (
+          <EmptyState
+            icon={Bot}
+            title="No bot activity"
+            description="Bot activity will appear here once bots are processing messages."
+            variant="noData"
+          />
+        ) : (
+          <DataTable
+            data={botStats}
+            columns={[
+              { key: 'name' as keyof typeof botStats[0], title: 'Bot Name', prominent: true },
+              { key: 'messages' as keyof typeof botStats[0], title: 'Messages' },
+              { key: 'errors' as keyof typeof botStats[0], title: 'Errors' },
+              {
+                key: 'successRate' as keyof typeof botStats[0],
+                title: 'Success %',
+                render: (value: string) => (
+                  <span className={parseFloat(value) > 98 ? 'text-success' : 'text-warning'}>
+                    {value}%
+                  </span>
+                ),
+              },
+            ]}
+            rowKey={(bot: typeof botStats[0]) => bot.name}
+            pagination={{ pageSize: 10 }}
+          />
+        )}
+      </Card>
+
+      {/* Bot Success/Error Summary */}
+      {botStats.length > 0 && (
+        <Card>
+          <Card.Title tag="h3">Bot Success / Error Summary</Card.Title>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {botStats.map(stat => (
+              <div key={stat.name} className="bg-base-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-sm">{stat.name}</span>
+                  <span className={`text-xs font-medium ${parseFloat(stat.successRate) > 98 ? 'text-success' : 'text-warning'}`}>
+                    {stat.successRate}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-base-content/60">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-success" />
+                    {stat.messages - stat.errors}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <XCircle className="w-3 h-3 text-error" />
+                    {stat.errors}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Activity className="w-3 h-3" />
+                    {stat.events} events
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+
+  const activityTab = (
+    <div className="space-y-6">
+      {/* Real-time Event Stream */}
+      <Card>
+        <Card.Title tag="h3">Recent Activity</Card.Title>
+        {validMessageFlow.length === 0 ? (
+          <EmptyState
+            icon={Clock}
+            title="No recent activity"
+            description="Events will appear here as your bots process messages."
+            variant="noData"
+          />
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {validMessageFlow.slice(0, 15).map((event, idx) => (
+              <div key={`${event.timestamp}-${idx}`} className="flex items-center gap-3 p-2 rounded bg-base-200">
+                {event.messageType === 'incoming' ? (
+                  <ArrowDown className="w-5 h-5 text-primary shrink-0" />
+                ) : (
+                  <ArrowUp className="w-5 h-5 text-success shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {event.botName ? `${event.botName} (${event.provider})` : event.provider}
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-base-content/60">
+                      {event.messageType === 'incoming' ? `User: ${event.userId}` : 'Response sent'}
+                    </span>
+                    <span className="text-xs text-base-content/50">
+                      {new Date(event.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Anomalies List */}
+      <Card>
+        <Card.Title tag="h3" className="flex items-center gap-2">
+          <AlertOctagon className="w-5 h-5 text-error" /> Detected Anomalies
+        </Card.Title>
+        {anomalies.length === 0 ? (
+          <div className="py-12 text-center">
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-4 opacity-20" />
+            <p className="text-base-content/50">No system anomalies detected in the current window.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {anomalies.map(anomaly => (
+              <div
+                key={anomaly.id}
+                className="relative p-4 rounded-xl border border-base-300 bg-base-100 hover:border-primary/30 transition-colors"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant={anomaly.severity === 'critical' || anomaly.severity === 'high' ? 'error' : 'warning'} size="xs">
+                    {anomaly.severity.toUpperCase()}
+                  </Badge>
+                  <span className="text-[10px] opacity-40 font-mono">{new Date(anomaly.timestamp).toLocaleString()}</span>
+                </div>
+
+                <div className="mb-3">
+                  <p className="text-sm font-bold">{anomaly.metric} Spike</p>
+                  <p className="text-xs opacity-70">{anomaly.explanation}</p>
+                </div>
+
+                {anomaly.traceId && (
+                  <Button
+                    variant="primary"
+                    size="xs"
+                    className="gap-1"
+                    onClick={() => (window as any).location.href = `/admin/monitoring?trace=${anomaly.traceId}`}
+                  >
+                    <ExternalLink className="w-3 h-3" /> Trace
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-base-200 p-6">
       {/* Header */}
@@ -172,196 +376,22 @@ const AnalyticsDashboard: React.FC = () => {
         }
       />
 
-      {/* Key Metrics */}
+      {/* Key Metrics — pinned summary, always visible */}
       <StatsCards stats={usageMetricsCards} isLoading={isLoading} />
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <MetricChart
-          title="Message Volume"
-          data={messageVolumeData}
-          type="area"
-          color="var(--fallback-p,oklch(var(--p)/1))"
-          unit="msgs"
-          height={350}
-        />
-        <MetricChart
-          title="Cost Trend"
-          data={costData.map(d => ({
-            timestamp: d.date,
-            value: d.cost,
-            label: 'Cost'
-          }))}
-          type="line"
-          color="var(--fallback-su,oklch(var(--su)/1))"
-          unit="$"
-          height={350}
-        />
-        <MetricChart
-          title="Response Time (Live)"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.responseTime,
-            label: 'Latency'
-          }))}
-          type="line"
-          color="var(--fallback-er,oklch(var(--er)/1))"
-          unit="ms"
-          height={350}
+      {/* Detail segmented into tabs to reduce clutter / scroll */}
+      <div className="mt-6">
+        <Tabs
+          variant="lifted"
+          activeTab={analyticsTab}
+          onChange={setAnalyticsTab}
+          tabs={[
+            { id: 'trends', label: 'Trends', content: chartsTab },
+            { id: 'performance', label: 'Bot Performance', content: performanceTab },
+            { id: 'activity', label: 'Activity & Anomalies', content: activityTab },
+          ]}
         />
       </div>
-
-      {/* Detailed Analytics Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bot Performance */}
-        <Card>
-          <Card.Title tag="h3">Bot Performance</Card.Title>
-          {botStats.length === 0 ? (
-            <EmptyState
-              icon={Bot}
-              title="No bot activity"
-              description="Bot activity will appear here once bots are processing messages."
-              variant="noData"
-            />
-          ) : (
-            <DataTable
-              data={botStats}
-              columns={[
-                { key: 'name' as keyof typeof botStats[0], title: 'Bot Name', prominent: true },
-                { key: 'messages' as keyof typeof botStats[0], title: 'Messages' },
-                { key: 'errors' as keyof typeof botStats[0], title: 'Errors' },
-                {
-                  key: 'successRate' as keyof typeof botStats[0],
-                  title: 'Success %',
-                  render: (value: string) => (
-                    <span className={parseFloat(value) > 98 ? 'text-success' : 'text-warning'}>
-                      {value}%
-                    </span>
-                  ),
-                },
-              ]}
-              rowKey={(bot: typeof botStats[0]) => bot.name}
-              pagination={{ pageSize: 10 }}
-            />
-          )}
-        </Card>
-
-        {/* Real-time Event Stream */}
-        <Card>
-          <Card.Title tag="h3">Recent Activity</Card.Title>
-          {validMessageFlow.length === 0 ? (
-            <EmptyState
-              icon={Clock}
-              title="No recent activity"
-              description="Events will appear here as your bots process messages."
-              variant="noData"
-            />
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {validMessageFlow.slice(0, 15).map((event, idx) => (
-                <div key={`${event.timestamp}-${idx}`} className="flex items-center gap-3 p-2 rounded bg-base-200">
-                  {event.messageType === 'incoming' ? (
-                    <ArrowDown className="w-5 h-5 text-primary shrink-0" />
-                  ) : (
-                    <ArrowUp className="w-5 h-5 text-success shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {event.botName ? `${event.botName} (${event.provider})` : event.provider}
-                    </p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-base-content/60">
-                        {event.messageType === 'incoming' ? `User: ${event.userId}` : 'Response sent'}
-                      </span>
-                      <span className="text-xs text-base-content/50">
-                        {new Date(event.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Bot Success/Error Summary */}
-      {botStats.length > 0 && (
-        <Card>
-          <Card.Title tag="h3">Bot Success / Error Summary</Card.Title>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {botStats.map(stat => (
-              <div key={stat.name} className="bg-base-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-sm">{stat.name}</span>
-                  <span className={`text-xs font-medium ${parseFloat(stat.successRate) > 98 ? 'text-success' : 'text-warning'}`}>
-                    {stat.successRate}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-base-content/60">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-success" />
-                    {stat.messages - stat.errors}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <XCircle className="w-3 h-3 text-error" />
-                    {stat.errors}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Activity className="w-3 h-3" />
-                    {stat.events} events
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Anomalies List */}
-      <Card className="mt-8">
-        <Card.Title tag="h3" className="flex items-center gap-2">
-          <AlertOctagon className="w-5 h-5 text-error" /> Detected Anomalies
-        </Card.Title>
-        {anomalies.length === 0 ? (
-          <div className="py-12 text-center">
-            <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-4 opacity-20" />
-            <p className="text-base-content/50">No system anomalies detected in the current window.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {anomalies.map(anomaly => (
-              <div 
-                key={anomaly.id}
-                className="relative p-4 rounded-xl border border-base-300 bg-base-100 hover:border-primary/30 transition-colors"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant={anomaly.severity === 'critical' || anomaly.severity === 'high' ? 'error' : 'warning'} size="xs">
-                    {anomaly.severity.toUpperCase()}
-                  </Badge>
-                  <span className="text-[10px] opacity-40 font-mono">{new Date(anomaly.timestamp).toLocaleString()}</span>
-                </div>
-                
-                <div className="mb-3">
-                  <p className="text-sm font-bold">{anomaly.metric} Spike</p>
-                  <p className="text-xs opacity-70">{anomaly.explanation}</p>
-                </div>
-
-                {anomaly.traceId && (
-                  <Button 
-                    variant="primary" 
-                    size="xs" 
-                    className="gap-1"
-                    onClick={() => (window as any).location.href = `/admin/monitoring?trace=${anomaly.traceId}`}
-                  >
-                    <ExternalLink className="w-3 h-3" /> Trace
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
   );
 };
