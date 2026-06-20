@@ -197,10 +197,11 @@ const MetricChart: React.FC<MetricChartProps> = ({
           ) : (
             <EmptyState
               icon={ChartBarIcon}
-              title="No data available"
-              description=""
+              title={`No ${title.toLowerCase()} yet`}
+              description="Data appears here once your bots start processing messages in the selected time range."
               variant="noData"
               className="py-8"
+              {...(onRefresh ? { actionLabel: 'Refresh', onAction: onRefresh } : {})}
             />
           )}
         </div>

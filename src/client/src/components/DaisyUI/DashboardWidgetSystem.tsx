@@ -432,6 +432,18 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     [widgets],
   );
 
+  // Widgets are absolutely positioned, so they contribute 0 height to the flow.
+  // Previously the container used `min-h-screen`, forcing a full-viewport block
+  // even when nearly empty — producing a large whitespace gap above the content
+  // that follows it. Size the canvas to the furthest widget bottom edge instead.
+  const canvasHeight = useMemo(() => {
+    const maxBottom = visibleWidgets.reduce(
+      (m, w) => Math.max(m, (w.position?.y ?? 0) + (w.size?.height ?? 0)),
+      0,
+    );
+    return Math.max(maxBottom + 48, 320);
+  }, [visibleWidgets]);
+
   const gridBackgroundStyle = useMemo(
     () => ({
       backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)',
@@ -441,13 +453,13 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   );
 
   return (
-    <div className="relative min-h-screen bg-base-200 p-4">
+    <div className="relative bg-base-200 p-4 rounded-xl" style={{ minHeight: canvasHeight }}>
       {/* Toolbar */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         {!readOnly && (
           <>
             <button
-              className={`btn ${isEditing ? 'btn-error' : 'btn-primary'}`}
+              className={`btn btn-sm ${isEditing ? 'btn-success' : 'btn-primary'}`}
               onClick={() => setIsEditing(!isEditing)}
             >
               {isEditing ? '✓ Done' : '✏️ Edit'}
@@ -456,14 +468,14 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
             {isEditing && (
               <>
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-sm btn-primary btn-outline"
                   onClick={() => setShowWidgetPalette(!showWidgetPalette)}
                 >
                   ➕ Add Widget
                 </button>
 
                 <button
-                  className="btn btn-outline"
+                  className="btn btn-sm btn-ghost"
                   onClick={resetLayout}
                 >
                   🔄 Reset Layout

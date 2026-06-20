@@ -179,6 +179,7 @@ const AnalyticsDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <MetricChart
           title="Message Volume"
+          onRefresh={fetchAnalyticsData}
           data={messageVolumeData}
           type="area"
           color="var(--fallback-p,oklch(var(--p)/1))"
@@ -187,6 +188,7 @@ const AnalyticsDashboard: React.FC = () => {
         />
         <MetricChart
           title="Cost Trend"
+          onRefresh={fetchAnalyticsData}
           data={costData.map(d => ({
             timestamp: d.date,
             value: d.cost,
@@ -199,6 +201,7 @@ const AnalyticsDashboard: React.FC = () => {
         />
         <MetricChart
           title="Response Time (Live)"
+          onRefresh={fetchAnalyticsData}
           data={performanceMetrics.map(m => ({
             timestamp: m.timestamp,
             value: m.responseTime,
