@@ -34,7 +34,7 @@ const AuditTab: React.FC = () => {
     }, 1000);
   }, []);
 
-  if (loading) return <div className="p-8 text-center"><LoadingSpinner lg /></div>;
+  if (loading) return <div className="p-8 text-center"><LoadingSpinner size="lg" /></div>;
 
   return (
     <div className="space-y-6">

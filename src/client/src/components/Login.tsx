@@ -79,7 +79,7 @@ const Login: React.FC = () => {
           )}
 
           {error && (
-            <Alert status="error" message={error} className="mb-4" aria-live="assertive" />
+            <Alert status="error" message={error} className="mb-4" />
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +93,7 @@ const Login: React.FC = () => {
                 type="text"
                 value={formData.username}
                 onChange={handleInputChange}
-                placeholder={isServerless ? "Enter 'admin'" : 'Username'}
+                placeholder="Enter 'admin'"
                 disabled={isLoading}
                 required
                 autoComplete="username"
@@ -110,7 +110,7 @@ const Login: React.FC = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                placeholder={isServerless ? 'Enter password' : 'Password'}
+                placeholder="Enter password"
                 disabled={isLoading}
                 required
                 autoComplete="current-password"
@@ -144,13 +144,11 @@ const Login: React.FC = () => {
               )}
             </Button>
 
-            {isServerless && (
-              <div className="text-center mt-4">
-                <p className="text-sm text-base-content/70">
-                  Check deployment logs for password if not configured
-                </p>
-              </div>
-            )}
+            <div className="text-center mt-4">
+              <p className="text-sm text-base-content/70">
+                {isServerless ? 'Check deployment logs for password if not configured' : 'Enter your credentials'}
+              </p>
+            </div>
           </form>
 
           {isTrustedNetwork && (
@@ -158,7 +156,7 @@ const Login: React.FC = () => {
               <div className="divider text-base-content/50">or</div>
               <div className="bg-success/10 border border-success/30 rounded-box p-4">
                 <Button
-                  variant="success"
+                  variant="primary"
                   size="lg"
                   className="w-full"
                   onClick={handleTrustedLogin}

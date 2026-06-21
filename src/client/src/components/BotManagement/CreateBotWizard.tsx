@@ -87,7 +87,7 @@ interface BotSubmitPayload {
 interface CreateBotWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit?: (data: BotSubmitPayload) => void | Promise<void>;
+    onSubmit?: (data: BotSubmitPayload | Partial<import('../../types/bot').BotConfig>) => void | Promise<void>;
     personas?: WizardPersona[];
     llmProfiles?: WizardLlmProfile[];
     defaultLlmConfigured?: boolean;
@@ -738,7 +738,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
 
-                        <Collapse title="View System Instructions" className="bg-base-200" size="sm">
+                        <Collapse title="View System Instructions" className="bg-base-200">
                             <Mockup 
                                 type="code" 
                                 content={aiGeneratedResult.systemInstruction} 
@@ -749,7 +749,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         {aiGeneratedResult.suggestedMcpTools && (
                             <div className="flex flex-wrap gap-2">
                                 {aiGeneratedResult.suggestedMcpTools.map((tool: string) => (
-                                    <Badge key={tool} variant="outline" size="sm">+{tool}</Badge>
+                                    <Badge key={tool} style="outline" size="sm">+{tool}</Badge>
                                 ))}
                             </div>
                         )}

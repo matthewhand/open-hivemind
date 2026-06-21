@@ -19,7 +19,7 @@ interface DemoStatus {
 
 export function useDemoModeWarning(
   showToast: (type: 'warning' | 'info' | 'success' | 'error', title: string, message: string) => void
-): () => boolean {
+): () => Promise<boolean> {
   const checkingRef = useRef(false);
 
   return useCallback(async () => {
@@ -28,7 +28,7 @@ export function useDemoModeWarning(
     checkingRef.current = true;
 
     try {
-      const status = await apiService.get<DemoStatus>('/api/demo/status');
+      const status = await apiService.get('/api/demo/status') as DemoStatus | undefined;
       if (status?.isDemoMode) {
         showToast(
           'warning',
