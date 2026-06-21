@@ -42,31 +42,32 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   return (
     <div className={`min-h-screen flex bg-base-200 ${className}`}>
 
-      {/* SIDEBAR - Fixed on left */}
-      {!isMobile && (
-        <aside className="fixed left-0 top-0 bottom-0 w-60 bg-base-300 border-r border-base-content/10 z-40 overflow-y-auto">
-          <EnhancedDrawer
-            isOpen={true}
-            onClose={() => { }}
-            navItems={navItems}
-            variant="sidebar"
-          />
-        </aside>
-      )}
+      {/* SIDEBAR - Fixed on left.
+          Visibility is gated by CSS (`hidden lg:block`), NOT by the JS `isMobile`
+          flag, so it can never diverge from the content offset below. The old
+          `{!isMobile && ...}` + `isMobile ? ml-0 : ml-60` pairing could fall out
+          of sync on first paint (useMediaQuery initialises false) and render the
+          sidebar while the content offset was 0, clipping page headings under it. */}
+      <aside className="hidden lg:block fixed left-0 top-0 bottom-0 w-60 bg-base-300 border-r border-base-content/10 z-40 overflow-y-auto">
+        <EnhancedDrawer
+          isOpen={true}
+          onClose={() => { }}
+          navItems={navItems}
+          variant="sidebar"
+        />
+      </aside>
 
-      {/* MOBILE HEADER */}
-      {isMobile && (
-        <header className="fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
-          <span className="font-semibold text-base-content truncate min-w-0">Hivemind</span>
-          <div className="flex items-center gap-2">
-            <RateLimitIndicator />
-          </div>
-          <HamburgerMenu
-            isOpen={isMobileMenuOpen}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          />
-        </header>
-      )}
+      {/* MOBILE HEADER (CSS-gated; hidden at lg so it never co-renders with the sidebar) */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
+        <span className="font-semibold text-base-content truncate min-w-0">Hivemind</span>
+        <div className="flex items-center gap-2">
+          <RateLimitIndicator />
+        </div>
+        <HamburgerMenu
+          isOpen={isMobileMenuOpen}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        />
+      </header>
 
       {/* MOBILE DRAWER */}
       {isMobile && isMobileMenuOpen && (
@@ -82,7 +83,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
       {/* MAIN CONTENT WRAPPER - Offset for sidebar */}
       <div
-        className={`flex-1 min-w-0 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-60'}`}
+        className="flex-1 min-w-0 min-h-screen flex flex-col transition-all duration-300 mt-14 ml-0 lg:mt-0 lg:ml-60"
       >
         {/* Rate limit indicator and Demo Mode Banner */}
         {!isMobile && (
