@@ -31,8 +31,8 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `analytics-dashboard.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Analytics dashboard with bot performance metrics |
 | `api-docs-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Interactive API documentation page |
 | `api-rate-limit.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | API rate limiting configuration |
+| `audit-governance-initial.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit Log page — audit events table (/admin/audit) |
 | `audit-governance-filtered.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit Log page with a filter applied (/admin/audit)|
-| `audit-governance-initial.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit and governance page in initial state |
 | `backup-retention-baseline.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention settings in baseline state |
 | `backup-retention-enforced.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention with enforcement policy active |
 | `bot-create-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md, archive/screenshots/README.md | Bot creation page |
