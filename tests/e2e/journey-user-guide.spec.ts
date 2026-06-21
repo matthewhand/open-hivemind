@@ -39,7 +39,14 @@ const clearToasts = (page: Page) =>
 
 const shot = async (page: Page, name: string) => {
   await clearToasts(page);
-  await page.screenshot({ path: `${SCREENSHOT_DIR}/journey-${name}.png`, fullPage: true });
+  // Viewport-framed (NOT fullPage): user-guide screenshots should show the
+  // header + the first relevant screenful of each step, not a 10,000px dump of
+  // an entire long admin page — full-page captures of dense list pages (e.g.
+  // the Bots grid) are overwhelming for a first-time reader. Scroll to top so
+  // the page header is in frame.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: `${SCREENSHOT_DIR}/journey-${name}.png`, fullPage: false });
 };
 
 /** Navigate, wait for the network to settle, give charts a beat to render. */
