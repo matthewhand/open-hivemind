@@ -19,7 +19,7 @@ export const useMCPServerDelete = (
     try {
       await Promise.allSettled(
         Array.from(bulk.selectedIds).map((id) =>
-          apiService.delete(`/api/admin/mcp-servers/${encodeURIComponent(id)}`)
+          apiService.delete(`/api/admin/mcp-servers/${encodeURIComponent(id as string)}`)
         )
       );
       bulk.clearSelection();

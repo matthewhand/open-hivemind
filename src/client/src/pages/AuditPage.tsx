@@ -198,14 +198,19 @@ const AuditPage: React.FC = () => {
   const [actionFilter, setActionFilter] = useState('all');
   const [resultFilter, setResultFilter] = useState('all');
 
-  // Row expansion
+  // Expanded row state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const toggleRow = (id: string) =>
+  const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
     });
+  };
 
   const fetchAuditEvents = useCallback(async () => {
     try {

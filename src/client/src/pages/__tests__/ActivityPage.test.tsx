@@ -165,7 +165,7 @@ vi.mock('../../components/SearchFilterBar', () => ({
 
 // Mock lucide-react icons
 vi.mock('lucide-react', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal() as Record<string, unknown>;
   return {
     ...actual,
     Clock: () => <span />,
