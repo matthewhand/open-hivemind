@@ -67,7 +67,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `env-sample-completeness.png` | current | docs/screenshots/README.md | Environment sample file completeness check |
 | `export-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Data export page |
 | `guard-profiles-coverage.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Guard profiles coverage report |
-| `guards-concurrent-test.png` | current | none | Guards page state during a concurrent guard test |
+| `guards-concurrent-test.png` | current | none | Guards page — guard profiles (access control, rate limits, content filters) |
 | `guards-modal-enhanced.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Enhanced guards modal with additional options |
 | `guards-modal.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Guards configuration modal |
 | `guards-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Guards page with guardrail profiles |
