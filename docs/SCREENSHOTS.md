@@ -32,7 +32,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `api-docs-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Interactive API documentation page |
 | `api-rate-limit.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | API rate limiting configuration |
 | `audit-governance-filtered.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit and governance page with filters applied |
-| `audit-governance-initial.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit and governance page in initial state |
+| `audit-governance-initial.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit Log page — audit events table (/admin/audit) |
 | `backup-retention-baseline.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention settings in baseline state |
 | `backup-retention-enforced.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention with enforcement policy active |
 | `bot-create-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md, archive/screenshots/README.md | Bot creation page |

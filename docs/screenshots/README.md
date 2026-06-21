@@ -56,7 +56,7 @@ The spec auto-detects sentinel API keys (`/^(test\|dummy\|mock\|fake\|sk-test)-/
 | Screenshot | Description |
 |---|---|
 | ![analytics-dashboard](analytics-dashboard.png) | Analytics dashboard with bot performance metrics |
-| ![audit-governance-initial](audit-governance-initial.png) | Audit and governance page in initial state |
+| ![audit-governance-initial](audit-governance-initial.png) | Audit Log page — audit events table (/admin/audit)|
 | ![audit-governance-filtered](audit-governance-filtered.png) | Audit and governance page with filters applied |
 
 ## Bot Management
