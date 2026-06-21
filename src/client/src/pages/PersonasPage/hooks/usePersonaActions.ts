@@ -36,6 +36,7 @@ export const usePersonaActions = (
   showDeleteModal: boolean;
   setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
   deletingPersona: Persona | null;
+  setDeletingPersona: React.Dispatch<React.SetStateAction<Persona | null>>;
   editingPersona: Persona | null;
   cloningPersonaId: string | null;
   isViewMode: boolean;
@@ -340,6 +341,7 @@ export const usePersonaActions = (
     showDeleteModal,
     setShowDeleteModal,
     deletingPersona,
+    setDeletingPersona,
     editingPersona,
     cloningPersonaId,
     isViewMode,

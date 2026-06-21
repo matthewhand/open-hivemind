@@ -62,7 +62,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         checked={isOpen}
         onContent={<CloseIcon />}
         offContent={<HamburgerIcon />}
-        rotate
+        variant="rotate"
         className="swap-active-inherit"
       />
     </div>

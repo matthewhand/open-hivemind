@@ -13,7 +13,7 @@ const MessageVolumeChart: React.FC = () => {
     if (metrics) {
       const newEntry = {
         time: new Date().toLocaleTimeString(),
-        volume: metrics.messagesProcessed,
+        volume: metrics.messagesProcessed ?? 0,
       };
       setData((prevData) => [...prevData.slice(-9), newEntry]);
     }
