@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, RefreshCw, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Activity, RefreshCw, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
@@ -50,7 +50,6 @@ const STATUS_CONFIG: Record<
     icon: typeof CheckCircle;
     color: string;
     bg: string;
-    border: string;
     badge: 'success' | 'warning' | 'error';
     label: string;
   }
@@ -59,7 +58,6 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle,
     color: 'text-success',
     bg: 'bg-success/10',
-    border: 'border-success/30',
     badge: 'success',
     label: 'Healthy',
   },
@@ -67,7 +65,6 @@ const STATUS_CONFIG: Record<
     icon: AlertTriangle,
     color: 'text-warning',
     bg: 'bg-warning/10',
-    border: 'border-warning/30',
     badge: 'warning',
     label: 'Degraded',
   },
@@ -75,7 +72,6 @@ const STATUS_CONFIG: Record<
     icon: XCircle,
     color: 'text-error',
     bg: 'bg-error/10',
-    border: 'border-error/30',
     badge: 'error',
     label: 'Down',
   },
@@ -131,7 +127,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
 
   return (
     <div
-      className={`rounded-xl border p-4 ${statusCfg.bg} ${statusCfg.border} flex flex-col gap-3`}
+      className={`rounded-xl border p-4 ${statusCfg.bg} border-${statusCfg.badge}/30 flex flex-col gap-3`}
     >
       {/* Header: name + status */}
       <div className="flex items-center justify-between">
@@ -206,33 +202,23 @@ const ProviderHealthPage: React.FC = () => {
   const [data, setData] = useState<ProviderHealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notImplemented, setNotImplemented] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchHealth = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const resp = await apiService.get<{
+      const resp = await apiService.get('/api/admin/provider-health') as {
         success: boolean;
         data: ProviderHealthData;
-      }>('/api/admin/provider-health');
+      };
       setData(resp.data);
       setLastRefresh(new Date());
       setError(null);
-      setNotImplemented(false);
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ?? 'Unable to fetch provider health data.';
-      // The endpoint returns 501 by design when ENABLE_MOCK_PROVIDER_HEALTH is
-      // unset. Show a friendly explanation rather than the raw JSON envelope.
-      if (/\b501\b|PROVIDER_HEALTH_NOT_IMPLEMENTED|not implemented/i.test(msg)) {
-        setNotImplemented(true);
-        setError(null);
-      } else {
-        setNotImplemented(false);
-        setError(msg);
-      }
+      setError(msg);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -309,18 +295,6 @@ const ProviderHealthPage: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Not-implemented banner (501 by design when ENABLE_MOCK_PROVIDER_HEALTH is unset) */}
-      {notImplemented && (
-        <div className="alert bg-base-200 text-base-content border border-base-300 shadow-sm">
-          <Info className="w-5 h-5 text-info shrink-0" />
-          <span>
-            Provider health metrics aren&apos;t collected in this build. Set{' '}
-            <code>ENABLE_MOCK_PROVIDER_HEALTH=true</code> to preview this dashboard with
-            simulated data.
-          </span>
-        </div>
-      )}
 
       {/* Error banner */}
       {error && (

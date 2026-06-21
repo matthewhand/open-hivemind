@@ -100,9 +100,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const handleTogglePanicMode = async () => {
     try {
-      const response = await apiService.post<{ success: boolean; data: { enabled: boolean } }>(
-        '/api/admin/panic-mode'
-      );
+      const response = await apiService.post('/api/admin/panic-mode') as { success: boolean; data: { enabled: boolean } };
       if (response.success) {
         const enabled = response.data.enabled;
         setIsPanicMode(enabled);
@@ -454,7 +452,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                             <Icon className={`w-3.5 h-3.5 ${isAction ? 'text-primary' : 'opacity-40'}`} />
                             <span className="text-sm">{suggestion}</span>
                             {isAction && (
-                              <Badge size="xs" variant="outline" className="ml-auto text-[8px] opacity-50 uppercase">Bot Action</Badge>
+                              <Badge size="xs" style="outline" className="ml-auto text-[8px] opacity-50 uppercase">Bot Action</Badge>
                             )}
                           </button>
                         </li>

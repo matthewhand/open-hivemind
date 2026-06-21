@@ -11,7 +11,7 @@ import { Badge } from '../DaisyUI/Badge';
 import SimpleTable from '../DaisyUI/SimpleTable';
 import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
 import FileUpload from '../DaisyUI/FileUpload';
-import { apiService } from '../../services/api';
+import { apiService, type ApiEnvelope } from '../../services/api';
 
 interface ImportBundle {
   schemaVersion?: number;
@@ -29,11 +29,13 @@ interface ConflictInfo {
   isConflict: boolean;
 }
 
+// Mirrors the server-side ImportReport returned by POST /api/bots/import
+// (src/server/services/BotRouteService.ts): all four fields are string arrays.
 interface ImportReport {
   created: string[];
   updated: string[];
   skipped: string[];
-  errors: Array<{ name: string; error: string }>;
+  errors: string[];
 }
 
 interface ImportBotsModalProps {
@@ -121,8 +123,8 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     if (!bundle) return;
     setImporting(true);
     try {
-      const data = await apiService.post<any>('/api/bots/import', bundle);
-      setReport(data.report);
+      const response = await apiService.post<ApiEnvelope<ImportReport>>('/api/bots/import', bundle);
+      setReport(response.data ?? null);
       setStep('result');
       setFeedbackState({ state: 'success', message: 'Import Successful!' });
       onImportComplete();
@@ -247,7 +249,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
                   <XCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-sm">Errors ({report.errors.length})</p>
-                    {report.errors.map((e, i) => <p key={i} className="text-xs text-error">{e.name}: {e.error}</p>)}
+                    {report.errors.map((e, i) => <p key={i} className="text-xs text-error">{e}</p>)}
                   </div>
                 </div>
               )}

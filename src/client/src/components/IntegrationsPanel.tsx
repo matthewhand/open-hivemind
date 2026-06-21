@@ -39,7 +39,7 @@ import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
-import type { LLMProviderType, ProviderModalState } from '../types/bot';
+import type { LLMProvider, LLMProviderType, ProviderModalState } from '../types/bot';
 
 interface ConfigSchema {
   doc?: string;
@@ -100,7 +100,8 @@ const IntegrationsPanel: React.FC = () => {
     isOpen: false,
     isEdit: false,
     providerType: 'llm',
-    provider: null,
+    mode: 'create',
+    provider: undefined,
   });
 
   // Confirm modal state
@@ -348,7 +349,7 @@ const IntegrationsPanel: React.FC = () => {
             size="sm"
             className="gap-2"
             onClick={() =>
-              setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', provider: null })
+              setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', mode: 'create', provider: undefined })
             }
           >
             <PlusIcon className="w-4 h-4" /> Add LLM Provider
@@ -407,13 +408,15 @@ const IntegrationsPanel: React.FC = () => {
                             isOpen: true,
                             isEdit: true,
                             providerType: 'llm',
+                            mode: 'edit',
                             provider: {
                               id: profile.key,
                               name: profile.name,
                               type: profile.provider,
-                              config: profile.config,
+                              config: profile.config ?? {},
                               modelType: profile.modelType,
-                            },
+                              enabled: true,
+                            } as LLMProvider,
                           })
                         }
                       >

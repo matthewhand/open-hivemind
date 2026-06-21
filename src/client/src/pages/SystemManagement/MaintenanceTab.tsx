@@ -40,14 +40,14 @@ const MaintenanceTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card title="System Maintenance" icon={<RotateCcw className="w-5 h-5 text-primary" />}>
+      <Card title="System Maintenance">
         <div className="p-4 space-y-6">
           <div className="bg-error/10 border border-error/20 p-4 rounded-lg flex items-start gap-4">
             <AlertTriangle className="w-6 h-6 text-error flex-shrink-0 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-error">Factory Reset</h3>
               <p className="text-sm opacity-80 mt-1">
-                This action is <strong>irreversible</strong>. It will wipe all data from the database, including:
+                This action is **irreversible**. It will wipe all data from the database, including:
               </p>
               <ul className="list-disc list-inside text-xs mt-2 space-y-1 opacity-70 grid grid-cols-2">
                 <li>User Messages</li>
@@ -82,8 +82,8 @@ const MaintenanceTab: React.FC = () => {
                 </div>
 
                 <Button
-                  variant="error"
-                  className="gap-2"
+                  variant="ghost"
+                  className="gap-2 text-error"
                   disabled={confirmationPhrase !== 'confirm-factory-reset' || !password || isResetting}
                   onClick={() => setShowConfirmModal(true)}
                   loading={isResetting}

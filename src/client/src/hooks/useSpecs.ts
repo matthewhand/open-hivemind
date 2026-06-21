@@ -16,7 +16,7 @@ export const useSpecs = (): {
   } = useQuery<Spec[]>({
     queryKey: ['specs'],
     queryFn: async (): Promise<Spec[]> => {
-      const response = await apiService.request<{ success: boolean; data: Spec[]; error?: string }>('/api/specs');
+      const response = await apiService.request('/api/specs') as { success: boolean; data: Spec[]; error?: string };
       if (response.success && response.data) {
         return response.data;
       }
@@ -26,7 +26,7 @@ export const useSpecs = (): {
 
   const error = queryError instanceof Error ? queryError.message : null;
 
-  return { specs, loading, error, refetch };
+  return { specs, loading, error, refetch: async () => { await refetch(); } };
 };
 
 export default useSpecs;

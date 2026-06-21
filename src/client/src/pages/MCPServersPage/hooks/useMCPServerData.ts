@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { apiService } from '../../../services/api';
+import { apiService, type ApiEnvelope } from '../../../services/api';
+
+// Payload shape of GET /api/admin/mcp-servers. The server/configuration entries
+// are loosely-shaped and normalized below via explicitly-typed `.map` callbacks,
+// so the arrays are modeled as `unknown[]` rather than cast to `any`.
+interface MCPServersPayload {
+  servers?: unknown[];
+  configurations?: unknown[];
+  trustedRepositories?: TrustedRepository[];
+  cautionRepositories?: TrustedRepository[];
+  trustSettings?: { showTrustIndicator?: boolean };
+}
 
 export interface Tool {
   name: string;
@@ -50,7 +61,7 @@ export const useMCPServerData = (): {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.get<any>('/api/admin/mcp-servers');
+      const data = await apiService.get<ApiEnvelope<MCPServersPayload>>('/api/admin/mcp-servers');
 
       const connectedServers: MCPServer[] = (Array.isArray(data.data?.servers) ? data.data.servers : []).map(
         (server: any, index: number) => ({
