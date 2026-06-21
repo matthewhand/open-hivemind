@@ -30,6 +30,21 @@ const CONFIG_LIMITS = {
   PROFILE_NAME_MAX_LENGTH: 100,
 } as const;
 
+// Shape of the optional template payload passed via navigation state by the
+// "Use Template" action. All fields optional — only what is present is applied.
+interface TemplatePrefill {
+  name?: string;
+  description?: string;
+  platform?: string;
+  persona?: string;
+  llmProvider?: string;
+  mcpServers?: string[];
+}
+
+interface BotCreateLocationState {
+  template?: TemplatePrefill;
+}
+
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,7 +106,7 @@ const BotCreatePage: React.FC = () => {
 
   // Prefill the form from a template passed via navigation state (e.g. "Use Template").
   useEffect(() => {
-    const template = (location.state as any)?.template;
+    const template = (location.state as BotCreateLocationState | null)?.template;
     if (!template) return;
 
     setFormData(prev => ({

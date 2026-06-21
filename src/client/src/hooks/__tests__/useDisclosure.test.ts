@@ -1,5 +1,6 @@
 // Vitest provides describe, it, expect, vi as globals
 import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import type { KeyboardEvent } from 'react';
 import { useDisclosure } from '../useDisclosure';
 

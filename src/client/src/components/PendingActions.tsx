@@ -3,7 +3,7 @@ import { Shield, Check, X, Clock, Terminal } from 'lucide-react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
-import { apiService } from '../services/api';
+import { apiService, type ApiEnvelope } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useErrorToast, useSuccessToast } from './DaisyUI/ToastNotification';
 
@@ -26,7 +26,7 @@ const PendingActions: React.FC = () => {
   const fetchActions = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiService.get<any>('/api/admin/pending-actions');
+      const res = await apiService.get<ApiEnvelope<PendingAction[]>>('/api/admin/pending-actions');
       setActions(res.data || []);
     } catch (err) {
       console.error('Failed to fetch pending actions:', err);
@@ -98,17 +98,17 @@ const PendingActions: React.FC = () => {
                   </h4>
                 </div>
                 <div className="flex gap-1">
-                  <Button 
-                    size="xs" 
-                    variant="success"
+                  <Button
+                    size="xs"
+                    variant="primary"
                     onClick={() => handleResolve(action.id, true)}
                     title="Approve"
                   >
                     <Check className="w-3 h-3" />
                   </Button>
-                  <Button 
-                    size="xs" 
-                    variant="error"
+                  <Button
+                    size="xs"
+                    variant="ghost"
                     onClick={() => handleResolve(action.id, false)}
                     title="Deny"
                   >

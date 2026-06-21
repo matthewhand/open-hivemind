@@ -37,6 +37,8 @@ export interface MarketplaceCardProps {
   pkg: MarketplacePackage;
   isBusy?: boolean;
   actionInProgress?: string | null;
+  userRating?: number;
+  onRate?: (pkgName: string, star: number) => void;
   onInstall?: (pkg: MarketplacePackage) => void;
   onUpdate?: (name: string) => void;
   onUninstall?: (name: string) => void;
@@ -60,21 +62,6 @@ const TYPE_COLORS = {
   tool: 'info',
 } as const;
 
-// Static full class strings — Tailwind JIT can't see interpolated names like
-// `bg-${color}/10`, so those get purged and render colorless. Keep them verbatim.
-const TYPE_ICON_BG = {
-  llm: 'bg-secondary/10',
-  message: 'bg-primary/10',
-  memory: 'bg-accent/10',
-  tool: 'bg-info/10',
-} as const;
-const TYPE_ICON_TEXT = {
-  llm: 'text-secondary',
-  message: 'text-primary',
-  memory: 'text-accent',
-  tool: 'text-info',
-} as const;
-
 const STATUS_BADGES = {
   'built-in': { label: 'Built-in', color: 'neutral' as const },
   installed: { label: 'Installed', color: 'success' as const },
@@ -89,6 +76,8 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
   pkg,
   isBusy = false,
   actionInProgress,
+  userRating,
+  onRate,
   onInstall,
   onUpdate,
   onUninstall,
@@ -102,8 +91,8 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
       <Card.Body className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${TYPE_ICON_BG[pkg.type]}`}>
-              <Icon className={`w-5 h-5 ${TYPE_ICON_TEXT[pkg.type]}`} />
+            <div className={`p-2 rounded-lg bg-${color}/10`}>
+              <Icon className={`w-5 h-5 text-${color}`} />
             </div>
             <div>
               <h2 className="font-semibold">{pkg.displayName}</h2>
@@ -126,22 +115,25 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
 
         {/* Star Rating & Feedback */}
         <div className="flex items-center justify-between mb-3">
-          <div
-            className="flex items-center gap-1"
-            data-testid={`star-rating-${pkg.name}`}
-            role="img"
-            aria-label={`Rating: ${pkg.rating ?? 0} out of 5 stars`}
-          >
+          <div className="flex items-center gap-1" data-testid={`star-rating-${pkg.name}`}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <StarIcon
+              <Button
                 key={star}
+                variant="ghost"
+                size="xs"
+                className="p-0"
                 data-testid={`star-${star}`}
-                className={`w-4 h-4 ${
-                  (pkg.rating ?? 0) >= star
-                    ? 'fill-warning text-warning'
-                    : 'text-base-content/30'
-                }`}
-              />
+                onClick={() => onRate?.(pkg.name, star)}
+                aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+              >
+                <StarIcon
+                  className={`w-4 h-4 ${
+                    (userRating ?? pkg.rating ?? 0) >= star
+                      ? 'fill-warning text-warning'
+                      : 'text-base-content/30'
+                  }`}
+                />
+              </Button>
             ))}
           </div>
           {pkg.feedbackUrl ? (
@@ -172,7 +164,8 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
           {pkg.status === 'installed' && (
             <>
               <Button
-                variant="outline"
+                variant="ghost"
+                buttonStyle="outline"
                 size="sm"
                 className="flex-1"
                 onClick={() => onUpdate?.(pkg.name)}
@@ -186,7 +179,8 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
                 Update
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
+                buttonStyle="outline"
                 size="sm"
                 onClick={() => onUninstall?.(pkg.name)}
                 disabled={isBusy}

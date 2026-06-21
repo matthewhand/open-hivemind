@@ -1,6 +1,13 @@
 import { useCallback } from 'react';
-import { apiService } from '../../../services/api';
+import { apiService, type ApiEnvelope } from '../../../services/api';
 import type { BotConfig } from '../../../types/bot';
+
+// Payload returned by the bot export endpoints; serialized verbatim to a file.
+interface BotExportPayload {
+  schemaVersion: number;
+  exportedAt: string;
+  bots: unknown[];
+}
 
 export const useBotExport = (
   bots: BotConfig[],
@@ -21,7 +28,7 @@ export const useBotExport = (
 
   const handleExportAll = useCallback(async () => {
     try {
-      const data = await apiService.get<any>('/api/bots/export');
+      const data = await apiService.get<ApiEnvelope<BotExportPayload>>('/api/bots/export');
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -38,7 +45,7 @@ export const useBotExport = (
   const handleExportSingleBot = useCallback(
     async (bot: BotConfig) => {
       try {
-        const data = await apiService.get<any>(`/api/bots/${bot.id}/export`);
+        const data = await apiService.get<ApiEnvelope<BotExportPayload>>(`/api/bots/${bot.id}/export`);
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

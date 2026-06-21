@@ -45,6 +45,7 @@ export type {
   ActivityEvent,
   ActivityTimelineBucket,
   ActivityResponse,
+  ApiEnvelope,
   RateLimitInfo,
   RateLimitListener,
 } from './api/types';
@@ -53,7 +54,14 @@ export type {
 // with all domain mixin return values.
 const core = new ApiService();
 
-export const apiService = Object.assign(
+export const apiService: ApiService &
+  ReturnType<typeof botsMixin> &
+  ReturnType<typeof configMixin> &
+  ReturnType<typeof personasMixin> &
+  ReturnType<typeof secureConfigsMixin> &
+  ReturnType<typeof monitoringMixin> &
+  ReturnType<typeof adminMixin> &
+  ReturnType<typeof authMixin> = Object.assign(
   core,
   botsMixin(core),
   configMixin(core),

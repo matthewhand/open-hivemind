@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useUrlParams from '../../hooks/useUrlParams';
 import { apiService, type Persona as ApiPersona, type Bot } from '../../services/api';
@@ -63,7 +63,7 @@ export function usePersonasLogic() {
     error: personasError,
   } = useQuery<ApiPersona[]>({
     queryKey: ['personasLogic', 'personas'],
-    queryFn: () => apiService.get<ApiPersona[]>('/api/personas'),
+    queryFn: () => apiService.get('/api/personas') as Promise<ApiPersona[]>,
   });
 
   const loading = botsLoading || personasLoading || mutating;
@@ -101,7 +101,7 @@ export function usePersonasLogic() {
 
     // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
     // This reduces the time complexity of the persona mapping from O(P * B) to O(P + B)
-    const botNameMap = new Map(filledBots.map((b: any) => [b.id, b.name]));
+    const botNameMap = new Map<string, string>(filledBots.map((b: any) => [b.id as string, b.name as string]));
 
     const mappedPersonas = rawPersonas.map((p) => {
       const assignedIds = Array.isArray(p.bots) ? p.bots : [];
@@ -118,8 +118,7 @@ export function usePersonasLogic() {
     setPersonas(mappedPersonas);
   }, [configResponse, personasResponse, botsLoading, personasLoading, botsError, personasError]);
 
-  const bulkSelection = useBulkSelection(personas);
-  const dragAndDrop = useDragAndDrop(personas, 'id');
+  const bulkSelection = useBulkSelection(personas.map((p) => p.id));
 
   const filteredPersonas = useMemo(() => {
     let result = personas;
@@ -138,8 +137,6 @@ export function usePersonasLogic() {
     return result;
   }, [personas, searchQuery, selectedCategory]);
 
-  dragAndDrop.items = filteredPersonas;
-
   const handlePersonaReorder = useCallback(async (reordered: Persona[]) => {
     try {
       setPersonas(reordered);
@@ -149,9 +146,17 @@ export function usePersonasLogic() {
     }
   }, [errorToast, fetchData]);
 
+  // Stable ref so useDragAndDrop always calls the latest version of the callback
+  const onReorderRef = useRef(handlePersonaReorder);
   useEffect(() => {
-    dragAndDrop.onReorder = handlePersonaReorder;
+    onReorderRef.current = handlePersonaReorder;
   }, [handlePersonaReorder]);
+
+  const dragAndDrop = useDragAndDrop<Persona>({
+    items: filteredPersonas,
+    idAccessor: (p) => p.id,
+    onReorder: (reordered) => onReorderRef.current(reordered),
+  });
 
   const handleBulkDeletePersonas = async () => {
     if (bulkSelection.selectedIds.size === 0) return;
