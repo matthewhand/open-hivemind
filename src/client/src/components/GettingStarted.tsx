@@ -69,8 +69,7 @@ const GettingStarted: React.FC<GettingStartedProps> = ({ onDismiss }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiService
-      .get<any>('/api/dashboard/config-status')
+    (apiService.get('/api/dashboard/config-status') as Promise<any>)
       .then((data: any) => {
         const s = data?.data || data;
         setStatus({

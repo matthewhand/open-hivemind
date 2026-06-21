@@ -2,7 +2,7 @@ import React from 'react';
 
 export interface BadgeProps {
   /** The content to display inside the badge */
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /**
    * Color variant of the badge
    * @default 'neutral'

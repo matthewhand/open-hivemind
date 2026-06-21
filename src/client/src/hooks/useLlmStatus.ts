@@ -23,7 +23,7 @@ export const useLlmStatus = (): LlmStatusState => {
     refetch,
   } = useQuery<LlmStatus>({
     queryKey: ['config', 'llm-status'],
-    queryFn: () => apiService.get<LlmStatus>('/api/config/llm-status'),
+    queryFn: (): Promise<LlmStatus> => apiService.get('/api/config/llm-status'),
   });
 
   const error = queryError instanceof Error ? queryError.message : null;

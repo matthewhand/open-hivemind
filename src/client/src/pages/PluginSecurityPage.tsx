@@ -371,6 +371,7 @@ const PluginSecurityPage: React.FC = () => {
                     <>
                       <Button
                         size="sm"
+                        variant="ghost"
                         buttonStyle="outline"
                         onClick={() => handleVerifyPlugin(plugin.pluginName)}
                         disabled={actionInProgress === plugin.pluginName}
@@ -387,7 +388,7 @@ const PluginSecurityPage: React.FC = () => {
                       {plugin.trustLevel === 'untrusted' ? (
                         <Button
                           size="sm"
-                          color="success"
+                          variant="primary"
                           onClick={() => openTrustConfirmModal(plugin.pluginName, true)}
                           disabled={actionInProgress === plugin.pluginName}
                           aria-label={`Trust ${plugin.pluginName}`}
@@ -398,7 +399,7 @@ const PluginSecurityPage: React.FC = () => {
                       ) : (
                         <Button
                           size="sm"
-                          color="warning"
+                          variant="ghost"
                           onClick={() => openTrustConfirmModal(plugin.pluginName, false)}
                           disabled={actionInProgress === plugin.pluginName}
                           aria-label={`Revoke trust from ${plugin.pluginName}`}
@@ -437,6 +438,7 @@ const PluginSecurityPage: React.FC = () => {
         title={confirmModal.title}
         message={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         confirmText="Confirm"
         cancelText="Cancel"

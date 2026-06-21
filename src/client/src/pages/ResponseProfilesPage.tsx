@@ -234,7 +234,7 @@ const ResponseProfilesPage: React.FC = () => {
           <p className="text-base-content/60 text-sm mt-1">Tune how bots engage in conversations and simulate human social behavior</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchProfiles} disabled={loading}>
+          <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
           <Button variant="primary" onClick={handleAddProfile}>
@@ -299,7 +299,7 @@ const ResponseProfilesPage: React.FC = () => {
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => handleEditProfile(profile)}
                     aria-label={`Edit response profile ${profile.name}`}
                   >
@@ -308,7 +308,7 @@ const ResponseProfilesPage: React.FC = () => {
                   {!profile.isBuiltIn && (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       className="text-error hover:bg-error/10"
                       onClick={() => handleDeleteProfile(profile.key)}
                       aria-label={`Delete response profile ${profile.name}`}
@@ -444,7 +444,7 @@ const ResponseProfilesPage: React.FC = () => {
                               type="number"
                               className="input-xs w-24 text-right"
                               step={key.includes('MULTIPLIER') || key.includes('CHANCE') ? 0.01 : 1}
-                              value={formData.settings?.[key] ?? ''}
+                              value={String(formData.settings?.[key] ?? '')}
                               onChange={(e) => {
                                 const parsed = parseFloat(e.target.value);
                                 if (!isFinite(parsed)) return; // reject Infinity / NaN
