@@ -122,7 +122,7 @@ export class SlackWelcomeHandler {
       debug(`Failed to fetch channel name for ${channel}: ${error}`);
     }
 
-    const resourceUrl = process.env.RESOURCE_URL || 'https://university.example.com/resources';
+    const resourceUrl = process.env.RESOURCE_URL || 'https://example.com/resources';
     const defaultMessage = `# Welcome, ${userName}, to the #${channelName} channel! :wave:\n\n## Purpose\nThis channel is designed to help you achieve your learning objectives through interactive discussions and AI-powered assistance.\n\n## How to Use\n- **Ask Questions**: Post your questions here and I'll respond in threads to keep discussions organized\n- **Get Help**: Request private assistance and I'll DM you directly\n- **Track Progress**: Ask for assessments to monitor your learning journey\n\n## Resources\n- [Learning Portal](${resourceUrl})\n- [Documentation](${resourceUrl}/docs)\n- [Support](${resourceUrl}/support)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_${channel})\n- [How-To](action:how_to_${channel})\n- [Contact Support](action:contact_support_${channel})\n- [Report Issue](action:report_issue_${channel})`;
 
     const welcomeMessage = String(
@@ -229,7 +229,7 @@ export class SlackWelcomeHandler {
     }
 
     const reportIssueUrl =
-      process.env.REPORT_ISSUE_URL || 'https://university.example.com/report-issue';
+      process.env.REPORT_ISSUE_URL || 'https://example.com/report-issue';
     const learnMoreDefault = "Here's more info about this channel!";
     const learnMoreMessage = String(
       slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault
@@ -252,7 +252,7 @@ export class SlackWelcomeHandler {
       [`how_to_${channel}`]:
         'Here\'s how I work:\n- Ask questions in the channel, and I\'ll reply in threads for learning discussions.\n- For assessments or private help, I\'ll message you via DMs.\nTry asking "What are the learning objectives?" or "Assess my progress"!',
       [`contact_support_${channel}`]:
-        "Need support? Post your question here, and I'll thread it for group discussion. For private issues, I'll reach out via DM. You can also email support@university.example.com.",
+        "Need support? Post your question here, and I'll thread it for group discussion. For private issues, I'll reach out via DM. You can also email support@example.com.",
       [`report_issue_${channel}`]: `Something not working? Let me know here, and I'll thread it for help. Or report it directly at: ${reportIssueUrl}`,
     };
 

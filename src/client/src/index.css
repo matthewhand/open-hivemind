@@ -259,6 +259,20 @@ textarea {
   transform: translateY(0);
 }
 
+/* Accessible disabled/loading buttons.
+   Stock DaisyUI renders the disabled label as base-content @ ~20% opacity
+   (~1.4:1 on the dark theme — well below WCAG AA). Floor the label/spinner
+   contrast to ~65% over base-300 so it still reads as "muted/disabled" while
+   meeting AA, and neutralise any inherited opacity multiplier. */
+.btn:disabled,
+.btn[disabled],
+.btn-disabled {
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+  background-color: var(--color-base-300);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 /* ============================================
    Page Animations
    ============================================ */
