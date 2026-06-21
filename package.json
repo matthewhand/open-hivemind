@@ -304,7 +304,7 @@
       "@modelcontextprotocol/sdk": "^1.25.2",
       "babel-plugin-istanbul": "^8.0.2",
       "tar": "^7.5.11",
-      "undici": "^6.24.0",
+      "undici": "^6.27.0",
       "fast-xml-parser": "^4.5.5",
       "minimatch": "^10.2.3",
       "serialize-javascript": "^7.0.3",
