@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import { vi } from 'vitest';
 import AlertPanel, { Alert } from './AlertPanel';
 
 const baseTime = new Date('2026-06-02T12:00:00Z').toISOString();

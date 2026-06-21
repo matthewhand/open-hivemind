@@ -28,6 +28,7 @@ interface LLMProfile {
     key: string;
     name: string;
     provider: string;
+    modelType?: string;
 }
 
 interface BotSettingsModalProps {
