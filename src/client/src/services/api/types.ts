@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { Bot } from '../../types/bot';
 // Re-export canonical Persona and Bot from types/bot.ts
 export type { Persona, Bot } from '../../types/bot';
 
@@ -111,6 +112,7 @@ export interface ConfigResponse {
 
 export interface StatusResponse {
   bots: Array<{
+    id?: string;
     name: string;
     provider: string;
     llmProvider: string;
@@ -121,6 +123,8 @@ export interface StatusResponse {
     errorCount?: number;
   }>;
   uptime: number;
+  environment?: string;
+  version?: string;
 }
 
 export interface ConfigFile {
@@ -222,6 +226,18 @@ export interface ActivityResponse {
     p95ResponseTime?: number;
     p99ResponseTime?: number;
   }>;
+}
+
+/**
+ * Standard server response envelope, mirroring `ApiResponse.success(data)` on
+ * the backend (`{ success: true, data: T }`). Many endpoints wrap their payload
+ * this way; some legacy callers also read the unwrapped payload directly, so
+ * `data` is optional here to model both shapes without resorting to `as any`.
+ */
+export interface ApiEnvelope<T> {
+  success?: boolean;
+  data?: T;
+  error?: string;
 }
 
 export interface RateLimitInfo {

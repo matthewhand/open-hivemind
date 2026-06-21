@@ -80,7 +80,9 @@ const SettingsSecurity: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const { showStamp } = useSavedStamp();
   const { addToast } = useToast();
-  const warnIfDemo = useDemoModeWarning(addToast);
+  const warnIfDemo = useDemoModeWarning(
+    (type, title, message) => { addToast({ type, title, message }); }
+  );
 
   const enableAuthentication = watch('enableAuthentication');
   const enableRateLimit = watch('enableRateLimit');

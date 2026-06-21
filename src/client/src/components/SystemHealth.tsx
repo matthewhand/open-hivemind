@@ -231,7 +231,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
         {apiHealth && (
           <div className="mb-6">
             <Alert
-              status={apiHealth?.overall?.status}
+              status={apiHealth?.overall?.status === 'healthy' ? 'success' : apiHealth?.overall?.status}
               message={apiHealth?.overall?.message || `System Status: ${metrics?.status}`}
             />
           </div>

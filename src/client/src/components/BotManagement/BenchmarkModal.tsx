@@ -68,15 +68,10 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
   }, [isOpen]);
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title={
-        <div className="flex items-center gap-2">
-           <Trophy className="w-5 h-5 text-warning" />
-           <span>Performance Benchmark: {botName}</span>
-        </div>
-      }
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Performance Benchmark: ${botName}`}
       size="lg"
     >
       <div className="space-y-6">
@@ -86,7 +81,7 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
                 <Cpu className="w-16 h-16 text-primary animate-pulse" />
                 <Zap className="w-6 h-6 text-warning absolute -top-1 -right-1 animate-bounce" />
              </div>
-             <LoadingSpinner lg />
+             <LoadingSpinner size="lg" />
              <p className="text-sm font-bold opacity-60 uppercase tracking-widest">Executing Standardized IQ & Latency Suite...</p>
           </div>
         ) : error ? (
@@ -102,19 +97,19 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ botId, botName, isOpen,
                 <Stat 
                   title="Standardized IQ" 
                   value={data.iqScore} 
-                  icon={<Brain className="w-5 h-5 text-secondary" />}
+                  figure={<Brain className="w-5 h-5 text-secondary" />}
                   description="Logic & Reasoning"
                 />
                 <Stat 
                   title="Avg Latency" 
                   value={`${data.avgLatency}ms`} 
-                  icon={<Timer className="w-5 h-5 text-primary" />}
+                  figure={<Timer className="w-5 h-5 text-primary" />}
                   description="End-to-end response"
                 />
                 <Stat 
                   title="Provider" 
                   value={data.provider.toUpperCase()} 
-                  icon={<Zap className="w-5 h-5 text-warning" />}
+                  figure={<Zap className="w-5 h-5 text-warning" />}
                   description="Engine efficiency"
                 />
              </Stats>

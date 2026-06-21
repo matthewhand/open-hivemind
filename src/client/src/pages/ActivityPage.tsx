@@ -643,7 +643,7 @@ const ActivityPage: React.FC = () => {
 
   const columns: Column<ActivityEvent>[] = [
     {
-      key: 'replay',
+      key: 'replay' as keyof ActivityEvent,
       title: '',
       width: '60px',
       render: (_: unknown, record: ActivityEvent) => (
@@ -780,14 +780,14 @@ const ActivityPage: React.FC = () => {
       {/* Retry Button if there are errors */}
       {error && retryCount > 0 && (
         <div className="mt-2 text-center">
-          {retryCount < maxRetries ? (
+          {retryCount < _maxRetries ? (
             <Button
               size="sm"
               variant="secondary"
               onClick={fetchActivity}
               disabled={loading} aria-busy={loading}
             >
-              Retry ({retryCount}/{maxRetries})
+              Retry ({retryCount}/{_maxRetries})
             </Button>
           ) : (
             <Button
@@ -1018,7 +1018,7 @@ const ActivityPage: React.FC = () => {
       </Card>
 
       {/* Live Orchestration Log (New Feature) */}
-      <Card title="Live Orchestration Log" icon={<RefreshCw className={`w-5 h-5 ${orchestrationLogs.length > 0 ? 'animate-spin-slow' : ''}`} />}>
+      <Card title="Live Orchestration Log">
         <div className="max-h-60 overflow-y-auto bg-base-300 rounded-lg p-4 font-mono text-xs space-y-1">
           {orchestrationLogs.length === 0 ? (
             <div className="text-base-content/80 italic">Waiting for orchestration events...</div>
@@ -1207,10 +1207,10 @@ const ActivityPage: React.FC = () => {
       {/* Pagination Load More */}
       {data?.pagination?.hasMore && (
         <div className="flex justify-center mt-8 pb-8">
-          <Button 
-            onClick={handleLoadMore} 
+          <Button
+            onClick={handleLoadMore}
             loading={loading}
-            variant="outline"
+            buttonStyle="outline"
             className="gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

@@ -27,7 +27,7 @@ interface ChatMsg {
  * Opens on the right side when the user clicks "Test" on a profile card.
  * Supports optional custom system prompt and unified error display.
  */
-const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, onClose }) => {
+const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, sandboxConfig, onClose }) => {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
