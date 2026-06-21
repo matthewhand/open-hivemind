@@ -198,7 +198,7 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
         <div className="alert alert-error mb-4">
           <AlertIcon className="w-5 h-5" />
           <span>{error}</span>
-          <Button variant="outline" size="xs" onClick={fetchPackages}>
+          <Button variant="ghost" buttonStyle="outline" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
         </div>

@@ -36,7 +36,7 @@ vi.mock('../DaisyUI/Button', () => ({
     className?: string;
     loading?: boolean;
   }) => (
-    <button onClick={onClick} disabled={disabled ?? loading} className={className} aria-busy={String(!!loading)}>
+    <button onClick={onClick} disabled={disabled ?? loading} className={className} aria-busy={!!loading}>
       {children}
     </button>
   ),

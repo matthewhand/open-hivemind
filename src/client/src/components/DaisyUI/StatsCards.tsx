@@ -25,6 +25,15 @@ interface StatsCardsProps {
   className?: string;
 }
 
+// Fields read from GET /api/webui/system-status. All optional: the live
+// endpoint only returns a subset, and the hook falls back to demo defaults
+// for anything missing.
+interface SystemStatusResponse {
+  bots?: { total?: number; active?: number };
+  database?: { stats?: { totalMessages?: number } };
+  mcp?: { connected?: number };
+}
+
 // Icon mapping for string-based icons
 const iconMap: Record<string, React.ReactNode> = {
   '🤖': <Bot className="w-8 h-8" />,
@@ -274,7 +283,7 @@ export const useSystemStats = () => {
       try {
         setIsLoading(true);
 
-        const data = await apiService.get<any>('/api/webui/system-status');
+        const data = await apiService.get<SystemStatusResponse>('/api/webui/system-status');
 
         const mockStats: StatItem[] = [
           {

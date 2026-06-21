@@ -12,12 +12,12 @@ describe('KeyboardShortcutsHelp', () => {
       key: 'k',
       ctrlKey: true,
       description: 'Search',
-      callback: vi.fn(),
+      action: vi.fn(),
     },
     {
       key: 'escape',
       description: 'Close',
-      callback: vi.fn(),
+      action: vi.fn(),
     },
   ];
 

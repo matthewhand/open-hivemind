@@ -3,6 +3,8 @@ import React from 'react';
 interface PageHeaderProps {
   title: string;
   description?: string;
+  /** Alias for `description`. */
+  subtitle?: string;
   icon?: React.ReactNode | React.ElementType;
   actions?: React.ReactNode;
   gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
@@ -34,11 +36,13 @@ const iconBgMap = {
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
+  subtitle,
   icon,
   actions,
   gradient = 'primary',
   className = '',
 }) => {
+  const resolvedDescription = description ?? subtitle;
   return (
     <div className="mb-6">
       <div
@@ -61,9 +65,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-base-content to-base-content/70 bg-clip-text">
                 {title}
               </h1>
-              {description && (
+              {resolvedDescription && (
                 <p className="text-base-content/60 mt-1 text-sm">
-                  {description}
+                  {resolvedDescription}
                 </p>
               )}
             </div>

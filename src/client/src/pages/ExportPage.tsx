@@ -8,7 +8,6 @@ import {
   Plus,
   Trash2,
   RotateCcw,
-  RefreshCw,
   Search,
   HardDrive,
   Clock,
@@ -33,7 +32,7 @@ import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
 import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import type { Column, RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface Backup {
   id: string;
@@ -214,7 +213,7 @@ const ExportPage: React.FC = () => {
     );
   }, [backups, searchQuery]);
 
-  const backupColumns: RDVColumn<Backup>[] = [
+  const backupColumns: Column<Backup>[] = [
     {
       key: 'name',
       title: 'Name',
@@ -340,7 +339,7 @@ const ExportPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6" data-testid="backups-page">
+    <div className="space-y-6">
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
@@ -349,7 +348,7 @@ const ExportPage: React.FC = () => {
       />
 
       {lastActionResult && (
-        <VisualFeedback type={lastActionResult === 'success' ? 'success' : 'error'} message={lastActionResult === 'success' ? 'Operation completed' : 'Operation failed'} onDismiss={() => setLastActionResult(null)} />
+        <VisualFeedback state={lastActionResult === 'success' ? 'success' : 'error'} message={lastActionResult === 'success' ? 'Operation completed' : 'Operation failed'} onComplete={() => setLastActionResult(null)} />
       )}
 
       <div ref={statsRef} className="relative">
@@ -374,17 +373,8 @@ const ExportPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto">
               <Button
-                variant="ghost"
-                onClick={fetchBackups}
-                aria-label="Refresh backups"
-                data-testid="refresh-backups-btn"
-              >
-                <RefreshCw className="w-4 h-4" /> Refresh
-              </Button>
-              <Button
                 variant="primary"
                 onClick={() => setCreateModalOpen(true)}
-                data-testid="create-backup-btn"
               >
                 <Plus className="w-4 h-4 mr-2" /> Create Backup
               </Button>

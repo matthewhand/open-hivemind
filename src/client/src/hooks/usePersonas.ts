@@ -39,7 +39,7 @@ export const usePersonas = (): UsePersonasReturn => {
   } = useQuery<Persona[]>({
     queryKey: ['personas'],
     queryFn: async () => {
-      const data = await apiService.get<any>('/api/personas');
+      const data = await apiService.get('/api/personas');
       const next = Array.isArray(data) ? data : [];
       return next.length > 0 ? next : [...BUILTIN_PERSONAS];
     },
