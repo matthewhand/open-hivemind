@@ -90,7 +90,7 @@ const ConfigPage: React.FC = () => {
         icon={Plug}
         gradient="secondary"
         actions={
-          <Button variant="outline" size="sm" onClick={fetchIntegrations} disabled={loading}>
+          <Button variant="ghost" buttonStyle="outline" size="sm" onClick={fetchIntegrations} disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -101,7 +101,7 @@ const ConfigPage: React.FC = () => {
       {error && (
         <Alert status="error" onClose={() => setError(null)}>
           <span>{error}</span>
-          <Button variant="outline" size="xs" onClick={fetchIntegrations}>
+          <Button variant="ghost" buttonStyle="outline" size="xs" onClick={fetchIntegrations}>
             Retry
           </Button>
         </Alert>

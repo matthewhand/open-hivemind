@@ -16,6 +16,10 @@ export interface Metrics {
       stats: unknown;
     };
   };
+  /** Cumulative LLM token usage count, if reported by the server */
+  llmTokenUsage?: number;
+  /** Cumulative messages processed count, if reported by the server */
+  messagesProcessed?: number;
 }
 
 export const getMetrics = async (): Promise<Metrics> => {

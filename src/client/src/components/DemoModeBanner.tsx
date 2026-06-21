@@ -23,7 +23,7 @@ const DemoModeBanner: React.FC = () => {
     useEffect(() => {
         const checkDemoMode = async () => {
             try {
-                const data = await apiService.get<DemoStatus>('/api/demo/status');
+                const data = await apiService.get('/api/demo/status') as DemoStatus;
                 setDemoStatus(data);
             } catch (error) {
                 console.debug('Could not check demo mode status:', error);

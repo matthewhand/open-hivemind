@@ -57,7 +57,7 @@ export const useBotActions = (
 
   const handleCreateBot = useCallback(async (botData: Partial<BotConfig>) => {
     try {
-      const response = await apiService.post<{ data: BotConfig }>('/api/bots', botData);
+      const response = await apiService.post('/api/bots', botData) as { data: BotConfig };
       // POST /api/bots returns an empty success envelope (no bot payload);
       // pushing `undefined` into the list crashes the grid render. The
       // fetchBots() below refreshes the list with the created bot.

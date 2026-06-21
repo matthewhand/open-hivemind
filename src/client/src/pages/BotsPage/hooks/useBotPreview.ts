@@ -1,8 +1,13 @@
 import { useCallback, useState } from 'react';
-import { apiService } from '../../../services/api';
+import { apiService, type ApiEnvelope } from '../../../services/api';
 import { ErrorService } from '../../../services/ErrorService';
 import type { BotConfig } from '../../../types/bot';
 import { withRetry } from '../../../utils/withRetry';
+
+// Preview payloads are loosely-shaped log entries rendered generically, so the
+// inner lists are typed as `unknown[]` rather than cast to `any`.
+type ActivityPreviewResponse = ApiEnvelope<{ activity?: unknown[] }>;
+type ChatPreviewResponse = ApiEnvelope<{ messages?: unknown[] }>;
 
 export const useBotPreview = (): {
   previewBot: BotConfig | null;
@@ -31,7 +36,7 @@ export const useBotPreview = (): {
     setActivityError(null);
     try {
       const activityJson = await withRetry(() =>
-        apiService.get<any>(`/api/bots/${botId}/activity?limit=${limit}`)
+        apiService.get<ActivityPreviewResponse>(`/api/bots/${botId}/activity?limit=${limit}`)
       );
       setActivityLogs(activityJson.data?.activity || []);
     } catch (err) {
@@ -45,7 +50,7 @@ export const useBotPreview = (): {
     setChatError(null);
     try {
       const chatJson = await withRetry(() =>
-        apiService.get<any>(`/api/bots/${botId}/chat?limit=20`)
+        apiService.get<ChatPreviewResponse>(`/api/bots/${botId}/chat?limit=20`)
       );
       setChatHistory(chatJson.data?.messages || []);
     } catch (err) {

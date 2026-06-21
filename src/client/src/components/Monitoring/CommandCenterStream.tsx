@@ -57,7 +57,7 @@ const CommandCenterStream: React.FC = () => {
           <Terminal className="w-6 h-6 text-primary" />
           Command Center Stream
         </h3>
-        <Badge variant="outline" size="sm" className="font-mono">LIVE</Badge>
+        <Badge style="outline" size="sm" className="font-mono">LIVE</Badge>
       </div>
 
       {isIdle ? (

@@ -6,7 +6,7 @@ import Modal from '../DaisyUI/Modal';
 import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';
 import Validator, { ValidatorHint } from '../DaisyUI/Validator';
-import { Persona } from './usePersonasLogic';
+import type { Persona } from '../../pages/PersonasPage/hooks/usePersonasData';
 import type { Bot } from '../../services/api';
 import type { PersonaResponseBehavior } from '../../types/bot';
 import Checkbox from '../DaisyUI/Checkbox';
