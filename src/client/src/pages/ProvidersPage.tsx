@@ -91,7 +91,7 @@ const ProvidersPage: React.FC = () => {
       const color = type === 'message' ? 'primary' as const :
                     type === 'llm' ? 'secondary' as const :
                     type === 'memory' ? 'accent' as const :
-                    'info' as const;
+                    'ghost' as const;
 
       return {
         type,

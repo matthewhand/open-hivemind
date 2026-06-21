@@ -13,7 +13,7 @@ const LLMUsageChart: React.FC = () => {
     if (metrics) {
       const newEntry = {
         time: new Date().toLocaleTimeString(),
-        tokens: metrics.llmTokenUsage,
+        tokens: metrics.llmTokenUsage ?? 0,
       };
       setData((prevData) => [...prevData.slice(-9), newEntry]);
     }

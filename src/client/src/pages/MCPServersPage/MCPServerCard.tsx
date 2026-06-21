@@ -91,7 +91,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
             </div>
             {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
               <Button
-                variant="outline"
+                buttonStyle="outline"
                 size="xs"
                 className="text-primary"
                 onClick={() => handleViewTools(server)}
@@ -113,7 +113,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
                 <Button
-                  variant="outline"
+                  buttonStyle="outline"
                   size="sm"
                   className="btn-circle text-error"
                   aria-label={String(`Disconnect ${server.name}`)}
@@ -125,7 +125,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
             ) : (
               <Tooltip content={server.status === 'stopped' ? 'Connect' : 'Retry Connection'}>
                 <Button
-                  variant="outline"
+                  buttonStyle="outline"
                   size="sm"
                   className="btn-circle text-success"
                   aria-label={String(server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`)}
@@ -142,7 +142,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
             {server.toolCount > 0 && (
               <Tooltip content="View Tools">
                 <Button
-                  variant="outline"
+                  buttonStyle="outline"
                   size="sm"
                   className="btn-circle"
                   aria-label={String(`View Tools for ${server.name}`)}
@@ -156,7 +156,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
           <div className="flex gap-1">
             <Tooltip content="Edit Configuration">
               <Button
-                variant="outline"
+                buttonStyle="outline"
                 size="sm"
                 className="btn-circle"
                 aria-label={String(`Edit ${server.name}`)}
@@ -167,7 +167,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
             </Tooltip>
             <Tooltip content="Delete Server">
               <Button
-                variant="outline"
+                buttonStyle="outline"
                 size="sm"
                 className="btn-circle text-error hover:bg-error hover:text-error-content"
                 aria-label={String(`Delete ${server.name}`)}

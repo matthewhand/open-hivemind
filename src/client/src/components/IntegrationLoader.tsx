@@ -142,7 +142,7 @@ export class IntegrationLoader {
         );
 
         const loadedResults = await Promise.all(componentPromises);
-        components.push(...loadedResults.filter((c): c is IntegrationUIComponent => c !== null));
+        components.push(...(loadedResults.filter(c => c !== null) as IntegrationUIComponent[]));
       }
 
       // If no manifest exists, try to auto-discover components
@@ -239,7 +239,7 @@ export class IntegrationLoader {
       });
 
       const discoveredResults = await Promise.all(discoveryPromises);
-      components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
+      components.push(...(discoveredResults.filter(c => c !== null) as IntegrationUIComponent[]));
 
     } catch (error) {
       debug('WARN:', `Failed to auto-discover components for integration ${integrationId}:`, error);
@@ -251,7 +251,7 @@ export class IntegrationLoader {
   /**
    * Dynamically load a React component from an integration
    */
-  private async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  public async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> { // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       // Try to dynamically import the component
       const modulePath = `../../integrations/${integrationId}/${componentPath}`;
@@ -322,7 +322,7 @@ const IntegrationContext = React.createContext<IntegrationLoader | null>(null);
 
 export function IntegrationProvider({ children, loader }: { children: React.ReactNode, loader?: IntegrationLoader }) {
   // We allow passing an explicit loader instance, or default to a new one
-  const [loaderInstance] = React.useState(() => loader || new IntegrationLoader());
+  const [loaderInstance] = React.useState(() => loader || IntegrationLoader.getInstance());
 
   return (
     <IntegrationContext.Provider value={loaderInstance}>
@@ -356,6 +356,7 @@ export function LazyIntegrationComponent({
   const LazyComponent = lazy(() =>
     loader
       .loadComponent(integrationId, componentPath)
+      .then(component => ({ default: component }))
       .catch(error => {
         debug('ERROR:', `Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component

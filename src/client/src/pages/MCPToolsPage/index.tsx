@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import * as React from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import ToolResultModal from '../../components/ToolResultModal';
 import { ToolRegistryPanel, ToolExecutionPanel } from '../../components/mcp-tools';
@@ -16,7 +16,7 @@ const MCPToolsPage: React.FC = () => {
     favorites, recentlyUsed,
     selectedTool, setSelectedTool, initialArgs, isRunning,
     showHistory, setShowHistory, executionHistory, loadingHistory,
-    selectedResult, showResultModal, setShowResultModal,
+    selectedResult, setSelectedResult, showResultModal, setShowResultModal,
     recentResults, setRecentResults,
     urlParams, setUrlParam,
     handleToggleTool, handleExecuteTool, fetchHistory,
@@ -30,7 +30,7 @@ const MCPToolsPage: React.FC = () => {
         description="Browse and manage tools available from your MCP servers"
         icon={Wrench}
         actions={
-          <Button variant="outline" size="sm" onClick={() => { setShowHistory(true); fetchHistory(); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setShowHistory(true); fetchHistory(); }}>
             <Clock className="w-4 h-4 mr-1" /> Execution History
           </Button>
         }

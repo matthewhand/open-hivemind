@@ -232,7 +232,7 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                     checked={isExpanded}
                     onContent={<ChevronUp className="w-4 h-4 text-base-content/40" />}
                     offContent={<ChevronDown className="w-4 h-4 text-base-content/40" />}
-                    rotate
+                    variant="rotate"
                   />
                 </button>
 

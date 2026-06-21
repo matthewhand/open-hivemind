@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 
-interface SwapProps {
+export interface SwapProps {
   onContent: React.ReactNode;
   offContent: React.ReactNode;
   checked?: boolean;

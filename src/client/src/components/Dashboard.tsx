@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
         apiService.get('/api/health'),
         apiService.getLlmProfiles(),
       ]);
-      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
+      const statusData: StatusResponse = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [], uptime: 0 };
       const healthPayload = healthResult.status === 'fulfilled' ? healthResult.value : null;
 
       // Read the same source as the Bots page (/api/bots) so the hero stats

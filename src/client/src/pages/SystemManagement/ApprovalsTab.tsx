@@ -47,7 +47,7 @@ const ApprovalsTab: React.FC = () => {
     }, 800);
   }, []);
 
-  if (loading) return <div className="p-8 text-center"><LoadingSpinner lg /></div>;
+  if (loading) return <div className="p-8 text-center"><LoadingSpinner size="lg" /></div>;
 
   return (
     <div className="space-y-6">
@@ -97,10 +97,10 @@ const ApprovalsTab: React.FC = () => {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button size="sm" variant="error" className="gap-2">
+                  <Button size="sm" variant="ghost" className="gap-2 text-error hover:bg-error/10">
                     <X className="w-4 h-4" /> Deny
                   </Button>
-                  <Button size="sm" variant="success" className="gap-2">
+                  <Button size="sm" variant="ghost" className="gap-2 text-success hover:bg-success/10">
                     <Check className="w-4 h-4" /> Approve
                   </Button>
                 </div>

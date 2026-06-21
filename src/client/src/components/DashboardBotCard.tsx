@@ -10,6 +10,7 @@ import DiagnosticModal from './BotManagement/DiagnosticModal';
 import InsightsModal from './BotManagement/InsightsModal';
 import VersionHistoryModal from './BotManagement/VersionHistoryModal';
 import BenchmarkModal from './BotManagement/BenchmarkModal';
+import { botStatusVariant } from '../utils/botStatus';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -19,14 +20,6 @@ interface DashboardBotCardProps {
   getProviderIcon: (provider: string) => string;
   getStatusColor: (status: string) => string;
 }
-
-/** Map status strings to valid Badge variants. */
-const toBadgeVariant = (color: string): 'success' | 'warning' | 'error' | 'neutral' => {
-  if (color === 'success') return 'success';
-  if (color === 'warning') return 'warning';
-  if (color === 'error') return 'error';
-  return 'neutral';
-};
 
 const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   bot,
@@ -100,7 +93,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  </Button>
                </Tooltip>
                <Badge
-                variant={toBadgeVariant(getStatusColor(botStatus))}
+                variant={botStatusVariant(botStatus)}
                 size="small"
               >
                 {botStatus.toUpperCase()}
@@ -111,16 +104,13 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         {/* Provider badges */}
         <ul className="flex flex-wrap gap-1.5 mt-3" aria-label="Bot Providers">
           <li><Badge variant="neutral" size="small">
-            {bot.messageProvider}
+            📱 {bot.messageProvider}
           </Badge></li>
           {bot.llmProvider && (
             <li><Badge variant="secondary" size="small">
-              {bot.llmProvider}
+              🤖 {bot.llmProvider}
             </Badge></li>
           )}
-          <li><Badge variant="neutral" style="outline" className="text-xs">
-            📱 {bot.messageProvider.toUpperCase()}
-          </Badge></li>
         </ul>
 
         {/* Error alert (only when errors exist) */}
@@ -132,7 +122,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Actions */}
         <div className="card-actions justify-end mt-3">
-          <Button variant="outline" size="sm" aria-label={String(`View details for ${bot.name}`)}>
+          <Button variant="ghost" size="sm" aria-label={`View details for ${bot.name}`} onClick={() => setIsDiagnosticOpen(true)}>
             Details
           </Button>
         </div>
