@@ -70,6 +70,9 @@ router.get('/kpis', (req: Request, res: Response) => {
 /**
  * @route GET /api/monitoring/kpis/:id
  * @desc Get a single business KPI (definition, current value, and trend).
+ *       `deferred` is true when the KPI is not yet fed from real pipeline data
+ *       (cost / multi-day retention metrics) and therefore reads back as 0 —
+ *       a placeholder, not a measured value.
  * @access Private
  */
 router.get('/kpis/:id', (req: Request, res: Response): void => {
@@ -85,6 +88,7 @@ router.get('/kpis/:id', (req: Request, res: Response): void => {
       data: {
         kpi,
         trend: collector.getKpiTrend(kpi.id),
+        deferred: (DEFERRED_KPI_IDS as readonly string[]).includes(kpi.id),
       },
     });
   } catch (error) {

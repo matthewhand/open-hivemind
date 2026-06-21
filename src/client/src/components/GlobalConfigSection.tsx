@@ -231,13 +231,20 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
 
   const currentValues = getValues();
 
+  // Acronym-aware display label: CSS `capitalize` turns "llm" into "Llm" and
+  // "mcp" into "Mcp". Map known acronyms to their proper casing; title-case the
+  // rest (discord/slack/memory/tool/...).
+  const ACRONYMS: Record<string, string> = { llm: 'LLM', mcp: 'MCP', api: 'API', ai: 'AI' };
+  const sectionLabel =
+    ACRONYMS[section.toLowerCase()] ?? section.charAt(0).toUpperCase() + section.slice(1);
+
   return (
     <Card className="shadow-xl border border-base-200">
       <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <div>
-              <Card.Title className="text-2xl capitalize">{section} Settings</Card.Title>
-              <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
+              <Card.Title className="text-2xl">{sectionLabel} Settings</Card.Title>
+              <p className="text-base-content/60 text-sm">Configure global defaults for {sectionLabel}.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {isMessageProviderSection && (

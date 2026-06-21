@@ -31,8 +31,8 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `analytics-dashboard.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Analytics dashboard with bot performance metrics |
 | `api-docs-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Interactive API documentation page |
 | `api-rate-limit.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | API rate limiting configuration |
-| `audit-governance-filtered.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit and governance page with filters applied |
 | `audit-governance-initial.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit Log page — audit events table (/admin/audit) |
+| `audit-governance-filtered.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Audit Log page with a filter applied (/admin/audit)|
 | `backup-retention-baseline.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention settings in baseline state |
 | `backup-retention-enforced.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Backup retention with enforcement policy active |
 | `bot-create-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md, archive/screenshots/README.md | Bot creation page |
@@ -67,7 +67,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `env-sample-completeness.png` | current | docs/screenshots/README.md | Environment sample file completeness check |
 | `export-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Data export page |
 | `guard-profiles-coverage.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Guard profiles coverage report |
-| `guards-concurrent-test.png` | current | none | Guards page state during a concurrent guard test |
+| `guards-concurrent-test.png` | current | none | Guards page — guard profiles (access control, rate limits, content filters) |
 | `guards-modal-enhanced.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Enhanced guards modal with additional options |
 | `guards-modal.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Guards configuration modal |
 | `guards-page.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Guards page with guardrail profiles |
@@ -141,7 +141,7 @@ Non-image files in `docs/screenshots/` not tracked below: `index.html`, `mcp-too
 | `verification-bots-search.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Bot search verification view |
 | `verification-personas-copy.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Persona copy verification |
 | `verification-personas.png` | current | docs/screenshots/README.md, archive/screenshots/README.md | Persona verification view |
-| `webhook-integration.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Webhook integration configuration |
+| `webhook-integration.png` | current | USER_GUIDE.md, docs/screenshots/README.md | Webhook Events page — event log (/admin/webhooks) |
 | `widget-after-removal.png` | current | none | Widget dashboard after removing a widget |
 | `widget-after-reset.png` | current | none | Widget dashboard after layout reset |
 | `widget-dashboard.png` | current | docs/screenshots/README.md | Widget-driven dashboard layout with rearrangeable tiles |

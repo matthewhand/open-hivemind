@@ -57,7 +57,7 @@ The spec auto-detects sentinel API keys (`/^(test\|dummy\|mock\|fake\|sk-test)-/
 |---|---|
 | ![analytics-dashboard](analytics-dashboard.png) | Analytics dashboard with bot performance metrics |
 | ![audit-governance-initial](audit-governance-initial.png) | Audit Log page — audit events table (/admin/audit)|
-| ![audit-governance-filtered](audit-governance-filtered.png) | Audit and governance page with filters applied |
+| ![audit-governance-filtered](audit-governance-filtered.png) | Audit Log page with a filter applied (/admin/audit) |
 
 ## Bot Management
 
@@ -220,5 +220,5 @@ The spec auto-detects sentinel API keys (`/^(test\|dummy\|mock\|fake\|sk-test)-/
 | ![showcase-page](showcase-page.png) | DaisyUI component showcase page |
 | ![sitemap-page](sitemap-page.png) | Initial loading splash ("Open-Hivemind / Initializing AI Network Dashboard / 30% Complete") shown before the sitemap renders. **Note:** filename is misleading — this is the splash, not the sitemap itself; image needs re-shooting. |
 | ![static-pages](static-pages.png) | Static pages overview |
-| ![webhook-integration](webhook-integration.png) | Webhook integration configuration |
+| ![webhook-integration](webhook-integration.png) | Webhook Events page — event log with source/status filters (/admin/webhooks) |
 | ![verification-bots-search](verification-bots-search.png) | Bot search verification view |
