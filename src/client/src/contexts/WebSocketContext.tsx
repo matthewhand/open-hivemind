@@ -19,7 +19,7 @@ interface ConfigChangedEvent {
   key?: string;
 }
 
-interface WebSocketContextType {
+export interface WebSocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   messageFlow: MessageFlowEvent[];
@@ -30,6 +30,8 @@ interface WebSocketContextType {
   configVersion: number;
   /** Detail from the most recent config_changed event, if any. */
   lastConfigChange: ConfigChangedEvent | null;
+  /** Real-time system events streamed from the server. */
+  systemEvents?: any[];
   connect: () => void;
   disconnect: () => void;
 }

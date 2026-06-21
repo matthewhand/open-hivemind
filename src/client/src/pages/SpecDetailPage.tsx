@@ -132,8 +132,11 @@ ${spec.content.replace(/^/gm, '  ')}
                         Export
                       </Button>
                     }
-                    items={exportItems}
-                  />
+                  >
+                    {exportItems.map((item) => (
+                      <li key={item.label}><a onClick={item.onClick}>{item.label}</a></li>
+                    ))}
+                  </Dropdown>
                 </div>
               }
             />

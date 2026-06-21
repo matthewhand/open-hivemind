@@ -78,7 +78,7 @@ export const BotSwarm3DView: React.FC<BotSwarm3DViewProps> = ({
                   {bot.messageProvider}
                 </Badge>
                 {bot.llmProvider && (
-                  <Badge variant="outline" size="sm" className="text-xs">
+                  <Badge style="outline" size="sm" className="text-xs">
                     <Globe className="w-3 h-3 mr-1" />
                     {bot.llmProvider}
                   </Badge>

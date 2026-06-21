@@ -13,18 +13,18 @@ export const useHealthBadges = (): HealthBadges => {
     const {
         data: healthData,
         isLoading: healthLoading,
-    } = useQuery<any>({
+    } = useQuery({
         queryKey: ['health', 'detailed'],
-        queryFn: () => apiService.get<any>('/api/health/detailed'),
+        queryFn: () => apiService.get('/api/health/detailed'),
         refetchInterval: 30_000,
     });
 
     const {
         data: llmData,
         isLoading: llmLoading,
-    } = useQuery<any>({
+    } = useQuery({
         queryKey: ['config', 'llm-status'],
-        queryFn: () => apiService.get<any>('/api/config/llm-status'),
+        queryFn: () => apiService.get('/api/config/llm-status'),
         refetchInterval: 30_000,
     });
 
@@ -33,14 +33,16 @@ export const useHealthBadges = (): HealthBadges => {
     let monitoringStatus: HealthBadges['monitoringStatus'] = null;
     let monitoringBadge: string | null = null;
 
-    if (healthData) {
-        const status = healthData.status as 'healthy' | 'degraded' | 'unhealthy';
+    if (healthData && typeof healthData === 'object') {
+        const status = (healthData as Record<string, unknown>).status as 'healthy' | 'degraded' | 'unhealthy';
         monitoringStatus = status;
         if (status === 'unhealthy') { monitoringBadge = '!'; }
         else if (status === 'degraded') { monitoringBadge = '⚠'; }
     }
 
-    const configWarning = llmData ? !llmData.defaultConfigured : false;
+    const configWarning = llmData && typeof llmData === 'object'
+        ? !(llmData as Record<string, unknown>).defaultConfigured
+        : false;
 
     return {
         monitoringStatus,
