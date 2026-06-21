@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
 import { LoadingSpinner } from '../DaisyUI/Loading';
-import Timeline from '../DaisyUI/Timeline';
 import Badge from '../DaisyUI/Badge';
 import { 
   CheckCircle, 
@@ -70,12 +69,11 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       title={`Deep Diagnostic: ${botName}`}
       size="md"
-      ariaLabelledBy="diagnostic-modal-title"
     >
       <div
         className="space-y-6 p-4 sm:p-6"
@@ -86,7 +84,7 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       >
         {loading && !results ? (
           <div className="py-12 text-center space-y-4" role="status">
-             <LoadingSpinner lg />
+             <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
         ) : error ? (
@@ -104,52 +102,47 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
           </div>
         ) : results ? (
           <div className="space-y-6 py-2">
-             <Timeline>
-                <Timeline.Item 
-                  start="Provider"
-                  middle={getStatusIcon(results.messageProvider.status)}
-                  end={
-                    <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
-                       <div className="flex justify-between items-center">
-                          <span className="font-bold text-sm flex items-center gap-2"><MessageSquare className="w-3 h-3" /> Connection</span>
-                          <Badge size="xs" variant={results.messageProvider.status === 'ok' ? 'success' : 'error'}>{results.messageProvider.status}</Badge>
-                       </div>
-                       <p className="text-xs opacity-60">{results.messageProvider.details || 'Verifying token and socket state...'}</p>
+             <ul className="timeline timeline-vertical">
+                <li>
+                  <div className="timeline-start text-xs opacity-50">Provider</div>
+                  <div className="timeline-middle">{getStatusIcon(results.messageProvider.status)}</div>
+                  <div className="timeline-end bg-base-200 p-3 rounded-xl flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm flex items-center gap-2"><MessageSquare className="w-3 h-3" /> Connection</span>
+                      <Badge size="xs" variant={results.messageProvider.status === 'ok' ? 'success' : 'error'}>{results.messageProvider.status}</Badge>
                     </div>
-                  }
-                />
-                
-                <Timeline.Item 
-                  start="LLM API"
-                  middle={getStatusIcon(results.llm.status)}
-                  end={
-                    <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
-                       <div className="flex justify-between items-center">
-                          <span className="font-bold text-sm flex items-center gap-2"><Brain className="w-3 h-3" /> Inference</span>
-                          <Badge size="xs" variant={results.llm.status === 'ok' ? 'success' : 'error'}>{results.llm.status}</Badge>
-                       </div>
-                       <p className="text-xs opacity-60">{results.llm.details || 'Attempting ping request...'}</p>
+                    <p className="text-xs opacity-60">{results.messageProvider.details || 'Verifying token and socket state...'}</p>
+                  </div>
+                  <hr />
+                </li>
+                <li>
+                  <hr />
+                  <div className="timeline-start text-xs opacity-50">LLM API</div>
+                  <div className="timeline-middle">{getStatusIcon(results.llm.status)}</div>
+                  <div className="timeline-end bg-base-200 p-3 rounded-xl flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm flex items-center gap-2"><Brain className="w-3 h-3" /> Inference</span>
+                      <Badge size="xs" variant={results.llm.status === 'ok' ? 'success' : 'error'}>{results.llm.status}</Badge>
                     </div>
-                  }
-                />
-
+                    <p className="text-xs opacity-60">{results.llm.details || 'Attempting ping request...'}</p>
+                  </div>
+                  <hr />
+                </li>
                 {results.mcp && results.mcp.length > 0 && results.mcp.map((m: MCPResult) => (
-                  <Timeline.Item 
-                    key={m.name}
-                    start="MCP"
-                    middle={getStatusIcon(m.status)}
-                    end={
-                      <div className="bg-base-200 p-3 rounded-xl flex flex-col gap-1">
-                        <div className="flex justify-between items-center">
-                            <span className="font-bold text-sm flex items-center gap-2"><Puzzle className="w-3 h-3" /> {m.name}</span>
-                            <Badge size="xs" variant={m.status === 'ok' ? 'success' : 'error'}>{m.status}</Badge>
-                        </div>
-                        <p className="text-xs opacity-60">{m.status === 'ok' ? 'Server is responding and tools listed' : (m.details || 'Connection timeout')}</p>
+                  <li key={m.name}>
+                    <hr />
+                    <div className="timeline-start text-xs opacity-50">MCP</div>
+                    <div className="timeline-middle">{getStatusIcon(m.status)}</div>
+                    <div className="timeline-end bg-base-200 p-3 rounded-xl flex flex-col gap-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm flex items-center gap-2"><Puzzle className="w-3 h-3" /> {m.name}</span>
+                        <Badge size="xs" variant={m.status === 'ok' ? 'success' : 'error'}>{m.status}</Badge>
                       </div>
-                    }
-                  />
+                      <p className="text-xs opacity-60">{m.status === 'ok' ? 'Server is responding and tools listed' : (m.details || 'Connection timeout')}</p>
+                    </div>
+                  </li>
                 ))}
-             </Timeline>
+             </ul>
 
              <div className="pt-4 border-t border-base-300 flex justify-between items-center">
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>

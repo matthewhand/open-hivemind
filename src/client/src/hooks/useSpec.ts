@@ -11,11 +11,11 @@ const useSpec = (id: string) => {
   } = useQuery<SpecDetailResponse | null>({
     queryKey: ['spec', id],
     queryFn: async () => {
-      const json = await apiService.get<any>(`/api/specs/${id}`);
+      const json = await apiService.get(`/api/specs/${id}`) as Record<string, unknown>;
       if (json.success && json.data) {
-        return json.data;
+        return json.data as SpecDetailResponse;
       }
-      throw new Error(json.error || 'Failed to fetch spec');
+      throw new Error((json.error as string) || 'Failed to fetch spec');
     },
     enabled: !!id,
   });

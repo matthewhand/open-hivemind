@@ -12,7 +12,7 @@ overrides:
   '@modelcontextprotocol/sdk': ^1.25.2
   babel-plugin-istanbul: ^8.0.2
   tar: ^7.5.11
-  undici: ^6.24.0
+  undici: ^6.27.0
   fast-xml-parser: ^4.5.5
   minimatch: ^10.2.3
   serialize-javascript: ^7.0.3
@@ -8352,8 +8352,8 @@ packages:
   undici-types@7.24.7:
     resolution: {integrity: sha512-XA+gOBkzYD3C74sZowtCLTpgtaCdqZhqCvR6y9LXvrKTt/IVU6bz49T4D+BPi475scshCCkb0IklJRw6T1ZlgQ==}
 
-  undici@6.24.1:
-    resolution: {integrity: sha512-sC+b0tB1whOCzbtlx20fx3WgCXwkW627p4EA9uM+/tNNPkSS+eSEld6pAs9nDv7WbY1UUljBMYPtu9BCOrCWKA==}
+  undici@6.27.0:
+    resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
   unenv@2.0.0-rc.24:
@@ -9852,7 +9852,7 @@ snapshots:
       discord-api-types: 0.38.45
       magic-bytes.js: 1.13.0
       tslib: 2.8.1
-      undici: 6.24.1
+      undici: 6.27.0
 
   '@discordjs/util@1.2.0':
     dependencies:
@@ -11789,7 +11789,7 @@ snapshots:
       ts-morph: 12.0.0
       tsx: 4.21.0
       typescript: 5.9.3
-      undici: 6.24.1
+      undici: 6.27.0
     transitivePeerDependencies:
       - encoding
       - rollup
@@ -12850,7 +12850,7 @@ snapshots:
       lodash.snakecase: 4.1.1
       magic-bytes.js: 1.13.0
       tslib: 2.8.1
-      undici: 6.24.1
+      undici: 6.27.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -14695,7 +14695,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.1
-      undici: 6.24.1
+      undici: 6.27.0
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -15251,7 +15251,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.34.5
-      undici: 6.24.1
+      undici: 6.27.0
       workerd: 1.20260409.1
       ws: 8.21.0
       youch: 4.1.0-beta.10
@@ -17098,7 +17098,7 @@ snapshots:
 
   undici-types@7.24.7: {}
 
-  undici@6.24.1: {}
+  undici@6.27.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:

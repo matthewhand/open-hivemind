@@ -6,7 +6,6 @@ import { Alert } from '../DaisyUI/Alert';
 import Input from '../DaisyUI/Input';
 import Join from '../DaisyUI/Join';
 import Mockup from '../DaisyUI/Mockup';
-import Select from '../DaisyUI/Select';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;

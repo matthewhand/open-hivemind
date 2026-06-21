@@ -101,6 +101,7 @@ export function useToolExecution({ setAlert, setUsageCounts, setRecentlyUsed }: 
     initialArgs,
     isRunning,
     selectedResult,
+    setSelectedResult,
     showResultModal,
     setShowResultModal,
     recentResults,

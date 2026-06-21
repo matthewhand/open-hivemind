@@ -3,7 +3,7 @@ import classNames from 'classnames';
 
 /* ── Stat (individual) ─────────────────────────────────────────── */
 
-export interface StatProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface StatProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Content for the `stat-title` slot */
   title?: React.ReactNode;
   /** Content for the `stat-value` slot */

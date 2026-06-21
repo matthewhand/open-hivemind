@@ -10,7 +10,7 @@ interface AlertProps {
   onClose?: () => void;
   children?: React.ReactNode;
   className?: string;
-  'aria-live'?: 'off' | 'polite' | 'assertive';
+  compact?: boolean;
 }
 
 const statusClasses = {
@@ -28,7 +28,7 @@ export const Alert: React.FC<AlertProps> = ({
   onClose,
   children,
   className = '',
-  'aria-live': ariaLive
+  compact: _compact,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -46,7 +46,7 @@ export const Alert: React.FC<AlertProps> = ({
   }
 
   return (
-    <div role="alert" aria-live={ariaLive} className={`alert ${statusClasses[activeStatus]} ${className}`}>
+    <div role="alert" className={`alert ${statusClasses[activeStatus]} ${className}`}>
       {React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}
       {message && <span>{message}</span>}
       {children}
