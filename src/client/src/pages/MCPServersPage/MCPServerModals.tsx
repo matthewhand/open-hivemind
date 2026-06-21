@@ -221,6 +221,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
         confirmText="Delete"
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </>
   );

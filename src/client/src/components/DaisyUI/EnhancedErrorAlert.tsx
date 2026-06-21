@@ -165,7 +165,8 @@ export const EnhancedErrorAlert: React.FC<EnhancedErrorAlertProps> = ({
               {/* Retry Button */}
               {canRetry && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  buttonStyle="outline"
                   size="sm"
                   onClick={handleRetry}
                   disabled={!canRetryNow}

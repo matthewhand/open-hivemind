@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 
 interface CollapseProps {
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
   className?: string;
@@ -43,7 +43,7 @@ const Collapse: React.FC<CollapseProps> = ({
         checked={isOpen}
         onChange={(e) => setIsOpen(e.target.checked)}
         className="collapse-checkbox"
-        aria-label={ariaLabel || `Toggle ${title}`}
+        aria-label={ariaLabel || (typeof title === 'string' ? `Toggle ${title}` : 'Toggle section')}
       />
       <div className="collapse-title text-xl font-medium flex items-center gap-2">
         {icon && <span>{icon}</span>}
