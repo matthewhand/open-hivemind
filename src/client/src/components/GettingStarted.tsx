@@ -70,8 +70,8 @@ const GettingStarted: React.FC<GettingStartedProps> = ({ onDismiss }) => {
 
   useEffect(() => {
     apiService
-      .get<any>('/api/dashboard/config-status')
-      .then((data: any) => {
+      .get<{ data?: TaskStatus } & TaskStatus>('/api/dashboard/config-status')
+      .then((data) => {
         const s = data?.data || data;
         setStatus({
           llmConfigured: !!s?.llmConfigured,

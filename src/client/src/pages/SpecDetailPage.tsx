@@ -127,11 +127,13 @@ ${spec.content.replace(/^/gm, '  ')}
                   </Button>
                   <Dropdown
                     trigger={
-                      <Button className="btn-primary">
+                      <div className="flex items-center text-primary-content">
                         <Download className="w-4 h-4 mr-2" />
                         Export
-                      </Button>
+                      </div>
                     }
+                    color="primary"
+                    size="md"
                     items={exportItems}
                   />
                 </div>

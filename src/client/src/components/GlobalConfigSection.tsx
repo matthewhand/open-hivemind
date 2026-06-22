@@ -17,13 +17,13 @@ const debug = Debug('app:client:components:GlobalConfigSection');
 interface ConfigSchema {
   doc?: string;
   format?: string | string[];
-  default?: any;
+  default?: unknown;
   env?: string;
 }
 
 interface ConfigItem {
-  values: Record<string, any>;
-  schema: Record<string, any>;
+  values: Record<string, unknown>;
+  schema: Record<string, ConfigSchema>;
 }
 
 type _GlobalConfig = Record<string, ConfigItem>;
@@ -32,10 +32,10 @@ interface GlobalConfigSectionProps {
   section: string;
 }
 
-type FormValues = Record<string, any>;
+type FormValues = Record<string, unknown>;
 
 const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) => {
-  const [configSchema, setConfigSchema] = useState<Record<string, any>>({});
+  const [configSchema, setConfigSchema] = useState<Record<string, ConfigSchema>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,7 +63,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     try {
       setLoading(true);
       setError(null);
-      const data: any = await apiService.getGlobalConfig();
+      const data = await apiService.getGlobalConfig() as Record<string, ConfigItem>;
       if (data && data[section]) {
         const config = data[section];
         setConfigSchema(config.schema || {});
@@ -118,7 +118,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     setTesting(true);
     setTestStatus(null);
     try {
-      const data: any = await apiService.post('/api/config/message-provider/test', {
+      const data = await apiService.post<{ success?: boolean; message?: string; error?: string }>('/api/config/message-provider/test', {
         provider: section,
         config: values,
       });
@@ -134,7 +134,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     }
   };
 
-  const renderField = (key: string, value: any, schema: ConfigSchema) => {
+  const renderField = (key: string, value: unknown, schema: ConfigSchema) => {
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
 
     let type = 'text';
