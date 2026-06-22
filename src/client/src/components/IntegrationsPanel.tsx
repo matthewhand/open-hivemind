@@ -359,7 +359,8 @@ const IntegrationsPanel: React.FC = () => {
         {llmProfiles.length === 0 ? (
           <div className="text-center py-8 opacity-50 border-2 border-dashed border-base-200 rounded-xl mb-6">
             <Brain className="w-12 h-12 mx-auto mb-2 opacity-20" />
-            <p>No custom LLM profiles configured. Using defaults.</p>
+            <h3 className="text-lg font-semibold text-base-content/80 mt-2">No LLM Profiles</h3>
+            <p className="text-sm">No custom LLM profiles configured. Using defaults.</p>
           </div>
         ) : (
           <List className="mb-8 rounded-xl shadow-sm border border-base-200 bg-base-100 overflow-hidden">

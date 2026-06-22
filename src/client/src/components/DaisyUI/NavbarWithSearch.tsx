@@ -479,14 +479,14 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                     {recentSearches.map((search, index) => (
                       <li key={index}>
                         <button
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors flex items-center justify-between group"
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 focus-visible:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors flex items-center justify-between group"
                           onClick={() => handleSearchSubmitWithOptions(search)}
                         >
                           <div className="flex items-center gap-3">
                             <Activity className="w-3.5 h-3.5 opacity-30" />
                             <span className="text-sm">{search}</span>
                           </div>
-                          <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity">Select ↵</span>
+                          <span className="text-[10px] opacity-0 group-hover:opacity-40 group-focus-visible:opacity-100 transition-opacity">Select ↵</span>
                         </button>
                       </li>
                     ))}

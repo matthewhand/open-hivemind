@@ -184,6 +184,18 @@ const MCPServerManager: React.FC = () => {
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
       <DataTable<MCPServer>
+        emptyState={
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <WrenchScrewdriverIcon className="w-12 h-12 text-base-content/20 mb-4" />
+            <h3 className="text-lg font-semibold text-base-content/80">No Servers Configured</h3>
+            <p className="text-sm text-base-content/50 mt-1 max-w-sm">
+              Get started by connecting an MCP server to enable tool execution.
+            </p>
+            <Button className="mt-6" onClick={() => setConnectDialogOpen(true)} startIcon={<PlusIcon className="w-4 h-4" />}>
+              Connect First Server
+            </Button>
+          </div>
+        }
         data={servers}
         columns={[
           {
