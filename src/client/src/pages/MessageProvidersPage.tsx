@@ -371,18 +371,18 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2">
                     {profile.source !== 'env' && (
                       <>
-                        <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }} aria-label={`Edit ${profile.name} profile`}>
                           <EditIcon className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                        <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }} aria-label={`Delete ${profile.name} profile`}>
                           <DeleteIcon className="w-4 h-4" />
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>

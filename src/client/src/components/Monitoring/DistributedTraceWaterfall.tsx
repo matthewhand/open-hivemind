@@ -127,7 +127,14 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
     const barColor = getServiceColor(span.service);
 
     return (
-      <div key={span.id} className={`group relative border-b border-base-200 transition-colors ${isSelected ? 'bg-base-300' : 'hover:bg-base-200/50'}`} onClick={(e) => handleSpanClick(span.id, e)}>
+      <div
+        key={span.id}
+        className={`group relative border-b border-base-200 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${isSelected ? 'bg-base-300' : 'hover:bg-base-200/50'}`}
+        onClick={(e) => handleSpanClick(span.id, e)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSpanClick(span.id, e); } }}
+      >
         <div className="flex items-center p-2 text-sm">
           {/* Left Panel: Tree View */}
           <div

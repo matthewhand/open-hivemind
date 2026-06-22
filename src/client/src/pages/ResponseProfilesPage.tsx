@@ -296,11 +296,11 @@ const ResponseProfilesPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleEditProfile(profile)}
+                    onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }}
                     aria-label={`Edit response profile ${profile.name}`}
                   >
                     <EditIcon className="w-4 h-4" aria-hidden="true" />
@@ -310,7 +310,7 @@ const ResponseProfilesPage: React.FC = () => {
                       size="sm"
                       variant="outline"
                       className="text-error hover:bg-error/10"
-                      onClick={() => handleDeleteProfile(profile.key)}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }}
                       aria-label={`Delete response profile ${profile.name}`}
                     >
                       <DeleteIcon className="w-4 h-4" aria-hidden="true" />
