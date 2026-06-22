@@ -103,15 +103,26 @@ const Dashboard: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const isMounted = React.useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
-      setError(null);
+      if (isMounted.current) setError(null);
       const [botsResult, statusResult, healthResult, profilesResult] = await Promise.allSettled([
         apiService.getBots(),
         apiService.getStatus(),
         apiService.get('/api/health'),
         apiService.getLlmProfiles(),
       ]);
+
+      if (!isMounted.current) return;
+
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
       const healthPayload = healthResult.status === 'fulfilled' ? healthResult.value : null;
 
@@ -140,9 +151,9 @@ const Dashboard: React.FC = () => {
       setToastMessage('Dashboard refreshed successfully!');
       setShowToast(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      if (isMounted.current) setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }, []);
 

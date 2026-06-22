@@ -25,6 +25,13 @@ export function useFocusTrap(isOpen: boolean, containerRef: React.RefObject<HTML
       previousFocusRef.current.focus();
       previousFocusRef.current = null;
     }
+
+    return () => {
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+        previousFocusRef.current = null;
+      }
+    };
   }, [isOpen, containerRef, closeButtonRef]);
 
   useEffect(() => {

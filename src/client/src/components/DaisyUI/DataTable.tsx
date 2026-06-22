@@ -255,6 +255,7 @@ const DataTable = <T extends Record<string, any>>({
         {visible.map((action, i) => (
           <button
             key={i}
+            type="button"
             className={`btn btn-sm ${TOUCH_TARGET} ${
               action.variant === 'error'
                 ? 'btn-ghost text-error hover:bg-error/10'
@@ -269,6 +270,11 @@ const DataTable = <T extends Record<string, any>>({
             onClick={e => {
               e.stopPropagation();
               action.onClick(record, index);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+              }
             }}
             disabled={action.disabled?.(record)}
             title={action.tooltip || action.label}
