@@ -1,0 +1,2 @@
+## 2026-06-05 | [Architectural Audit] | Insight: Div-soup structures vs Semantic ARIA roles | Protocol: Utilizing proper HTML5 lists
+Found instances of `div-soup` implementations across multiple modal and management interfaces, notably in MCPServersPage and BaseProvidersConfig where nested `div` elements were used to simulate data lists (`dl`) and ordered lists (`ol`). These were refactored into semantic HTML5 structures along with providing dynamic loading components `EmptyState`/`Alert` and adding `aria-labels` to non-descriptive icon buttons.

@@ -351,13 +351,13 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
                 {/* Placeholder for BotActivityWaterfallMonitor or real trace chart integration */}
                 <div className="text-center text-base-content/50">
                   <p className="text-sm">Traffic tracing enabled for active provider.</p>
-                  <div className="mt-2 flex gap-1 justify-center items-end h-8">
-                    <div className="w-2 bg-primary/40 h-full rounded-t-sm animate-pulse"></div>
-                    <div className="w-2 bg-primary/60 h-2/3 rounded-t-sm animate-pulse delay-75"></div>
-                    <div className="w-2 bg-primary/80 h-4/5 rounded-t-sm animate-pulse delay-150"></div>
-                    <div className="w-2 bg-primary h-1/2 rounded-t-sm animate-pulse delay-300"></div>
-                    <div className="w-2 bg-primary/50 h-3/4 rounded-t-sm animate-pulse delay-75"></div>
-                  </div>
+                  <ol className="mt-2 flex gap-1 justify-center items-end h-8">
+                    <li className="w-2 bg-primary/40 h-full rounded-t-sm animate-pulse"></li>
+                    <li className="w-2 bg-primary/60 h-2/3 rounded-t-sm animate-pulse delay-75"></li>
+                    <li className="w-2 bg-primary/80 h-4/5 rounded-t-sm animate-pulse delay-150"></li>
+                    <li className="w-2 bg-primary h-1/2 rounded-t-sm animate-pulse delay-300"></li>
+                    <li className="w-2 bg-primary/50 h-3/4 rounded-t-sm animate-pulse delay-75"></li>
+                  </ol>
                 </div>
               </div>
             </div>

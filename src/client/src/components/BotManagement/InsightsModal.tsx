@@ -4,6 +4,8 @@ import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Sparkles, XCircle, RefreshCw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { apiService } from '../../services/api';
+import { Alert } from '../DaisyUI/Alert';
+import EmptyState from '../DaisyUI/EmptyState';
 
 interface InsightsModalProps {
   botId: string;
@@ -56,18 +58,15 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
         aria-busy={loading}
       >
         {loading && !insights ? (
-          <div className="py-20 text-center space-y-4">
-            <div className="flex justify-center">
-              <Sparkles className="w-12 h-12 text-primary animate-pulse" />
-            </div>
-            <LoadingSpinner size="lg" />
-            <p className="text-sm opacity-50 animate-pulse font-medium">
-              Analyzing metrics, anomalies, and historical data...
-            </p>
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="Analyzing Metrics"
+            description="Analyzing metrics, anomalies, and historical data..."
+            variant="primary"
+          />
         ) : error ? (
-          <div className="alert alert-error shadow-lg">
-            <XCircle className="w-6 h-6" />
+          <Alert status="error" className="shadow-lg items-start">
+            <XCircle className="w-6 h-6 shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="font-bold">Error</h3>
               <div className="text-xs">{error}</div>
@@ -81,7 +80,7 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Retrying...' : 'Retry'}
             </button>
-          </div>
+          </Alert>
         ) : insights ? (
           <div className="prose prose-sm max-w-none dark:prose-invert bg-base-200/50 p-6 rounded-2xl border border-base-300">
             <ReactMarkdown>{insights}</ReactMarkdown>
@@ -98,9 +97,12 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
             </div>
           </div>
         ) : (
-          <div className="py-12 text-center opacity-50">
-            No insights available.
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="No Insights"
+            description="No insights available."
+            variant="noData"
+          />
         )}
       </div>
     </Modal>

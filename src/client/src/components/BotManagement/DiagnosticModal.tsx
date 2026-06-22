@@ -14,6 +14,8 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { Alert } from '../DaisyUI/Alert';
+import EmptyState from '../DaisyUI/EmptyState';
 
 interface DiagnosticResult {
   status: 'ok' | 'error' | 'pending';
@@ -85,14 +87,18 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         aria-busy={loading}
       >
         {loading && !results ? (
-          <div className="py-12 text-center space-y-4">
-             <LoadingSpinner lg />
-             <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="Running Diagnostics"
+            description="Running multi-point handshake tests..."
+            variant="info"
+          />
         ) : error ? (
-          <div className="alert alert-error">
-             <XCircle className="w-6 h-6" />
-             <span>{error}</span>
+          <Alert status="error" className="items-start">
+             <XCircle className="w-6 h-6 mt-0.5 shrink-0" />
+             <div className="flex-1">
+               <span>{error}</span>
+             </div>
              <button
                onClick={runDiagnostic}
                className="btn btn-xs btn-ghost"
@@ -101,7 +107,7 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
              >
                 {loading ? 'Retrying...' : 'Retry'}
              </button>
-          </div>
+          </Alert>
         ) : results ? (
           <div className="space-y-6 py-2">
              <Timeline>

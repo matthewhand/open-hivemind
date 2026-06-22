@@ -337,34 +337,34 @@ const MCPServersPage: React.FC = () => {
                 <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
                   <Globe className="w-3 h-3" /> Connection Details
                 </h4>
-                <div className="space-y-2">
+                <dl className="space-y-2">
                   <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
-                    <span className="font-medium text-base-content/70">URL</span>
-                    <span className="font-mono text-xs truncate max-w-[220px]">{liveServer.url || 'Not set'}</span>
+                    <dt className="font-medium text-base-content/70">URL</dt>
+                    <dd className="font-mono text-xs truncate max-w-[220px]">{liveServer.url || 'Not set'}</dd>
                   </div>
                   <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
-                    <span className="font-medium text-base-content/70">Status</span>
-                    <span className={`text-xs font-medium ${liveServer.status === 'running' ? 'text-success' : liveServer.status === 'error' ? 'text-error' : 'text-base-content/50'}`}>
+                    <dt className="font-medium text-base-content/70">Status</dt>
+                    <dd className={`text-xs font-medium ${liveServer.status === 'running' ? 'text-success' : liveServer.status === 'error' ? 'text-error' : 'text-base-content/50'}`}>
                       {liveServer.status === 'running' && <><CheckCircle className="w-3 h-3 inline mr-1" />Connected</>}
                       {liveServer.status === 'stopped' && <><XCircle className="w-3 h-3 inline mr-1" />Disconnected</>}
                       {liveServer.status === 'error' && <><AlertCircle className="w-3 h-3 inline mr-1" />Error</>}
-                    </span>
+                    </dd>
                   </div>
                   <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
-                    <span className="font-medium text-base-content/70">API Key</span>
-                    <span className="text-xs">
+                    <dt className="font-medium text-base-content/70">API Key</dt>
+                    <dd className="text-xs">
                       {liveServer.apiKey
                         ? <span className="text-success">Configured <CheckCircle className="w-3 h-3 inline" /></span>
                         : <span className="text-base-content/50">Not set</span>}
-                    </span>
+                    </dd>
                   </div>
                   {liveServer.lastConnected && (
                     <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
-                      <span className="font-medium text-base-content/70">Last Connected</span>
-                      <span className="text-xs">{new Date(liveServer.lastConnected).toLocaleString()}</span>
+                      <dt className="font-medium text-base-content/70">Last Connected</dt>
+                      <dd className="text-xs">{new Date(liveServer.lastConnected).toLocaleString()}</dd>
                     </div>
                   )}
-                </div>
+                </dl>
               </div>
 
               {/* Error display */}
@@ -383,16 +383,16 @@ const MCPServersPage: React.FC = () => {
                   <Wrench className="w-3 h-3" /> Available Tools ({liveServer.toolCount})
                 </h4>
                 {liveServer.tools && liveServer.tools.length > 0 ? (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <ul className="space-y-2 max-h-48 overflow-y-auto">
                     {liveServer.tools.map((tool) => (
-                      <div key={tool.name} className="p-2 bg-base-200/50 rounded text-sm">
+                      <li key={tool.name} className="p-2 bg-base-200/50 rounded text-sm">
                         <div className="font-medium text-xs">{tool.name}</div>
                         {tool.description && (
                           <p className="text-xs text-base-content/50 mt-0.5 line-clamp-2">{tool.description}</p>
                         )}
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
                   <p className="text-sm opacity-50 italic">
                     {liveServer.status === 'running' ? 'No tools reported.' : 'Connect to discover tools.'}
