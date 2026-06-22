@@ -371,7 +371,7 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}>
                     {profile.source !== 'env' && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
@@ -448,6 +448,7 @@ const MessageProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [profilesResult, statusResult] = await Promise.allSettled([
         apiService.get('/api/config/message-profiles'),
         apiService.getStatus(),
@@ -467,7 +468,9 @@ const MessageProvidersPage: React.FC = () => {
         setStatusBots(rawStatus?.data?.bots ?? rawStatus?.bots ?? []);
       }
     } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load message profiles');
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load data');
+      setProfiles([]);
+      setStatusBots([]);
     } finally {
       setLoading(false);
     }

@@ -296,7 +296,7 @@ const ResponseProfilesPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}>
                   <Button
                     size="sm"
                     variant="outline"

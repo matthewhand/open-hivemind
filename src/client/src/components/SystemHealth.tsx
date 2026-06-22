@@ -96,6 +96,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const [sysData, apiData] = await Promise.all([
           apiService.getSystemHealth(),
           apiService.getApiEndpointsStatus().catch(() => null), // Optional if API monitoring is not enabled
@@ -106,7 +108,6 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
           setApiHealth(apiData);
         }
         setLastRefresh(new Date());
-        setError(null);
       } catch (err: unknown) {
         // Provide more specific error messages based on error type
         if (
@@ -121,6 +122,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
         } else {
           setError('Failed to fetch system health data. Some metrics may be unavailable.');
         }
+        setMetrics(null);
+        setApiHealth(null);
       } finally {
         setLoading(false);
       }

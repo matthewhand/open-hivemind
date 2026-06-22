@@ -61,7 +61,7 @@ export const BotListGrid: React.FC<BotListGridProps> = memo(({
               size="sm"
               checked={bulk.isSelected(bot.id)}
               onChange={(e) => bulk.toggleItem(bot.id, e as any)}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}
               aria-label={`Select ${bot.name}`}
             />
             {isMobile ? (

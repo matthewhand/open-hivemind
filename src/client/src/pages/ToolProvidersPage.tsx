@@ -64,10 +64,12 @@ const ToolProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await apiService.get('/api/config/tool-profiles');
       setProfiles((res as any).tool || []);
     } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load tool profiles');
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load data');
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -204,7 +206,7 @@ const ToolProvidersPage: React.FC = () => {
                       <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
                     </div>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}>
                     <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
                     <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>

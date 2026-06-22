@@ -364,7 +364,7 @@ const WebhookEventsPage: React.FC = () => {
                           <Button
                             size="xs"
                             variant="ghost"
-                            onClick={e => { e.stopPropagation(); handleRetry(ev.id); }}
+                            onClick={(e) => { e.stopPropagation(); handleRetry(ev.id); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                             loading={retrying === ev.id}
                           >
                             <RotateCcw className="w-3 h-3" />

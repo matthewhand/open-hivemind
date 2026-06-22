@@ -127,10 +127,12 @@ const MemoryProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await apiService.get('/api/config/memory-profiles');
       setProfiles((res as any).memory || []);
     } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load memory profiles');
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load data');
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -334,7 +336,7 @@ const MemoryProvidersPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}>
                       <Button
                         size="sm"
                         variant="ghost"

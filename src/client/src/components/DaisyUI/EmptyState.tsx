@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import Button from './Button';
 
 interface EmptyStateProps {
+  headingLevel?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
   icon: any;
   title: string;
   description: string;
@@ -74,6 +75,7 @@ variantStyles.noResults = variantStyles.secondary;
  * Replaces basic emoji empty states with a polished, professional look.
  */
 const EmptyState: React.FC<EmptyStateProps> = ({
+
   icon: Icon,
   title,
   description,
@@ -82,6 +84,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
   variant = 'primary',
   className = '',
+  headingLevel: Heading = 'h2',
 }) => {
   const styles = variantStyles[variant] || variantStyles.primary;
 
@@ -99,7 +102,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       `}
     >
       {/* Decorative background elements */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-30" aria-hidden="true">
         <div className={`absolute top-1/4 left-1/4 w-32 h-32 ${styles.blob} rounded-full blur-3xl`} />
         <div className={`absolute bottom-1/4 right-1/4 w-40 h-40 ${styles.blob} rounded-full blur-3xl`} />
       </div>
@@ -113,13 +116,14 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             transition-all duration-300 ease-out
             shadow-lg shadow-current/5
           `}
+          aria-hidden="true"
         >
           {React.isValidElement(Icon) ? Icon : React.createElement(Icon as any, { className: "w-12 h-12", strokeWidth: 1.5 })}
         </div>
 
-        <h2 className="text-xl font-semibold mb-2 text-base-content">
+        <Heading className="text-xl font-semibold mb-2 text-base-content">
           {title}
-        </h2>
+        </Heading>
 
         <p className="text-base-content/60 max-w-md mb-8">
           {description}

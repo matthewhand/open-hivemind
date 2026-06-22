@@ -734,7 +734,7 @@ const GuardsPage: React.FC = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
+                        onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                         title="Duplicate Profile"
                         aria-label={`Duplicate ${profile.name} guard`}
                       >
@@ -743,7 +743,7 @@ const GuardsPage: React.FC = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
+                        onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                         title="Edit Profile"
                         aria-label={`Edit ${profile.name} guard`}
                       >
@@ -753,7 +753,7 @@ const GuardsPage: React.FC = () => {
                         size="sm"
                         variant="ghost"
                         className="text-error hover:bg-error/10 hover:text-error"
-                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                         title="Delete Profile"
                         aria-label={`Delete ${profile.name} guard`}
                       >

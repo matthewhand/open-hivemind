@@ -100,7 +100,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
           >
             <li>
               <a
-                onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(false); onEdit?.(bot); }}
+                onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(false); onEdit?.(bot); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                 className="flex items-center gap-2"
                 role="menuitem"
               >
@@ -110,7 +110,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             </li>
             <li>
               <a
-                onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(false); onDelete?.(bot); }}
+                onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(false); onDelete?.(bot); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                 className="flex items-center gap-2 text-error"
                 role="menuitem"
               >
@@ -165,7 +165,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             variant={isDisabledBot ? 'ghost' : 'primary'}
             size="sm"
             className={`flex-1 ${isDisabledBot ? 'border border-base-300' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onEdit?.(bot); }}
+            onClick={(e) => { e.stopPropagation(); onEdit?.(bot); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
           >
             <Settings className="w-3 h-3 mr-1" />
             Configure
@@ -174,7 +174,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             variant="ghost"
             size="sm"
             className={`btn-square ${isActive ? 'text-error border-error' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onToggleStatus?.(bot); }}
+            onClick={(e) => { e.stopPropagation(); onToggleStatus?.(bot); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
             aria-label={isActive ? `Deactivate ${bot.name}` : `Activate ${bot.name}`}
           >
             {isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}

@@ -113,7 +113,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
                       variant="primary"
                       size="sm"
                       className="w-fit"
-                      onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
+                      onClick={(e) => { e.stopPropagation(); openEditModal(persona); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                     >
                       Edit
                     </Button>

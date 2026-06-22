@@ -60,7 +60,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
               size="sm"
               checked={bulk.isSelected(server.id)}
               onChange={(e) => bulk.toggleItem(server.id, e as any)}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}
               aria-label={`Select ${server.name}`}
             />
             <Card.Title className="text-lg font-bold">{server.name}</Card.Title>
@@ -105,7 +105,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
           )}
         </div>
 
-        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200" onClick={(e: React.MouseEvent) => e.stopPropagation()} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}>
           <div className="flex gap-1">
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
