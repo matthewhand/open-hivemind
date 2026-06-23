@@ -119,8 +119,9 @@ const MemoryProvidersPage: React.FC = () => {
   const [healthMap, setHealthMap] = useState<Record<string, ProviderHealth>>({});
   const [healthLoading, setHealthLoading] = useState(false);
 
-  // Test state: map from profile key -> TestResult | 'loading'
-  const [testResults, setTestResults] = useState<Record<string, TestResult | 'loading'>>({});
+  // Test state: map from profile key -> TestResult
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
+  const [testingStates, setTestingStates] = useState<Record<string, boolean>>({});
 
   const memorySchemas = useMemo(() => getProviderSchemasByType('memory'), []);
 
@@ -166,7 +167,7 @@ const MemoryProvidersPage: React.FC = () => {
   }, [configVersion, lastConfigChange, fetchProfiles]);
 
   const handleTestProfile = useCallback(async (profileKey: string) => {
-    setTestResults(prev => ({ ...prev, [profileKey]: 'loading' }));
+    setTestingStates(prev => ({ ...prev, [profileKey]: true }));
     try {
       const res = await apiService.post(`/api/providers/memory/${profileKey}/test`, {}) as TestResult;
       setTestResults(prev => ({ ...prev, [profileKey]: res }));
@@ -177,6 +178,8 @@ const MemoryProvidersPage: React.FC = () => {
         delete next[profileKey];
         return next;
       });
+    } finally {
+      setTestingStates(prev => ({ ...prev, [profileKey]: false }));
     }
   }, [errorToast]);
 
@@ -299,7 +302,7 @@ const MemoryProvidersPage: React.FC = () => {
           {filteredProfiles.map((profile) => {
             const health = getProfileHealth(profile);
             const testResult = testResults[profile.key];
-            const isTesting = testResult === 'loading';
+            const isTesting = !!testingStates[profile.key];
 
             return (
               <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
@@ -334,12 +337,12 @@ const MemoryProvidersPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
                         className="text-info hover:bg-info/10"
-                        onClick={() => handleTestProfile(profile.key)}
+                        onClick={(e) => { e.stopPropagation(); handleTestProfile(profile.key); }}
                         loading={isTesting}
                         aria-label={`Test ${profile.name} provider`}
                       >
@@ -348,11 +351,11 @@ const MemoryProvidersPage: React.FC = () => {
                       </Button>
                       {profile.source !== 'env' && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                          <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
                         </>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                         {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                       </Button>
                     </div>
@@ -461,7 +464,7 @@ const MemoryProvidersPage: React.FC = () => {
     </div>
   ), [
     profiles, filteredProfiles, providerTypes, stats, loading, error, healthLoading,
-    searchQuery, filterType, expandedProfile, healthMap, testResults,
+    searchQuery, filterType, expandedProfile, healthMap, testResults, testingStates,
     formModal, formData, selectedProvider, currentSchema, memorySchemas, confirmModal,
     fetchHealth, fetchProfiles, handleAddProfile, handleEditProfile, handleDeleteProfile,
     handleFormSubmit, handleTestProfile, toggleExpand, setSearchQuery, setFilterType,

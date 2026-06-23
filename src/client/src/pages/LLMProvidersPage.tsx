@@ -262,21 +262,21 @@ const ProfilesTab: React.FC<{
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
                       {onTestProfile && (
                         <Button
                           size="sm"
                           variant="ghost"
                           className="text-success hover:bg-success/10"
                           aria-label={`Test ${profile.name} provider`}
-                          onClick={() => onTestProfile(profile.key, profile.provider)}
+                          onClick={(e) => { e.stopPropagation(); onTestProfile(profile.key, profile.provider); }}
                         >
                           <ChatIcon className="w-4 h-4" />
                         </Button>
                       )}
                       {profile.source !== 'env' && (
                         <>
-                          <Button size="sm" variant="ghost" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
+                          <Button size="sm" variant="ghost" aria-label={`Edit ${profile.name} profile`} onClick={(e) => { e.stopPropagation(); onEditProfile(profile); }}>
                             <EditIcon className="w-4 h-4" />
                           </Button>
                           <Button
@@ -284,7 +284,7 @@ const ProfilesTab: React.FC<{
                             variant="ghost"
                             className="text-error hover:bg-error/10"
                             aria-label={`Delete ${profile.name} profile`}
-                            onClick={() => onDeleteProfile(profile.key)}
+                            onClick={(e) => { e.stopPropagation(); onDeleteProfile(profile.key); }}
                           >
                             <DeleteIcon className="w-4 h-4" />
                           </Button>
