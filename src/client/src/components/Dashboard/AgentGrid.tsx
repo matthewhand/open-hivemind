@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import AgentCard from './AgentCard';
 import { useAgents } from '../../hooks/useAgents';
+import { SkeletonGrid } from '../DaisyUI/Skeleton';
+import EmptyState from '../DaisyUI/EmptyState';
+import { X } from 'lucide-react';
 
 interface AgentGridProps {
   configurable?: boolean;
@@ -10,11 +13,19 @@ const AgentGrid: React.FC<AgentGridProps> = ({ configurable }) => {
   const { agents, loading, error } = useAgents();
 
   if (loading) {
-    return <p className="text-base-content">Loading agents...</p>;
+    return (
+      <div aria-live="polite" aria-busy="true">
+        <SkeletonGrid count={3} />
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="text-error">{error}</p>;
+    return (
+      <div aria-live="polite">
+        <EmptyState variant="error" icon={X} title="Failed to load agents" description={error} />
+      </div>
+    );
   }
 
   return (
