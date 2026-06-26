@@ -526,6 +526,12 @@ export async function initServices(
       return matches;
     });
 
+    appLogger.info('📡 Filter results', {
+      originalCount: messengerServices.length,
+      filteredCount: filteredMessengers.length,
+      filtered: filteredMessengers.map((s) => s.providerName || s.provider),
+    });
+
     // Register messenger services with ShutdownCoordinator
     for (const service of messengerServices) {
       shutdownCoordinator.registerMessengerService(service as any);
