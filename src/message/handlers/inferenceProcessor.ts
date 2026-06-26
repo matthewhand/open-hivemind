@@ -109,10 +109,10 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
 
     // Smart mention instructions based on platform and user context
     const userId = ctx.message.getAuthorId();
-    const username = ctx.message.getAuthor();
+    const authorId = ctx.message.getAuthorId();
     const mentionInstructions = userId
       ? `MENTION SYNTAX: When addressing the user, use <@${userId}> format for proper Discord mentions. `
-      : `USER ADDRESSING: When addressing the user, use their display name: ${username}. `;
+      : `USER ADDRESSING: When addressing the user, use their ID: ${authorId}. `;
 
     // System prompt
     const baseSystemPrompt = buildSystemPromptWithBotName(
