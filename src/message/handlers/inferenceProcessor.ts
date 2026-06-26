@@ -76,7 +76,10 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
       ctx.logger(`Including ${filteredHistory.length} conversation messages (bots + humans)`);
     } else {
       // Filter out bot messages, only include human messages
-      filteredHistory = ctx.historyMessages.filter((msg) => !msg.isBot());
+      filteredHistory = ctx.historyMessages.filter((msg) => {
+        const authorId = msg.getAuthorId();
+        return authorId && !authorId.includes('bot');
+      });
       ctx.logger(
         `Filtered to ${filteredHistory.length} human-only messages (conversation history disabled)`
       );
@@ -86,9 +89,12 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     let conversationContext = '';
     if (includeConversationHistory && globalHistoryEnabled && filteredHistory.length > 0) {
       const recentBotMessages = filteredHistory
-        .filter((msg) => msg.isBot())
+        .filter((msg) => {
+          const authorId = msg.getAuthorId();
+          return authorId && authorId.includes('bot');
+        })
         .slice(0, 5) // Last 5 bot messages for context
-        .map((msg) => `${msg.getAuthor()}: ${msg.getText()?.substring(0, 200)}`)
+        .map((msg) => `${msg.getAuthorId()}: ${msg.getText()?.substring(0, 200)}`)
         .join('\n');
 
       if (recentBotMessages) {
@@ -161,12 +167,6 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
         (ctx.llmProvider && ctx.llmProvider.name)
     );
     const llmStartedAt = Date.now();
-
-    // Generate response first to calculate realistic typing delay
-    let llmResponse: {
-      text: string;
-      usage?: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number };
-    } | null = null;
 
     try {
       if (ctx.botConfig.MESSAGE_LLM_DIRECT) {
