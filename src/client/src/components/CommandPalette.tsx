@@ -80,6 +80,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   // Focus trap: keep Tab/Shift-Tab cycling within the dialog
   useFocusTrap(isOpen, dialogRef);
 
+  // Scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   const selectItem = useCallback(
     (item: PaletteItem) => {
       onClose();
