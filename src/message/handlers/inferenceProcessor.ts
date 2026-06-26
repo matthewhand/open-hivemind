@@ -64,23 +64,60 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     }
     ctx.pipelineMetrics.endStage('memory_search', { hasMemories: memoryContext.length > 0 });
 
+    // Conversation history filtering - check if bot should include other bots' messages
+    ctx.pipelineMetrics.startStage('conversation_filter');
+    let filteredHistory = ctx.historyMessages;
+    const includeConversationHistory = ctx.botConfig.MESSAGE_INCLUDE_CONVERSATION_HISTORY !== false;
+    const globalHistoryEnabled = process.env.MESSAGE_INCLUDE_BOT_CONVERSATION_HISTORY !== 'false';
+
+    if (includeConversationHistory && globalHistoryEnabled) {
+      // Include all messages (human + bot) for philosophical debate context
+      filteredHistory = ctx.historyMessages;
+      ctx.logger(`Including ${filteredHistory.length} conversation messages (bots + humans)`);
+    } else {
+      // Filter out bot messages, only include human messages
+      filteredHistory = ctx.historyMessages.filter((msg) => !msg.isBot());
+      ctx.logger(
+        `Filtered to ${filteredHistory.length} human-only messages (conversation history disabled)`
+      );
+    }
+
+    // Build conversation context for philosophical debates
+    let conversationContext = '';
+    if (includeConversationHistory && globalHistoryEnabled && filteredHistory.length > 0) {
+      const recentBotMessages = filteredHistory
+        .filter((msg) => msg.isBot())
+        .slice(0, 5) // Last 5 bot messages for context
+        .map((msg) => `${msg.getAuthor()}: ${msg.getText()?.substring(0, 200)}`)
+        .join('\n');
+
+      if (recentBotMessages) {
+        conversationContext = `\n\nRECENT CONVERSATION:\n${recentBotMessages}\n\nConsider the philosophical perspectives and challenge or build upon what others have said. `;
+      }
+    }
+    ctx.pipelineMetrics.endStage('conversation_filter', {
+      originalCount: ctx.historyMessages.length,
+      filteredCount: filteredHistory.length,
+      hasConversationContext: conversationContext.length > 0,
+    });
+
     // System prompt
     const baseSystemPrompt = buildSystemPromptWithBotName(
       String(ctx.botConfig.MESSAGE_SYSTEM_PROMPT || ''),
       String(ctx.activeAgentName)
     );
     const systemPrompt = memoryContext
-      ? `${baseSystemPrompt}\n\n${memoryContext}`
-      : baseSystemPrompt;
+      ? `${baseSystemPrompt}\n\n${memoryContext}${conversationContext}`
+      : `${baseSystemPrompt}${conversationContext}`;
 
-    // History trimming
+    // History trimming - use filtered history
     ctx.pipelineMetrics.startStage('history');
     const maxHistoryTokens = Number(ctx.botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
     const providerWantsHistory = ctx.llmProvider.supportsHistory
       ? ctx.llmProvider.supportsHistory()
       : true;
     const trimmedHistory = providerWantsHistory
-      ? trimHistoryToTokenBudget(ctx.historyMessages, {
+      ? trimHistoryToTokenBudget(filteredHistory, {
           inputBudgetTokens: maxHistoryTokens,
           promptText: ctx.processedMessage || '',
         })
