@@ -159,6 +159,10 @@ export class UserConfigStore {
    * @returns true if bot is disabled, false otherwise.
    */
   public isBotDisabled(botName: string): boolean {
+    // Environment override to enable all bots (for debugging/production)
+    if (process.env.ENABLE_ALL_BOTS === 'true') {
+      return false;
+    }
     return this.config.botDisabledStates?.[botName]?.disabled ?? false;
   }
 
