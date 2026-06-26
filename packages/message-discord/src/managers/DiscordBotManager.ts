@@ -47,10 +47,27 @@ export class DiscordBotManager {
     const botConfigs = getAllBotConfigs?.() || [];
 
     // Filter to Discord bots only
-    const discordBots = botConfigs.filter(
+    let discordBots = botConfigs.filter(
       (config) =>
         config.messageProvider === 'discord' || config.discordBotToken || config.discord?.token
     );
+
+    // Fallback: If no Discord bots found, check environment variables
+    if (discordBots.length === 0) {
+      for (const [key, value] of Object.entries(process.env)) {
+        if (key.match(/^BOTS_(.+)_DISCORD_BOT_TOKEN$/) && value) {
+          const botName = key.match(/^BOTS_(.+)_DISCORD_BOT_TOKEN$/)?.[1];
+          if (botName) {
+            discordBots.push({
+              name: botName.toLowerCase(),
+              messageProvider: 'discord',
+              discord: { token: value },
+              enabled: true,
+            });
+          }
+        }
+      }
+    }
 
     // Also check for legacy DISCORD_BOT_TOKEN environment variable
     const legacyToken = process.env.DISCORD_BOT_TOKEN;
