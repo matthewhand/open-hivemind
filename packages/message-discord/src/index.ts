@@ -31,7 +31,7 @@ export const createDiscordService: IAdapterFactory = (
 ): IMessengerService => {
   const service = new DiscordService(dependencies);
   // Store the bot config for later use
-  (service as any)._botConfig = config.botConfig;
+  (service as any)._botConfig = config?.botConfig;
   return service;
 };
 
