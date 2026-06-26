@@ -101,14 +101,21 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
       hasConversationContext: conversationContext.length > 0,
     });
 
+    // Smart mention instructions based on platform and user context
+    const userId = ctx.message.getAuthorId();
+    const username = ctx.message.getAuthor();
+    const mentionInstructions = userId
+      ? `MENTION SYNTAX: When addressing the user, use <@${userId}> format for proper Discord mentions. `
+      : `USER ADDRESSING: When addressing the user, use their display name: ${username}. `;
+
     // System prompt
     const baseSystemPrompt = buildSystemPromptWithBotName(
       String(ctx.botConfig.MESSAGE_SYSTEM_PROMPT || ''),
       String(ctx.activeAgentName)
     );
     const systemPrompt = memoryContext
-      ? `${baseSystemPrompt}\n\n${memoryContext}${conversationContext}`
-      : `${baseSystemPrompt}${conversationContext}`;
+      ? `${mentionInstructions}${baseSystemPrompt}\n\n${memoryContext}${conversationContext}`
+      : `${mentionInstructions}${baseSystemPrompt}${conversationContext}`;
 
     // History trimming - use filtered history
     ctx.pipelineMetrics.startStage('history');
@@ -154,6 +161,12 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
         (ctx.llmProvider && ctx.llmProvider.name)
     );
     const llmStartedAt = Date.now();
+
+    // Generate response first to calculate realistic typing delay
+    let llmResponse: {
+      text: string;
+      usage?: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number };
+    } | null = null;
 
     try {
       if (ctx.botConfig.MESSAGE_LLM_DIRECT) {
@@ -202,6 +215,44 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     ctx.pipelineMetrics.endStage('llm_inference', {
       hasResponse: !!(llmResponse && llmResponse.text),
     });
+
+    // Calculate realistic typing delay based on response length
+    if (llmResponse?.text) {
+      const responseText = llmResponse.text;
+      const wordCount = responseText.split(' ').length;
+
+      // Human-like typing speeds: 40-80 WPM with thinking time
+      const minWpm = parseFloat(process.env.MESSAGE_TYPING_MIN_WPM || '40');
+      const maxWpm = parseFloat(process.env.MESSAGE_TYPING_MAX_WPM || '80');
+      const minThinkingTime = parseInt(process.env.MESSAGE_MIN_THINKING_TIME || '2000');
+      const maxThinkingTime = parseInt(process.env.MESSAGE_MAX_THINKING_TIME || '5000');
+
+      // Calculate typing time (ms per word)
+      const wordsPerMs = (minWpm + Math.random() * (maxWpm - minWpm)) / 60000;
+      const typingTime = wordCount / wordsPerMs;
+
+      // Add thinking time
+      const thinkingTime = minThinkingTime + Math.random() * (maxThinkingTime - minThinkingTime);
+      const totalDelay = thinkingTime + typingTime;
+
+      // Cap at reasonable maximum and add 10% variation
+      const cappedDelay = Math.min(totalDelay * (0.9 + Math.random() * 0.2), 120000);
+
+      // Critical hit system - 5% chance for instant response
+      const criticalHit =
+        Math.random() < parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
+
+      if (!criticalHit && cappedDelay > 1000) {
+        ctx.logger(
+          `⏱️ Realistic typing delay: ${(cappedDelay / 1000).toFixed(1)}s (${wordCount} words, ${criticalHit ? 'CRITICAL HIT' : 'normal'})`
+        );
+        await new Promise((resolve) => setTimeout(resolve, cappedDelay));
+      } else {
+        ctx.logger(
+          `⚡ ${criticalHit ? 'CRITICAL HIT! Instant response' : 'Quick response'} (${wordCount} words)`
+        );
+      }
+    }
 
     // Post-inference quota
     if (process.env.DISABLE_QUOTA !== 'true' && llmResponse?.text) {
