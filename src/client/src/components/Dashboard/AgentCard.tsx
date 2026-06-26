@@ -261,6 +261,35 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text">Include Conversation History</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={agent.MESSAGE_INCLUDE_CONVERSATION_HISTORY !== false}
+                onChange={(e) => {
+                  const updatedAgent = {
+                    ...agent,
+                    MESSAGE_INCLUDE_CONVERSATION_HISTORY: e.target.checked
+                  };
+                  onUpdate(updatedAgent);
+                }}
+                disabled={agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_INCLUDE_CONVERSATION_HISTORY']?.isOverridden}
+              />
+            </label>
+            <div className="label">
+              <span className="label-text-alt">When enabled, bot can see and respond to other bots' messages</span>
+            </div>
+            {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_INCLUDE_CONVERSATION_HISTORY']?.isOverridden && (
+              <div className="mt-1">
+                <Chip variant="info" size="sm">
+                  ENV: {agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_INCLUDE_CONVERSATION_HISTORY']?.redactedValue}
+                </Chip>
+              </div>
+            )}
+          </div>
+          
+          <div className="form-control">
             <label className="label">
               <span className="label-text">System Instruction</span>
             </label>

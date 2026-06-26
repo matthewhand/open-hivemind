@@ -20,6 +20,14 @@ export const botSchema = {
     env: 'BOTS_{name}_MESSAGE_PROFILE',
   },
 
+  // Conversation history configuration
+  MESSAGE_INCLUDE_CONVERSATION_HISTORY: {
+    doc: 'Whether this bot should include recent conversation history (other bots messages) for context',
+    format: Boolean,
+    default: true,
+    env: 'BOTS_{name}_MESSAGE_INCLUDE_CONVERSATION_HISTORY',
+  },
+
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
