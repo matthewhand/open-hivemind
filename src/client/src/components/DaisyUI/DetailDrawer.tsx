@@ -52,13 +52,14 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
+    const prev = document.body.style.overflow;
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prev;
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prev;
     };
   }, [isOpen]);
 
