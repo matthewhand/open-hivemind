@@ -116,6 +116,7 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [configResult, botsResult, profilesResult] = await Promise.allSettled([
         apiService.get<GlobalConfig>('/api/config/global'),
         apiService.get<any>('/api/dashboard/api/status'),
