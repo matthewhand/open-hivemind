@@ -3,6 +3,7 @@ import { Shield, Check, X, Clock, Terminal } from 'lucide-react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
+import EmptyState from './DaisyUI/EmptyState';
 import { apiService, type ApiEnvelope } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useErrorToast, useSuccessToast } from './DaisyUI/ToastNotification';
@@ -26,6 +27,7 @@ const PendingActions: React.FC = () => {
   const fetchActions = useCallback(async () => {
     try {
       setLoading(true);
+      setActions([]);
       const res = await apiService.get<ApiEnvelope<PendingAction[]>>('/api/admin/pending-actions');
       setActions(res.data || []);
     } catch (err) {
@@ -69,8 +71,38 @@ const PendingActions: React.FC = () => {
     }
   };
 
-  if (loading && actions.length === 0) return null;
-  if (!loading && actions.length === 0) return null;
+  if (loading && actions.length === 0) {
+    return (
+      <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="flex items-center gap-2 mb-3 px-4">
+          <Shield className="w-5 h-5 text-warning" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Pending Approvals</h3>
+        </div>
+        <div className="flex justify-center p-8">
+          <span className="loading loading-spinner loading-md text-primary" aria-hidden="true"></span>
+        </div>
+        <div className="divider mx-4" />
+      </div>
+    );
+  }
+
+  if (!loading && actions.length === 0) {
+    return (
+      <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="flex items-center gap-2 mb-3 px-4">
+          <Shield className="w-5 h-5 text-warning" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Pending Approvals</h3>
+        </div>
+        <EmptyState
+          icon={Shield}
+          title="No Pending Approvals"
+          description="All tool execution requests have been resolved."
+          className="my-4"
+        />
+        <div className="divider mx-4" />
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
