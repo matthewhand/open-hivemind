@@ -106,6 +106,11 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
+      // Deterministically clear data buffers to prevent flashes of stale data
+      setBots([]);
+      setStatus(null);
+      setHealthData(null);
+      setLlmProfiles([]);
       const [botsResult, statusResult, healthResult, profilesResult] = await Promise.allSettled([
         apiService.getBots(),
         apiService.getStatus(),
