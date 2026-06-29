@@ -70,8 +70,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
   public constructor(deps: IServiceDependencies) {
     super();
     if (!deps) {
-      console.log('ERROR: DiscordService created without dependencies - skipping initialization');
-      return;
+      throw new Error('DiscordService requires dependencies');
     }
     this.deps = deps;
     this.botManager = new DiscordBotManager(deps);
