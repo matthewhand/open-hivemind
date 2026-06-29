@@ -488,7 +488,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           <button
             type="button"
             className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-warning' : 'text-base-content/30'
-              } ${isFavorite || 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
+              } ${isFavorite || 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(theme.value);

@@ -114,18 +114,18 @@ describe('DashboardBotCard A11y', () => {
 
     const runBenchmarkBtn = screen.getByLabelText('Run performance benchmark for Test Bot');
     expect(runBenchmarkBtn).toHaveClass('focus-visible:opacity-100');
-    expect(runBenchmarkBtn).toHaveClass('focus-within:opacity-100');
+    expect(runBenchmarkBtn).toHaveClass('group-focus-within:opacity-100');
 
     const viewHistoryBtn = screen.getByLabelText('View version history for Test Bot');
     expect(viewHistoryBtn).toHaveClass('focus-visible:opacity-100');
-    expect(viewHistoryBtn).toHaveClass('focus-within:opacity-100');
+    expect(viewHistoryBtn).toHaveClass('group-focus-within:opacity-100');
 
     const insightsBtn = screen.getByLabelText('View AI performance insights for Test Bot');
     expect(insightsBtn).toHaveClass('focus-visible:opacity-100');
-    expect(insightsBtn).toHaveClass('focus-within:opacity-100');
+    expect(insightsBtn).toHaveClass('group-focus-within:opacity-100');
 
     const diagnosticBtn = screen.getByLabelText('Run diagnostic for Test Bot');
     expect(diagnosticBtn).toHaveClass('focus-visible:opacity-100');
-    expect(diagnosticBtn).toHaveClass('focus-within:opacity-100');
+    expect(diagnosticBtn).toHaveClass('group-focus-within:opacity-100');
   });
 });

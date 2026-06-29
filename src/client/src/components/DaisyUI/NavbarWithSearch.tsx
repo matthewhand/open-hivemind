@@ -484,7 +484,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                             <Activity className="w-3.5 h-3.5 opacity-30" />
                             <span className="text-sm">{search}</span>
                           </div>
-                          <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity">Select ↵</span>
+                          <span className="text-[10px] opacity-0 group-hover:opacity-40 group-focus-visible:opacity-40 transition-opacity">Select ↵</span>
                         </button>
                       </li>
                     ))}
