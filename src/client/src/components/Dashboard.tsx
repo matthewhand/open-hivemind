@@ -16,6 +16,26 @@ import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2, Plus, Bot as BotIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+interface LLMProfile {
+  provider?: string;
+  key?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+interface HealthData {
+  uptime?: number;
+  version?: string;
+  [key: string]: unknown;
+}
+
+interface WebUIConfigResponse {
+  success?: boolean;
+  data?: {
+    layout?: string[];
+  };
+}
+
 const Dashboard: React.FC = () => {
   const getStatusColor = useCallback((botStatus: string) => {
     switch (botStatus.toLowerCase()) {
@@ -48,9 +68,9 @@ const Dashboard: React.FC = () => {
     }
   }, []);
   const [bots, setBots] = useState<BotConfig[]>([]);
-  const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
+  const [llmProfiles, setLlmProfiles] = useState<LLMProfile[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [healthData, setHealthData] = useState<any>(null);
+  const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
@@ -65,7 +85,7 @@ const Dashboard: React.FC = () => {
 
   const fetchLayout = useCallback(async () => {
     try {
-      const response: any = await apiService.get('/api/webui/config');
+      const response = await apiService.get('/api/webui/config') as WebUIConfigResponse;
       if (response.success && response.data?.layout) {
         setLayout(response.data.layout);
       }
@@ -85,8 +105,9 @@ const Dashboard: React.FC = () => {
       await apiService.post('/api/webui/config', { layout });
       successToast('Dashboard Layout Saved', 'Your custom widget order has been persisted.');
       setIsCustomizing(false);
-    } catch (e: any) {
-      errorToast('Failed to Save Layout', e.message || 'Error occurred');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Error occurred';
+      errorToast('Failed to Save Layout', message);
     } finally {
       setSavingLayout(false);
     }
@@ -106,6 +127,10 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
+      setBots([]);
+      setLlmProfiles([]);
+      setStatus(null);
+      setHealthData(null);
       const [botsResult, statusResult, healthResult, profilesResult] = await Promise.allSettled([
         apiService.getBots(),
         apiService.getStatus(),
@@ -113,27 +138,28 @@ const Dashboard: React.FC = () => {
         apiService.getLlmProfiles(),
       ]);
       const statusData: StatusResponse = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [], uptime: 0 };
-      const healthPayload = healthResult.status === 'fulfilled' ? healthResult.value : null;
+      const healthPayload = healthResult.status === 'fulfilled' ? (healthResult.value as HealthData) : null;
 
       // Read the same source as the Bots page (/api/bots) so the hero stats
       // and the Agents panel never disagree with the bot list elsewhere.
-      const rawBots: any = botsResult.status === 'fulfilled' ? botsResult.value : null;
+      const rawBots = botsResult.status === 'fulfilled' ? (botsResult.value as { data?: { bots?: BotConfig[] } | BotConfig[]; bots?: BotConfig[] } | BotConfig[]) : null;
       const botsList: BotConfig[] = Array.isArray(rawBots) ? rawBots
         : Array.isArray(rawBots?.data) ? rawBots.data
-        : rawBots?.data?.bots ?? rawBots?.bots ?? [];
+        : (!Array.isArray(rawBots) && rawBots?.data && !Array.isArray(rawBots.data) && rawBots.data.bots) ? rawBots.data.bots
+        : (!Array.isArray(rawBots) && rawBots?.bots) ? rawBots.bots : [];
 
       // Fall back to status bots only when /api/bots yields nothing
       // (e.g. older servers); normalize the shape the cards expect.
-      const fallbackBots: BotConfig[] = (statusData?.bots ?? []).map((b: any) => ({
+      const fallbackBots: BotConfig[] = (statusData?.bots ?? []).map((b) => ({
         ...b,
         id: b.id ?? b.name,
         messageProvider: b.messageProvider ?? b.provider ?? '',
-      }));
+      } as BotConfig));
       setBots(botsList.length > 0 ? botsList : fallbackBots);
 
       // Providers stat reads the same LLM profile list as the Bots page.
-      const profilesData: any = profilesResult.status === 'fulfilled' ? profilesResult.value : null;
-      const profiles = profilesData?.llm || profilesData?.profiles?.llm || [];
+      const profilesData = profilesResult.status === 'fulfilled' ? (profilesResult.value as { llm?: LLMProfile[]; profiles?: { llm?: LLMProfile[] } } | LLMProfile[]) : null;
+      const profiles = Array.isArray(profilesData) ? profilesData : (profilesData?.llm || profilesData?.profiles?.llm || []);
       setLlmProfiles(Array.isArray(profiles) ? profiles : []);
       setStatus(statusData);
       setHealthData(healthPayload);
@@ -158,9 +184,11 @@ const Dashboard: React.FC = () => {
 
   // ⚡ Bolt Optimization: Pre-compute bot status lookups to change O(N*M) render to O(N+M)
   const botStatusMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, StatusResponse['bots'][0]>();
     if (status?.bots) {
-      status.bots.forEach(b => map.set(b.id, b));
+      status.bots.forEach(b => {
+         if (b.id) map.set(b.id, b);
+      });
     }
     return map;
   }, [status]);

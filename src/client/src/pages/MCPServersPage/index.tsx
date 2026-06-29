@@ -104,6 +104,7 @@ const MCPServersPage: React.FC = () => {
 
   const handleRefreshTools = async (serverId: string) => {
     setRefreshingId(serverId);
+    setAlert(null); // Clear active alerts
     try {
       await fetchServers();
     } finally {
@@ -423,9 +424,9 @@ const MCPServersPage: React.FC = () => {
         dialogOpen={dialogOpen}
         setDialogOpen={setDialogOpen}
         isEditing={isEditing}
-        alert={alert as any}
+        alert={alert}
         selectedServer={selectedServer}
-        setSelectedServer={setSelectedServer as any}
+        setSelectedServer={setSelectedServer as React.Dispatch<React.SetStateAction<MCPServer | null>>}
         handleTestConnection={() => handleTestConnection(selectedServer)}
         isTesting={isTesting}
         handleSaveServer={() => handleSaveServer(selectedServer, isEditing, setDialogOpen)}

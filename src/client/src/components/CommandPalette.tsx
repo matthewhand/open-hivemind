@@ -77,6 +77,20 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     selected?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    let prev = document.body.style.overflow;
+    if (isOpen) {
+      prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = prev;
+    }
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   // Focus trap: keep Tab/Shift-Tab cycling within the dialog
   useFocusTrap(isOpen, dialogRef);
 
