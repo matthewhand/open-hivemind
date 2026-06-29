@@ -44,9 +44,12 @@ export class AnomalyRepository {
           zScore, threshold, severity, explanation, resolved, tenantId
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      await db.run(sql, [
+
+      const params = [
         anomaly.id,
-        anomaly.timestamp,
+        anomaly.timestamp instanceof Date
+          ? anomaly.timestamp.toISOString()
+          : String(anomaly.timestamp),
         anomaly.metric,
         anomaly.value,
         anomaly.expectedMean,
@@ -56,8 +59,10 @@ export class AnomalyRepository {
         anomaly.severity,
         anomaly.explanation,
         anomaly.resolved ? 1 : 0,
-        anomaly.tenantId,
-      ]);
+        anomaly.tenantId ?? null,
+      ];
+
+      await db.run(sql, params);
 
       debug(`Anomaly stored: ${anomaly.id}`);
     } catch (error) {
