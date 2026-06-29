@@ -180,10 +180,17 @@ export class SyncProviderRegistry {
     }
 
     // -- Messenger services --------------------------------------------------
+    const { ServiceDependenciesProvider } = require('../services/ServiceDependenciesProvider');
+    const messengerDependencies = ServiceDependenciesProvider.getDependencies();
+
     for (const platform of config.messengerPlatforms ?? []) {
       try {
         const mod: PluginModule = await loadPlugin(`message-${platform.toLowerCase()}`);
-        const instance = instantiateMessageService(mod, { __platform: platform });
+        const instance = instantiateMessageService(
+          mod,
+          { __platform: platform },
+          messengerDependencies
+        );
         this.messengerServices.set(platform, instance);
         debug('Loaded messenger service: %s', platform);
       } catch (err) {

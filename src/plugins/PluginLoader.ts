@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import Debug from 'debug';
 import type {
   ILlmProvider,
@@ -25,6 +26,37 @@ const debug = Debug('app:pluginLoader');
  */
 export const PLUGINS_DIR: string =
   process.env.HIVEMIND_PLUGINS_DIR ?? path.join(os.homedir(), '.hivemind', 'plugins');
+
+async function loadWorkspacePluginFromSource(name: string): Promise<PluginModule | null> {
+  const packageDir = path.join(process.cwd(), 'packages', name);
+
+  try {
+    await fs.promises.access(packageDir);
+  } catch {
+    return null;
+  }
+
+  const candidates = ['dist/index.js', 'src/index.ts', 'src/index.js'];
+
+  for (const candidate of candidates) {
+    const entryPath = path.join(packageDir, candidate);
+    try {
+      await fs.promises.access(entryPath);
+      const mod = await import(pathToFileURL(entryPath).href);
+      debug('Loaded workspace plugin from local path: %s', entryPath);
+      return mod;
+    } catch (error: unknown) {
+      const code = (error as NodeJS.ErrnoException)?.code;
+      const message = error instanceof Error ? error.message : String(error);
+      if (code === 'ENOENT' || message.includes('Cannot find module')) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return null;
+}
 
 /**
  * Plugin manifest — every package must export this as `manifest`.
@@ -74,7 +106,13 @@ export async function loadPlugin(name: string): Promise<PluginModule> {
       throw e;
   }
 
-  // 2. Try community plugins dir
+  // 2. Fall back to the local workspace package source when linked package builds are absent
+  const workspacePlugin = await loadWorkspacePluginFromSource(name);
+  if (workspacePlugin) {
+    return workspacePlugin;
+  }
+
+  // 3. Try community plugins dir
   const pluginPath = path.join(PLUGINS_DIR, name);
   try {
     await fs.promises.access(pluginPath);

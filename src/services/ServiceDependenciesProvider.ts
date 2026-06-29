@@ -12,6 +12,7 @@ import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import * as discordConfig from '../config/discordConfig';
 import * as messageConfig from '../config/messageConfig';
 import * as slackConfig from '../config/slackConfig';
+import { UserConfigStore } from '../config/UserConfigStore';
 import { container } from '../di/container';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService } from '../server/services/WebSocketService';
@@ -52,7 +53,7 @@ export class ServiceDependenciesProvider {
       ) as unknown as IStartupGreetingService,
       getBotConfig: (name: string) => botConfigManager.getBot(name) as unknown as IBotConfig | null,
       getAllBotConfigs: () => botConfigManager.getAllBots() as unknown as IBotConfig[],
-      isBotDisabled: (name: string) => !botConfigManager.getBot(name)?.enabled,
+      isBotDisabled: (name: string) => UserConfigStore.getInstance().isBotDisabled(name),
     };
   }
 }
