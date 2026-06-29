@@ -32,6 +32,12 @@ export class DiscordBotManager {
 
   constructor(deps: IServiceDependencies) {
     this.deps = deps;
+    console.log(
+      'DEBUG: DiscordBotManager constructor - deps exists:',
+      !!deps,
+      'getAllBotConfigs exists:',
+      !!deps?.getAllBotConfigs
+    );
     this.loadBotsFromConfig();
   }
 
