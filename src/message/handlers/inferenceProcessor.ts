@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import type { IMessage } from '@hivemind/shared-types';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import {
