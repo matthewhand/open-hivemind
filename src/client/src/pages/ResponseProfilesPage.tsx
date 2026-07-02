@@ -267,7 +267,7 @@ const ResponseProfilesPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4">
           {filteredProfiles.map((profile) => (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
+              <button type="button" className="w-full text-left p-4 flex items-center justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={() => toggleExpand(profile.key)} aria-expanded={expandedProfile === profile.key} aria-controls={`response-profile-details-${profile.key}`}>
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl ${profile.isBuiltIn ? 'bg-secondary/10 text-secondary' : 'bg-primary/10 text-primary'}`}>
                     <ResponseIcon className="w-5 h-5" />
@@ -296,11 +296,11 @@ const ResponseProfilesPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleEditProfile(profile)}
+                    onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }}
                     aria-label={`Edit response profile ${profile.name}`}
                   >
                     <EditIcon className="w-4 h-4" aria-hidden="true" />
@@ -310,7 +310,7 @@ const ResponseProfilesPage: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       className="text-error hover:bg-error/10"
-                      onClick={() => handleDeleteProfile(profile.key)}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }}
                       aria-label={`Delete response profile ${profile.name}`}
                     >
                       <DeleteIcon className="w-4 h-4" aria-hidden="true" />
@@ -319,17 +319,17 @@ const ResponseProfilesPage: React.FC = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => toggleExpand(profile.key)}
+                    onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }}
                     aria-label={`${expandedProfile === profile.key ? 'Collapse' : 'Expand'} settings for response profile ${profile.name}`}
                     aria-expanded={expandedProfile === profile.key}
                   >
                     {expandedProfile === profile.key ? <ExpandIcon className="w-4 h-4" aria-hidden="true" /> : <CollapseIcon className="w-4 h-4" aria-hidden="true" />}
                   </Button>
                 </div>
-              </div>
+              </button>
 
               {expandedProfile === profile.key && (
-                <div className="px-4 pb-4">
+                <div id={`response-profile-details-${profile.key}`} className="px-4 pb-4">
                   <div className="divider my-0"></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                     {Object.entries(profile.settings).map(([k, v]) => (

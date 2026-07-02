@@ -339,7 +339,7 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
             return (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
               <div>
-                <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
+                <button type="button" className="w-full text-left p-4 flex items-center justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={() => toggleExpand(profile.key)} aria-expanded={expandedProfile === profile.key} aria-controls={`message-profile-details-${profile.key}`}>
                   <div className="flex items-center gap-4">
                     <div
                       className="p-3 bg-primary/10 text-primary rounded-xl"
@@ -371,25 +371,25 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2">
                     {profile.source !== 'env' && (
                       <>
-                        <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }} aria-label={`Edit ${profile.name} profile`}>
                           <EditIcon className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                        <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }} aria-label={`Delete ${profile.name} profile`}>
                           <DeleteIcon className="w-4 h-4" />
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>
-                </div>
+                </button>
 
                 {expandedProfile === profile.key && (
-                  <div className="px-4 pb-4 pt-0">
+                  <div id={`message-profile-details-${profile.key}`} className="px-4 pb-4 pt-0">
                     <div className="bg-base-200/50 rounded-xl p-4 border border-base-200">
                       <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
                         <ConfigIcon className="w-3 h-3" /> Configuration

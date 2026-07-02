@@ -305,7 +305,7 @@ const MemoryProvidersPage: React.FC = () => {
               <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
                 <div>
                   {/* Card header */}
-                  <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
+                  <button type="button" className="w-full text-left p-4 flex items-center justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={() => toggleExpand(profile.key)} aria-expanded={expandedProfile === profile.key} aria-controls={`memory-profile-details-${profile.key}`}>
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-accent/10 text-accent rounded-xl">
                         {typeof getProviderIcon(profile.provider) === 'string' ? <span className="text-xl">{getProviderIcon(profile.provider)}</span> : getProviderIcon(profile.provider)}
@@ -334,12 +334,12 @@ const MemoryProvidersPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
                         className="text-info hover:bg-info/10"
-                        onClick={() => handleTestProfile(profile.key)}
+                        onClick={(e) => { e.stopPropagation(); handleTestProfile(profile.key); }}
                         loading={isTesting}
                         aria-label={`Test ${profile.name} provider`}
                       >
@@ -348,15 +348,15 @@ const MemoryProvidersPage: React.FC = () => {
                       </Button>
                       {profile.source !== 'env' && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                          <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
                         </>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                         {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                       </Button>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Test results inline */}
                   {testResult && testResult !== 'loading' && (
@@ -391,7 +391,7 @@ const MemoryProvidersPage: React.FC = () => {
 
                   {/* Expanded config details */}
                   {expandedProfile === profile.key && (
-                    <div className="px-4 pb-4 pt-0">
+                    <div id={`memory-profile-details-${profile.key}`} className="px-4 pb-4 pt-0">
                       <div className="bg-base-200/50 rounded-xl p-4 border border-base-200">
                         <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2"><ConfigIcon className="w-3 h-3" /> Configuration</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

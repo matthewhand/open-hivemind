@@ -86,10 +86,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const styles = variantStyles[variant] || variantStyles.primary;
 
   return (
-    <div
+    <section
       data-testid="empty-state"
       role="status"
       aria-live="polite"
+      aria-labelledby="empty-state-title"
       className={`
         group relative overflow-hidden rounded-2xl py-16 px-8
         bg-gradient-to-br ${styles.gradient}
@@ -117,7 +118,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           {React.isValidElement(Icon) ? Icon : React.createElement(Icon as any, { className: "w-12 h-12", strokeWidth: 1.5 })}
         </div>
 
-        <h2 className="text-xl font-semibold mb-2 text-base-content">
+        <h2 id="empty-state-title" className="text-xl font-semibold mb-2 text-base-content">
           {title}
         </h2>
 
@@ -136,7 +137,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           </Button>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 
