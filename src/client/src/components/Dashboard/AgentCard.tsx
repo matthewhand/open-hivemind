@@ -24,8 +24,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   const [messengerProvider, setMessengerProvider] = useState(agent.provider || '');
   const [persona, setPersona] = useState(agent.persona || '');
   const [systemInstruction, setSystemInstruction] = useState(agent.systemInstruction || '');
-  const [mcpServers, setMcpServers] = useState<any[]>(agent.mcpServers || []);
-  const [mcpGuard, setMcpGuard] = useState<any>(agent.mcpGuard || { enabled: false, type: 'owner' });
+  const [mcpServers, setMcpServers] = useState<{ name: string; serverUrl: string; apiKey?: string }[]>(agent.mcpServers || []);
+  const [mcpGuard, setMcpGuard] = useState<{ enabled: boolean; type: string; allowedUserIds?: string[] }>(agent.mcpGuard || { enabled: false, type: 'owner' });
   const [newMcpServer, setNewMcpServer] = useState({ name: '', serverUrl: '', apiKey: '' });
   const [connected, setConnected] = useState(false);
 
@@ -62,27 +62,27 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
     setMcpGuard(agent.mcpGuard || { enabled: false, type: 'owner' });
   }, [agent]);
 
-  const handleLlmChange = (event: any) => {
+  const handleLlmChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setLlmProvider(event.target.value);
     updateConnectionStatus(event.target.value, messengerProvider, persona);
   };
 
-  const handleMessengerChange = (event: any) => {
+  const handleMessengerChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setMessengerProvider(event.target.value);
     updateConnectionStatus(llmProvider, event.target.value, persona);
   };
 
-  const handlePersonaChange = (event: any) => {
+  const handlePersonaChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setPersona(event.target.value);
     updateConnectionStatus(llmProvider, messengerProvider, event.target.value);
   };
 
-  const handleSystemInstructionChange = (event: any) => {
+  const handleSystemInstructionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSystemInstruction(event.target.value);
   };
 
-  const handleMcpGuardChange = (field: string, value: any) => {
-    setMcpGuard((prev: any) => ({ ...prev, [field]: value }));
+  const handleMcpGuardChange = (field: string, value: boolean | string | string[]) => {
+    setMcpGuard((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddMcpServer = () => {
@@ -137,7 +137,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   if (!configurable) {
     return (
       <Card className="w-full">
-            <div className="flex justify-between items-center">
+        <Card.Body>
+          <div className="flex justify-between items-center">
             <Card.Title tag="h3" className="text-lg">{agent.name}</Card.Title>
             <Chip variant="success" size="sm">online</Chip>
           </div>
@@ -145,12 +146,14 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             <p className="text-sm">Provider: {agent.provider}</p>
             {agent.persona && <p className="text-sm">Persona: {agent.persona}</p>}
           </div>
+        </Card.Body>
       </Card>
     );
   }
 
   return (
     <Card className={`w-full ${!isConfigured ? 'line-through' : ''} ${hasEnvOverrides ? 'border-2 border-info' : ''}`}>
+      <Card.Body>
         <div className="flex justify-between items-center">
           <Card.Title tag="h3" className="text-lg">
             {agent.name}
@@ -172,12 +175,15 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
         )}
         
-        <div className="mt-4 space-y-4">
+        <fieldset className="mt-4 space-y-4">
+          <legend className="sr-only">Agent Configuration for {agent.name}</legend>
           <div className="form-control w-full">
-            <label className="label">
+            <label className="label" htmlFor={`llm-provider-${agent.name}`}>
               <span className="label-text">LLM Provider</span>
             </label>
             <Select
+              id={`llm-provider-${agent.name}`}
+              aria-label={`Select LLM Provider for ${agent.name}`}
               value={llmProvider}
               onChange={handleLlmChange}
               disabled={providersLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.isOverridden)}
@@ -203,10 +209,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           <div className="form-control w-full">
-            <label className="label">
+            <label className="label" htmlFor={`messenger-provider-${agent.name}`}>
               <span className="label-text">Messenger Provider</span>
             </label>
             <Select
+              id={`messenger-provider-${agent.name}`}
+              aria-label={`Select Messenger Provider for ${agent.name}`}
               value={messengerProvider}
               onChange={handleMessengerChange}
               disabled={providersLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.isOverridden)}
@@ -232,10 +240,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           <div className="form-control w-full">
-            <label className="label">
+            <label className="label" htmlFor={`persona-${agent.name}`}>
               <span className="label-text">Persona</span>
             </label>
             <Select
+              id={`persona-${agent.name}`}
+              aria-label={`Select Persona for ${agent.name}`}
               value={persona}
               onChange={handlePersonaChange}
               disabled={personasLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.isOverridden)}
@@ -261,9 +271,11 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           <div className="form-control">
-            <label className="label cursor-pointer">
+            <label className="label cursor-pointer" htmlFor={`include-history-${agent.name}`}>
               <span className="label-text">Include Conversation History</span>
               <input
+                id={`include-history-${agent.name}`}
+                aria-label={`Include Conversation History for ${agent.name}`}
                 type="checkbox"
                 className="toggle toggle-primary"
                 checked={agent.MESSAGE_INCLUDE_CONVERSATION_HISTORY !== false}
@@ -290,11 +302,13 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor={`system-instruction-${agent.name}`}>
               <span className="label-text">System Instruction</span>
             </label>
             <Textarea
-              className="h-24"
+              id={`system-instruction-${agent.name}`}
+              aria-label={`System Instruction for ${agent.name}`}
+              className="h-24 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               value={systemInstruction}
               onChange={handleSystemInstructionChange}
               disabled={agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden}
@@ -308,24 +322,26 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             )}
           </div>
           
-          {/* MCP Servers Section */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">MCP Servers</h4>
-            <ul className="space-y-2">
+        </fieldset>
+
+        <fieldset className="mt-6">
+          <legend className="sr-only">MCP Servers for {agent.name}</legend>
+          <div className="mt-2">
+            <h4 className="text-lg font-semibold mb-2" id={`mcp-servers-${agent.name}`}>MCP Servers</h4>
+            <ul className="space-y-2" aria-labelledby={`mcp-servers-${agent.name}`}>
               {mcpServers.map((server, index) => (
                 <li key={index} className="flex justify-between items-center p-2 bg-base-200 rounded">
                   <div>
                     <div className="font-medium">{server.name}</div>
                     <div className="text-sm text-base-content/70">{server.serverUrl}</div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
+                    className="btn btn-ghost btn-sm focus-visible:ring-2 focus-visible:ring-error focus-visible:outline-none text-error hover:bg-error/10"
                     aria-label={`Remove MCP server ${server.name}`}
                     onClick={() => handleRemoveMcpServer(index)}
                   >
                     <Trash2 className="w-4 h-4" aria-hidden="true" />
-                  </Button>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -334,17 +350,19 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           <div className="flex gap-2">
             <Input
               placeholder="Server Name"
+              aria-label={`New MCP Server Name for ${agent.name}`}
               value={newMcpServer.name}
               onChange={(e) => setNewMcpServer({...newMcpServer, name: e.target.value})}
               size="sm"
-              className="flex-1"
+              className="flex-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             />
             <Input
               placeholder="Server URL"
+              aria-label={`New MCP Server URL for ${agent.name}`}
               value={newMcpServer.serverUrl}
               onChange={(e) => setNewMcpServer({...newMcpServer, serverUrl: e.target.value})}
               size="sm"
-              className="flex-1"
+              className="flex-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             />
             <Button
               variant="secondary" className="btn-outline"
@@ -357,13 +375,18 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             </Button>
           </div>
           
-          {/* MCP Guard Section */}
-          <div className="mt-6">
+        </fieldset>
+
+        <fieldset className="mt-6">
+          <legend className="sr-only">MCP Tool Usage Guard for {agent.name}</legend>
+          <div className="mt-2">
             <h4 className="text-lg font-semibold mb-2">MCP Tool Usage Guard</h4>
             <div className="form-control">
-              <label className="label cursor-pointer">
+              <label className="label cursor-pointer" htmlFor={`enable-mcp-guard-${agent.name}`}>
                 <span className="label-text">Enable MCP Tool Usage Guard</span>
                 <Toggle
+                  id={`enable-mcp-guard-${agent.name}`}
+                  aria-label={`Enable MCP Tool Usage Guard for ${agent.name}`}
                   className="toggle toggle-primary"
                   checked={mcpGuard.enabled}
                   onChange={(e) => handleMcpGuardChange('enabled', e.target.checked)}
@@ -374,10 +397,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             {mcpGuard.enabled && (
               <div className="mt-4">
                 <div className="form-control w-full">
-                  <label className="label">
+                  <label className="label" htmlFor={`mcp-guard-type-${agent.name}`}>
                     <span className="label-text">Guard Type</span>
                   </label>
                   <Select
+                    id={`mcp-guard-type-${agent.name}`}
+                    aria-label={`MCP Guard Type for ${agent.name}`}
                     value={mcpGuard.type}
                     onChange={(e) => handleMcpGuardChange('type', e.target.value)}
                     options={[
@@ -392,11 +417,13 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                 
                 {mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
-                    <label className="label">
+                    <label className="label" htmlFor={`mcp-guard-users-${agent.name}`}>
                       <span className="label-text">Allowed User IDs (comma-separated)</span>
                     </label>
                     <Textarea
-                      className="h-16"
+                      id={`mcp-guard-users-${agent.name}`}
+                      aria-label={`Allowed User IDs for ${agent.name}`}
+                      className="h-16 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                       value={mcpGuard.allowedUserIds?.join(', ') || ''}
                       onChange={(e) => handleMcpGuardChange('allowedUserIds', e.target.value.split(',').map(id => id.trim()))}
                     />
@@ -405,7 +432,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               </div>
             )}
           </div>
-        </div>
+        </fieldset>
+      </Card.Body>
     </Card>
   );
 };
