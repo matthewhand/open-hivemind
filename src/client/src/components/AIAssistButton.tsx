@@ -52,26 +52,32 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <Tooltip
-      content={error || (loading ? 'Generating...' : label)}
-      position="right"
-      color={error ? 'error' : undefined}
-      className="font-normal normal-case text-sm"
-    >
-      <button
-        type="button"
-        className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
-        onClick={handleClick}
-        disabled={loading}
-        aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
+    <>
+      <span className="sr-only" aria-live="polite">
+        {loading ? `Generating ${label.replace('Generate ', '')}...` : error ? error : ''}
+      </span>
+      <Tooltip
+        content={error || (loading ? 'Generating...' : label)}
+        position="right"
+        color={error ? 'error' : undefined}
+        className="font-normal normal-case text-sm"
       >
-        {loading ? (
-          <LoadingSpinner size="xs" />
-        ) : (
-          <Sparkles className="w-4 h-4" />
-        )}
-      </button>
-    </Tooltip>
+        <button
+          type="button"
+          className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
+          onClick={handleClick}
+          disabled={loading}
+          aria-busy={loading}
+          aria-label={label}
+        >
+          {loading ? (
+            <LoadingSpinner size="xs" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+        </button>
+      </Tooltip>
+    </>
   );
 };
 
