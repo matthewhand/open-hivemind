@@ -70,11 +70,14 @@ export function usePersonasLogic() {
 
   const fetchData = useCallback(async () => {
     try {
+      setMutating(true);
       setError(null);
       await queryClient.invalidateQueries({ queryKey: ['personasLogic'] });
     } catch (err: unknown) {
       setError('Failed to fetch data.');
       logger.error(err);
+    } finally {
+      setMutating(false);
     }
   }, [queryClient]);
 
