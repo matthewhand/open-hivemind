@@ -270,6 +270,11 @@ const DataTable = <T extends Record<string, any>>({
               e.stopPropagation();
               action.onClick(record, index);
             }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+              }
+            }}
             disabled={action.disabled?.(record)}
             title={action.tooltip || action.label}
             aria-label={action.label}
