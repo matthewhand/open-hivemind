@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Palette, ChevronDown, Check } from 'lucide-react';
 import useTheme from '../../hooks/useTheme';
+import Dropdown from './Dropdown';
 
 const AVAILABLE_THEMES = [
   'light', 'dark', 'auto', 'night', 'dracula', 'cupcake', 'emerald', 
@@ -35,22 +36,38 @@ const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
 
   if (!mounted) {
     return (
-      <div className={dropdownClass}>
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Theme menu">
-          <Palette className="w-4 h-4" />
-        </div>
-      </div>
+      <Dropdown
+        className={className}
+        position={position}
+        color="ghost"
+        size="sm"
+        triggerClassName="btn-circle"
+        aria-label="Theme menu"
+        trigger={<Palette className="w-4 h-4" />}
+        hideArrow
+      >
+        <></>
+      </Dropdown>
     );
   }
 
   return (
-    <div className={dropdownClass}>
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-1" aria-label="Theme switcher">
-        <Palette className="w-4 h-4" />
-        <span className="hidden sm:inline">Theme</span>
-        <ChevronDown className="w-3 h-3 opacity-60" />
-      </div>
-      <ul tabIndex={0} className="dropdown-content bg-base-300 rounded-box z-[1] w-56 p-2 shadow-2xl max-h-[calc(100vh-10rem)] overflow-y-auto mt-2 mb-2">
+    <Dropdown
+      className={className}
+      position={position}
+      color="ghost"
+      size="sm"
+      triggerClassName="gap-1"
+      aria-label="Theme switcher"
+      aria-haspopup="menu"
+      trigger={
+        <>
+          <Palette className="w-4 h-4" />
+          <span className="hidden sm:inline">Theme</span>
+        </>
+      }
+      contentClassName="bg-base-300 rounded-box z-[1] w-56 p-2 shadow-2xl max-h-[calc(100vh-10rem)] overflow-y-auto mt-2 mb-2 menu"
+    >
         {AVAILABLE_THEMES.map((t) => (
           <li key={t}>
             <button
@@ -83,8 +100,7 @@ const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
             </button>
           </li>
         ))}
-      </ul>
-    </div>
+    </Dropdown>
   );
 };
 

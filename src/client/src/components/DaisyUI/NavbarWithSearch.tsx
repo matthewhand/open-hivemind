@@ -339,11 +339,17 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       {/* Navbar Start */}
       <div className="navbar-start gap-2">
         {/* Mobile Menu */}
-        <div className="dropdown lg:hidden">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Open mobile menu">
-            <Menu className="w-5 h-5" />
-          </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200">
+        <Dropdown
+          className="lg:hidden"
+          color="ghost"
+          size="sm"
+          triggerClassName="btn-circle"
+          aria-label="Open mobile menu"
+          aria-haspopup="menu"
+          hideArrow
+          contentClassName="menu menu-sm mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200"
+          trigger={<Menu className="w-5 h-5" />}
+        >
             {navItems.map((item) => (
               <li key={item.id}>
                 <a href={item.path} className={currentPath === item.path ? 'active font-bold' : ''}>
@@ -365,8 +371,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                 )}
               </li>
             ))}
-          </ul>
-        </div>
+        </Dropdown>
 
         {/* Logo and Title */}
         <a href="/" className="btn btn-ghost px-2 hover:bg-transparent flex gap-2">
@@ -529,33 +534,49 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         {/* System Status Indicator */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" aria-label="System status">
+        <Dropdown
+          className="dropdown-end"
+          color="ghost"
+          size="sm"
+          triggerClassName="btn-circle"
+          aria-label="System status"
+          aria-haspopup="menu"
+          hideArrow
+          contentClassName="z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2"
+          trigger={
             <Indicator
                item={<span className="badge badge-xs badge-success indicator-item"></span>}
                className="p-1"
             >
                <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             </Indicator>
-          </div>
-          <ul tabIndex={0} className="dropdown-content z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2">
+          }
+        >
             <li className="menu-title text-xs opacity-40 uppercase tracking-widest font-bold mb-2">Live Infrastructure</li>
             <li><a className="flex justify-between py-2 font-medium"><span>🟢 System Status</span> <Badge variant="success" size="xs">Healthy</Badge></a></li>
             <Divider className="my-1" />
             <li><a href="/admin/monitoring" className="btn btn-xs btn-primary btn-outline mt-2">View Health Dashboard</a></li>
-          </ul>
-        </div>
+        </Dropdown>
 
         {/* Notifications */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
-            <Indicator
-              item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
-            >
-              <Bell className="w-5 h-5 opacity-70" />
-            </Indicator>
-          </div>
-          <ul tabIndex={0} className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
+        <div onClick={onNotificationClick}>
+          <Dropdown
+            className="dropdown-end"
+            color="ghost"
+            size="sm"
+            triggerClassName="btn-circle"
+            aria-label={`Notifications, ${notificationCount} unread`}
+            aria-haspopup="menu"
+            hideArrow
+            contentClassName="z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2"
+            trigger={
+              <Indicator
+                item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
+              >
+                <Bell className="w-5 h-5 opacity-70" />
+              </Indicator>
+            }
+          >
             <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
             <div className="max-h-60 overflow-y-auto">
                <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
@@ -574,7 +595,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                </a></li>
             </div>
             <li><a href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
-          </ul>
+          </Dropdown>
         </div>
 
         <Divider vertical className="h-6 mx-0 hidden sm:flex" />
@@ -660,8 +681,16 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         {/* User Menu */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar ml-1" aria-label="User menu">
+        <Dropdown
+          className="dropdown-end"
+          color="ghost"
+          size="sm"
+          triggerClassName="btn-circle avatar ml-1"
+          aria-label="User menu"
+          aria-haspopup="menu"
+          hideArrow
+          contentClassName="menu menu-sm mt-3 z-[50] p-2 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200"
+          trigger={
             <div className="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden shadow-md">
                <Avatar
                 size="sm"
@@ -674,8 +703,8 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                 {!userAvatar && userName.charAt(0).toUpperCase()}
               </Avatar>
             </div>
-          </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200">
+          }
+        >
             <div className="px-4 py-3 border-b border-base-200 mb-2">
                <p className="text-xs font-bold opacity-40 uppercase tracking-widest mb-1">Signed in as</p>
                <p className="font-bold text-sm truncate">{userName}</p>
@@ -686,8 +715,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li><a href="https://github.com/matthewhand/open-hivemind" target="_blank" rel="noopener noreferrer" className="py-2.5"><HelpCircle className="w-4 h-4" /> Help & Support</a></li>
             <li><a href="https://github.com/matthewhand/open-hivemind" target="_blank" rel="noopener noreferrer" className="py-2.5"><FileText className="w-4 h-4" /> API Documentation</a></li>
             <li className="mt-2"><a href="/login" className="text-error font-bold hover:bg-error/10 py-2.5"><LogOut className="w-4 h-4" /> Sign out</a></li>
-          </ul>
-        </div>
+        </Dropdown>
       </div>
     </nav>
     </>
