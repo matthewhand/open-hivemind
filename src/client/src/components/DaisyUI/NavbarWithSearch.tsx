@@ -559,44 +559,44 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </Dropdown>
 
         {/* Notifications */}
-        <div onClick={onNotificationClick}>
-          <Dropdown
-            className="dropdown-end"
-            color="ghost"
-            size="sm"
-            triggerClassName="btn-circle"
-            aria-label={`Notifications, ${notificationCount} unread`}
-            aria-haspopup="menu"
-            hideArrow
-            contentClassName="z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2"
-            trigger={
+        <Dropdown
+          className="dropdown-end"
+          color="ghost"
+          size="sm"
+          triggerClassName="btn-circle"
+          aria-label={`Notifications, ${notificationCount} unread`}
+          aria-haspopup="menu"
+          hideArrow
+          contentClassName="z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2"
+          trigger={
+            <div onClick={onNotificationClick} className="contents">
               <Indicator
                 item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
               >
                 <Bell className="w-5 h-5 opacity-70" />
               </Indicator>
-            }
-          >
-            <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
-            <div className="max-h-60 overflow-y-auto">
-               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
-                  <div className="bg-primary/10 text-primary p-2 rounded-lg"><BotIcon className="w-4 h-4" /></div>
-                  <div className="flex flex-col">
-                     <span className="text-xs font-bold">Bot "Assistant" reconnected</span>
-                     <span className="text-[10px] opacity-40">2 minutes ago</span>
-                  </div>
-               </a></li>
-               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
-                  <div className="bg-warning/10 text-warning p-2 rounded-lg"><Activity className="w-4 h-4" /></div>
-                  <div className="flex flex-col">
-                     <span className="text-xs font-bold">High memory usage detected</span>
-                     <span className="text-[10px] opacity-40">15 minutes ago</span>
-                  </div>
-               </a></li>
             </div>
-            <li><a href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
-          </Dropdown>
-        </div>
+          }
+        >
+          <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
+          <div className="max-h-60 overflow-y-auto">
+             <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                <div className="bg-primary/10 text-primary p-2 rounded-lg"><BotIcon className="w-4 h-4" /></div>
+                <div className="flex flex-col">
+                   <span className="text-xs font-bold">Bot "Assistant" reconnected</span>
+                   <span className="text-[10px] opacity-40">2 minutes ago</span>
+                </div>
+             </a></li>
+             <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                <div className="bg-warning/10 text-warning p-2 rounded-lg"><Activity className="w-4 h-4" /></div>
+                <div className="flex flex-col">
+                   <span className="text-xs font-bold">High memory usage detected</span>
+                   <span className="text-[10px] opacity-40">15 minutes ago</span>
+                </div>
+             </a></li>
+          </div>
+          <li><a href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
+        </Dropdown>
 
         <Divider vertical className="h-6 mx-0 hidden sm:flex" />
 

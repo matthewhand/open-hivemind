@@ -124,7 +124,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         {!hideArrow && <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />}
       </button>
       {isOpen && (
-        <ContentWrapper id={menuId} tabIndex={0} className={`dropdown-content ${isMenu ? 'menu' : ''} p-2 shadow bg-base-100 rounded-box w-52 z-50 ${contentClassName}`} role={isMenu ? "menu" : undefined}>
+        <ContentWrapper id={menuId} tabIndex={0} className={`dropdown-content ${isMenu ? 'menu' : ''} p-2 shadow bg-base-100 rounded-box min-w-max z-50 ${contentClassName}`} role={isMenu ? "menu" : undefined}>
           {children}
         </ContentWrapper>
       )}
