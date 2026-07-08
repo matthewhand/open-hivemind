@@ -246,28 +246,28 @@ export const DropdownDemo: React.FC = () => {
       <Section title="Dropdown Positions">
         <div className="flex flex-wrap gap-4">
           <div className="dropdown">
-            <div tabIndex={0} role="button" className="btn m-1">Click</div>
+            <button type="button" className="btn m-1">Click</button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a>Item 1</a></li>
               <li><a>Item 2</a></li>
             </ul>
           </div>
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn m-1">Dropdown End</div>
+            <button type="button" className="btn m-1">Dropdown End</button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a>Item 1</a></li>
               <li><a>Item 2</a></li>
             </ul>
           </div>
           <div className="dropdown dropdown-top">
-            <div tabIndex={0} role="button" className="btn m-1">Dropdown Top</div>
+            <button type="button" className="btn m-1">Dropdown Top</button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a>Item 1</a></li>
               <li><a>Item 2</a></li>
             </ul>
           </div>
           <div className="dropdown dropdown-hover">
-            <div tabIndex={0} role="button" className="btn m-1">Hover</div>
+            <button type="button" className="btn m-1">Hover</button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a>Item 1</a></li>
               <li><a>Item 2</a></li>

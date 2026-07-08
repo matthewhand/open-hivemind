@@ -1,7 +1,7 @@
-import { ServiceDependenciesProvider } from '../../../src/services/ServiceDependenciesProvider';
 import { BotConfigurationManager } from '../../../src/config/BotConfigurationManager';
-import { WebSocketService } from '../../../src/server/services/WebSocketService';
 import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import { WebSocketService } from '../../../src/server/services/WebSocketService';
+import { ServiceDependenciesProvider } from '../../../src/services/ServiceDependenciesProvider';
 import { StartupGreetingService } from '../../../src/services/StartupGreetingService';
 
 jest.mock('../../../src/config/BotConfigurationManager');

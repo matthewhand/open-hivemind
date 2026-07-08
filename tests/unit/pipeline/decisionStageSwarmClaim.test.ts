@@ -13,11 +13,11 @@
  * (`botName`) as the write-side claim.
  */
 
+import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
 import type { ActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stub message
@@ -140,7 +140,7 @@ describe('DecisionStage swarm-claim identity consistency', () => {
     expect(second.shouldReply).toBe(true);
     expect(skipped).toHaveLength(0);
     // Strategy ran on both passes (would be short-circuited if mis-deduplicated).
-    expect((strategy.shouldReply as jest.Mock)).toHaveBeenCalledTimes(2);
+    expect(strategy.shouldReply as jest.Mock).toHaveBeenCalledTimes(2);
   });
 
   it('still skips when a DIFFERENT bot already claimed the message', async () => {

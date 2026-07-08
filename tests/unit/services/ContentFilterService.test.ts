@@ -228,7 +228,10 @@ describe('ContentFilterService', () => {
         strictness: 'low',
         blockedTerms: ['badword'],
       };
-      const result = filterService.filterContentForDisplay('This is a badword and another BaDwOrD', config);
+      const result = filterService.filterContentForDisplay(
+        'This is a badword and another BaDwOrD',
+        config
+      );
       expect(result).toBe('This is a [FILTERED] and another [FILTERED]');
     });
 

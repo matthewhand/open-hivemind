@@ -107,7 +107,8 @@ const promptBuilder: PromptBuilder = {
   buildSystemPrompt: jest.fn(() => 'BASE PROMPT'),
 };
 
-const enabledConfig = (overrides: Partial<HistorySummaryConfig> = {}): (() => HistorySummaryConfig) =>
+const enabledConfig =
+  (overrides: Partial<HistorySummaryConfig> = {}): (() => HistorySummaryConfig) =>
   () => ({ enabled: true, threshold: 5, keepRecent: 3, maxWords: 100, ...overrides });
 
 describe('EnrichStage history summarization', () => {

@@ -10,6 +10,9 @@
 
 import express from 'express';
 import request from 'supertest';
+import { globalErrorHandler } from '@src/middleware/errorHandler';
+// Import the router AFTER the mock is registered.
+import personasRouter from '@src/server/routes/personas';
 
 // --- Mock PersonaManager so the route uses a controllable in-memory manager ---
 const createPersona = jest.fn();
@@ -30,10 +33,6 @@ jest.mock('@src/managers/PersonaManager', () => ({
     getInstance: jest.fn(async () => mockManager),
   },
 }));
-
-// Import the router AFTER the mock is registered.
-import personasRouter from '@src/server/routes/personas';
-import { globalErrorHandler } from '@src/middleware/errorHandler';
 
 function createApp(): express.Application {
   const app = express();
@@ -97,7 +96,10 @@ describe('personas routes async responses', () => {
       .send({ name: 'Cloned Persona' });
 
     expect(res.status).toBe(201);
-    expect(clonePersona).toHaveBeenCalledWith('persona-123', expect.objectContaining({ name: 'Cloned Persona' }));
+    expect(clonePersona).toHaveBeenCalledWith(
+      'persona-123',
+      expect.objectContaining({ name: 'Cloned Persona' })
+    );
     expect(res.body).toMatchObject({ id: 'persona-clone', name: 'Cloned Persona' });
   });
 
@@ -112,7 +114,10 @@ describe('personas routes async responses', () => {
       .send({ description: 'Updated description' });
 
     expect(res.status).toBe(200);
-    expect(updatePersona).toHaveBeenCalledWith('persona-123', expect.objectContaining({ description: 'Updated description' }));
+    expect(updatePersona).toHaveBeenCalledWith(
+      'persona-123',
+      expect.objectContaining({ description: 'Updated description' })
+    );
     expect(res.body).toMatchObject({ id: 'persona-123', description: 'Updated description' });
   });
 });

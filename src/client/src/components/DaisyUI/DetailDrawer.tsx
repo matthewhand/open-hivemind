@@ -50,15 +50,17 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when drawer is open
+    // Prevent body scroll when drawer is open
   useEffect(() => {
+    let prevOverflow = '';
     if (isOpen) {
+      prevOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = '';
+      if (isOpen) {
+        document.body.style.overflow = prevOverflow;
+      }
     };
   }, [isOpen]);
 

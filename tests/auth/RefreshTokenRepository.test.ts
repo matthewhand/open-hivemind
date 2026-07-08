@@ -1,6 +1,6 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
 import { RefreshTokenRepository } from '../../src/auth/RefreshTokenRepository';
 
 // The global jest config maps `better-sqlite3` to a hand-written mock that only
@@ -8,7 +8,7 @@ import { RefreshTokenRepository } from '../../src/auth/RefreshTokenRepository';
 // (named params, ON CONFLICT, COUNT, the auth_refresh_tokens table), so we load
 // the actual better-sqlite3 implementation and inject a real DB instance.
 const realBetterSqlitePath = require.resolve('better-sqlite3/lib/index.js');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const RealDatabase = jest.requireActual(realBetterSqlitePath) as unknown as new (
   filename: string
 ) => import('better-sqlite3').Database;

@@ -12,7 +12,7 @@ jest.mock('fs', () => ({
     stat: jest.fn().mockResolvedValue({ size: 0 }),
     rename: jest.fn().mockResolvedValue(undefined),
     unlink: jest.fn().mockResolvedValue(undefined),
-  }
+  },
 }));
 
 describe('AuditLogger', () => {

@@ -8,12 +8,11 @@
  * assert the endpoint reflects their real state.
  */
 
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
-import type { Request, Response, NextFunction } from 'express';
-import { buildSystemChecks } from '../../../../src/server/routes/health/helpers';
 import { ProviderRegistry } from '../../../../src/registries/ProviderRegistry';
 import detailedRouter from '../../../../src/server/routes/health/detailed';
+import { buildSystemChecks } from '../../../../src/server/routes/health/helpers';
 
 // Mount the router behind a middleware that injects an authenticated user so
 // the full (non-sanitized) detailed payload — including `checks` — is returned.

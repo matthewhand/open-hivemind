@@ -7,11 +7,11 @@
  * config export shapes (nested maps, arrays of objects, mixed scalar types).
  */
 import {
-  convertToYAML,
-  parseYAML,
-  detectFormat,
   convertToCSV,
+  convertToYAML,
+  detectFormat,
   parseCSV,
+  parseYAML,
 } from '../../../../../src/server/services/configImportExport/formatConverters';
 
 describe('detectFormat', () => {

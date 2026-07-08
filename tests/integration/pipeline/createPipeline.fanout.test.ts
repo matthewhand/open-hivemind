@@ -13,11 +13,10 @@
  * processed exactly once.
  */
 
+import { IMessage, type IMessengerService } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
 import { createPipeline } from '@src/pipeline/createPipeline';
 import { ReceiveStage } from '@src/pipeline/ReceiveStage';
-import type { IMessengerService } from '@hivemind/shared-types';
-import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stubs

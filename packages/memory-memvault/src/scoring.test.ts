@@ -1,6 +1,6 @@
 import {
-  DEFAULT_RECENCY_HALF_LIFE_MS,
   cosineSimilarity,
+  DEFAULT_RECENCY_HALF_LIFE_MS,
   hybridScore,
   recencyDecay,
 } from './scoring';

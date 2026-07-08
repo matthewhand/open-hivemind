@@ -64,6 +64,7 @@ const Dashboard: React.FC = () => {
   const errorToast = useErrorToast();
 
   const fetchLayout = useCallback(async () => {
+    setError(null);
     try {
       const response: any = await apiService.get('/api/webui/config');
       if (response.success && response.data?.layout) {

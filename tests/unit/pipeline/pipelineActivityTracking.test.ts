@@ -12,18 +12,17 @@
  * These tests assert the pipeline now wires all three recordings.
  */
 
+import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
-import type { ActivityRecorder } from '@src/pipeline/ActivityRecorder';
-import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
-import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
-import { SendStage, type MessageSender } from '@src/pipeline/SendStage';
-import { GlobalActivityTracker } from '@src/message/helpers/processing/GlobalActivityTracker';
 import {
   clearBotActivity,
   getLastBotActivity,
 } from '@src/message/helpers/processing/ChannelActivity';
+import { GlobalActivityTracker } from '@src/message/helpers/processing/GlobalActivityTracker';
+import { DefaultActivityRecorder, type ActivityRecorder } from '@src/pipeline/ActivityRecorder';
+import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
+import { SendStage, type MessageSender } from '@src/pipeline/SendStage';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stub message

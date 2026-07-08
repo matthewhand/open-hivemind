@@ -145,18 +145,15 @@ export class McpToolProvider implements IToolProvider {
           `MCP server ${this.name} uses stdio transport but no command was configured`
         );
       }
-      const { StdioClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/stdio.js'
-      );
+      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
       return new StdioClientTransport({ command: this.config.command, args: [] });
     }
 
     const serverUrl = new URL(this.config.serverUrl);
 
     if (transport === 'streamable-http') {
-      const { StreamableHTTPClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/streamableHttp.js'
-      );
+      const { StreamableHTTPClientTransport } =
+        await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
       return new StreamableHTTPClientTransport(serverUrl, {
         requestInit: authHeaders ? { headers: authHeaders } : undefined,
       });
