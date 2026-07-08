@@ -8,9 +8,9 @@
  * `createPipeline` was wired with `botConfig: {}`.
  */
 
-import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
-import * as getLlmProvider from '@src/llm/getLlmProvider';
 import type { ILlmProvider } from '@hivemind/shared-types';
+import * as getLlmProvider from '@src/llm/getLlmProvider';
+import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
 
 describe('LlmInvokerAdapter', () => {
   let provider: ILlmProvider;
@@ -26,9 +26,7 @@ describe('LlmInvokerAdapter', () => {
       generateCompletion: jest.fn().mockResolvedValue('mock response'),
     } as unknown as ILlmProvider;
 
-    spy = jest
-      .spyOn(getLlmProvider, 'getLlmProviderForBot')
-      .mockResolvedValue(provider);
+    spy = jest.spyOn(getLlmProvider, 'getLlmProviderForBot').mockResolvedValue(provider);
   });
 
   afterEach(() => {

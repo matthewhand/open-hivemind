@@ -18,13 +18,13 @@
 
 import express from 'express';
 import request from 'supertest';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import serversRouter from '@src/server/routes/mcp/servers';
 import {
   connectedClients,
   getGuardedSensitiveTools,
   type MCPClient,
 } from '@src/server/routes/mcp/shared';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 
 type GetAllBots = ReturnType<typeof BotConfigurationManager.getInstance>['getAllBots'];
 

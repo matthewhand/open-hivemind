@@ -1,8 +1,7 @@
-import { Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import request from 'supertest';
-import express from 'express';
-import anomalyRouter from '../../../../src/server/routes/anomaly';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import anomalyRouter from '../../../../src/server/routes/anomaly';
 import { AnomalyDetectionService } from '../../../../src/services/AnomalyDetectionService';
 
 jest.mock('../../../../src/database/DatabaseManager');
@@ -55,18 +54,14 @@ describe('Anomaly Routes', () => {
 
   describe('POST /api/anomalies/:id/resolve', () => {
     it('should resolve anomaly', async () => {
-      const res = await request(app)
-        .post('/api/anomalies/1/resolve')
-        .send({ reason: 'test' });
+      const res = await request(app).post('/api/anomalies/1/resolve').send({ reason: 'test' });
       expect(res.status).toBe(200);
       expect(mockAnomalyService.resolveAnomaly).toHaveBeenCalledWith('1');
     });
 
     it('should return 404 if anomaly not found', async () => {
       mockAnomalyService.resolveAnomaly.mockResolvedValue(false);
-      const res = await request(app)
-        .post('/api/anomalies/999/resolve')
-        .send({ reason: 'test' });
+      const res = await request(app).post('/api/anomalies/999/resolve').send({ reason: 'test' });
       expect(res.status).toBe(404);
     });
   });

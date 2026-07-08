@@ -9,7 +9,6 @@
  * The SDK is mocked via jest.config.js moduleNameMapper -> tests/mocks/
  * modelcontextprotocol-sdk.ts for both the root and `/client/*` subpaths.
  */
-import { McpToolProvider } from './McpToolProvider';
 
 // Pull the shared SDK mock spies. Each SDK subpath resolves to this same mock
 // module via jest.config.js, so importing any one of them yields the spies.
@@ -18,9 +17,10 @@ import {
   mockConnect,
   mockListTools,
   SSEClientTransport,
-  StreamableHTTPClientTransport,
   StdioClientTransport,
+  StreamableHTTPClientTransport,
 } from '@modelcontextprotocol/sdk/client/index.js';
+import { McpToolProvider } from './McpToolProvider';
 
 const Client = MockClient as unknown as jest.Mock;
 

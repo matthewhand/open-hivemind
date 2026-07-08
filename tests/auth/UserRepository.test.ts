@@ -1,8 +1,8 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
-import { UserRepository } from '../../src/auth/UserRepository';
 import type { User } from '../../src/auth/types';
+import { UserRepository } from '../../src/auth/UserRepository';
 
 // The global jest config maps `better-sqlite3` to a hand-written mock that only
 // understands a fixed set of table names. These persistence tests need real SQL
@@ -11,7 +11,7 @@ import type { User } from '../../src/auth/types';
 // moduleNameMapper rewrites bare specifiers (even via requireActual), so we
 // resolve the package's real entry point and require it by absolute path.
 const realBetterSqlitePath = require.resolve('better-sqlite3/lib/index.js');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const RealDatabase = jest.requireActual(realBetterSqlitePath) as unknown as new (
   filename: string
 ) => import('better-sqlite3').Database;

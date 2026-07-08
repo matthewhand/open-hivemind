@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { quotaMiddleware, extractIdentity } from '../../../src/middleware/quotaMiddleware';
+import { NextFunction, Request, Response } from 'express';
+import { extractIdentity, quotaMiddleware } from '../../../src/middleware/quotaMiddleware';
 
 describe('quotaMiddleware', () => {
   describe('extractIdentity', () => {

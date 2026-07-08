@@ -7,8 +7,8 @@
 
 import express from 'express';
 import request from 'supertest';
-import monitoringRouter from '../../../../src/server/routes/monitoring';
 import { DEFERRED_KPI_IDS } from '../../../../src/observability/BusinessKpiRecorder';
+import monitoringRouter from '../../../../src/server/routes/monitoring';
 
 function buildApp() {
   const app = express();

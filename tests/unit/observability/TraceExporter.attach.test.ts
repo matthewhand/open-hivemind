@@ -7,20 +7,19 @@
  * a live PipelineTracer so that completed traces are actually exported.
  */
 
+import type { IMessage } from '@hivemind/shared-types';
+import { MessageBus } from '../../../src/events/MessageBus';
+import type { MessageContext, MessageEvents } from '../../../src/events/types';
+import { PipelineTracer, type Trace } from '../../../src/observability/PipelineTracer';
 import {
+  attachTraceExporters,
   ConsoleExporter,
+  createExportersFromEnv,
   JsonFileExporter,
   OtlpExporter,
   TraceExportManager,
-  createExportersFromEnv,
-  attachTraceExporters,
+  type ITraceExporter,
 } from '../../../src/observability/TraceExporter';
-import type { ITraceExporter } from '../../../src/observability/TraceExporter';
-import { PipelineTracer } from '../../../src/observability/PipelineTracer';
-import type { Trace } from '../../../src/observability/PipelineTracer';
-import { MessageBus } from '../../../src/events/MessageBus';
-import type { MessageContext, MessageEvents } from '../../../src/events/types';
-import type { IMessage } from '@hivemind/shared-types';
 
 function makeMessage(): IMessage {
   return {

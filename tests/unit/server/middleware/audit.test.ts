@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
 import { auditMiddleware, type AuditedRequest } from '../../../../src/server/middleware/audit';
 
 describe('auditMiddleware', () => {

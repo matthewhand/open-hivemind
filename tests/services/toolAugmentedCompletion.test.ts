@@ -1,10 +1,12 @@
 import type {
   ILlmProvider,
+  IMessage,
   LlmChatMessage,
   LlmToolCompletionResult,
   LlmToolDefinition,
 } from '@hivemind/shared-types';
-import type { IMessage } from '@hivemind/shared-types';
+// Import after the mock is registered.
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 
 // --- Mock ToolManager so the tool loop is fully controllable -----------------
 
@@ -23,9 +25,6 @@ jest.mock('@src/services/ToolManager', () => ({
     }),
   },
 }));
-
-// Import after the mock is registered.
-import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 
 const sampleTool: LlmToolDefinition = {
   type: 'function',

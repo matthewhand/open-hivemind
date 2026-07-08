@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import metricsRouter from '@src/server/routes/health/metrics';
 import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
+import metricsRouter from '@src/server/routes/health/metrics';
 
 /**
  * Verifies provider-level metrics recorded via ProviderMetricsCollector are

@@ -95,6 +95,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({ refreshInterval = 30000 }) 
 
   useEffect(() => {
     const fetchData = async () => {
+      setError(null);
       try {
         const [sysData, apiData] = await Promise.all([
           apiService.getSystemHealth(),

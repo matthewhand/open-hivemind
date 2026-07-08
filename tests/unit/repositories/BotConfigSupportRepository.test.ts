@@ -302,10 +302,7 @@ describe('BotConfigVersionRepository', () => {
         changes: 1,
       }));
 
-      const ids = await repo.createBotConfigurationVersionsBulk([
-        makeVersion(),
-        makeVersion(),
-      ]);
+      const ids = await repo.createBotConfigurationVersionsBulk([makeVersion(), makeVersion()]);
 
       expect(ids).toEqual([10, 11]);
     });
@@ -339,9 +336,9 @@ describe('BotConfigVersionRepository', () => {
     it('should propagate a wrapped error when the transaction fails (atomicity)', async () => {
       (mockDb.transaction as jest.Mock).mockRejectedValue(new Error('tx boom'));
 
-      await expect(
-        repo.createBotConfigurationVersionsBulk([makeVersion()])
-      ).rejects.toThrow('Failed to create bot configuration versions in bulk');
+      await expect(repo.createBotConfigurationVersionsBulk([makeVersion()])).rejects.toThrow(
+        'Failed to create bot configuration versions in bulk'
+      );
     });
 
     it('should throw when the database is not available', async () => {
@@ -349,9 +346,7 @@ describe('BotConfigVersionRepository', () => {
         () => null as any,
         () => {}
       );
-      await expect(
-        badRepo.createBotConfigurationVersionsBulk([makeVersion()])
-      ).rejects.toThrow();
+      await expect(badRepo.createBotConfigurationVersionsBulk([makeVersion()])).rejects.toThrow();
     });
   });
 

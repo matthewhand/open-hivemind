@@ -1,9 +1,9 @@
+import type { ConversationSummary, MessageRecord } from '@src/database/types';
 import {
   ConversationSummaryService,
   type ConversationSummaryStore,
   type Summarizer,
 } from '@src/memory/ConversationSummaryService';
-import type { ConversationSummary, MessageRecord } from '@src/database/types';
 
 function makeMessage(overrides: Partial<MessageRecord> = {}): MessageRecord {
   return {

@@ -1,5 +1,9 @@
-import { Response, NextFunction, Request } from 'express';
-import { correlationIdMiddleware, generateCorrelationId, getCorrelationId } from '../../../src/middleware/correlationId';
+import { NextFunction, Request, Response } from 'express';
+import {
+  correlationIdMiddleware,
+  generateCorrelationId,
+  getCorrelationId,
+} from '../../../src/middleware/correlationId';
 
 describe('correlationIdMiddleware', () => {
   let req: Partial<Request>;
@@ -39,7 +43,7 @@ describe('correlationIdMiddleware', () => {
   it('should make correlation ID available via getCorrelationId in next()', () => {
     let capturedId: string | undefined;
     const nextWithCheck = () => {
-        capturedId = getCorrelationId();
+      capturedId = getCorrelationId();
     };
 
     correlationIdMiddleware(req as Request, res as Response, nextWithCheck);

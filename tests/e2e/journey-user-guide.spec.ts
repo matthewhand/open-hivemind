@@ -67,7 +67,9 @@ const seeOrWarn = async (locator: Locator, label: string, timeout = 10_000) => {
   try {
     await expect(locator).toBeVisible({ timeout });
   } catch {
-    console.warn(`[journey-user-guide] expected ${label} not visible within ${timeout}ms — screenshot may be incomplete`);
+    console.warn(
+      `[journey-user-guide] expected ${label} not visible within ${timeout}ms — screenshot may be incomplete`
+    );
   }
 };
 

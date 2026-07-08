@@ -1,3 +1,5 @@
+import MattermostClient, { type MinimalWebSocket } from './mattermostClient';
+
 /**
  * Regression test for audit #1 (mattermost-receive):
  * MattermostService.setMessageHandler() used to be a no-op and MattermostClient
@@ -16,8 +18,6 @@ jest.mock('@src/config/BotConfigurationManager', () => ({
     getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }),
   },
 }));
-
-import MattermostClient, { type MinimalWebSocket } from './mattermostClient';
 
 /** A controllable fake WebSocket for deterministic tests. */
 class FakeWebSocket implements MinimalWebSocket {
@@ -135,16 +135,14 @@ describe('MattermostService.setMessageHandler subscribes to incoming posts', () 
     });
     (client as unknown as { connected: boolean }).connected = true;
     // Avoid a network call for user resolution.
-    jest
-      .spyOn(client, 'getUser')
-      .mockResolvedValue({
-        id: 'user1',
-        username: 'alice',
-        email: '',
-        first_name: 'Alice',
-        last_name: '',
-        is_bot: false,
-      } as any);
+    jest.spyOn(client, 'getUser').mockResolvedValue({
+      id: 'user1',
+      username: 'alice',
+      email: '',
+      first_name: 'Alice',
+      last_name: '',
+      is_bot: false,
+    } as any);
     jest.spyOn(client, 'getCurrentUserId').mockReturnValue('botUser');
 
     // Inject our client and config into the singleton.

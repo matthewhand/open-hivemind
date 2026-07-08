@@ -99,9 +99,7 @@ function makeRepo(rows: FakeRow[], opts: { connected?: boolean; postgres?: boole
 
 describe('MemoryRepository.evictMemories', () => {
   it('is a no-op when no policy is provided (safe by default)', async () => {
-    const rows: FakeRow[] = [
-      { id: 1, userId: null, agentId: null, created_at: daysAgo(100) },
-    ];
+    const rows: FakeRow[] = [{ id: 1, userId: null, agentId: null, created_at: daysAgo(100) }];
     const repo = makeRepo(rows);
     const deleted = await repo.evictMemories();
     expect(deleted).toBe(0);
@@ -109,9 +107,7 @@ describe('MemoryRepository.evictMemories', () => {
   });
 
   it('is a no-op for zero/negative policy values', async () => {
-    const rows: FakeRow[] = [
-      { id: 1, userId: null, agentId: null, created_at: daysAgo(100) },
-    ];
+    const rows: FakeRow[] = [{ id: 1, userId: null, agentId: null, created_at: daysAgo(100) }];
     const repo = makeRepo(rows);
     expect(await repo.evictMemories({ olderThanDays: 0, maxCount: 0 })).toBe(0);
     expect(await repo.evictMemories({ olderThanDays: -5, maxCount: -1 })).toBe(0);
@@ -194,9 +190,7 @@ describe('MemoryRepository.evictMemories', () => {
   });
 
   it('returns 0 when not connected', async () => {
-    const rows: FakeRow[] = [
-      { id: 1, userId: null, agentId: null, created_at: daysAgo(100) },
-    ];
+    const rows: FakeRow[] = [{ id: 1, userId: null, agentId: null, created_at: daysAgo(100) }];
     const repo = makeRepo(rows, { connected: false });
     expect(await repo.evictMemories({ olderThanDays: 1 })).toBe(0);
     expect(rows).toHaveLength(1);
@@ -205,8 +199,19 @@ describe('MemoryRepository.evictMemories', () => {
   it('builds a Postgres-flavoured TTL query when isPostgres is true', async () => {
     const run = jest.fn().mockResolvedValue({ lastID: 0, changes: 0 });
     const get = jest.fn().mockResolvedValue(undefined);
-    const db = { run, get, all: jest.fn(), exec: jest.fn(), transaction: jest.fn(), close: jest.fn() } as unknown as IDatabase;
-    const repo = new MemoryRepository(() => db, () => true, () => true);
+    const db = {
+      run,
+      get,
+      all: jest.fn(),
+      exec: jest.fn(),
+      transaction: jest.fn(),
+      close: jest.fn(),
+    } as unknown as IDatabase;
+    const repo = new MemoryRepository(
+      () => db,
+      () => true,
+      () => true
+    );
     await repo.evictMemories({ olderThanDays: 7 });
     expect(run).toHaveBeenCalledTimes(1);
     const sql = run.mock.calls[0][0] as string;

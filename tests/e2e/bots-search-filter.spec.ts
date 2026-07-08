@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { assertNoErrors, navigateAndWaitReady, registerViteSourceBypass, setupTestWithErrorDetection } from './test-utils';
-
+import {
+  assertNoErrors,
+  navigateAndWaitReady,
+  registerViteSourceBypass,
+  setupTestWithErrorDetection,
+} from './test-utils';
 
 test.describe('Bots Search and Filter', () => {
   test.setTimeout(90000);
@@ -140,7 +144,7 @@ test.describe('Bots Search and Filter', () => {
     await searchInput.fill('Support');
 
     // Wait for filter to apply
-    
+
     // We expect 1 visible row
     const visibleBot = page.getByRole('heading', { name: 'Support Bot' });
     await expect(visibleBot).toBeVisible();

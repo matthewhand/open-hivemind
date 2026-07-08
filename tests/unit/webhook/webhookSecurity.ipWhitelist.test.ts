@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { verifyIpWhitelist } from '@webhook/security/webhookSecurity';
 import webhookConfig from '@config/webhookConfig';
+import { verifyIpWhitelist } from '@webhook/security/webhookSecurity';
 
 /**
  * Tests for proxy-aware client IP resolution + CIDR whitelist matching in
@@ -36,21 +36,30 @@ describe('verifyIpWhitelist - CIDR + proxy-aware', () => {
 
   it('allows an exact single-IP match (backward compatible)', () => {
     webhookConfig.set('WEBHOOK_IP_WHITELIST', '203.0.113.5');
-    const { res, next } = run({ ip: '203.0.113.5', socket: { remoteAddress: '203.0.113.5' } as any });
+    const { res, next } = run({
+      ip: '203.0.113.5',
+      socket: { remoteAddress: '203.0.113.5' } as any,
+    });
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
 
   it('allows an IP inside a CIDR range', () => {
     webhookConfig.set('WEBHOOK_IP_WHITELIST', '203.0.113.0/24');
-    const { res, next } = run({ ip: '203.0.113.42', socket: { remoteAddress: '203.0.113.42' } as any });
+    const { res, next } = run({
+      ip: '203.0.113.42',
+      socket: { remoteAddress: '203.0.113.42' } as any,
+    });
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
 
   it('rejects an IP outside a CIDR range', () => {
     webhookConfig.set('WEBHOOK_IP_WHITELIST', '203.0.113.0/24');
-    const { res, next } = run({ ip: '198.51.100.1', socket: { remoteAddress: '198.51.100.1' } as any });
+    const { res, next } = run({
+      ip: '198.51.100.1',
+      socket: { remoteAddress: '198.51.100.1' } as any,
+    });
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.send).toHaveBeenCalledWith('Forbidden: Unauthorized IP address');
@@ -91,7 +100,10 @@ describe('verifyIpWhitelist - CIDR + proxy-aware', () => {
 
   it('blocks when the whitelist is empty', () => {
     webhookConfig.set('WEBHOOK_IP_WHITELIST', '');
-    const { res, next } = run({ ip: '203.0.113.5', socket: { remoteAddress: '203.0.113.5' } as any });
+    const { res, next } = run({
+      ip: '203.0.113.5',
+      socket: { remoteAddress: '203.0.113.5' } as any,
+    });
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.send).toHaveBeenCalledWith('Forbidden: IP whitelist is empty');

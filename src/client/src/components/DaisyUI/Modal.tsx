@@ -408,7 +408,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   }, [isOpen, onClose]);
 
   return (
-    <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true">
+    <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true" open={isOpen}>
       <div className="absolute inset-0 overflow-hidden">
         {/* Backdrop */}
         <div

@@ -228,8 +228,7 @@ export class SlackWelcomeHandler {
       throw new Error('Channel, userId, and actionId required');
     }
 
-    const reportIssueUrl =
-      process.env.REPORT_ISSUE_URL || 'https://example.com/report-issue';
+    const reportIssueUrl = process.env.REPORT_ISSUE_URL || 'https://example.com/report-issue';
     const learnMoreDefault = "Here's more info about this channel!";
     const learnMoreMessage = String(
       slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault

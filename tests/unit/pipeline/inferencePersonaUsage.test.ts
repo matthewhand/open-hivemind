@@ -13,9 +13,9 @@
  *   - failures in usage tracking never break the pipeline.
  */
 
+import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
 import { InferenceStage, type LlmInvoker } from '@src/pipeline/InferenceStage';
-import { IMessage } from '@hivemind/shared-types';
 
 // --- Mock external singletons the stage touches ---------------------------
 
