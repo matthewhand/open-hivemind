@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from './Avatar';
 import Input from './Input';
+import Dropdown from './Dropdown';
 
 export interface ChatMessage {
   id: string;
@@ -235,18 +236,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Chat options">
+          <Dropdown
+            className="dropdown-end"
+            color="ghost"
+            size="sm"
+            triggerClassName="btn-circle"
+            aria-label="Chat options"
+            aria-haspopup="menu"
+            hideArrow
+            trigger={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
-            </div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a>🗑️ Clear Chat</a></li>
-              <li><a>📋 Export Chat</a></li>
-              <li><a>⚙️ Settings</a></li>
-            </ul>
-          </div>
+            }
+          >
+            <li><a>🗑️ Clear Chat</a></li>
+            <li><a>📋 Export Chat</a></li>
+            <li><a>⚙️ Settings</a></li>
+          </Dropdown>
         </div>
       </div>
 

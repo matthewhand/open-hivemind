@@ -7,7 +7,7 @@ describe('Live Discord Integration', () => {
   test('Discord service loads in dev environment', async () => {
     // Run npm run dev and check for Discord service loading
     const { stdout } = await execAsync(
-      'cd /mnt/models/projects/active/open-hivemind && timeout 30s npm run dev 2>&1 | grep -E "(Messenger services loaded|Filter results|Bot started)" || true'
+      'timeout 15s npm run dev 2>&1 | grep -E "(Messenger services loaded|Filter results|Bot started)" || true'
     );
 
     console.log('Dev server output:', stdout);

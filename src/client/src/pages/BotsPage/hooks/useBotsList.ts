@@ -50,9 +50,10 @@ export const useBotsList = (
   }, [botsQueryError, setError, toastError]);
 
   const fetchBots = useCallback(async () => {
+    setError(null);
     await queryClient.invalidateQueries({ queryKey: ['bots'] });
     await tqRefetchBots();
-  }, [queryClient, tqRefetchBots]);
+  }, [queryClient, tqRefetchBots, setError]);
 
   return { bots, setBots, botsLoading, fetchBots };
 };
