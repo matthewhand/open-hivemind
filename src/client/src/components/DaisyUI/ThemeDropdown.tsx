@@ -36,20 +36,20 @@ const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
   if (!mounted) {
     return (
       <div className={dropdownClass}>
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Theme menu">
+        <button type="button" tabIndex={0} className="btn btn-ghost btn-sm btn-circle" aria-label="Theme menu">
           <Palette className="w-4 h-4" />
-        </div>
+        </button>
       </div>
     );
   }
 
   return (
     <div className={dropdownClass}>
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-1" aria-label="Theme switcher">
+      <button type="button" tabIndex={0} className="btn btn-ghost btn-sm gap-1" aria-label="Theme switcher">
         <Palette className="w-4 h-4" />
         <span className="hidden sm:inline">Theme</span>
         <ChevronDown className="w-3 h-3 opacity-60" />
-      </div>
+      </button>
       <ul tabIndex={0} className="dropdown-content bg-base-300 rounded-box z-[1] w-56 p-2 shadow-2xl max-h-[calc(100vh-10rem)] overflow-y-auto mt-2 mb-2">
         {AVAILABLE_THEMES.map((t) => (
           <li key={t}>
