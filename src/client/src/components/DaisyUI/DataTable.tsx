@@ -502,24 +502,27 @@ const DataTable = <T extends Record<string, any>>({
       <div className={`space-y-4 ${className}`}>
         {toolbar}
         {columnFilterBar}
-        <div className="space-y-3">
+        <ul className="space-y-3">
           {paginatedData.map((row, idx) => {
             const innerContent = (
-              <div className="card-body p-4 gap-2 text-left">
+              <dl className="card-body p-4 gap-2 text-left m-0">
                 {/* Prominent fields */}
                 {prominentCols.map(col => (
                   <div key={String(col.key)} className="text-lg font-semibold">
-                    {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
+                    <dt className="sr-only">{col.title}</dt>
+                    <dd className="m-0">
+                      {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
+                    </dd>
                   </div>
                 ))}
 
                 {/* Detail fields with labels */}
                 {detailCols.map(col => (
                   <div key={String(col.key)} className="flex justify-between items-center gap-2 text-sm">
-                    <span className="text-base-content/60 font-medium shrink-0">{col.title}</span>
-                    <span className="text-right truncate">
+                    <dt className="text-base-content/60 font-medium shrink-0">{col.title}</dt>
+                    <dd className="text-right truncate m-0">
                       {col.render ? col.render(row[col.key], row, idx) : String(row[col.key] ?? '')}
-                    </span>
+                    </dd>
                   </div>
                 ))}
 
@@ -529,34 +532,36 @@ const DataTable = <T extends Record<string, any>>({
                     {renderActions(row, idx, true)}
                   </div>
                 )}
-              </div>
+              </dl>
             );
 
             if (onRowClick) {
               return (
-                <div
+                <li
                   key={resolveKey(row, idx)}
-                  role="button"
-                  tabIndex={0}
-                  className={`card bg-base-100 shadow-sm border border-base-200 cursor-pointer active:bg-base-200 w-full hover:bg-base-50 focus-visible:ring-2 focus-visible:ring-primary outline-none transition-colors duration-200 block text-left`}
-                  onClick={() => onRowClick(row, idx)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row, idx); } }}
+                  className="list-none"
                 >
-                  {innerContent}
-                </div>
+                  <button
+                    type="button"
+                    className={`card bg-base-100 shadow-sm border border-base-200 cursor-pointer active:bg-base-200 w-full hover:bg-base-50 focus-visible:ring-2 focus-visible:ring-primary outline-none transition-colors duration-200 block text-left`}
+                    onClick={() => onRowClick(row, idx)}
+                  >
+                    {innerContent}
+                  </button>
+                </li>
               );
             }
 
             return (
-              <div
+              <li
                 key={resolveKey(row, idx)}
-                className={`card bg-base-100 shadow-sm border border-base-200`}
+                className={`card bg-base-100 shadow-sm border border-base-200 list-none`}
               >
                 {innerContent}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
         {isInfiniteScroll && currentPage < totalPages && (
           <div ref={loadMoreRef} className="py-8 flex justify-center">

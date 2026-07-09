@@ -253,22 +253,23 @@ const ResponseProfilesPage: React.FC = () => {
         searchPlaceholder="Search response profiles..."
       />
 
-      {loading ? (
-        <SkeletonTableLayout rows={5} columns={3} />
-      ) : filteredProfiles.length === 0 ? (
-        <EmptyState 
-          icon={ResponseIcon} 
-          title="No Response Profiles" 
-          description="Create a profile to control bot social dynamics and response timing." 
-          actionLabel="Create Profile" 
-          onAction={handleAddProfile} 
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredProfiles.map((profile) => (
-            <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
-                <div className="flex items-center gap-4">
+      <div aria-live="polite" aria-busy={loading}>
+        {loading ? (
+          <SkeletonTableLayout rows={5} columns={3} />
+        ) : filteredProfiles.length === 0 ? (
+          <EmptyState
+            icon={ResponseIcon}
+            title="No Response Profiles"
+            description="Create a profile to control bot social dynamics and response timing."
+            actionLabel="Create Profile"
+            onAction={handleAddProfile}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredProfiles.map((profile) => (
+              <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl ${profile.isBuiltIn ? 'bg-secondary/10 text-secondary' : 'bg-primary/10 text-primary'}`}>
                     <ResponseIcon className="w-5 h-5" />
                   </div>
@@ -296,7 +297,7 @@ const ResponseProfilesPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="ghost"
@@ -340,8 +341,9 @@ const ResponseProfilesPage: React.FC = () => {
               )}
             </Card>
           ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Form Modal */}
       <Modal
