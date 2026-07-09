@@ -255,6 +255,7 @@ const DataTable = <T extends Record<string, any>>({
         {visible.map((action, i) => (
           <button
             key={i}
+            type="button"
             className={`btn btn-sm ${TOUCH_TARGET} ${
               action.variant === 'error'
                 ? 'btn-ghost text-error hover:bg-error/10'
@@ -269,6 +270,11 @@ const DataTable = <T extends Record<string, any>>({
             onClick={e => {
               e.stopPropagation();
               action.onClick(record, index);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+              }
             }}
             disabled={action.disabled?.(record)}
             title={action.tooltip || action.label}
@@ -336,7 +342,7 @@ const DataTable = <T extends Record<string, any>>({
         <div className="text-center py-12 text-base-content/60">
           No data to display.
           {searchTerm && (
-            <button className="btn btn-ghost btn-sm ml-2" onClick={() => setSearchTerm('')}>
+            <button type="button" className="btn btn-ghost btn-sm ml-2" onClick={() => setSearchTerm('')}>
               Clear search
             </button>
           )}
@@ -386,6 +392,7 @@ const DataTable = <T extends Record<string, any>>({
 
         {exportable && (
           <button
+            type="button"
             className="btn btn-outline btn-sm"
             onClick={exportToCSV}
           >
@@ -443,6 +450,7 @@ const DataTable = <T extends Record<string, any>>({
 
       <div className="join">
         <button
+          type="button"
           className={`join-item btn btn-sm ${TOUCH_TARGET}`}
           disabled={currentPage === 1}
           onClick={() => setCurrentPage(1)}
@@ -451,6 +459,7 @@ const DataTable = <T extends Record<string, any>>({
           &laquo;
         </button>
         <button
+          type="button"
           className={`join-item btn btn-sm ${TOUCH_TARGET}`}
           disabled={currentPage === 1}
           onClick={() => setCurrentPage(p => p - 1)}
@@ -464,6 +473,7 @@ const DataTable = <T extends Record<string, any>>({
           return (
             <button
               key={page}
+              type="button"
               className={`join-item btn btn-sm ${TOUCH_TARGET} ${currentPage === page ? 'btn-active' : ''}`}
               onClick={() => setCurrentPage(page)}
               aria-label={`Page ${page}`}
@@ -474,6 +484,7 @@ const DataTable = <T extends Record<string, any>>({
           );
         })}
         <button
+          type="button"
           className={`join-item btn btn-sm ${TOUCH_TARGET}`}
           disabled={currentPage === totalPages}
           onClick={() => setCurrentPage(p => p + 1)}
@@ -482,6 +493,7 @@ const DataTable = <T extends Record<string, any>>({
           &rsaquo;
         </button>
         <button
+          type="button"
           className={`join-item btn btn-sm ${TOUCH_TARGET}`}
           disabled={currentPage === totalPages}
           onClick={() => setCurrentPage(totalPages)}
@@ -657,6 +669,7 @@ const DataTable = <T extends Record<string, any>>({
                     <span className="text-base-content/60">No data found</span>
                     {searchTerm && (
                       <button
+                        type="button"
                         className="btn btn-ghost btn-sm"
                         onClick={() => setSearchTerm('')}
                       >
