@@ -127,11 +127,12 @@ ${spec.content.replace(/^/gm, '  ')}
                   </Button>
                   <Dropdown
                     trigger={
-                      <Button className="btn-primary">
+                      <>
                         <Download className="w-4 h-4 mr-2" />
                         Export
-                      </Button>
+                      </>
                     }
+                    color="primary"
                   >
                     {exportItems.map((item) => (
                       <li key={item.label}><a onClick={item.onClick}>{item.label}</a></li>

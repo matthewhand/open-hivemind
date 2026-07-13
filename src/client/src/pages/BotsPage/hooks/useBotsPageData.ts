@@ -4,6 +4,7 @@ import { apiService } from '../../../services/api';
 
 export const useBotsPageData = (setError: (err: string | null) => void) => {
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
+    setError(null);
     const [globalResult, personasResult, profilesResult] = await Promise.allSettled([
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
