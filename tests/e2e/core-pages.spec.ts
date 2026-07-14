@@ -72,7 +72,9 @@ test.describe('Core Pages Rendering', () => {
 
   test('should render the configuration page', async ({ page }) => {
     await injectAuthAndNavigate(page, '/admin/config');
-    await expect(page.locator('h1').first()).toContainText(/Configuration|Settings/i);
+    await expect(page.locator('h1').first()).toContainText(
+      /Integrations & Configuration|Configuration|Settings/i
+    );
   });
 
   test('should render the help page', async ({ page }) => {
