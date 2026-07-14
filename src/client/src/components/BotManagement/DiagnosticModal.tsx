@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
-import { LoadingSpinner } from '../DaisyUI/Loading';
+import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import Badge from '../DaisyUI/Badge';
 import { 
   CheckCircle, 
@@ -83,9 +83,9 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         aria-busy={loading}
       >
         {loading && !results ? (
-          <div className="py-12 text-center space-y-4" role="status">
-             <LoadingSpinner size="lg" />
-             <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
+          <div className="py-4 space-y-4" role="status">
+             <p className="text-sm opacity-50 animate-pulse text-center mb-6">Running multi-point handshake tests...</p>
+             <SkeletonTimeline items={4} />
           </div>
         ) : error ? (
           <div className="alert alert-error" role="alert">
