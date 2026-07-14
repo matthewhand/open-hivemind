@@ -548,13 +548,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Notifications */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
+          <button type="button" tabIndex={0} className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
             <Indicator
               item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
             >
               <Bell className="w-5 h-5 opacity-70" />
             </Indicator>
-          </div>
+          </button>
           <ul tabIndex={0} className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
             <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
             <div className="max-h-60 overflow-y-auto">
