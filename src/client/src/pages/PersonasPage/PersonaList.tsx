@@ -68,14 +68,15 @@ export const PersonaList: React.FC<PersonaListProps> = ({
           },
         ]}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-4" role="list">
         {filteredPersonas.map((persona, index) => {
           const isCustom = !persona.isBuiltIn;
           const isSelected = bulk.selectedIds.has(persona.id);
           return (
-            <div
+            <li
               key={persona.id}
               data-testid="persona-card"
+              role="listitem"
               className="relative"
               draggable={!isMobile}
               onDragStart={onDragStart(index)}
@@ -144,10 +145,10 @@ export const PersonaList: React.FC<PersonaListProps> = ({
                   </div>
                 </div>
               </Card>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </>
   );
 };

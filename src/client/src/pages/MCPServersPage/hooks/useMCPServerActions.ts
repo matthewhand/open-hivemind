@@ -45,7 +45,7 @@ export const useMCPServerActions = (
     }
   };
 
-  const [isTesting, setIsTesting] = useState(false);
+  const [testState, setTestState] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   const handleTestConnection = async (selectedServer: MCPServer | null) => {
     if (!selectedServer?.url) {
@@ -54,7 +54,7 @@ export const useMCPServerActions = (
     }
 
     try {
-      setIsTesting(true);
+      setTestState('testing');
       const data: any = await apiService.post('/api/admin/mcp-servers/test', {
         name: selectedServer.name || 'Test Server',
         serverUrl: selectedServer.url,
@@ -68,17 +68,19 @@ export const useMCPServerActions = (
         .map((t: any) => t.name)
         .join(', ');
       const moreText = tools.length > 5 ? ` and ${tools.length - 5} more` : '';
+      setTestState('success');
       setAlert({
         type: 'success',
         message: `Connection successful! Found ${toolCount} tools: ${toolNames}${moreText}`,
       });
     } catch (err) {
+      setTestState('error');
       setAlert({
         type: 'error',
         message: err instanceof Error ? err.message : 'Connection failed',
       });
     } finally {
-      setIsTesting(false);
+      setTestState(prev => prev === 'testing' ? 'idle' : prev);
     }
   };
 
@@ -123,5 +125,5 @@ export const useMCPServerActions = (
     }
   };
 
-  return { handleServerAction, handleTestConnection, isTesting, handleSaveServer };
+  return { handleServerAction, handleTestConnection, testState, handleSaveServer };
 };

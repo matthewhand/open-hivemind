@@ -41,7 +41,7 @@ interface MCPServerModalsProps {
   selectedServer: MCPServer | null;
   setSelectedServer: React.Dispatch<React.SetStateAction<MCPServer | null>>;
   handleTestConnection: () => void;
-  isTesting: boolean;
+  testState: 'idle' | 'testing' | 'success' | 'error';
   handleSaveServer: () => void;
   confirmModal: {
     isOpen: boolean;
@@ -71,7 +71,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
   selectedServer,
   setSelectedServer,
   handleTestConnection,
-  isTesting,
+  testState,
   handleSaveServer,
   confirmModal,
   setConfirmModal,
@@ -131,7 +131,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
         title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
         actions={[
           { label: 'Cancel', onClick: () => setDialogOpen(false), variant: 'ghost' },
-          { label: 'Test', onClick: handleTestConnection, variant: 'primary', disabled: isTesting || !selectedServer?.url, loading: isTesting },
+          { label: 'Test', onClick: handleTestConnection, variant: 'primary', disabled: testState === 'testing' || !selectedServer?.url, loading: testState === 'testing' },
           { label: 'Save', onClick: handleSaveServer, variant: 'primary' },
         ]}
       >
