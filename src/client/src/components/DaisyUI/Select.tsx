@@ -44,6 +44,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const selectClasses = classNames(
       'select',
       'w-full',
+      'focus-visible:ring-2',
+      'focus-visible:ring-primary',
+      'focus-visible:ring-offset-2',
+      'focus-visible:outline-none',
       {
         'select-xs': size === 'xs',
         'select-sm': size === 'sm',

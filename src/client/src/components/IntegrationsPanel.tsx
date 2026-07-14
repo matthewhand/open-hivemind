@@ -357,10 +357,11 @@ const IntegrationsPanel: React.FC = () => {
 
         {/* Profiles List using DaisyUI List */}
         {llmProfiles.length === 0 ? (
-          <div className="text-center py-8 opacity-50 border-2 border-dashed border-base-200 rounded-xl mb-6">
+          <section aria-labelledby="empty-llm-profiles-heading" className="text-center py-8 opacity-50 border-2 border-dashed border-base-200 rounded-xl mb-6">
+            <h3 id="empty-llm-profiles-heading" className="sr-only">No custom LLM profiles</h3>
             <Brain className="w-12 h-12 mx-auto mb-2 opacity-20" />
             <p>No custom LLM profiles configured. Using defaults.</p>
-          </div>
+          </section>
         ) : (
           <List className="mb-8 rounded-xl shadow-sm border border-base-200 bg-base-100 overflow-hidden">
             {llmProfiles.map((profile) => {

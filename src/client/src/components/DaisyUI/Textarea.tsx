@@ -55,7 +55,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         ref={ref}
-        className={`textarea ${getVariantClass()} ${getSizeClass()} ${getBorderedClass()} ${getResizeClass()} ${className}`}
+        className={`textarea focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${getVariantClass()} ${getSizeClass()} ${getBorderedClass()} ${getResizeClass()} ${className}`}
         {...props}
       />
     );
