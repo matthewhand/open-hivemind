@@ -4,6 +4,7 @@ import {
   Link2 as LinkIcon,
   Plus as PlusIcon,
   Wrench as WrenchScrewdriverIcon,
+  Server as ServerIcon,
 } from 'lucide-react';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
@@ -13,6 +14,7 @@ import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import DataTable from './DaisyUI/DataTable';
+import EmptyState from './DaisyUI/EmptyState';
 import type { Column, RowAction } from './DaisyUI/DataTable';
 import { apiService } from '../services/api';
 
@@ -185,6 +187,14 @@ const MCPServerManager: React.FC = () => {
 
       <DataTable<MCPServer>
         data={servers}
+        emptyState={
+          <EmptyState
+            icon={ServerIcon}
+            title="No MCP Servers Connected"
+            description="Connect a Model Context Protocol server to extend the platform's capabilities with external tools."
+            variant="noData"
+          />
+        }
         columns={[
           {
             key: 'name',
@@ -307,7 +317,12 @@ const MCPServerManager: React.FC = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-base-content/70">No tools available for this server.</p>
+            <EmptyState
+              icon={WrenchScrewdriverIcon}
+              title="No Tools Available"
+              description="This server has not exposed any tools."
+              variant="noData"
+            />
           )}
         </div>
       </Modal>
