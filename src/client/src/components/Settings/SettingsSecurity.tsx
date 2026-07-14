@@ -181,7 +181,8 @@ const SettingsSecurity: React.FC = () => {
               Authentication
             </h6>
 
-            <div className="space-y-3">
+            <fieldset className="space-y-3">
+              <legend className="sr-only">Settings Group</legend>
               <div className="form-control">
                 <label className="label cursor-pointer py-1">
                   <span className="label-text text-sm">Enable authentication</span>
@@ -229,7 +230,7 @@ const SettingsSecurity: React.FC = () => {
                   />
                 </label>
               </div>
-            </div>
+            </fieldset>
           </Card>
 
           {/* Rate Limiting */}
@@ -239,7 +240,8 @@ const SettingsSecurity: React.FC = () => {
               Rate Limiting
             </h6>
 
-            <div className="space-y-3">
+            <fieldset className="space-y-3">
+              <legend className="sr-only">Settings Group</legend>
               <div className="form-control">
                 <label className="label cursor-pointer py-1">
                   <span className="label-text text-sm">Enable rate limiting</span>
@@ -280,7 +282,7 @@ const SettingsSecurity: React.FC = () => {
                   />
                 </FormField>
               </div>
-            </div>
+            </fieldset>
           </Card>
 
           {/* CORS */}
@@ -341,7 +343,8 @@ const SettingsSecurity: React.FC = () => {
               Security Features
             </h6>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <fieldset className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <legend className="sr-only">Security Features Group</legend>
               <div className="form-control">
                 <label className="label cursor-pointer py-1">
                   <span className="label-text text-sm">Security headers</span>
@@ -392,7 +395,7 @@ const SettingsSecurity: React.FC = () => {
                   />
                 </label>
               </div>
-            </div>
+            </fieldset>
           </Card>
         </div>
 
