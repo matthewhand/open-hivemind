@@ -95,7 +95,8 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
       )}
 
       {filters.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <fieldset className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <legend className="sr-only">Filter options</legend>
           {filters.map((filter) => (
             <div key={filter.key} className={filter.className || "w-full sm:w-48"}>
               <Select
@@ -107,7 +108,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
               />
             </div>
           ))}
-        </div>
+        </fieldset>
       )}
     </div>
   );

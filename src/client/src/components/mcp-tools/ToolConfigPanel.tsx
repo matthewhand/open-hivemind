@@ -153,12 +153,10 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
       )}
 
       {mode === 'form' ? (
-        <div className="bg-base-200 p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-4">
-            <span className="font-bold text-sm uppercase opacity-50">Arguments Form</span>
-          </div>
+        <fieldset className="bg-base-200 p-4 rounded-lg border-none">
+          <legend className="font-bold text-sm uppercase opacity-50 mb-4 w-full border-b border-base-300 pb-2">Arguments Form</legend>
           {renderFormFields()}
-        </div>
+        </fieldset>
       ) : (
         <div className="form-control">
           <label className="label">

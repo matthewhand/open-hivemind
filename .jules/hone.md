@@ -1,0 +1,3 @@
+## 2024-07-03 | Architectural Audit | Insight: AIAssistButton lacks robust state-machine for async actions | Protocol: Add determinist 'idle' | 'loading' | 'error' states with proper ARIA attributes.
+## 2024-07-03 | Architectural Audit | Insight: SearchFilterBar filter groups are rendered as bare divs | Protocol: Wrap filter inputs in a semantically correct <fieldset> to group controls for screen readers.
+## 2024-07-03 | Architectural Audit | Insight: ToolConfigPanel's argument form iterates over schema properties generating div-soup controls | Protocol: Group dynamic form fields inside a <fieldset> with a descriptive <legend>.
