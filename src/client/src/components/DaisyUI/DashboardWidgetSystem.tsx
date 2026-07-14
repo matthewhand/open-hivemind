@@ -50,13 +50,7 @@ const StatsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: 
 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-        </ul>
-      </div>
+                  <WidgetDropdown widgetId={widget.id} onConfigure={onConfigure} onRemove={onRemove} />
     ) : undefined}>
       <div className="grid grid-cols-1 gap-3">
         {stats.map((stat: any, index: number) => (
@@ -81,13 +75,7 @@ const ChartWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: 
 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-        </ul>
-      </div>
+                  <WidgetDropdown widgetId={widget.id} onConfigure={onConfigure} onRemove={onRemove} />
     ) : undefined}>
       {/* Simulated Chart */}
       <div className="relative h-32 bg-base-200 rounded-lg flex items-end p-2 gap-1">
@@ -119,13 +107,7 @@ const ActivityWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdat
 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-        </ul>
-      </div>
+                  <WidgetDropdown widgetId={widget.id} onConfigure={onConfigure} onRemove={onRemove} />
     ) : undefined}>
       <div className="space-y-2 max-h-40 overflow-y-auto">
         {activities.map((activity: any, index: number) => (
@@ -157,13 +139,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onU
 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-        </ul>
-      </div>
+                  <WidgetDropdown widgetId={widget.id} onConfigure={onConfigure} onRemove={onRemove} />
     ) : undefined}>
       <div className="grid grid-cols-2 gap-2">
         {actions.map((action: any, index: number) => (
@@ -194,13 +170,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onU
 
   return (
     <Card className="h-full" title={widget.title} actions={isEditing ? (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-        </ul>
-      </div>
+                  <WidgetDropdown widgetId={widget.id} onConfigure={onConfigure} onRemove={onRemove} />
     ) : undefined}>
       <div className="space-y-3">
         {Object.entries(health).map(([key, value]) => (
@@ -222,6 +192,76 @@ const SystemHealthWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onU
   );
 });
 SystemHealthWidget.displayName = 'SystemHealthWidget';
+
+
+const WidgetDropdown: React.FC<{ widgetId: string, onConfigure?: (id: string) => void, onRemove?: (id: string) => void }> = ({ widgetId, onConfigure, onRemove }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const listRef = React.useRef<HTMLUListElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setIsOpen(true);
+        setTimeout(() => {
+          const firstItem = listRef.current?.querySelector('button[role="menuitem"]') as HTMLElement | null;
+          firstItem?.focus();
+        }, 0);
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      (e.currentTarget as HTMLElement).focus();
+      return;
+    }
+
+    const items = Array.from(listRef.current?.querySelectorAll('button[role="menuitem"]') || []) as HTMLElement[];
+    const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+      items[nextIndex]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+      items[prevIndex]?.focus();
+    }
+  };
+
+  return (
+    <div className={`dropdown dropdown-end ${isOpen ? 'dropdown-open' : ''}`} onBlur={(e) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setIsOpen(false);
+      }
+    }}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        className="btn btn-ghost btn-sm btn-circle"
+        aria-label="Widget options"
+        onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
+      >⋮</button>
+      <ul
+        ref={listRef}
+        role="menu"
+        className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+        onKeyDown={handleKeyDown}
+      >
+        <li role="none">
+          <button type="button" role="menuitem" onClick={() => { setIsOpen(false); onConfigure?.(widgetId); }}>⚙️ Configure</button>
+        </li>
+        <li role="none">
+          <button type="button" role="menuitem" onClick={() => { setIsOpen(false); onRemove?.(widgetId); }} className="text-error">🗑️ Remove</button>
+        </li>
+      </ul>
+    </div>
+  );
+};
 
 const WIDGET_TYPES: WidgetType[] = [
   {

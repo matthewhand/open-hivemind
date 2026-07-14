@@ -32,7 +32,8 @@ interface MCPTool {
 
 const MCPServerManager: React.FC = () => {
   const [servers, setServers] = useState<MCPServer[]>([]);
-  const [loading, setLoading] = useState(true);
+  type FetchState = 'idle' | 'loading' | 'success' | 'error';
+  const [fetchState, setFetchState] = useState<FetchState>('loading');
   const [error, setError] = useState<string | null>(null);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
@@ -48,7 +49,7 @@ const MCPServerManager: React.FC = () => {
 
   const fetchServers = async () => {
     try {
-      setLoading(true);
+      setFetchState('loading');
       setError(null);
       const data: any = await apiService.get('/api/admin/mcp-servers');
 
@@ -90,8 +91,9 @@ const MCPServerManager: React.FC = () => {
       setServers(serverList);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch MCP servers');
+      setFetchState('error');
     } finally {
-      setLoading(false);
+      setFetchState(prev => prev === 'error' ? 'error' : 'success');
     }
   };
 
@@ -145,9 +147,9 @@ const MCPServerManager: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (fetchState === 'loading') {
     return (
-      <div className="min-h-[200px] p-4">
+      <div className="min-h-[200px] p-4" aria-live="polite" aria-busy={true}>
         <SkeletonList items={4} />
       </div>
     );
