@@ -147,6 +147,7 @@ const Menu: React.FC<MenuProps> = ({
     const isExpanded = expandedItems.has(item.id);
     const itemClasses = [
       'menu-item',
+      'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-2',
       item.active ? 'menu-item-active' : '',
       item.disabled ? 'menu-item-disabled' : '',
       hasChildren ? 'menu-item-has-children' : '',

@@ -11,7 +11,6 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
-import SimpleTable from './DaisyUI/SimpleTable';
 import ModelAutocomplete from './DaisyUI/ModelAutocomplete';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Debug from 'debug';
@@ -463,44 +462,35 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
               {groupName}
             </Card.Title>
-            <div className="overflow-x-auto">
-              <SimpleTable className="w-full">
-                <thead>
-                  <tr>
-                    <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
-                    <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fields.map(field => (
-                    <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
-                      <td className="align-top py-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-base-content/90">
-                              {field.label}
-                            </span>
-                            {field.required ? (
-                              <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
-                            ) : (
-                              <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
-                            )}
-                          </div>
-                          {field.description && (
-                            <span className="text-xs text-base-content/60 leading-tight">
-                              {field.description}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="align-top py-4">
-                        {renderField(field)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </SimpleTable>
-            </div>
+            <fieldset className="border border-base-200 rounded-lg p-4 mt-2">
+              <legend className="sr-only">{groupName} Settings</legend>
+              <div className="grid grid-cols-1 gap-4">
+                {fields.map(field => (
+                  <div key={field.name} className="flex flex-col md:flex-row md:items-start gap-4 p-2 hover:bg-base-200/50 transition-colors rounded-lg">
+                    <div className="md:w-1/3 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-base-content/90">
+                          {field.label}
+                        </span>
+                        {field.required ? (
+                          <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
+                        ) : (
+                          <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
+                        )}
+                      </div>
+                      {field.description && (
+                        <span className="text-xs text-base-content/60 leading-tight">
+                          {field.description}
+                        </span>
+                      )}
+                    </div>
+                    <div className="md:w-2/3">
+                      {renderField(field)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </fieldset>
           </Card.Body>
         </Card>
       ))}
@@ -536,40 +526,31 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                         {groupName}
                       </h4>
                     )}
-                    <div className="overflow-x-auto">
-                      <SimpleTable className="w-full">
-                        <thead>
-                          <tr>
-                            <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
-                            <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fields.map(field => (
-                            <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
-                              <td className="align-top py-4">
-                                <div className="flex flex-col gap-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-base-content/90">
-                                      {field.label}
-                                    </span>
-                                    <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
-                                  </div>
-                                  {field.description && (
-                                    <span className="text-xs text-base-content/60 leading-tight">
-                                      {field.description}
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="align-top py-4">
-                                {renderField(field)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </SimpleTable>
-                    </div>
+                    <fieldset className="border border-base-200 rounded-lg p-4 mt-2">
+                      <legend className="sr-only">{groupName} Advanced Settings</legend>
+                      <div className="grid grid-cols-1 gap-4">
+                        {fields.map(field => (
+                          <div key={field.name} className="flex flex-col md:flex-row md:items-start gap-4 p-2 hover:bg-base-200/50 transition-colors rounded-lg">
+                            <div className="md:w-1/3 flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-base-content/90">
+                                  {field.label}
+                                </span>
+                                <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
+                              </div>
+                              {field.description && (
+                                <span className="text-xs text-base-content/60 leading-tight">
+                                  {field.description}
+                                </span>
+                              )}
+                            </div>
+                            <div className="md:w-2/3">
+                              {renderField(field)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </fieldset>
                   </div>
                 ))}
               </div>

@@ -111,45 +111,14 @@ export function DynamicSchemaForm({ schema, values, onChange, disabled }: Props)
   const hasAdvanced = schema.fields.advanced.length > 0;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-4">
       {hasRequired && (
-        <div>
-          <p className="text-xs font-semibold text-error uppercase tracking-wide mb-1">
+        <fieldset className="border border-base-200 rounded-lg p-4">
+          <legend className="text-xs font-semibold text-error uppercase tracking-wide px-2 mb-1">
             Required
-          </p>
-          {schema.fields.required.map((f) => (
-            <FieldRow
-              key={f.name}
-              field={f}
-              value={values[f.name] ?? ''}
-              onChange={onChange}
-              disabled={disabled}
-            />
-          ))}
-        </div>
-      )}
-
-      {hasOptional && (
-        <div>
-          {schema.fields.optional.map((f) => (
-            <FieldRow
-              key={f.name}
-              field={f}
-              value={values[f.name] ?? ''}
-              onChange={onChange}
-              disabled={disabled}
-            />
-          ))}
-        </div>
-      )}
-
-      {hasAdvanced && (
-        <details className="collapse collapse-arrow bg-base-200 mt-2">
-          <summary className="collapse-title text-sm font-medium py-2 min-h-0">
-            Advanced Settings
-          </summary>
-          <div className="collapse-content">
-            {schema.fields.advanced.map((f) => (
+          </legend>
+          <div className="space-y-1">
+            {schema.fields.required.map((f) => (
               <FieldRow
                 key={f.name}
                 field={f}
@@ -158,6 +127,49 @@ export function DynamicSchemaForm({ schema, values, onChange, disabled }: Props)
                 disabled={disabled}
               />
             ))}
+          </div>
+        </fieldset>
+      )}
+
+      {hasOptional && (
+        <fieldset className="border border-base-200 rounded-lg p-4">
+          <legend className="text-xs font-semibold text-base-content/70 uppercase tracking-wide px-2 mb-1">
+            Optional
+          </legend>
+          <div className="space-y-1">
+            {schema.fields.optional.map((f) => (
+              <FieldRow
+                key={f.name}
+                field={f}
+                value={values[f.name] ?? ''}
+                onChange={onChange}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      {hasAdvanced && (
+        <details className="collapse collapse-arrow bg-base-200 mt-2 border border-base-300">
+          <summary className="collapse-title text-sm font-medium py-2 min-h-0">
+            Advanced Settings
+          </summary>
+          <div className="collapse-content">
+            <fieldset className="p-2">
+              <legend className="sr-only">Advanced Settings</legend>
+              <div className="space-y-1">
+                {schema.fields.advanced.map((f) => (
+                  <FieldRow
+                    key={f.name}
+                    field={f}
+                    value={values[f.name] ?? ''}
+                    onChange={onChange}
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
+            </fieldset>
           </div>
         </details>
       )}
