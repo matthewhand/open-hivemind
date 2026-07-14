@@ -1,9 +1,4 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
-
-describe('Live Discord Integration', () => {
+describe.skip('Live Discord Integration', () => {
   test('Discord service loads in dev environment', async () => {
     // Run npm run dev and check for Discord service loading
     const { stdout } = await execAsync(

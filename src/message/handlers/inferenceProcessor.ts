@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import type { IMessage } from '@hivemind/shared-types';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import {
@@ -17,7 +18,6 @@ import type { MessageContext } from './types';
  */
 export async function processInference(ctx: MessageContext): Promise<boolean> {
   const channelId = ctx.message.getChannelId();
-  const userId = ctx.message.getAuthorId();
   const botId = ctx.resolvedBotId || '';
 
   // Delays
@@ -228,19 +228,29 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
       const maxThinkingTime = parseInt(process.env.MESSAGE_MAX_THINKING_TIME || '5000');
 
       // Calculate typing time (ms per word)
-      const wordsPerMs = (minWpm + Math.random() * (maxWpm - minWpm)) / 60000;
+      const wordsPerMs =
+        (minWpm +
+          (crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295) * (maxWpm - minWpm)) /
+        60000;
       const typingTime = wordCount / wordsPerMs;
 
       // Add thinking time
-      const thinkingTime = minThinkingTime + Math.random() * (maxThinkingTime - minThinkingTime);
+      const thinkingTime =
+        minThinkingTime +
+        (crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295) *
+          (maxThinkingTime - minThinkingTime);
       const totalDelay = thinkingTime + typingTime;
 
       // Cap at reasonable maximum and add 10% variation
-      const cappedDelay = Math.min(totalDelay * (0.9 + Math.random() * 0.2), 120000);
+      const cappedDelay = Math.min(
+        totalDelay * (0.9 + (crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295) * 0.2),
+        120000
+      );
 
       // Critical hit system - 5% chance for instant response
       const criticalHit =
-        Math.random() < parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
+        crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 <
+        parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
 
       if (!criticalHit && cappedDelay > 1000) {
         ctx.logger(
