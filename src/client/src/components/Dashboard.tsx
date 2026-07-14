@@ -8,15 +8,17 @@ import Hero from './DaisyUI/Hero';
 import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
+import EmptyState from './DaisyUI/EmptyState';
 import Badge from './DaisyUI/Badge';
 import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
 import CommandCenterStream from './Monitoring/CommandCenterStream';
 import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2, Plus, Bot as BotIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const getStatusColor = useCallback((botStatus: string) => {
     switch (botStatus.toLowerCase()) {
       case 'active':
@@ -386,23 +388,16 @@ const Dashboard: React.FC = () => {
             </div>
 
             {bots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
-                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  <BotIcon className="w-7 h-7" />
-                </div>
-                <h3 className="text-lg font-bold mb-1">No agents yet</h3>
-                <p className="text-sm text-base-content/60 mb-5 max-w-sm">
-                  Create your first bot to start seeing it here.
-                </p>
-                <Link
-                  to="/admin/bots/create"
-                  className="btn btn-primary btn-sm gap-2"
-                  aria-label="Create a bot"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create a bot
-                </Link>
-              </div>
+              <EmptyState
+                icon={BotIcon}
+                title="No agents yet"
+                description="Create your first bot to start seeing it here."
+                actionLabel="Create a bot"
+                actionIcon={Plus}
+                onAction={() => navigate('/admin/bots/create')}
+                variant="noData"
+                className="mb-8"
+              />
             ) : (
               <>
                 {/* Bot Cards Grid */}

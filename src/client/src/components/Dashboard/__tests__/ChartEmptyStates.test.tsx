@@ -27,9 +27,7 @@ describe('chart empty states', () => {
     render(<MessageVolumeChart />);
 
     expect(screen.getByText('Message Volume')).toBeInTheDocument();
-    expect(
-      screen.getByText(/No messages recorded yet — volume appears once bots start chatting\./)
-    ).toBeInTheDocument();
+    expect(screen.getByText('No messages yet')).toBeInTheDocument();
   });
 
   it('MessageVolumeChart renders the chart once volume exists', () => {
@@ -41,7 +39,7 @@ describe('chart empty states', () => {
 
     render(<MessageVolumeChart />);
 
-    expect(screen.queryByText(/No messages recorded yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No messages yet')).not.toBeInTheDocument();
   });
 
   it('LLMUsageChart shows an empty state when no tokens are recorded', () => {
@@ -54,9 +52,7 @@ describe('chart empty states', () => {
     render(<LLMUsageChart />);
 
     expect(screen.getByText('LLM Token Usage')).toBeInTheDocument();
-    expect(
-      screen.getByText(/No token usage recorded yet — usage appears once bots start calling their LLM providers\./)
-    ).toBeInTheDocument();
+    expect(screen.getByText('No token usage yet')).toBeInTheDocument();
   });
 
   it('LLMUsageChart renders the chart once usage exists', () => {
@@ -68,6 +64,6 @@ describe('chart empty states', () => {
 
     render(<LLMUsageChart />);
 
-    expect(screen.queryByText(/No token usage recorded yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No token usage yet')).not.toBeInTheDocument();
   });
 });

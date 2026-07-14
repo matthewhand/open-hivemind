@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Cpu } from 'lucide-react';
+import EmptyState from '../DaisyUI/EmptyState';
 import Card from '../DaisyUI/Card';
 import { useMetrics } from '../../hooks/useMetrics';
 
@@ -43,11 +44,14 @@ const LLMUsageChart: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-[300px] flex-col items-center justify-center gap-3 text-center">
-            <Cpu className="h-10 w-10 text-base-content/20" aria-hidden="true" />
-            <p className="text-sm text-base-content/60 max-w-xs">
-              No token usage recorded yet — usage appears once bots start calling their LLM providers.
-            </p>
+          <div className="flex h-[300px] items-center justify-center">
+            <EmptyState
+              icon={Cpu}
+              title="No token usage yet"
+              description="Usage appears once bots start calling their LLM providers."
+              variant="noData"
+              className="py-8 px-4 w-full h-full flex flex-col justify-center"
+            />
           </div>
         )}
       </Card.Body>
