@@ -82,7 +82,9 @@ const Menu: React.FC<MenuProps> = ({
 
     if (!focusableItems.length) return;
 
-    const currentIndex = focusableItems.indexOf(document.activeElement as HTMLElement);
+    // Use document.activeElement correctly without asserting if not present
+    let currentIndex = focusableItems.indexOf(document.activeElement as HTMLElement);
+    if (currentIndex === -1) currentIndex = 0; // Default to first item if focus is lost or elsewhere
 
     let nextIndex = currentIndex;
 
