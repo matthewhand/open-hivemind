@@ -342,23 +342,23 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       <div className="navbar-start gap-2">
         {/* Mobile Menu */}
         <div className="dropdown lg:hidden">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Open mobile menu">
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" aria-label="Open mobile menu">
             <Menu className="w-5 h-5" />
-          </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200">
+          </button>
+          <ul tabIndex={0} role="menu" className="menu menu-sm dropdown-content mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200">
             {navItems.map((item) => (
-              <li key={item.id}>
-                <a href={item.path} className={currentPath === item.path ? 'active font-bold' : ''}>
-                  <span className="text-lg">{item.icon}</span>
+              <li key={item.id} role="none">
+                <a role="menuitem" href={item.path} className={currentPath === item.path ? 'active font-bold' : ''}>
+                  <span className="text-lg" aria-hidden="true">{item.icon}</span>
                   {item.label}
                   {item.badge && <Badge size="sm" variant="primary">{item.badge}</Badge>}
                 </a>
                 {item.children && (
-                  <ul className="p-2 border-l border-base-300 ml-4">
+                  <ul className="p-2 border-l border-base-300 ml-4" role="menu">
                     {item.children.map((child) => (
-                      <li key={child.id}>
-                        <a href={child.path} className={currentPath === child.path ? 'active' : ''}>
-                          <span>{child.icon}</span>
+                      <li key={child.id} role="none">
+                        <a role="menuitem" href={child.path} className={currentPath === child.path ? 'active' : ''}>
+                          <span aria-hidden="true">{child.icon}</span>
                           {child.label}
                         </a>
                       </li>
@@ -550,32 +550,32 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Notifications */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle btn-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
             <Indicator
               item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
             >
-              <Bell className="w-5 h-5 opacity-70" />
+              <Bell className="w-5 h-5 opacity-70" aria-hidden="true" />
             </Indicator>
-          </div>
-          <ul tabIndex={0} className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
-            <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
+          </button>
+          <ul tabIndex={0} role="menu" className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
+            <li className="menu-title text-xs font-bold uppercase tracking-widest p-3" role="none"><span aria-hidden="true">Recent Alerts</span></li>
             <div className="max-h-60 overflow-y-auto">
-               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
-                  <div className="bg-primary/10 text-primary p-2 rounded-lg"><BotIcon className="w-4 h-4" /></div>
+               <li role="none"><a role="menuitem" className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                  <div className="bg-primary/10 text-primary p-2 rounded-lg" aria-hidden="true"><BotIcon className="w-4 h-4" /></div>
                   <div className="flex flex-col">
                      <span className="text-xs font-bold">Bot "Assistant" reconnected</span>
                      <span className="text-[10px] opacity-40">2 minutes ago</span>
                   </div>
                </a></li>
-               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
-                  <div className="bg-warning/10 text-warning p-2 rounded-lg"><Activity className="w-4 h-4" /></div>
+               <li role="none"><a role="menuitem" className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                  <div className="bg-warning/10 text-warning p-2 rounded-lg" aria-hidden="true"><Activity className="w-4 h-4" /></div>
                   <div className="flex flex-col">
                      <span className="text-xs font-bold">High memory usage detected</span>
                      <span className="text-[10px] opacity-40">15 minutes ago</span>
                   </div>
                </a></li>
             </div>
-            <li><a href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
+            <li role="none"><a role="menuitem" href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
           </ul>
         </div>
 

@@ -34,30 +34,41 @@ interface DiagnosticModalProps {
 }
 
 const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpen, onClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [results, setResults] = useState<{
+    messageProvider: DiagnosticResult;
+    llmProvider: DiagnosticResult;
+    database: DiagnosticResult;
+    mcpConnections: MCPResult[];
+    overall: string;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const runDiagnostic = async () => {
-    setLoading(true);
-    setError(null);
+    setFetchState('loading');
+    setErrorMessage(null);
     try {
-      const response: any = await apiService.get(`/api/bots/${botId}/diagnose`);
+      const response = await apiService.get<{ success: boolean; data: any; message?: string }>(`/api/bots/${botId}/diagnose`);
       if (response.success) {
         setResults(response.data);
+        setFetchState('success');
       } else {
         throw new Error(response.message || 'Diagnostic failed');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
+      setErrorMessage(err instanceof Error ? err.message : String(err));
+      setFetchState('error');
     }
   };
 
   useEffect(() => {
     if (isOpen) {
       runDiagnostic();
+    } else {
+      // Reset state when closed
+      setFetchState('idle');
+      setResults(null);
+      setErrorMessage(null);
     }
   }, [isOpen, botId]);
 
@@ -68,6 +79,9 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       default: return <Clock className="w-5 h-5 opacity-30 animate-pulse" />;
     }
   };
+
+  const isLoading = fetchState === 'loading';
+  const isError = fetchState === 'error';
 
   return (
     <Modal 
@@ -82,24 +96,24 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         role="region"
         aria-label="Diagnostic results"
         aria-live="polite"
-        aria-busy={loading}
+        aria-busy={isLoading}
       >
-        {loading && !results ? (
+        {isLoading && !results ? (
           <div className="py-12 text-center space-y-4">
              <LoadingSpinner lg />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
-        ) : error ? (
+        ) : isError ? (
           <div className="alert alert-error">
              <XCircle className="w-6 h-6" />
-             <span>{error}</span>
+             <span>{errorMessage}</span>
              <button
                onClick={runDiagnostic}
                className="btn btn-xs btn-ghost"
-               disabled={loading}
+               disabled={isLoading}
                aria-label="Retry diagnostic"
              >
-                {loading ? 'Retrying...' : 'Retry'}
+                {isLoading ? 'Retrying...' : 'Retry'}
              </button>
           </div>
         ) : results ? (

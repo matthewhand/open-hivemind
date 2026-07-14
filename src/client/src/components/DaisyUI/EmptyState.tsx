@@ -85,11 +85,14 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   const styles = variantStyles[variant] || variantStyles.primary;
 
+  const titleId = title.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <div
+    <section
       data-testid="empty-state"
       role="status"
       aria-live="polite"
+      aria-labelledby={titleId}
       className={`
         group relative overflow-hidden rounded-2xl py-16 px-8
         bg-gradient-to-br ${styles.gradient}
@@ -99,7 +102,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       `}
     >
       {/* Decorative background elements */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-30" aria-hidden="true">
         <div className={`absolute top-1/4 left-1/4 w-32 h-32 ${styles.blob} rounded-full blur-3xl`} />
         <div className={`absolute bottom-1/4 right-1/4 w-40 h-40 ${styles.blob} rounded-full blur-3xl`} />
       </div>
@@ -107,6 +110,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <div className="relative z-10 flex flex-col items-center text-center">
         {/* Icon container with animation */}
         <div
+          aria-hidden="true"
           className={`
             p-4 rounded-2xl mb-6
             ${styles.iconBg}
@@ -117,9 +121,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           {React.isValidElement(Icon) ? Icon : React.createElement(Icon as any, { className: "w-12 h-12", strokeWidth: 1.5 })}
         </div>
 
-        <h2 className="text-xl font-semibold mb-2 text-base-content">
+        <h3 id={titleId} className="text-xl font-semibold mb-2 text-base-content">
           {title}
-        </h2>
+        </h3>
 
         <p className="text-base-content/60 max-w-md mb-8">
           {description}
@@ -136,7 +140,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           </Button>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 
