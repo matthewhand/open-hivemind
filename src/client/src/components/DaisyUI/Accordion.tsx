@@ -123,20 +123,14 @@ const Accordion: React.FC<AccordionProps> = ({
               className="peer"
             />
 
-            <div
+            <button
+              type="button"
               className={getTitleClasses()}
-              role="button"
               tabIndex={isDisabled ? -1 : 0}
               onClick={() => !isDisabled && handleToggle(item.id)}
-              onKeyDown={(e) => {
-                if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  handleToggle(item.id);
-                }
-              }}
               aria-expanded={isOpen}
               aria-controls={`accordion-content-${item.id}`}
-              aria-disabled={isDisabled}
+              disabled={isDisabled}
             >
               <div className={`flex items-center gap-2 ${iconPosition === 'right' ? 'justify-between' : ''}`}>
                 {iconPosition === 'left' && item.icon && (
@@ -147,7 +141,7 @@ const Accordion: React.FC<AccordionProps> = ({
                   <span className="text-2xl" aria-hidden="true">{item.icon}</span>
                 )}
               </div>
-            </div>
+            </button>
 
             <div
               className={getContentClasses()}
