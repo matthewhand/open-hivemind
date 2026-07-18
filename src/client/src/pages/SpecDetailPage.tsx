@@ -126,11 +126,12 @@ ${spec.content.replace(/^/gm, '  ')}
                     Back
                   </Button>
                   <Dropdown
+                    color="primary"
                     trigger={
-                      <Button className="btn-primary">
+                      <>
                         <Download className="w-4 h-4 mr-2" />
                         Export
-                      </Button>
+                      </>
                     }
                   >
                     {exportItems.map((item) => (
