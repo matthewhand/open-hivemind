@@ -54,13 +54,21 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     );
   }, [query]);
 
-  // Reset state when opened
+  // Reset state when opened and manage body overflow
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
+
       // Focus after the dialog has rendered
       requestAnimationFrame(() => inputRef.current?.focus());
+
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
     }
   }, [isOpen]);
 
