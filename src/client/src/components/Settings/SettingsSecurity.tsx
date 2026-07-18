@@ -176,10 +176,12 @@ const SettingsSecurity: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Authentication */}
           <Card className="bg-base-200/50 p-4">
-            <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full"></span>
-              Authentication
-            </h6>
+            <fieldset>
+              <legend className="sr-only">Authentication</legend>
+              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
+                <span className="w-2 h-2 bg-primary rounded-full"></span>
+                Authentication
+              </h6>
 
             <div className="space-y-3">
               <div className="form-control">
@@ -230,14 +232,17 @@ const SettingsSecurity: React.FC = () => {
                 </label>
               </div>
             </div>
+            </fieldset>
           </Card>
 
           {/* Rate Limiting */}
           <Card className="bg-base-200/50 p-4">
-            <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-warning rounded-full"></span>
-              Rate Limiting
-            </h6>
+            <fieldset>
+              <legend className="sr-only">Rate Limiting</legend>
+              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
+                <span className="w-2 h-2 bg-warning rounded-full"></span>
+                Rate Limiting
+              </h6>
 
             <div className="space-y-3">
               <div className="form-control">
@@ -281,14 +286,17 @@ const SettingsSecurity: React.FC = () => {
                 </FormField>
               </div>
             </div>
+            </fieldset>
           </Card>
 
           {/* CORS */}
           <Card className="bg-base-200/50 p-4 lg:col-span-2">
-            <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-accent rounded-full"></span>
-              CORS Configuration
-            </h6>
+            <fieldset>
+              <legend className="sr-only">CORS Configuration</legend>
+              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
+                <span className="w-2 h-2 bg-accent rounded-full"></span>
+                CORS Configuration
+              </h6>
 
             <div className="flex gap-2 mb-3">
               <Input
@@ -332,14 +340,17 @@ const SettingsSecurity: React.FC = () => {
                 <span className="text-base-content/50 text-sm italic">No origins configured</span>
               )}
             </div>
+            </fieldset>
           </Card>
 
           {/* Security Features */}
           <Card className="bg-base-200/50 p-4 lg:col-span-2">
-            <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-success rounded-full"></span>
-              Security Features
-            </h6>
+            <fieldset>
+              <legend className="sr-only">Security Features</legend>
+              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
+                <span className="w-2 h-2 bg-success rounded-full"></span>
+                Security Features
+              </h6>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="form-control">
@@ -393,6 +404,7 @@ const SettingsSecurity: React.FC = () => {
                 </label>
               </div>
             </div>
+            </fieldset>
           </Card>
         </div>
 
