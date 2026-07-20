@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { Pool, type PoolConfig } from 'pg';
+import { Pool, type PoolClient, type PoolConfig } from 'pg';
 import { type IDatabase } from './types';
 
 const debug = Debug('app:PostgresWrapper');
@@ -108,7 +108,8 @@ export class PostgresWrapper implements IDatabase {
 
   async run(
     sql: string,
-    params: any[] = []
+    params: any[] = [],
+    client?: PoolClient
   ): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
     // If it's an INSERT, we might want the ID back.
@@ -121,7 +122,7 @@ export class PostgresWrapper implements IDatabase {
       }
     }
 
-    const result = await this.pool.query(finalSql, params);
+    const result = await (client ?? this.pool).query(finalSql, params);
 
     return {
       lastID: result.rows[0]?.id || 0,
@@ -129,31 +130,43 @@ export class PostgresWrapper implements IDatabase {
     };
   }
 
-  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  async all<T = any>(sql: string, params: any[] = [], client?: PoolClient): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
-    const result = await this.pool.query(translatedSql, params);
+    const result = await (client ?? this.pool).query(translatedSql, params);
     return result.rows.map((row) => this.mapRow(row)) as T[];
   }
 
-  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+  async get<T = any>(sql: string, params: any[] = [], client?: PoolClient): Promise<T | undefined> {
     const translatedSql = this.translateSql(sql);
-    const result = await this.pool.query(translatedSql, params);
+    const result = await (client ?? this.pool).query(translatedSql, params);
     return this.mapRow(result.rows[0]) as T | undefined;
   }
 
-  async exec(sql: string): Promise<void> {
-    await this.pool.query(sql);
+  async exec(sql: string, client?: PoolClient): Promise<void> {
+    await (client ?? this.pool).query(sql);
   }
 
   async transaction<T>(callback: (db: IDatabase) => Promise<T>): Promise<T> {
-    await this.exec('BEGIN');
+    const client = await this.pool.connect();
     try {
-      const result = await callback(this);
-      await this.exec('COMMIT');
+      await client.query('BEGIN');
+      // Bind the callback to a db view that runs every statement on the SAME
+      // dedicated client, so the transaction is actually isolated and visible
+      // within the callback (e.g. INSERT then SELECT inside one tx).
+      const txDb: IDatabase = {
+        run: (sql: string, params?: any[]) => this.run(sql, params, client),
+        all: (sql: string, params?: any[]) => this.all(sql, params, client),
+        get: (sql: string, params?: any[]) => this.get(sql, params, client),
+        exec: (sql: string) => this.exec(sql, client),
+      };
+      const result = await callback(txDb);
+      await client.query('COMMIT');
       return result;
     } catch (e) {
-      await this.exec('ROLLBACK');
+      await client.query('ROLLBACK');
       throw e;
+    } finally {
+      client.release();
     }
   }
 

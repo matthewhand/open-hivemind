@@ -50,7 +50,7 @@
     "test": "cross-env DISABLE_ENCRYPTION=true NODE_CONFIG_DIR=config/test/ NODE_ENV=test DOTENV_CONFIG_PATH=.env.sample node -r dotenv/config ./node_modules/jest/bin/jest.js --runInBand",
     "test:parallel": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DOTENV_CONFIG_PATH=.env.sample node -r dotenv/config ./node_modules/jest/bin/jest.js --maxWorkers=50%",
     "test:coverage": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test node ./node_modules/jest/bin/jest.js --coverage --runInBand",
-    "test:real": "NODE_ENV=test jest --config jest.real.config.js",
+    "test:real": "cross-env NODE_ENV=test ALLOW_REAL_SECRETS=true DATABASE_ENCRYPTION_KEY=ci-test-encryption-key-32chars! DOTENV_CONFIG_PATH=.env.sample jest --config jest.real.config.js --runInBand",
     "test:real:legacy": "bash scripts/run-real-tests.sh",
     "test:debug": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
