@@ -452,9 +452,9 @@ router.patch(
  *           schema:
  *             type: object
  *             properties:
- *               oldPassword: { type: string }
+ *               currentPassword: { type: string }
  *               newPassword: { type: string }
- *             required: [oldPassword, newPassword]
+ *             required: [currentPassword, newPassword]
  *     responses:
  *       200:
  *         description: Password changed successfully
@@ -469,14 +469,21 @@ router.post(
       return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
     }
 
-    const { oldPassword, newPassword } = req.body;
+    // Schema field is currentPassword; accept legacy oldPassword as fallback.
+    const currentPassword = req.body.currentPassword ?? req.body.oldPassword;
+    const { newPassword } = req.body;
 
     try {
-      // Verify old password first using refactored method
-      const isPasswordValid = await authManager.verifyCurrentPassword(authReq.user.id, oldPassword);
+      // Verify current password first using refactored method
+      const isPasswordValid = await authManager.verifyCurrentPassword(
+        authReq.user.id,
+        currentPassword
+      );
 
       if (!isPasswordValid) {
-        return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
+        return res
+          .status(HTTP_STATUS.UNAUTHORIZED)
+          .json(ApiResponse.error('Invalid current password'));
       }
 
       const success = await authManager.changePassword(authReq.user.id, newPassword);

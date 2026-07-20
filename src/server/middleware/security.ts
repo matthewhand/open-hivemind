@@ -122,8 +122,13 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
  */
 export function isTrustedAdminIP(req: Request): boolean {
   if (process.env.FORCE_TRUSTED_LOGIN === 'true') {
-    debug('FORCE_TRUSTED_LOGIN is set — granting trusted admin access');
-    return true;
+    if (process.env.NODE_ENV === 'production') {
+      // Do NOT grant access — loud log and fall through to normal checks
+      debug('SECURITY: FORCE_TRUSTED_LOGIN ignored in production');
+    } else {
+      debug('FORCE_TRUSTED_LOGIN is set — granting trusted admin access');
+      return true;
+    }
   }
 
   if (process.env.ALLOW_LOCALHOST_ADMIN !== 'true') {
