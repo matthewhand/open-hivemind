@@ -18,20 +18,72 @@ import Debug from 'debug';
 import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 import { DefaultActivityRecorder, type ActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:send');
 
 // ---------------------------------------------------------------------------
+// Platform resolution (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the outbound platform key for multi-provider messenger routing.
+ *
+ * Prefer `botConfig.MESSAGE_PROVIDER` (always set on configured bots) over
+ * `ctx.platform` (sometimes empty or generic on the pipeline path). Falls
+ * back to `messageProvider` metadata when present.
+ */
+export function resolveOutboundPlatform(ctx: {
+  platform?: string;
+  botConfig?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}): string | undefined {
+  const candidates = [
+    ctx.botConfig?.MESSAGE_PROVIDER,
+    ctx.botConfig?.messageProvider,
+    ctx.platform,
+    ctx.metadata?.messageProvider,
+    ctx.metadata?.platform,
+  ];
+  for (const raw of candidates) {
+    if (raw == null) continue;
+    const key = String(raw).trim().toLowerCase();
+    // "generic" is a decision-strategy placeholder, not a real messenger.
+    if (key && key !== 'generic') {
+      return key;
+    }
+  }
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Collaborator interfaces
 // ---------------------------------------------------------------------------
+
+/**
+ * Optional routing / threading hints passed with an outbound send.
+ */
+export interface MessageSendOptions {
+  /** Thread/parent ID when the platform supports threaded replies. */
+  threadId?: string;
+  /** Message ID to reply to (used by some providers as the thread root). */
+  replyToMessageId?: string;
+  /** Originating platform key used to select the correct messenger service. */
+  platform?: string;
+}
 
 /**
  * Abstraction for sending messages to a platform channel.
  */
 export interface MessageSender {
-  sendToChannel(channelId: string, text: string, senderName?: string): Promise<void>;
+  sendToChannel(
+    channelId: string,
+    text: string,
+    senderName?: string,
+    options?: MessageSendOptions
+  ): Promise<void>;
 }
 
 /**
@@ -100,17 +152,20 @@ export class SendStage {
 
     const trimmed = ctx.responseText.trim();
 
-    // Empty response after trim -- nothing to send.
+    // Empty response after trim -- nothing to send. Release the swarm claim so
+    // another bot (or a retry) can pick the message up.
     if (!trimmed) {
       debug('SendStage: empty response after trim, skipping send for bot=%s', ctx.botName);
+      this.releaseSwarmClaim(ctx);
       return;
     }
 
     const parts = this.splitMessage(trimmed);
+    const sendOptions = this.resolveSendOptions(ctx);
 
     try {
       for (const part of parts) {
-        await this.sender.sendToChannel(ctx.channelId, part, ctx.botName);
+        await this.sender.sendToChannel(ctx.channelId, part, ctx.botName, sendOptions);
       }
 
       // Capture metadata
@@ -118,13 +173,16 @@ export class SendStage {
         partsCount: parts.length,
         totalLength: trimmed.length,
         status: 'sent',
+        threadId: sendOptions.threadId,
+        replyToMessageId: sendOptions.replyToMessageId,
+        platform: sendOptions.platform,
       };
 
       // Record response-scoring signals (fatigue, grace window, idle response).
       // Mirrors the legacy `outputProcessor.ts` recordings so these signals are
       // live in pipeline mode. Best-effort: never block delivery.
       try {
-        const serviceName = String(ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic');
+        const serviceName = resolveOutboundPlatform(ctx) || 'generic';
         const botId =
           this.botId || (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
         this.recorder.recordBotResponse(serviceName, ctx.channelId, botId);
@@ -147,6 +205,8 @@ export class SendStage {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('SendStage: send error: %O', error);
+      // Free the swarm claim so another bot can attempt delivery.
+      this.releaseSwarmClaim(ctx);
       await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'send' });
       return;
     }
@@ -158,6 +218,88 @@ export class SendStage {
   }
 
   // ---- Private helpers ----------------------------------------------------
+
+  /**
+   * Resolve thread / reply / platform options for an outbound send.
+   *
+   * Mirrors legacy `outputProcessor.ts`:
+   * - Prefer an explicit thread id from the inbound message when available.
+   * - When `MESSAGE_REPLY_IN_THREAD` is enabled (bot config or env), pass the
+   *   inbound message id as `replyToMessageId` so providers can start/continue
+   *   a thread (Slack uses this as `thread_ts`).
+   */
+  private resolveSendOptions(ctx: MessageContext): MessageSendOptions {
+    const msg = ctx.message as {
+      getThreadId?: () => string | null | undefined;
+      getMessageId?: () => string;
+      metadata?: Record<string, unknown>;
+      data?: Record<string, unknown>;
+    };
+
+    let threadId: string | undefined;
+    if (typeof msg.getThreadId === 'function') {
+      const tid = msg.getThreadId();
+      if (tid != null && String(tid).length > 0) {
+        threadId = String(tid);
+      }
+    }
+    if (!threadId) {
+      const meta = msg.metadata ?? {};
+      const data = msg.data ?? {};
+      const candidate =
+        meta.threadId ??
+        meta.thread_ts ??
+        data.threadId ??
+        data.thread_ts ??
+        data.message_thread_id;
+      if (candidate != null && String(candidate).length > 0) {
+        threadId = String(candidate);
+      }
+    }
+
+    const replyInThreadFlag =
+      ctx.botConfig.MESSAGE_REPLY_IN_THREAD ?? process.env.MESSAGE_REPLY_IN_THREAD;
+    const replyInThread =
+      replyInThreadFlag === true ||
+      replyInThreadFlag === 'true' ||
+      replyInThreadFlag === 1 ||
+      replyInThreadFlag === '1';
+
+    let replyToMessageId: string | undefined;
+    if (replyInThread && typeof msg.getMessageId === 'function') {
+      const mid = msg.getMessageId();
+      if (mid) {
+        replyToMessageId = mid;
+      }
+    }
+
+    return {
+      threadId,
+      replyToMessageId,
+      // Prefer bot-config MESSAGE_PROVIDER (set on almost every bot) over
+      // ctx.platform, which is sometimes empty/generic on the pipeline path.
+      // Without this multi-provider deploys silently route all sends to the
+      // primary messenger (messengerServices[0]).
+      platform: resolveOutboundPlatform(ctx),
+    };
+  }
+
+  /**
+   * Best-effort release of a swarm claim after a failed/empty send so another
+   * bot (or retry) can claim the message.
+   */
+  private releaseSwarmClaim(ctx: MessageContext): void {
+    try {
+      const messageId =
+        typeof ctx.message.getMessageId === 'function' ? ctx.message.getMessageId() : undefined;
+      if (messageId) {
+        SwarmCoordinator.getInstance().releaseClaim(messageId);
+        debug('SendStage: released swarm claim for messageId=%s', messageId);
+      }
+    } catch (err) {
+      debug('SendStage: failed to release swarm claim (non-fatal): %O', err);
+    }
+  }
 
   /**
    * Split a message into parts of at most {@link MAX_PART_LENGTH} characters,

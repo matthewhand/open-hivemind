@@ -21,6 +21,7 @@ import { container } from 'tsyringe';
 import type { IMessage } from '@hivemind/shared-types';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';
@@ -132,11 +133,23 @@ export class InferenceStage {
         throw new Error(errorMsg);
       }
 
+      // Enrich invoker metadata with identity fields tools need (channel/user
+      // guards, message provider). Matches legacy toolAugmentedCompletion usage.
+      const authorId =
+        typeof ctx.message.getAuthorId === 'function' ? ctx.message.getAuthorId() : undefined;
+      const invokerMetadata = {
+        ...ctx.metadata,
+        channelId: ctx.channelId,
+        userId: authorId,
+        messageProvider: ctx.botConfig.MESSAGE_PROVIDER || ctx.platform,
+        platform: ctx.platform,
+      };
+
       const responseText = await this.llmInvoker.generateResponse(
         userMessage,
         ctx.history,
         ctx.systemPrompt,
-        ctx.metadata,
+        invokerMetadata,
         ctx.botConfig
       );
 
@@ -158,6 +171,9 @@ export class InferenceStage {
           latencyMs: durationMs,
           provider: (ctx.botConfig.llmProvider as string) || 'unknown',
         });
+
+        // Free the swarm claim so another bot can attempt a reply.
+        this.releaseSwarmClaim(ctx);
 
         await this.bus.emitAsync('message:skipped', {
           ...ctx,
@@ -214,7 +230,27 @@ export class InferenceStage {
         provider: (ctx.botConfig.llmProvider as string) || 'unknown',
       });
 
+      // Free the swarm claim so another bot can attempt a reply.
+      this.releaseSwarmClaim(ctx);
+
       await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'inference' });
+    }
+  }
+
+  /**
+   * Best-effort release of a swarm claim after empty/error inference so another
+   * bot (or retry) can claim the message.
+   */
+  private releaseSwarmClaim(ctx: MessageContext): void {
+    try {
+      const messageId =
+        typeof ctx.message.getMessageId === 'function' ? ctx.message.getMessageId() : undefined;
+      if (messageId) {
+        SwarmCoordinator.getInstance().releaseClaim(messageId);
+        debug('InferenceStage: released swarm claim for messageId=%s', messageId);
+      }
+    } catch (err) {
+      debug('InferenceStage: failed to release swarm claim (non-fatal): %O', err);
     }
   }
 
