@@ -101,9 +101,14 @@ describe('guard-profiles semantic guard passthrough', () => {
         llmProviderKey: 'openai-main',
         responseSchema: { type: 'boolean', description: 'true if safe' },
       });
+      // semanticOutputGuard omits responseSchema, so the schema's default is injected.
       expect(created.guards.semanticOutputGuard).toEqual({
         enabled: false,
         prompt: 'Is this output safe?',
+        responseSchema: {
+          type: 'boolean',
+          description: 'Return true if content should be allowed, false if it should be blocked',
+        },
       });
 
       // Persisted profile carries the same semantic guard config
@@ -190,7 +195,11 @@ describe('guard-profiles semantic guard passthrough', () => {
         enabled: true, // preserved from existing
         prompt: 'Updated input prompt', // updated
         llmProviderKey: 'openai-main', // preserved
-        responseSchema: { type: 'boolean', description: 'safe?' }, // preserved
+        // Omitted from the request, so the schema default is applied on merge.
+        responseSchema: {
+          type: 'boolean',
+          description: 'Return true if content should be allowed, false if it should be blocked',
+        },
       });
       // Other guards untouched
       expect(updated.guards.rateLimit).toEqual({ enabled: true, maxRequests: 50, windowMs: 60000 });

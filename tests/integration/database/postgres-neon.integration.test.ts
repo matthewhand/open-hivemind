@@ -6,13 +6,20 @@ import { DatabaseManager } from '../../../src/database/DatabaseManager';
 // Load .env to pick up DATABASE_URL
 dotenv.config();
 
-console.log('DATABASE_URL present:', !!process.env.DATABASE_URL);
+// Real-DB suite: only run when a non-placeholder DATABASE_URL is present AND the
+// caller has explicitly opted in with ALLOW_REAL_SECRETS=true. This matches the
+// jest.setup.ts Proxy gate and the project's `test:real` convention, so the
+// suite is skipped (not failed) in DB-less / CI environments.
+const realDbConfigured =
+  !!process.env.DATABASE_URL &&
+  !/^(your-|your_|<.+>|CHANGE.?ME|xxx|test-token|placeholder)/i.test(process.env.DATABASE_URL) &&
+  process.env.ALLOW_REAL_SECRETS === 'true';
+
+console.log('Postgres real integration configured:', realDbConfigured);
 
 describe('Postgres Real Integration (Neon.tech)', () => {
-  const dbUrl = process.env.DATABASE_URL;
-
-  // Only run if DATABASE_URL is present
-  const describeIfUrl = dbUrl ? describe : describe.skip;
+  // Only run if DATABASE_URL is present and real secrets are allowed
+  const describeIfUrl = realDbConfigured ? describe : describe.skip;
 
   describeIfUrl('Database Operations with Real Postgres', () => {
     let dbManager: DatabaseManager;
