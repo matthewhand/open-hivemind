@@ -65,15 +65,24 @@ const Modal: React.FC<ModalProps> = ({
         return;
     }
 
+    const prevOverflow = document.body.style.overflow;
     if (isOpen) {
       if (!modal.open) {
         modal.showModal();
+        document.body.style.overflow = 'hidden';
       }
     } else {
       if (modal.open) {
         modal.close();
+        document.body.style.overflow = prevOverflow;
       }
     }
+
+    return () => {
+       if (isOpen && modal.open) {
+           document.body.style.overflow = prevOverflow;
+       }
+    };
   }, [isOpen]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
