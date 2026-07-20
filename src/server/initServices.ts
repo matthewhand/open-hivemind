@@ -582,9 +582,12 @@ export async function initServices(
     // (It internally creates a PipelineTracer and stores it via setActiveTracer().)
     const primaryService = messengerServices[0];
     if (primaryService) {
+      // Wire the pipeline once on the shared bus, but hand every messenger to
+      // MessageSenderAdapter so outbound replies route by platform.
       createPipeline(bus, {
         botConfig: {},
         messengerService: primaryService,
+        messengerServices,
         botId: primaryService.botId,
         defaultChannelId: primaryService.getDefaultChannel?.() ?? undefined,
       });

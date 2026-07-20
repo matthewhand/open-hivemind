@@ -2,10 +2,9 @@
  * Factory that wires all 5 pipeline stages with their adapter-backed
  * dependencies and registers them on a {@link MessageBus}.
  *
- * This creates a **parallel** message-processing path that can run
- * alongside the existing `handleMessage` function.  Toggle the pipeline
- * on/off via the `USE_PIPELINE` feature flag (or however the caller
- * chooses to gate it).
+ * The staged pipeline is the **default** message-processing path. To
+ * revert to the legacy monolithic `handleMessage()` flow, set
+ * `USE_LEGACY_HANDLER=true`.
  *
  * ```
  *   message:incoming  →  ReceiveStage  →  DecisionStage  →  EnrichStage
@@ -60,8 +59,13 @@ export interface PipelineDependencies {
   botConfig: Record<string, unknown>;
   /** Default channel ID (used by decision logic). */
   defaultChannelId?: string;
-  /** Platform messenger service for sending replies. */
+  /** Primary platform messenger service for sending replies (fallback). */
   messengerService: IMessengerService;
+  /**
+   * All messenger services in a multi-provider deployment. When provided, the
+   * MessageSenderAdapter routes outbound sends by `options.platform`.
+   */
+  messengerServices?: IMessengerService[];
 }
 
 // ---------------------------------------------------------------------------
@@ -123,7 +127,13 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
 
   const send = new SendStage(
     bus,
-    new MessageSenderAdapter({ messengerService: deps.messengerService }),
+    new MessageSenderAdapter({
+      messengerService: deps.messengerService,
+      messengersByProvider: buildMessengersByProvider(
+        deps.messengerService,
+        deps.messengerServices
+      ),
+    }),
     new MemoryStorerAdapter(),
     new DefaultActivityRecorder(),
     deps.botId
@@ -176,4 +186,51 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
   new MetricsRecorder(bus).register();
 
   return true;
+}
+
+/**
+ * Build a provider-key → messenger map for multi-provider send routing.
+ * Keys come from `providerName` / `provider` / `name` on the service instance
+ * (as set by getMessengerProvider, which stamps `.provider = name`).
+ *
+ * Exported for unit tests — production callers go through {@link createPipeline}.
+ */
+export function buildMessengersByProvider(
+  primary: IMessengerService,
+  services?: IMessengerService[]
+): Map<string, IMessengerService> {
+  const map = new Map<string, IMessengerService>();
+  const all = services && services.length > 0 ? services : [primary];
+
+  for (const service of all) {
+    const key = resolveProviderKey(service);
+    if (key) {
+      map.set(key.toLowerCase(), service);
+    }
+  }
+
+  // Ensure the primary is always present under its own key when resolvable.
+  const primaryKey = resolveProviderKey(primary);
+  if (primaryKey && !map.has(primaryKey.toLowerCase())) {
+    map.set(primaryKey.toLowerCase(), primary);
+  }
+
+  return map;
+}
+
+/**
+ * Resolve the map key for a messenger. Prefer the production stamp
+ * (`provider` from getMessengerProvider) then `providerName` / `name`.
+ */
+export function resolveProviderKey(service: IMessengerService): string | undefined {
+  const s = service as IMessengerService & {
+    providerName?: string;
+    provider?: string;
+    name?: string;
+  };
+  // Prefer `.provider` (set by getMessengerProvider) over providerName so
+  // production Discord/Slack/Mattermost instances (which only stamp `.provider`)
+  // resolve correctly.
+  const key = s.provider || s.providerName || s.name;
+  return key ? String(key) : undefined;
 }
