@@ -23,23 +23,27 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   label = 'Generate with AI',
   className = '',
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  type FetchState = 'idle' | 'loading' | 'error' | 'success';
+  const [fetchState, setFetchState] = useState<FetchState>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const warningToast = useWarningToast();
 
   const handleClick = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setFetchState('loading');
+      setErrorMsg(null);
       const response: any = await apiService.post('/api/ai-assist/generate', {
         prompt,
         systemPrompt,
       });
       if (response && response.result) {
         onSuccess(response.result);
+        setFetchState('success');
+        setTimeout(() => setFetchState('idle'), 2000);
       }
     } catch (err: unknown) {
-      setError('Failed to generate');
+      setFetchState('error');
+      setErrorMsg('Failed to generate');
       // Check if it's a configuration error
       if ((err instanceof Error ? err.message : String(err)) && (err instanceof Error ? err.message : String(err)).includes('not configured')) {
         warningToast('AI Not Configured', 'AI Assistance is not configured. Please go to LLM Providers page to configure it.');
@@ -47,30 +51,33 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         warningToast('AI Generation failed');
       }
     } finally {
-      setLoading(false);
+      setFetchState(prev => prev === 'loading' ? 'idle' : prev);
     }
   };
 
   return (
     <Tooltip
-      content={error || (loading ? 'Generating...' : label)}
+      content={errorMsg || (fetchState === 'loading' ? 'Generating...' : label)}
       position="right"
-      color={error ? 'error' : undefined}
+      color={fetchState === 'error' ? 'error' : undefined}
       className="font-normal normal-case text-sm"
     >
+      <div aria-live="polite" className="inline-block">
       <button
         type="button"
+        aria-busy={fetchState === 'loading'}
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
-        disabled={loading}
-        aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
+        disabled={fetchState === 'loading'}
+        aria-label={fetchState === 'loading' ? `Generating ${label.replace('Generate ', '')}...` : label}
       >
-        {loading ? (
+        {fetchState === 'loading' ? (
           <LoadingSpinner size="xs" />
         ) : (
           <Sparkles className="w-4 h-4" />
         )}
       </button>
+      </div>
     </Tooltip>
   );
 };
