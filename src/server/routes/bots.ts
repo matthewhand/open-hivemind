@@ -78,6 +78,12 @@ router.get(
         provider: bot.messageProvider,
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
+        llmModel:
+          bot.llmModel ||
+          (bot.config as { openai?: { model?: string } } | undefined)?.openai?.model ||
+          undefined,
+        llmProfile: bot.llmProfile,
+        description: bot.description,
         persona: bot.persona,
         status: bot.isActive ? 'active' : 'disabled',
         connected: statusMap.get(bot.id) || false,
@@ -188,6 +194,12 @@ router.get(
       provider: bot.messageProvider,
       messageProvider: bot.messageProvider,
       llmProvider: bot.llmProvider,
+      llmModel:
+        bot.llmModel ||
+        (bot.config as { openai?: { model?: string } } | undefined)?.openai?.model ||
+        undefined,
+      llmProfile: bot.llmProfile,
+      description: bot.description,
       persona: bot.persona,
       status: bot.isActive ? 'active' : 'disabled',
       connected: statusMap.get(bot.id) || false,
@@ -195,6 +207,7 @@ router.get(
       errorCount: stats.errorCount,
       config: bot.config,
       isActive: bot.isActive,
+      systemInstruction: bot.systemInstruction,
     };
 
     return res.json(ApiResponse.success(result));
@@ -221,7 +234,19 @@ router.post(
     }
 
     try {
-      await manager.createBot(request);
+      const created = await manager.createBot(request);
+      return res.status(HTTP_STATUS.CREATED).json(
+        ApiResponse.success({
+          id: created.id,
+          name: created.name,
+          isActive: created.isActive,
+          llmModel: created.llmModel,
+          llmProvider: created.llmProvider,
+          messageProvider: created.messageProvider,
+          description: created.description,
+          status: created.isActive ? 'active' : 'disabled',
+        })
+      );
     } catch (error: unknown) {
       // Validation failures (e.g. unknown llmProvider / profile key) are
       // tagged with a 4xx statusCode — surface them as a client error
@@ -233,7 +258,6 @@ router.post(
       }
       throw error;
     }
-    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
   })
 );
 

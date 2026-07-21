@@ -247,11 +247,22 @@ export class BotManager extends EventEmitter {
    */
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {
-      // Check custom bots first
+      // Check in-memory custom bots first
       const bot = this.customBots.get(botId);
       if (bot) {
         debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
         return bot;
+      }
+
+      // WebUI-created agents live in webUIStorage (not the customBots Map).
+      // Without this lookup, PUT/toggle on journey-created bots always 404.
+      const webAgents = await webUIStorage.getAgents();
+      const webAgent = webAgents.find(
+        (a: Record<string, unknown>) => a.id === botId || a.name === botId
+      );
+      if (webAgent) {
+        debug(`Retrieved webUI bot: ${String(webAgent.name)} (${String(webAgent.id)})`);
+        return webAgent as unknown as BotInstance;
       }
 
       // Check configured bots - O(1) lookup instead of O(N) iteration
@@ -281,13 +292,15 @@ export class BotManager extends EventEmitter {
       // Generate unique ID
       const botId = crypto.randomUUID();
 
-      // Create bot instance
+      // Honor isActive when callers (UI wizard / journey capture) pass it; default inactive for safety.
+      const modelFromConfig =
+        (request.config as { openai?: { model?: string } } | undefined)?.openai?.model || undefined;
       const botInstance: BotInstance = {
         id: botId,
         name: request.name,
         messageProvider: request.messageProvider,
         llmProvider: request.llmProvider?.trim() || '',
-        isActive: false, // New bots start inactive
+        isActive: request.isActive === true,
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
         config: sanitizeConfig(request.config || {}),
@@ -295,11 +308,19 @@ export class BotManager extends EventEmitter {
         systemInstruction: request.systemInstruction,
         mcpServers: request.mcpServers,
         mcpGuard: request.mcpGuard,
+        ...(request.llmModel || modelFromConfig
+          ? { llmModel: request.llmModel || modelFromConfig }
+          : {}),
+        ...(request.llmProfile ? { llmProfile: request.llmProfile } : {}),
+        ...(request.description ? { description: request.description } : {}),
       };
 
       // Store sensitive configuration securely
 
       await storeSecureConfig(this.secureConfigManager, botId, request.config || {});
+
+      // Keep in-memory map in sync so getBot() finds the agent immediately
+      this.customBots.set(botId, botInstance);
 
       // Add to web UI storage
       await webUIStorage.saveAgent(botInstance as any);
@@ -400,7 +421,10 @@ export class BotManager extends EventEmitter {
         validateBotConfig(updates.config);
       }
 
-      // Update bot instance
+      const modelFromConfig =
+        (updates.config as { openai?: { model?: string } } | undefined)?.openai?.model || undefined;
+
+      // Update bot instance (preserve optional UI fields explicitly)
       const updatedBot: BotInstance = {
         ...existingBot,
         ...updates,
@@ -415,12 +439,22 @@ export class BotManager extends EventEmitter {
             : existingBot.systemInstruction,
         mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : existingBot.mcpServers,
         mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard,
+        llmModel:
+          updates.llmModel !== undefined
+            ? updates.llmModel
+            : modelFromConfig || existingBot.llmModel,
+        llmProfile: updates.llmProfile !== undefined ? updates.llmProfile : existingBot.llmProfile,
+        description:
+          updates.description !== undefined ? updates.description : existingBot.description,
+        isActive: updates.isActive !== undefined ? updates.isActive === true : existingBot.isActive,
       };
 
       // Store updated secure config if provided
       if (updates.config) {
         await storeSecureConfig(this.secureConfigManager, botId, updates.config);
       }
+
+      this.customBots.set(botId, updatedBot);
 
       // Update in web UI storage
       await webUIStorage.saveAgent(updatedBot as any);

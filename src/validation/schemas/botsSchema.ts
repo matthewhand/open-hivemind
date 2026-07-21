@@ -6,13 +6,26 @@ export const BotIdParamSchema = z.object({
   }),
 });
 
+/** Shared bot fields accepted on create/update (not stripped by validateRequest). */
+const botBodyFields = {
+  name: z.string().min(1, { message: 'Bot name is required' }).optional(),
+  messageProvider: z.string().optional(),
+  llmProvider: z.string().optional(),
+  llmModel: z.string().optional(),
+  llmProfile: z.string().optional(),
+  description: z.string().optional(),
+  persona: z.string().optional(),
+  systemInstruction: z.string().optional(),
+  isActive: z.boolean().optional(),
+  config: z.record(z.unknown()).optional(),
+  mcpServers: z.array(z.unknown()).optional(),
+  mcpGuard: z.record(z.unknown()).optional(),
+};
+
 export const CreateBotSchema = z.object({
   body: z.object({
+    ...botBodyFields,
     name: z.string().min(1, { message: 'Bot name is required' }),
-    messageProvider: z.string().optional(),
-    llmProvider: z.string().optional(),
-    persona: z.string().optional(),
-    isActive: z.boolean().optional(),
   }),
 });
 
@@ -20,13 +33,7 @@ export const UpdateBotSchema = z.object({
   params: z.object({
     id: z.string().min(1, { message: 'Bot ID is required' }),
   }),
-  body: z.object({
-    name: z.string().optional(),
-    messageProvider: z.string().optional(),
-    llmProvider: z.string().optional(),
-    persona: z.string().optional(),
-    isActive: z.boolean().optional(),
-  }),
+  body: z.object(botBodyFields),
 });
 
 export const CloneBotSchema = z.object({

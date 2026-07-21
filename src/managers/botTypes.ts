@@ -6,6 +6,11 @@ export interface BotInstance {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  /** Optional default model id for UI / test-drive display */
+  llmModel?: string;
+  /** Optional LLM profile key */
+  llmProfile?: string;
+  description?: string;
   isActive: boolean;
   createdAt: string;
   lastModified: string;
@@ -25,6 +30,13 @@ export interface CreateBotRequest {
   name: string;
   messageProvider: 'discord' | 'slack' | 'mattermost';
   llmProvider?: 'openai' | 'flowise' | 'openwebui' | 'openswarm';
+  /** Default model id shown in the bot drawer / test-drive UI */
+  llmModel?: string;
+  /** Optional LLM profile key (e.g. golden-openai) */
+  llmProfile?: string;
+  description?: string;
+  /** When true, the bot is created active (default false for safety) */
+  isActive?: boolean;
   config?: {
     discord?: {
       token: string;
