@@ -102,7 +102,6 @@ interface CardTitleProps {
 interface CardActionsProps {
   children?: ReactNode;
   className?: string;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 // Subcomponents definitions
@@ -121,8 +120,8 @@ const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', tag: Ta
 };
 CardTitle.displayName = 'Card.Title';
 
-const CardActions: React.FC<CardActionsProps> = ({ children, className = '', onClick }) => {
-  return <div className={`card-actions justify-end ${className}`} onClick={onClick}>{children}</div>;
+const CardActions: React.FC<CardActionsProps> = ({ children, className = '' }) => {
+  return <div className={`card-actions justify-end ${className}`}>{children}</div>;
 };
 CardActions.displayName = 'Card.Actions';
 

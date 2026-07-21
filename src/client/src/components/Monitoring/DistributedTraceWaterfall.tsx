@@ -5,6 +5,7 @@ import Card from '../DaisyUI/Card';
 import { Activity, Clock, Server, ChevronRight, ChevronDown, ZoomIn, ZoomOut, MoveLeft, MoveRight, X } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
 import Join from '../DaisyUI/Join';
+import EmptyState from '../DaisyUI/EmptyState';
 
 export interface TraceSpan {
   id: string;
@@ -39,6 +40,16 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
   // Zoom & Pan state
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panOffset, setPanOffset] = useState<number>(0);
+
+  if (!spans || spans.length === 0) {
+    return (
+      <EmptyState
+        icon={Activity}
+        title="No Trace Data"
+        description="No spans are available for this trace."
+      />
+    );
+  }
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -127,7 +138,19 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
     const barColor = getServiceColor(span.service);
 
     return (
-      <div key={span.id} className={`group relative border-b border-base-200 transition-colors ${isSelected ? 'bg-base-300' : 'hover:bg-base-200/50'}`} onClick={(e) => handleSpanClick(span.id, e)}>
+      <div
+        key={span.id}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSpanClick(span.id, e as any);
+          }
+        }}
+        className={`group relative border-b border-base-200 transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-base-300 ${isSelected ? 'bg-base-300' : 'hover:bg-base-200/50'}`}
+        onClick={(e) => handleSpanClick(span.id, e)}
+      >
         <div className="flex items-center p-2 text-sm">
           {/* Left Panel: Tree View */}
           <div

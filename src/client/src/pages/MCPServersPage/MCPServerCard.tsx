@@ -108,7 +108,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
           )}
         </dl>
 
-        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200">
           <div className="flex gap-1">
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
@@ -117,7 +117,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
                   size="sm"
                   className="btn-circle text-error"
                   aria-label={String(`Disconnect ${server.name}`)}
-                  onClick={() => handleServerAction(server.id, 'stop')}
+                  onClick={(e) => { e.stopPropagation(); handleServerAction(server.id, 'stop'); }}
                 >
                   <Square className="w-5 h-5" />
                 </Button>
@@ -129,7 +129,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
                   size="sm"
                   className="btn-circle text-success"
                   aria-label={String(server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`)}
-                  onClick={() => handleServerAction(server.id, 'start')}
+                  onClick={(e) => { e.stopPropagation(); handleServerAction(server.id, 'start'); }}
                 >
                   {server.status === 'error' ? (
                     <RefreshCw className="w-5 h-5" />
@@ -146,7 +146,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
                   size="sm"
                   className="btn-circle"
                   aria-label={String(`View Tools for ${server.name}`)}
-                  onClick={() => handleViewTools(server)}
+                  onClick={(e) => { e.stopPropagation(); handleViewTools(server); }}
                 >
                   <Wrench className="w-5 h-5" />
                 </Button>
@@ -160,7 +160,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
                 size="sm"
                 className="btn-circle"
                 aria-label={String(`Edit ${server.name}`)}
-                onClick={() => handleEditServer(server)}
+                onClick={(e) => { e.stopPropagation(); handleEditServer(server); }}
               >
                 <Pencil className="w-4 h-4" />
               </Button>
@@ -171,7 +171,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
                 size="sm"
                 className="btn-circle text-error hover:bg-error hover:text-error-content"
                 aria-label={String(`Delete ${server.name}`)}
-                onClick={() => handleDeleteServer(server.id)}
+                onClick={(e) => { e.stopPropagation(); handleDeleteServer(server.id); }}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
