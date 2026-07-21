@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import Card from '../../components/DaisyUI/Card';
 import Button from '../../components/DaisyUI/Button';

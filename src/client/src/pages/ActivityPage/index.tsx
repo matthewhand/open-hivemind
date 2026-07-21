@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Clock, RefreshCw, Info, BarChart3, CheckCircle2, AlertCircle, Bot, LayoutList, GitBranch, Download, Play } from 'lucide-react';
 import { Alert } from '../../components/DaisyUI/Alert';
