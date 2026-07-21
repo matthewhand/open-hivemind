@@ -152,7 +152,7 @@ export class DashboardService {
     let bots: Array<{ name: string; messageProvider: string; llmProvider: string }> = [];
     try {
       bots = manager.getAllBots();
-    } catch (e) {
+    } catch {
       bots = [];
     }
 
@@ -453,10 +453,7 @@ export class DashboardService {
       }));
 
     const agentMetrics = Array.from(metrics.values())
-      .map((m) => {
-        const { lastActivityMs: _lastActivityMs, ...rest } = m;
-        return rest;
-      })
+      .map(({ lastActivityMs: _lastActivityMs, ...rest }) => rest)
       .sort((a, b) => b.events - a.events);
 
     return { timeline, agentMetrics };
