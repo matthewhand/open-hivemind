@@ -50,4 +50,7 @@
 
 ### 🚧 Still Pending
 
-- Two-factor authentication, account lockout, and the session manager remain under security review and are not yet enabled. Discord voice / speech-to-text is not implemented.
+- **Session manager** is implemented but **opt-in** (`SESSION_MANAGER_ENABLED=true`); JWT remains the default production auth path until multi-instance session stores are hardened.
+- **TOTP 2FA** and **account lockout** code ships (`TotpService`, `LoginAttemptTracker`); full Settings UI persistence for every security toggle is still partial — treat as available via API/config, not fully operator-UX complete.
+- **Discord voice**: Whisper speech-to-text exists, but **voice-channel join/leave is still a no-op stub** (`VoiceChannelManager`), so end-to-end voice is not production-ready.
+- **Not claimed as shipped here**: multi-provider streaming, vision input, real `transfer_to_bot` handoff, Provider Health SLOs (mock/501 unless `ENABLE_MOCK_PROVIDER_HEALTH`), durable webhook *scheduled* delivery, pipeline↔legacy parity.

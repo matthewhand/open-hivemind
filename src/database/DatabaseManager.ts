@@ -119,12 +119,33 @@ export class DatabaseManager {
 
   constructor() {
     this.initRepositories();
-    // Load config from databaseConfig (convict)
-    const type = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres';
+    // Load config from databaseConfig (convict). Prefer explicit DATABASE_TYPE,
+    // but infer from DATABASE_URL scheme when present so mysql:// and
+    // postgres:// URLs do not get mis-configured as the wrong dialect.
+    const configuredType = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres' | 'mysql';
+    const dbUrl = String(
+      process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL') || ''
+    ).trim();
+    let type: 'sqlite' | 'postgres' | 'mysql' = configuredType;
+    if (dbUrl.startsWith('mysql://') || dbUrl.startsWith('mysql2://')) {
+      type = 'mysql';
+    } else if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
+      type = 'postgres';
+    }
+
     if (type === 'sqlite') {
       this.configure({
         type: 'sqlite',
         path: databaseConfig.get('DATABASE_PATH'),
+      });
+    } else if (type === 'mysql') {
+      this.configure({
+        type: 'mysql',
+        host: databaseConfig.get('DATABASE_HOST'),
+        port: databaseConfig.get('DATABASE_PORT') || 3306,
+        username: databaseConfig.get('DATABASE_USER'),
+        password: databaseConfig.get('DATABASE_PASSWORD'),
+        database: databaseConfig.get('DATABASE_NAME'),
       });
     } else {
       this.configure({
