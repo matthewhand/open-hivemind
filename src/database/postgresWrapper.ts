@@ -158,6 +158,8 @@ export class PostgresWrapper implements IDatabase {
         all: (sql: string, params?: any[]) => this.all(sql, params, client),
         get: (sql: string, params?: any[]) => this.get(sql, params, client),
         exec: (sql: string) => this.exec(sql, client),
+        transaction: () => Promise.reject(new Error('Nested transactions are not supported')),
+        close: () => Promise.resolve(),
       };
       const result = await callback(txDb);
       await client.query('COMMIT');

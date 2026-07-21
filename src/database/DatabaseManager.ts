@@ -7,6 +7,7 @@ import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import { Logger } from '@common/logger';
 import { runMigrations } from './migrationRunner';
+import { MySQLWrapper } from './mysqlWrapper';
 import { PostgresWrapper } from './postgresWrapper';
 import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
@@ -200,7 +201,7 @@ export class DatabaseManager {
 
         this.db = new SQLiteWrapper(dbPath);
         debug('DATABASE_MANAGER: this.db initialized (SQLite)');
-        await runMigrations(this.db, false);
+        await runMigrations(this.db, 'sqlite');
       } else if (this.config.type === 'postgres') {
         const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
         if (dbUrl) {
@@ -216,7 +217,22 @@ export class DatabaseManager {
           });
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
-        await runMigrations(this.db, true);
+        await runMigrations(this.db, 'postgres');
+      } else if (this.config.type === 'mysql') {
+        const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
+        if (dbUrl) {
+          this.db = new MySQLWrapper(dbUrl);
+        } else {
+          this.db = new MySQLWrapper({
+            host: this.config.host,
+            port: this.config.port || 3306,
+            user: this.config.username,
+            password: this.config.password,
+            database: this.config.database,
+          });
+        }
+        debug('DATABASE_MANAGER: this.db initialized (MySQL)');
+        await runMigrations(this.db, 'mysql');
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,

@@ -9,7 +9,7 @@ import type { IDatabase } from '../types';
 
 interface MigrationContext {
   db: IDatabase;
-  isPostgres: boolean;
+  dialect: 'sqlite' | 'postgres' | 'mysql';
 }
 
 export async function up({ db }: MigrationContext): Promise<void> {

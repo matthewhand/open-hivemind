@@ -1,12 +1,23 @@
 import { ActivitySchemas } from '../schemas/ActivitySchemas';
 import { type IDatabase } from '../types';
 
-export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolean }) => {
-  const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-  const datetime_type = isPostgres ? 'TIMESTAMP' : 'DATETIME';
-  const default_now = isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP';
+export const up = async ({
+  db,
+  dialect,
+}: {
+  db: IDatabase;
+  dialect: 'sqlite' | 'postgres' | 'mysql';
+}) => {
+  const pk_auto =
+    dialect === 'postgres'
+      ? 'SERIAL PRIMARY KEY'
+      : dialect === 'mysql'
+        ? 'INT AUTO_INCREMENT PRIMARY KEY'
+        : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const datetime_type = dialect === 'postgres' ? 'TIMESTAMP' : 'DATETIME';
+  const default_now = 'CURRENT_TIMESTAMP';
 
-  if (isPostgres) {
+  if (dialect === 'postgres') {
     try {
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
     } catch (e) {
@@ -64,7 +75,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
     )
   `);
 
-  if (isPostgres) {
+  if (dialect === 'postgres') {
     try {
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
@@ -82,7 +93,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       startTime ${datetime_type} NOT NULL,
       endTime ${datetime_type},
       messageCount INTEGER DEFAULT 0,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       tenantId TEXT,
       created_at ${datetime_type} DEFAULT ${default_now}
     )
@@ -106,7 +117,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       openwebui TEXT,
       openswarm TEXT,
       tenantId TEXT,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       createdAt ${datetime_type} DEFAULT ${default_now},
       updatedAt ${datetime_type} DEFAULT ${default_now},
       createdBy TEXT,
@@ -134,7 +145,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       openwebui TEXT,
       openswarm TEXT,
       tenantId TEXT,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       createdAt ${datetime_type} DEFAULT ${default_now},
       createdBy TEXT,
       changeLog TEXT
@@ -166,7 +177,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       maxUsers INTEGER DEFAULT 3,
       storageQuota INTEGER DEFAULT 1073741824,
       features TEXT,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       createdAt ${datetime_type} DEFAULT ${default_now},
       expiresAt ${datetime_type}
     )
@@ -179,7 +190,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       description TEXT,
       level INTEGER DEFAULT 0,
       permissions TEXT,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       tenantId TEXT NOT NULL,
       createdAt ${datetime_type} DEFAULT ${default_now},
       updatedAt ${datetime_type} DEFAULT ${default_now}
@@ -194,7 +205,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       passwordHash TEXT NOT NULL,
       roleId INTEGER,
       tenantId TEXT NOT NULL,
-      isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+      isActive ${dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 1' : 'INTEGER DEFAULT 1'},
       createdAt ${datetime_type} DEFAULT ${default_now},
       lastLogin ${datetime_type}
     )
@@ -247,7 +258,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       threshold REAL NOT NULL,
       severity TEXT NOT NULL,
       explanation TEXT NOT NULL,
-      resolved BOOLEAN DEFAULT ${isPostgres ? 'FALSE' : '0'},
+      resolved ${dialect === 'postgres' ? 'BOOLEAN DEFAULT FALSE' : dialect === 'mysql' ? 'BOOLEAN DEFAULT 0' : 'INTEGER DEFAULT 0'},
       tenantId TEXT,
       created_at ${datetime_type} DEFAULT ${default_now}
     )
@@ -290,10 +301,10 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
     )
   `);
 
-  const embedding_col = isPostgres ? 'embedding vector(1536)' : 'embedding TEXT';
+  const embedding_col = dialect === 'postgres' ? 'embedding vector(1536)' : 'embedding TEXT';
   await db.exec(`
     CREATE TABLE IF NOT EXISTS memories (
-      id ${isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+      id ${dialect === 'postgres' ? 'SERIAL PRIMARY KEY' : dialect === 'mysql' ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
       content TEXT NOT NULL,
       metadata TEXT,
       userId TEXT,
@@ -368,7 +379,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(userId)`);
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agentId)`);
 
-  if (isPostgres) {
+  if (dialect === 'postgres') {
     try {
       await db.exec(
         `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
