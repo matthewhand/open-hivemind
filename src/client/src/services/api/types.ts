@@ -121,10 +121,13 @@ export interface StatusResponse {
     connected?: boolean;
     messageCount?: number;
     errorCount?: number;
+    responseTime?: number;
   }>;
   uptime: number;
   environment?: string;
   version?: string;
+  averageResponseTime?: number;
+  isDemoMode?: boolean;
 }
 
 export interface ConfigFile {

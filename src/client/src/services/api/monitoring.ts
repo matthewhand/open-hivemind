@@ -27,8 +27,19 @@ export interface PipelineTrace {
 export function monitoringMixin(api: ApiService) {
   return {
     getStatus(): Promise<StatusResponse> {
-      return api.request<StatusResponse>('/api/dashboard/status');
+      return api
+        .request<{ success?: boolean; data?: StatusResponse } | StatusResponse>(
+          '/api/dashboard/status'
+        )
+        .then((res) => {
+          // Prefer unwrapped ApiResponse envelope; fall back to bare payload.
+          if (res && typeof res === 'object' && 'data' in res && (res as { data?: StatusResponse }).data) {
+            return (res as { data: StatusResponse }).data;
+          }
+          return res as StatusResponse;
+        });
     },
+
 
     /** Recent completed message-pipeline traces recorded by the PipelineTracer. */
     getDecisionTraces(): Promise<{ traces: PipelineTrace[] }> {

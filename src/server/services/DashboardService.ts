@@ -158,6 +158,36 @@ export class DashboardService {
 
     const ws = WebSocketService.getInstance();
 
+    // Prefer real pipeline latencies; fall back to demo simulator samples so
+    // monitoring never shows N/A while the platform is actively simulating load.
+    let fleetAvgResponseMs = 0;
+    try {
+      // Lazy require avoids circular import at module load.
+
+      const { MetricsCollector } = require('../../monitoring/MetricsCollector') as {
+        MetricsCollector: {
+          getInstance: () => {
+            getMetrics: () => { responseTime: number[] };
+            getLatestValue: (name: string) => number | undefined;
+          };
+        };
+      };
+      const collector = MetricsCollector.getInstance();
+      const samples = collector.getMetrics().responseTime || [];
+      if (samples.length > 0) {
+        fleetAvgResponseMs = Math.round(
+          samples.reduce((a: number, b: number) => a + b, 0) / samples.length
+        );
+      } else {
+        const demoRt = collector.getLatestValue('demo.responseTime');
+        if (typeof demoRt === 'number' && demoRt > 0) {
+          fleetAvgResponseMs = Math.round(demoRt);
+        }
+      }
+    } catch {
+      /* metrics optional */
+    }
+
     const status = bots
       .filter((bot) => bot && bot.name)
       .map((bot) => ({
@@ -169,6 +199,7 @@ export class DashboardService {
         connected: this.isProviderConnected(bot),
         messageCount: ws.getBotStats(bot.name).messageCount,
         errorCount: ws.getBotStats(bot.name).errorCount,
+        responseTime: fleetAvgResponseMs,
       }));
 
     let demoMode = false;
@@ -183,6 +214,7 @@ export class DashboardService {
       bots: status,
       uptime: process.uptime(),
       isDemoMode: demoMode,
+      averageResponseTime: fleetAvgResponseMs,
     };
   }
 
