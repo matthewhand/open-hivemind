@@ -166,13 +166,15 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
         </div>
         
+        <Card.Body>
         {hasEnvOverrides && (
           <div className="mt-2 mb-4">
             <Alert status="info" message="This agent has environment variable overrides. Some fields are read-only." />
           </div>
         )}
         
-        <div className="mt-4 space-y-4">
+        <fieldset className="mt-4 space-y-4">
+          <legend className="sr-only">Core Configuration</legend>
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">LLM Provider</span>
@@ -307,10 +309,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               </label>
             )}
           </div>
+        </fieldset>
           
           {/* MCP Servers Section */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">MCP Servers</h4>
+          <fieldset className="mt-6">
+            <legend className="sr-only">MCP Servers</legend>
+            <h4 className="text-lg font-semibold mb-2" aria-hidden="true">MCP Servers</h4>
             <ul className="space-y-2">
               {mcpServers.map((server, index) => (
                 <li key={index} className="flex justify-between items-center p-2 bg-base-200 rounded">
@@ -329,9 +333,9 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                 </li>
               ))}
             </ul>
-          </div>
           
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 mt-2">
             <Input
               placeholder="Server Name"
               value={newMcpServer.name}
@@ -356,10 +360,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               Add
             </Button>
           </div>
+          </fieldset>
           
           {/* MCP Guard Section */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">MCP Tool Usage Guard</h4>
+          <fieldset className="mt-6">
+            <legend className="sr-only">MCP Tool Usage Guard</legend>
+            <h4 className="text-lg font-semibold mb-2" aria-hidden="true">MCP Tool Usage Guard</h4>
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text">Enable MCP Tool Usage Guard</span>
@@ -404,8 +410,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                 )}
               </div>
             )}
-          </div>
-        </div>
+          </fieldset>
+        </Card.Body>
     </Card>
   );
 };
