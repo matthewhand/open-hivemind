@@ -386,11 +386,12 @@ const Dashboard: React.FC = () => {
             </div>
 
             {bots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
-                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <section aria-labelledby="empty-agents-title" className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
+                <h3 id="empty-agents-title" className="sr-only">No agents found</h3>
+                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4" aria-hidden="true">
                   <BotIcon className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold mb-1">No agents yet</h3>
+                <div className="text-lg font-bold mb-1">No agents yet</div>
                 <p className="text-sm text-base-content/60 mb-5 max-w-sm">
                   Create your first bot to start seeing it here.
                 </p>
@@ -399,39 +400,40 @@ const Dashboard: React.FC = () => {
                   className="btn btn-primary btn-sm gap-2"
                   aria-label="Create a bot"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" aria-hidden="true" />
                   Create a bot
                 </Link>
-              </div>
+              </section>
             ) : (
               <>
                 {/* Bot Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   {bots.map((bot, botIdx) => (
-                    <DashboardBotCard
-                      key={bot.id ?? `${bot.name}-${botIdx}`}
-                      bot={bot}
-                      botStatusData={
-                        botStatusMap.get(bot.id) ??
-                        (bot.status
-                          ? {
-                              name: bot.name,
-                              provider: bot.provider ?? bot.messageProvider ?? '',
-                              llmProvider: bot.llmProvider ?? '',
-                              status: bot.status,
-                              connected: bot.connected,
-                              messageCount: bot.messageCount,
-                              errorCount: bot.errorCount,
-                            }
-                          : undefined)
-                      }
-                      rating={botRatings[bot.name] || 0}
-                      onRatingChange={handleRatingChange}
-                      getProviderIcon={getProviderIcon}
-                      getStatusColor={getStatusColor}
-                    />
+                    <li key={bot.id ?? `${bot.name}-${botIdx}`}>
+                      <DashboardBotCard
+                        bot={bot}
+                        botStatusData={
+                          botStatusMap.get(bot.id) ??
+                          (bot.status
+                            ? {
+                                name: bot.name,
+                                provider: bot.provider ?? bot.messageProvider ?? '',
+                                llmProvider: bot.llmProvider ?? '',
+                                status: bot.status,
+                                connected: bot.connected,
+                                messageCount: bot.messageCount,
+                                errorCount: bot.errorCount,
+                              }
+                            : undefined)
+                        }
+                        rating={botRatings[bot.name] || 0}
+                        onRatingChange={handleRatingChange}
+                        getProviderIcon={getProviderIcon}
+                        getStatusColor={getStatusColor}
+                      />
+                    </li>
                   ))}
-                </div>
+                </ul>
 
                 <div className="mb-8">
                   <h3 className="text-xl font-bold mb-4">Management Grid</h3>

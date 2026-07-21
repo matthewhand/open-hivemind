@@ -33,24 +33,24 @@ interface DiagnosticModalProps {
 }
 
 const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpen, onClose }) => {
-  const [loading, setLoading] = useState(false);
+  const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const runDiagnostic = async () => {
-    setLoading(true);
+    setFetchState('loading');
     setError(null);
     try {
       const response: any = await apiService.get(`/api/bots/${botId}/diagnose`);
       if (response.success) {
         setResults(response.data);
+        setFetchState('success');
       } else {
         throw new Error(response.message || 'Diagnostic failed');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
+      setFetchState('error');
     }
   };
 
@@ -80,27 +80,27 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         role="region"
         aria-label="Diagnostic results"
         aria-live="polite"
-        aria-busy={loading}
+        aria-busy={fetchState === 'loading'}
       >
-        {loading && !results ? (
+        {fetchState === 'loading' && !results ? (
           <div className="py-12 text-center space-y-4" role="status">
              <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
-        ) : error ? (
+        ) : fetchState === 'error' ? (
           <div className="alert alert-error" role="alert">
              <XCircle className="w-6 h-6" />
              <span>{error}</span>
              <button
                onClick={runDiagnostic}
                className="btn btn-xs btn-ghost"
-               disabled={loading}
+               disabled={fetchState === 'loading'}
                aria-label="Retry diagnostic"
              >
-                {loading ? 'Retrying...' : 'Retry'}
+                {fetchState === 'loading' ? 'Retrying...' : 'Retry'}
              </button>
           </div>
-        ) : results ? (
+        ) : fetchState === 'success' && results ? (
           <div className="space-y-6 py-2">
              <ul className="timeline timeline-vertical">
                 <li>
@@ -148,9 +148,9 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>
                 <div className="flex gap-2">
                    <button onClick={onClose} className="btn btn-sm btn-ghost" aria-label="Close modal">Close</button>
-                   <button onClick={runDiagnostic} className="btn btn-sm btn-primary gap-2" disabled={loading}>
-                      <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                      {loading ? 'Testing...' : 'Run Again'}
+                   <button onClick={runDiagnostic} className="btn btn-sm btn-primary gap-2" disabled={fetchState === 'loading'}>
+                      <Activity className={`w-4 h-4 ${fetchState === 'loading' ? 'animate-spin' : ''}`} />
+                      {fetchState === 'loading' ? 'Testing...' : 'Run Again'}
                    </button>
                 </div>
              </div>
