@@ -172,7 +172,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
         )}
         
-        <div className="mt-4 space-y-4">
+        <fieldset className="mt-4 space-y-4">
+          <legend className="sr-only">Agent Configuration Settings</legend>
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">LLM Provider</span>
@@ -309,8 +310,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
           
           {/* MCP Servers Section */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">MCP Servers</h4>
+          <fieldset className="mt-6 border border-base-300 rounded p-4">
+            <legend className="text-lg font-semibold px-2 mb-2">MCP Servers</legend>
             <ul className="space-y-2">
               {mcpServers.map((server, index) => (
                 <li key={index} className="flex justify-between items-center p-2 bg-base-200 rounded">
@@ -329,37 +330,37 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                 </li>
               ))}
             </ul>
-          </div>
           
-          <div className="flex gap-2">
-            <Input
-              placeholder="Server Name"
-              value={newMcpServer.name}
-              onChange={(e) => setNewMcpServer({...newMcpServer, name: e.target.value})}
-              size="sm"
-              className="flex-1"
-            />
-            <Input
-              placeholder="Server URL"
-              value={newMcpServer.serverUrl}
-              onChange={(e) => setNewMcpServer({...newMcpServer, serverUrl: e.target.value})}
-              size="sm"
-              className="flex-1"
-            />
-            <Button
-              variant="secondary" className="btn-outline"
-              startIcon={<Plus className="w-4 h-4" />}
-              onClick={handleAddMcpServer}
-              disabled={!newMcpServer.name || !newMcpServer.serverUrl}
-              size="sm"
-            >
-              Add
-            </Button>
-          </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Server Name"
+                value={newMcpServer.name}
+                onChange={(e) => setNewMcpServer({...newMcpServer, name: e.target.value})}
+                size="sm"
+                className="flex-1"
+              />
+              <Input
+                placeholder="Server URL"
+                value={newMcpServer.serverUrl}
+                onChange={(e) => setNewMcpServer({...newMcpServer, serverUrl: e.target.value})}
+                size="sm"
+                className="flex-1"
+              />
+              <Button
+                variant="secondary" className="btn-outline"
+                startIcon={<Plus className="w-4 h-4" />}
+                onClick={handleAddMcpServer}
+                disabled={!newMcpServer.name || !newMcpServer.serverUrl}
+                size="sm"
+              >
+                Add
+              </Button>
+            </div>
+          </fieldset>
           
           {/* MCP Guard Section */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">MCP Tool Usage Guard</h4>
+          <fieldset className="mt-6 border border-base-300 rounded p-4">
+            <legend className="text-lg font-semibold px-2 mb-2">MCP Tool Usage Guard</legend>
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text">Enable MCP Tool Usage Guard</span>
@@ -404,8 +405,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                 )}
               </div>
             )}
-          </div>
-        </div>
+          </fieldset>
+        </fieldset>
     </Card>
   );
 };

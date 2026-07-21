@@ -267,6 +267,9 @@ const DataTable = <T extends Record<string, any>>({
                       : 'btn-ghost'
             }`}
             onClick={e => {
+              // e.stopPropagation() is explicitly not removed yet because it needs to be tested to make sure removing it
+              // doesn't cause any bubbling up issues that open rows. However, we also have to make sure we don't cause the row open issues
+              // that block buttons. Instead of e.stopPropagation, we pass the click.
               e.stopPropagation();
               action.onClick(record, index);
             }}
@@ -525,7 +528,7 @@ const DataTable = <T extends Record<string, any>>({
 
                 {/* Actions as button group */}
                 {actions && actions.length > 0 && (
-                  <div className="card-actions justify-end mt-2 pt-2 border-t border-base-200" onClick={e => e.stopPropagation()}>
+                  <div className="card-actions justify-end mt-2 pt-2 border-t border-base-200">
                     {renderActions(row, idx, true)}
                   </div>
                 )}
@@ -632,6 +635,7 @@ const DataTable = <T extends Record<string, any>>({
                         className="checkbox checkbox-sm"
                         checked={selectedRows.has((currentPage - 1) * pageSize + index)}
                         onChange={(e) => {
+                          // Allow stopping propagation here since checkboxes within rows should not trigger row clicks
                           e.stopPropagation();
                           handleSelectRow(index, e.target.checked);
                         }}
