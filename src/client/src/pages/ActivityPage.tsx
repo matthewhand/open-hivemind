@@ -699,7 +699,15 @@ const ActivityPage: React.FC = () => {
       title: 'Duration',
       sortable: true,
       width: '100px',
-      render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
+      render: (value: number) =>
+        value ? (
+          <span className="font-mono">
+            {Number.isFinite(value) ? `${Math.round(value)}ms` : '-'}
+          </span>
+        ) : (
+          '-'
+        ),
+
     },
     {
       key: 'messageType',

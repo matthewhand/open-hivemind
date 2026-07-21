@@ -168,6 +168,16 @@ const MarketplacePage: React.FC = () => {
         description="Discover and install community packages for your bots."
         icon={StoreIcon}
         gradient="primary"
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => setInstallModalOpen(true)}
+            aria-label="Install from URL"
+          >
+            <GitHubIcon className="w-4 h-4 mr-2" />
+            Install from URL
+          </Button>
+        }
       />
 
       {/* Alert Messages */}

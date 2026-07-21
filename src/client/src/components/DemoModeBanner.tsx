@@ -23,7 +23,14 @@ const DemoModeBanner: React.FC = () => {
     useEffect(() => {
         const checkDemoMode = async () => {
             try {
-                const data = await apiService.get('/api/demo/status') as DemoStatus;
+                const res = await apiService.get('/api/demo/status') as
+                    | DemoStatus
+                    | { success?: boolean; data?: DemoStatus };
+                // Unwrap ApiResponse envelope when present.
+                const data =
+                    res && typeof res === 'object' && 'data' in res && (res as { data?: DemoStatus }).data
+                        ? (res as { data: DemoStatus }).data
+                        : (res as DemoStatus);
                 setDemoStatus(data);
             } catch (error) {
                 console.debug('Could not check demo mode status:', error);
@@ -44,10 +51,14 @@ const DemoModeBanner: React.FC = () => {
     }
 
     return (
-        <div className="bg-primary text-primary-content px-4 py-3 relative">
-            <div className="container mx-auto flex items-center justify-between">
+        <div
+            className="bg-primary text-primary-content px-4 py-3 relative"
+            data-testid="demo-mode-banner"
+            role="status"
+        >
+            <div className="container mx-auto flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
-                    <span className="text-2xl">🎭</span>
+                    <span className="text-2xl" aria-hidden="true">🎭</span>
                     <div>
                         <span className="font-semibold">Demo Mode Active</span>
                         <span className="ml-2 opacity-80">
@@ -56,8 +67,8 @@ const DemoModeBanner: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                    <div className="text-sm opacity-80">
+                <div className="flex items-center space-x-3">
+                    <div className="text-sm opacity-80 hidden sm:block">
                         <span className="mr-3">🤖 {demoStatus.botCount} Demo Bots</span>
                         <span className="mr-3">💬 {demoStatus.conversationCount} Conversations</span>
                         {demoStatus.isSimulationRunning && (
@@ -67,6 +78,13 @@ const DemoModeBanner: React.FC = () => {
                             </span>
                         )}
                     </div>
+
+                    <a
+                        href="/onboarding"
+                        className="btn btn-sm btn-secondary text-secondary-content font-semibold"
+                    >
+                        Get Started
+                    </a>
 
                     <button
                         onClick={() => setIsDismissed(true)}
@@ -87,7 +105,7 @@ const DemoModeBanner: React.FC = () => {
                 {demoStatus.isSimulationRunning && (
                     <span className="ml-4">
                         🎯 Check the{' '}
-                        <a href="/monitoring" className="underline hover:opacity-100">
+                        <a href="/admin/overview?tab=monitoring" className="underline hover:opacity-100">
                             Monitoring Dashboard
                         </a>
                         {' '}to see live simulated activity!

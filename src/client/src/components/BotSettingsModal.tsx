@@ -7,7 +7,7 @@ import Avatar from './DaisyUI/Avatar';
 import Button from './DaisyUI/Button';
 import Divider from './DaisyUI/Divider';
 import Dropdown from './DaisyUI/Dropdown';
-import Modal from './DaisyUI/Modal';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
@@ -67,6 +67,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     const { hasChanges, diff, setOriginalConfig } = useConfigDiff(botConfig);
     const [showDiffConfirm, setShowDiffConfirm] = useState(false);
     const [pendingChange, setPendingChange] = useState<{ key: string; value: any } | null>(null);
+    const [showCloneConfirm, setShowCloneConfirm] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -105,6 +106,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     return (
+      <>
         <Modal isOpen={isOpen} onClose={onClose} title={bot.name} size="xl" showCloseButton actions={[
             { label: 'Close', onClick: onClose, variant: 'ghost' },
         ]}>
@@ -301,7 +303,13 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <Eye className="w-4 h-4" /> View Logs & Details
                             </Button>
 
-                            <Button variant="primary" buttonStyle="outline" className="w-full justify-start gap-3" onClick={() => onClone(bot)}>
+                            <Button
+                                variant="primary"
+                                buttonStyle="outline"
+                                className="w-full justify-start gap-3"
+                                onClick={() => setShowCloneConfirm(true)}
+                                title="Duplicate Bot"
+                            >
                                 <Copy className="w-4 h-4" /> Clone Configuration
                             </Button>
 
@@ -351,6 +359,21 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                     onCancel={() => { setShowDiffConfirm(false); setPendingChange(null); }}
                     title="Confirm Configuration Change"
                 />
+
         </Modal>
+
+        <ConfirmModal
+            isOpen={showCloneConfirm}
+            onClose={() => setShowCloneConfirm(false)}
+            onConfirm={() => {
+                setShowCloneConfirm(false);
+                onClone(bot);
+            }}
+            title="Clone Bot"
+            message={`Create a duplicate of "${bot.name}" named "${bot.name}-copy"?`}
+            confirmText="Duplicate Bot"
+            confirmVariant="primary"
+        />
+      </>
     );
 };

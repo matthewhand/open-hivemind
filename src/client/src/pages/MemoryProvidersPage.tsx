@@ -129,7 +129,13 @@ const MemoryProvidersPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await apiService.get('/api/config/memory-profiles');
-      setProfiles((res as any).memory || []);
+      // GET returns ApiResponse envelope: { success, data: { memory: [...] } }.
+      // Older callers expected a bare { memory } payload — accept both.
+      const payload = (res as { data?: { memory?: unknown[] }; memory?: unknown[] })?.data ?? res;
+      const list =
+        (payload as { memory?: unknown[] })?.memory ??
+        (Array.isArray(payload) ? payload : []);
+      setProfiles(Array.isArray(list) ? (list as typeof profiles) : []);
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : String(err)) || 'Failed to load memory profiles');
     } finally {
