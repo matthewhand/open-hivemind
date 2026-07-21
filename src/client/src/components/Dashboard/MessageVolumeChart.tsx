@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { MessageSquare } from 'lucide-react';
+import EmptyState from '../DaisyUI/EmptyState';
 import Card from '../DaisyUI/Card';
 import { useMetrics } from '../../hooks/useMetrics';
 
@@ -43,11 +44,14 @@ const MessageVolumeChart: React.FC = () => {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-[300px] flex-col items-center justify-center gap-3 text-center">
-            <MessageSquare className="h-10 w-10 text-base-content/20" aria-hidden="true" />
-            <p className="text-sm text-base-content/60 max-w-xs">
-              No messages recorded yet — volume appears once bots start chatting.
-            </p>
+          <div className="flex h-[300px] items-center justify-center">
+            <EmptyState
+              icon={MessageSquare}
+              title="No messages yet"
+              description="Volume appears once bots start chatting."
+              variant="noData"
+              className="py-8 px-4 w-full h-full flex flex-col justify-center"
+            />
           </div>
         )}
       </Card.Body>

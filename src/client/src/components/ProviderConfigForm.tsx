@@ -35,7 +35,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [testState, setTestState] = useState<'idle' | 'testing' | 'loadingAvatar' | 'success' | 'error'>('idle');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [healthStatus, setHealthStatus] = useState<Record<string, boolean | null>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -177,7 +177,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     // Create new AbortController for this test
     const controller = new AbortController();
     setAbortController(controller);
-    setIsLoading(true);
+    setTestState('testing');
     setTestResult(null);
 
     try {
@@ -187,6 +187,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           success,
           message: success ? 'Connection successful!' : 'Connection failed',
         });
+        setTestState(success ? 'success' : 'error');
       }
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -194,11 +195,13 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           success: false,
           message: error instanceof Error ? error.message : 'Connection test failed',
         });
+        setTestState('error');
       }
     } finally {
       if (!controller.signal.aborted) {
-        setIsLoading(false);
         setAbortController(null);
+        // We do NOT set state back to idle here if it's success/error
+        // so the UI can reflect the terminal state.
       }
     }
   };
@@ -207,7 +210,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     if (abortController) {
       abortController.abort();
       setAbortController(null);
-      setIsLoading(false);
+      setTestState('idle');
       setTestResult({
         success: false,
         message: 'Connection test cancelled',
@@ -218,19 +221,19 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoading(true);
+    setTestState('loadingAvatar');
     setAvatarUrl(null);
 
     try {
       const url = await onAvatarLoad(config);
       setAvatarUrl(url);
+      setTestState('success');
     } catch (error) {
       setTestResult({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
-    } finally {
-      setIsLoading(false);
+      setTestState('error');
     }
   };
 
@@ -585,12 +588,12 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             <Button
               variant="primary"
               onClick={handleTestConnection}
-              loading={isLoading && !abortController}
-              disabled={isLoading && !abortController}
+              loading={testState === 'testing' || testState === 'loadingAvatar'}
+              disabled={testState === 'testing' || testState === 'loadingAvatar'}
             >
               Test Connection
             </Button>
-            {isLoading && abortController && (
+            {(testState === 'testing' || testState === 'loadingAvatar') && abortController && (
               <Button
                 variant="ghost"
                 onClick={handleCancelTest}
@@ -605,8 +608,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Button
             variant="secondary"
             onClick={handleLoadAvatar}
-            loading={isLoading && !abortController}
-            disabled={isLoading && !abortController}
+            loading={testState === 'testing' || testState === 'loadingAvatar'}
+            disabled={testState === 'testing' || testState === 'loadingAvatar'}
           >
             Load Avatar
           </Button>
@@ -620,6 +623,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {testResult && (
         <Alert
           status={testResult.success ? 'success' : 'error'}
+          aria-live="polite"
           message={testResult.message}
         />
       )}

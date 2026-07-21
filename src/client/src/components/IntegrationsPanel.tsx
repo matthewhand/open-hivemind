@@ -481,12 +481,17 @@ const IntegrationsPanel: React.FC = () => {
               })}
 
               {!advancedMode && (
-                <section aria-labelledby="default-llm-empty-state" className="col-span-full text-center py-2">
-                  <h3 id="default-llm-empty-state" className="sr-only">No Default LLMs</h3>
-                  <Button variant="ghost" size="xs" onClick={() => (window as any).location.href = '/admin/settings'} className="text-[10px] opacity-50 hover:opacity-100">
-                    <ExternalLink className="w-3 h-3 mr-1" /> Enable "Advanced Mode" for more options
-                  </Button>
-                </section>
+                <div className="col-span-full" aria-live="polite">
+                  <EmptyState
+                    icon={ExternalLink}
+                    title="No Default LLMs"
+                    description="Enable 'Advanced Mode' for more options"
+                    variant="noData"
+                    actionLabel="Advanced Settings"
+                    onAction={() => navigate('/admin/settings')}
+                    className="py-4 px-2"
+                  />
+                </div>
               )}
             </div>
           </Collapse>
