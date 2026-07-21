@@ -5,9 +5,13 @@ export const slackProviderSchema: ProviderConfigSchema = {
   type: 'message',
   providerType: 'slack',
   displayName: 'Slack',
-  description: 'Connect to Slack workspaces with your app',
+  description:
+    'Connect to Slack workspaces (messages, threads, typing). Reaction add/send is not supported.',
   icon: '🔷',
   color: '#4A154B',
+  maturity: 'stable',
+  notes:
+    'History may include reaction metadata for context, but the bot cannot add reactions and reaction_added events are not handled.',
   defaultConfig: {
     socketMode: true,
   },

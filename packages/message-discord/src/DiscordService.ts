@@ -46,7 +46,6 @@ export class DiscordService extends EventEmitter implements IMessengerService {
   public botManager: DiscordBotManager;
   private messageSender: DiscordMessageSender;
   private eventHandler: DiscordEventHandler;
-  private voiceManager: any;
   private configCache = new Map<string, any>();
   private lastConfigCheck = 0;
   private readonly CONFIG_CACHE_TTL = 60000; // 1 minute
@@ -155,9 +154,9 @@ export class DiscordService extends EventEmitter implements IMessengerService {
       return;
     }
 
-    // Initialize voice manager after bots are ready
-    const { VoiceChannelManager } = require('./voice/voiceChannelManager');
-    this.voiceManager = new VoiceChannelManager(this.botManager.getClient(0));
+    // Voice join/leave is intentionally unsupported (VoiceChannelManager is a no-op
+    // stub). Do not construct a voice manager at startup — that would imply the
+    // capability is live. Public voice methods throw instead of faking success.
 
     // Set up interaction handler for slash commands
     this.setInteractionHandler();
@@ -576,26 +575,31 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     return this.botManager.getBotByName(name);
   }
 
+  /**
+   * Voice channel join is intentionally unsupported.
+   * Throws so callers never observe silent fake success from the no-op stub.
+   * @see packages/message-discord/src/voice/voiceChannelManager.ts
+   */
   public async joinVoiceChannel(channelId: string): Promise<void> {
-    if (!this.voiceManager) {
-      const { VoiceChannelManager } = require('./voice/voiceChannelManager');
-      this.voiceManager = new VoiceChannelManager(this.getClient());
-    }
-    await this.voiceManager.joinChannel(channelId, true);
-    log(`Joined voice channel ${channelId} with full voice capabilities`);
+    throw new Error(
+      `Discord voice join is not supported (channelId=${channelId}). ` +
+        'VoiceChannelManager is an intentional no-op stub; end-to-end voice is not a current capability.'
+    );
   }
 
+  /**
+   * Voice channel leave is intentionally unsupported (see joinVoiceChannel).
+   */
   public async leaveVoiceChannel(channelId: string): Promise<void> {
-    if (!this.voiceManager) {
-      const { ConfigError } = this.deps.errorTypes;
-      throw new ConfigError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT');
-    }
-    this.voiceManager.leaveChannel(channelId);
-    log(`Left voice channel ${channelId}`);
+    throw new Error(
+      `Discord voice leave is not supported (channelId=${channelId}). ` +
+        'VoiceChannelManager is an intentional no-op stub; end-to-end voice is not a current capability.'
+    );
   }
 
+  /** Always empty — voice join is unsupported, so no active voice channels exist. */
   public getVoiceChannels(): string[] {
-    return this.voiceManager?.getActiveChannels() || [];
+    return [];
   }
 
   public getDelegatedServices(): Array<{

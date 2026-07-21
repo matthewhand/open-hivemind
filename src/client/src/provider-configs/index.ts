@@ -9,6 +9,7 @@ import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';
 import { anthropicProviderSchema } from './schemas/anthropic';
 import { telegramProviderSchema } from './schemas/telegram';
+import { webhookProviderSchema } from './schemas/webhook';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
 import { mattermostProviderSchema } from './schemas/mattermost';
@@ -27,6 +28,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   slack: slackProviderSchema,
   telegram: telegramProviderSchema,
   mattermost: mattermostProviderSchema,
+  webhook: webhookProviderSchema,
 
   // LLM providers
   openai: openAIProviderSchema,

@@ -5,9 +5,13 @@ export const telegramProviderSchema: ProviderConfigSchema = {
   type: 'message',
   providerType: 'telegram',
   displayName: 'Telegram',
-  description: 'Connect to Telegram with your bot',
+  description:
+    'Connect to Telegram (send + long-poll receive). Channel history is not available via Bot API.',
   icon: '✈️',
   color: '#0088CC',
+  maturity: 'stable',
+  notes:
+    'Incoming messages use getUpdates long-polling. getMessages/history always returns empty (Telegram Bot API limitation).',
   defaultConfig: {
     parseMode: 'HTML',
   },

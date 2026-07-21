@@ -49,9 +49,11 @@ export const create = createDiscordService;
 
 export const manifest: PluginManifest = {
   displayName: 'Discord',
-  description: 'Connect your bots to Discord servers',
+  description:
+    'Connect your bots to Discord text channels (voice join is not supported)',
   type: 'message',
   minVersion: '1.0.0',
+  maturity: 'stable',
 };
 
 /**

@@ -71,6 +71,11 @@ export interface PluginManifest {
   minVersion?: string;
   /** Provider type — derivable from package name prefix but explicit here for safety */
   type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
+  /**
+   * Operator-facing maturity. Experimental/beta providers should not be
+   * advertised as fully production-ready in UI copy.
+   */
+  maturity?: 'stable' | 'beta' | 'experimental';
 }
 
 export interface PluginModule {

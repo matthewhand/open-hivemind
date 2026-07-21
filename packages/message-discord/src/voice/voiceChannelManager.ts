@@ -3,10 +3,15 @@ import Debug from 'debug';
 const debug = Debug('app:discord:voiceManager');
 
 /**
- * Stub: VoiceChannelManager
- * The original voice module sources were removed. This stub exists so that
- * DiscordService.ts can still `require('./voice/voiceChannelManager')` without
- * crashing at import time.  All methods are no-ops.
+ * Unsupported: VoiceChannelManager
+ *
+ * The original Discord voice module sources were removed. This class remains only
+ * so legacy imports do not crash at load time. **All methods are no-ops** and
+ * DiscordService public voice APIs throw rather than reporting fake success.
+ *
+ * Do not wire this into product features or UI until a real @discordjs/voice
+ * join path is restored. Whisper STT (`speechToText.ts`) is a library helper
+ * only and is not reachable without a working join.
  */
 export class VoiceChannelManager {
   private client: any;
@@ -14,17 +19,17 @@ export class VoiceChannelManager {
 
   constructor(client: any) {
     this.client = client;
-    debug('VoiceChannelManager stub initialized');
+    debug('VoiceChannelManager unsupported stub initialized (no real voice join)');
   }
 
   async joinChannel(channelId: string, _autoListen = true): Promise<any> {
-    debug(`joinChannel stub called for ${channelId}`);
+    debug(`joinChannel no-op for ${channelId} — voice join is unsupported`);
     return null;
   }
 
   async leaveChannel(channelId: string): Promise<void> {
     this.connections.delete(channelId);
-    debug(`leaveChannel stub called for ${channelId}`);
+    debug(`leaveChannel no-op for ${channelId} — voice leave is unsupported`);
   }
 
   isConnected(channelId: string): boolean {
@@ -37,6 +42,6 @@ export class VoiceChannelManager {
 
   async disconnectAll(): Promise<void> {
     this.connections.clear();
-    debug('disconnectAll stub called');
+    debug('disconnectAll no-op — voice is unsupported');
   }
 }

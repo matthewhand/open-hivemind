@@ -42,7 +42,9 @@ export function create(_config?: any): any {
 
 export const manifest: PluginManifest = {
   displayName: 'Slack',
-  description: 'Connect your bots to Slack workspaces',
+  description:
+    'Connect your bots to Slack workspaces (reaction add/send is not supported)',
   type: 'message',
   minVersion: '1.0.0',
+  maturity: 'stable',
 };

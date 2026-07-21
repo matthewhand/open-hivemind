@@ -23,6 +23,13 @@ export interface ProviderConfigSchema {
   color: string;
   fields: ProviderConfigField[];
   defaultConfig?: Record<string, any>;
+  /**
+   * Operator-facing maturity for honest UI labeling.
+   * Experimental/beta should not be presented as fully production-ready.
+   */
+  maturity?: 'stable' | 'beta' | 'experimental';
+  /** Capability caveats shown in config UI (what works / does not). */
+  notes?: string;
 }
 
 export interface ProviderConfigField {

@@ -1,5 +1,5 @@
 /**
- * Speech-to-text for Discord voice channels.
+ * Speech-to-text helper for Discord voice audio files.
  *
  * Transcribes a WAV/audio file to text using an OpenAI-compatible
  * audio transcription endpoint (Whisper). The implementation is
@@ -7,12 +7,16 @@
  * (Node 18+) so the `message-discord` package does not need to pull in
  * the heavy OpenAI SDK or any local speech models.
  *
+ * **End-to-end voice is not a product capability.** Voice channel join is an
+ * intentional no-op (`voiceChannelManager.ts`); DiscordService public voice
+ * methods throw. This helper is only useful if a caller supplies an audio file
+ * by another path (tests, future join wiring).
+ *
  * Behavior is intentionally fail-safe: if no API key is configured, or
  * the audio file is missing/empty, or the request fails for any reason,
  * the function resolves to an empty string. Callers
  * (e.g. VoiceCommandHandler) already treat `''` as "no transcription"
- * and skip further processing, so this preserves prior stub behavior
- * when STT is not configured.
+ * and skip further processing.
  *
  * Configuration (environment variables):
  *   - OPENAI_API_KEY            API key for the transcription endpoint (required to enable STT).

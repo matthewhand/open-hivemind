@@ -16,9 +16,11 @@ export const create = (config: any, dependencies: IServiceDependencies): IMessen
 
 export const manifest = {
   displayName: 'Webhook',
-  description: 'Connect your bots via HTTP Webhooks',
-  type: 'message',
+  description:
+    'HTTP webhook messenger: real outbound POST + inbound ingress (no channel history)',
+  type: 'message' as const,
   minVersion: '1.0.0',
+  maturity: 'beta' as const,
 };
 
 export default create;

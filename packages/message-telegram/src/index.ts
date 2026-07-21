@@ -27,7 +27,9 @@ export function create(_config?: any): any {
 
 export const manifest: PluginManifest = {
   displayName: 'Telegram',
-  description: 'Connect your bots to Telegram via the Bot API (long-polling)',
+  description:
+    'Connect your bots to Telegram via the Bot API (send + long-poll receive; no history API)',
   type: 'message',
   minVersion: '1.0.0',
+  maturity: 'stable',
 };

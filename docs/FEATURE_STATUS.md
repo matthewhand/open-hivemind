@@ -4,7 +4,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 
 | Domain | ✅ Complete | 🟡 Partial | 🔲 Stub | 📋 Planned | ❌ Broken |
 |---|---|---|---|---|---|
-| **messaging** | 36 | 10 | 6 | 0 | 0 |
+| **messaging** | 40 | 8 | 5 | 0 | 0 |
 | **llm-providers** | 17 | 9 | 2 | 0 | 0 |
 | **memory** | 18 | 4 | 1 | 1 | 0 |
 | **mcp-tools** | 13 | 10 | 2 | 0 | 0 |
@@ -14,7 +14,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | **auth-security** | 18 | 7 | 2 | 3 | 0 |
 | **persistence** | 28 | 5 | 3 | 0 | 0 |
 | **webui-infra** | 22 | 3 | 2 | 0 | 0 |
-| **TOTAL** | **218** | **64** | **20** | **5** | **0** |
+| **TOTAL** | **222** | **62** | **19** | **5** | **0** |
 
 
 ## messaging
@@ -53,7 +53,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Reconnection manager (exponential backoff + health checks) | ✅ complete | src/providers/ReconnectionManager.ts implements state machine, exponential backoff with crypto jitter, maxRetries, periodic healthCheck that triggers onDisconnected; used by Discord/Telegram/Mattermost providers. |
 | Bot-to-bot / unsolicited message controls | ✅ complete | DiscordService.initialize (DiscordService.ts:163-191) reads MESSAGE_IGNORE_BOTS, MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED, MESSAGE_ONLY_WHEN_SPOKEN_TO, grace window and prints config banner; event handler enforces ignoreBots filter. |
 | Per-message WebSocket monitoring (message flow events) | ✅ complete | Discord sender/event handler, Slack messageIO/handler, Mattermost service all call webSocketService.recordMessageFlow for incoming/outgoing with provider/botName/contentLength/status. |
-| Discord: voice channel join/leave | 🟡 partial | DiscordService.joinVoiceChannel/leaveVoiceChannel (line 572-588) delegate to VoiceChannelManager, but packages/message-discord/src/voice/voiceChannelManager.ts is an explicit no-op stub ('original voice module sources were removed', joinChannel returns null). |
+| Discord: voice channel join/leave | 🔲 stub | VoiceChannelManager is an intentional no-op. DiscordService.joinVoiceChannel/leaveVoiceChannel now **throw** (no silent fake success / no "full voice capabilities" log). getVoiceChannels always []. DISCORD_VOICE_CHANNEL_ID is reserved with no runtime effect. Not advertised as a product capability in registry/UI. |
 | Slack: typing indicator (native RTM + gated placeholder) | ✅ complete | SlackService.sendTyping (line 698): when an RTM client is present it sends a real native typing event (rtmClient.sendTyping, line 710); when RTM is unavailable (Socket Mode/Web API) it falls back to a placeholder '_is typing..._' message (ISlackMessageIO.sendTypingPlaceholder) that is later updated/deleted. The fallback is gated by SLACK_FAKE_TYPING (disable with SLACK_FAKE_TYPING=false, line 715). |
 | Slack: interactive actions / modals / buttons | ✅ complete | SlackInteractiveHandler wired through SlackEventBus; generic dispatch — `block_actions`/`view_submission` payloads are routed by `action_id`/`callback_id` through a pattern registry (exact string or RegExp), and unmatched actions are acknowledged and forwarded as messages through the normal message-handler path so bots/LLMs respond. |
 | Slack: model activity / status | 🟡 partial | SlackService.setModelActivity (line 1020) sets users.profile status but only when SLACK_ENABLE_STATUS_UPDATES==='true' (off by default) and requires user-token scopes Slack bots usually lack. |
@@ -62,16 +62,17 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | Mattermost: multi-bot instances | ✅ complete | MattermostService maintains clients Map keyed by bot name (line 27) and getDelegatedServices (656); each bot client has its own WebSocket receive path, so multi-bot is fully send+receive capable. |
 | Mattermost: channel list / topic / owner | 🟡 partial | getChannels (line 632) and getChannelTopic (547) work via client.getChannels/getChannelInfo; getChannelOwnerId (608) always returns '' (commented: Mattermost doesn't track creators by default). |
 | Webhook: inbound ingress route (push -> messenger handler) | ✅ complete | src/webhook/routes/webhookRoutes.ts:152-180 adds an inbound-ingress path: the route detects messenger services implementing IInboundWebhookReceiver (handleIncomingWebhook, line 30-38) and forwards the request body + target channel to messageService.handleIncomingWebhook (line 171), returning the bot reply. WebhookService.handleIncomingWebhook (packages/message-webhook/src/WebhookService.ts) builds an IMessage from generic/Slack payloads and invokes the registered handler. |
-| Webhook: provider registration | 🟡 partial | src/providers/WebhookProvider.ts wraps the stub WebhookService for ProviderRegistry, so a registered webhook 'messenger' can be created but its send is a stub and it is not part of the main messenger load list. |
-| Telegram: status / health / reconnection / addBot | 🟡 partial | getStatus/healthCheck call getMe (lines 95,508); addBot/reload persist to messengers.json and wrap getMe checks in ReconnectionManager; but Telegram is not included in getMessengerProvider's loaded provider list (only discord/slack/mattermost), so not part of live messaging. |
+| Webhook: provider registration | ✅ complete | WebhookProvider + @hivemind/message-webhook loaded via getMessengerProvider when configured; included in MESSENGER_PACKAGES and client PROVIDER_SCHEMAS (maturity: beta). Outbound send is a real HTTP POST. |
+| Telegram: status / health / reconnection / addBot | ✅ complete | TelegramService long-poll + getMe identity; TelegramProvider status/health/addBot/reload; loaded by getMessengerProvider when MESSAGE_PROVIDER/messengers.json includes telegram. |
 | Channel routing / prioritization (scoreChannel) | 🟡 partial | DiscordMessageSender.sendMessageToChannel picks best channel via channelRouter.pickBestChannel when MESSAGE_CHANNEL_ROUTER_ENABLED (DiscordMessageSender.ts:122); Slack/Mattermost expose scoreChannel via ChannelRouter.computeScore but gate to 0 when flag off; feature is off by default and Slack/Matte |
-| Provider selection / multi-provider bootstrap | 🟡 partial | src/message/management/getMessengerProvider.ts loads message-{discord,slack,mattermost} via PluginLoader filtered by MESSAGE_PROVIDER; Telegram and Webhook providers exist but are NOT in the loaded set, defaulting to Slack when nothing configured. |
+| Provider selection / multi-provider bootstrap | 🟡 partial | getMessengerProvider loads message-{discord,slack,mattermost,telegram,webhook} via PluginLoader filtered by MESSAGE_PROVIDER / messengers.json. Still defaults to Slack when nothing is configured (historical behavior). |
 | Discord: slash-command/interaction handling | 🔲 stub | DiscordEventHandler.ts:152 attachInteractionListeners only matches 'speckit specify' and replies 'handler not available in decoupled mode'; no real command dispatch wired. |
-| Discord: voice speech-to-text | 🔲 stub | packages/message-discord/src/voice/speechToText.ts:4 returns '' always; transcribeAudio aliases the same stub. |
-| Slack: reactions handling | 🔲 stub | No reaction send/add API used; SlackMessage.sanitizeMessageData (line 243) and SlackMessageProcessor map reaction metadata for history context only — bot cannot add reactions and reaction_added events are not handled. |
+| Discord: voice speech-to-text | 🟡 partial | speechToText.ts implements real Whisper via OpenAI-compatible /audio/transcriptions when OPENAI_API_KEY is set. End-to-end voice is still unavailable because channel join is unsupported — STT is a library helper only (no production voice path). |
+| Slack: reactions handling | 🔲 stub | No reaction send/add API; history may map reaction metadata only. Not advertised in Slack registry/UI descriptions (reaction add/send explicitly called out as unsupported). reaction_added events are not handled. |
 | Mattermost: model activity status | 🔲 stub | MattermostService.setModelActivity (line 577) is a no-op (void params; return). |
-| Webhook: outgoing send (package WebhookService) | 🔲 stub | packages/message-webhook/src/WebhookService.ts:25 sendMessageToChannel returns `webhook-msg-${Date.now()}` with no HTTP POST; comment says 'This would typically involve an HTTP POST'. getMessagesFromChannel returns []. |
-| Telegram: receive messages / history | 🔲 stub | TelegramProvider.getMessages (line 377) returns [] with debug 'Telegram Bot API does not support message history retrieval'; no update/long-poll/webhook listener exists, so no incoming handling. |
+| Webhook: outgoing send (package WebhookService) | ✅ complete | WebhookService.sendMessageToChannel performs real http.post to resolved WEBHOOK_URL / per-bot webhook.url; throws if URL unset or non-2xx/timeout (no fake silent id). getMessagesFromChannel returns [] intentionally (push-based). |
+| Telegram: receive messages (long-poll) | ✅ complete | TelegramService + TelegramPoller long-poll getUpdates, dispatch to setMessageHandler; identity via getMe; multi-bot pollers. |
+| Telegram: channel history fetch | 🔲 stub | Bot API has no history endpoint; TelegramService.getMessagesFromChannel and TelegramProvider.getMessages intentionally return []. |
 | Mattermost: runtime addBot via provider | 🟡 partial | MattermostProvider.addBot (src/providers/MattermostProvider.ts:71) sets up a ReconnectionManager; reload() (166) re-calls service.initialize per instance. Receive now works via the WebSocket path, but the addBot connectFn/health-check wiring is still thinner than Discord's. |
 
 ## llm-providers

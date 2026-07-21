@@ -100,7 +100,9 @@ const discordConfig = convict({
     env: 'DISCORD_UNSOLICITED_CHANCE_MODIFIER',
   },
   DISCORD_VOICE_CHANNEL_ID: {
-    doc: 'Optional voice channel ID for voice interactions.',
+    doc:
+      'Reserved/legacy voice channel ID. Discord voice join is NOT supported ' +
+      '(VoiceChannelManager is a no-op stub). Setting this has no runtime effect.',
     format: String,
     default: '',
     env: 'DISCORD_VOICE_CHANNEL_ID',

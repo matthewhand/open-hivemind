@@ -9,12 +9,14 @@ import { WebhookService } from '../../packages/message-webhook/src/WebhookServic
 /**
  * WebhookProvider
  *
- * This class wraps the WebhookService to provide a common registration
- * point for the ProviderRegistry.
+ * Wraps WebhookService for ProviderRegistry. Outbound send performs a real
+ * HTTP POST (throws when WEBHOOK_URL is unset — never returns a fake id).
+ * Maturity: beta (push-based messenger; no history).
  */
 export default class WebhookProvider {
   public id = 'webhook';
   public type = 'messenger';
+  public maturity = 'beta' as const;
 
   public getConfig() {
     return {};

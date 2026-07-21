@@ -19,7 +19,13 @@ export interface BotInstance {
 export const BOT_STATUSES = ['active', 'inactive', 'error', 'starting', 'stopping', 'running', 'stopped', 'disabled'] as const;
 export type BotStatus = typeof BOT_STATUSES[number];
 
-export const MESSAGE_PROVIDER_TYPES = ['discord', 'slack', 'mattermost', 'webhook'] as const;
+export const MESSAGE_PROVIDER_TYPES = [
+  'discord',
+  'slack',
+  'mattermost',
+  'telegram',
+  'webhook',
+] as const;
 export type MessageProviderType = typeof MESSAGE_PROVIDER_TYPES[number];
 
 export const LLM_PROVIDER_TYPES = ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'] as const;
@@ -278,10 +284,22 @@ export const MESSAGE_PROVIDER_CONFIGS = {
       { name: 'teamId', label: 'Team ID', type: 'text', required: false },
     ],
   },
+  telegram: {
+    type: 'telegram' as MessageProviderType,
+    displayName: 'Telegram',
+    description:
+      'Telegram Bot API (send + long-poll receive; no channel history)',
+    icon: '✈️',
+    fields: [
+      { name: 'botToken', label: 'Bot Token', type: 'password', required: true },
+      { name: 'chatId', label: 'Default Chat ID', type: 'text', required: false },
+    ],
+  },
   webhook: {
     type: 'webhook' as MessageProviderType,
     displayName: 'Webhook',
-    description: 'Generic webhook integration',
+    description:
+      'HTTP webhook messenger (real outbound POST; beta; no channel history)',
     icon: '🔗',
     fields: [
       { name: 'url', label: 'Webhook URL', type: 'text', required: true },

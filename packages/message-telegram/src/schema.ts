@@ -12,6 +12,8 @@ export interface ProviderSchema {
   label: string;
   type: 'messenger';
   docsUrl?: string;
+  maturity?: 'stable' | 'beta' | 'experimental';
+  notes?: string;
   fields: {
     required: ProviderField[];
     optional: ProviderField[];
@@ -24,6 +26,9 @@ export const schema: ProviderSchema = {
   label: 'Telegram',
   type: 'messenger',
   docsUrl: 'https://core.telegram.org/bots/api',
+  maturity: 'stable',
+  notes:
+    'Send + long-poll receive via getUpdates. Bot API does not support channel history retrieval.',
   fields: {
     required: [
       {
