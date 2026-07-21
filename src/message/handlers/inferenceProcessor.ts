@@ -17,7 +17,7 @@ import type { MessageContext } from './types';
  */
 export async function processInference(ctx: MessageContext): Promise<boolean> {
   const channelId = ctx.message.getChannelId();
-  const userId = ctx.message.getAuthorId();
+  const _userId = ctx.message.getAuthorId();
   const botId = ctx.resolvedBotId || '';
 
   // Delays
@@ -108,10 +108,9 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     });
 
     // Smart mention instructions based on platform and user context
-    const userId = ctx.message.getAuthorId();
     const authorId = ctx.message.getAuthorId();
-    const mentionInstructions = userId
-      ? `MENTION SYNTAX: When addressing the user, use <@${userId}> format for proper Discord mentions. `
+    const mentionInstructions = _userId
+      ? `MENTION SYNTAX: When addressing the user, use <@${_userId}> format for proper Discord mentions. `
       : `USER ADDRESSING: When addressing the user, use their ID: ${authorId}. `;
 
     // System prompt
@@ -140,8 +139,8 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     // Quota check
     if (process.env.DISABLE_QUOTA !== 'true') {
       const quotaManager = getQuotaManager();
-      const quotaEntityId = userId || channelId;
-      const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
+      const quotaEntityId = _userId || channelId;
+      const quotaEntityType = _userId ? ('user' as const) : ('channel' as const);
       const quotaStatus = await quotaManager.checkQuota(quotaEntityId, quotaEntityType);
       if (!quotaStatus.allowed) {
         ctx.logger(
@@ -189,11 +188,11 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
             maxTokens: Number(ctx.botConfig.LLM_MAX_TOKENS || 150),
             temperature: Number(ctx.botConfig.LLM_TEMPERATURE || 0.7),
             channelId,
-            userId,
+            userId: _userId,
           },
           systemPrompt,
           toolContext: {
-            userId,
+            userId: _userId,
             channelId,
             messageProvider: String(ctx.botConfig.MESSAGE_PROVIDER || 'generic'),
           },
@@ -228,18 +227,22 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
       const maxThinkingTime = parseInt(process.env.MESSAGE_MAX_THINKING_TIME || '5000');
 
       // Calculate typing time (ms per word)
+      // eslint-disable-next-line no-restricted-properties
       const wordsPerMs = (minWpm + Math.random() * (maxWpm - minWpm)) / 60000;
       const typingTime = wordCount / wordsPerMs;
 
       // Add thinking time
+      // eslint-disable-next-line no-restricted-properties
       const thinkingTime = minThinkingTime + Math.random() * (maxThinkingTime - minThinkingTime);
       const totalDelay = thinkingTime + typingTime;
 
       // Cap at reasonable maximum and add 10% variation
+      // eslint-disable-next-line no-restricted-properties
       const cappedDelay = Math.min(totalDelay * (0.9 + Math.random() * 0.2), 120000);
 
       // Critical hit system - 5% chance for instant response
       const criticalHit =
+        // eslint-disable-next-line no-restricted-properties
         Math.random() < parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
 
       if (!criticalHit && cappedDelay > 1000) {
@@ -258,8 +261,8 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     if (process.env.DISABLE_QUOTA !== 'true' && llmResponse?.text) {
       try {
         const quotaManager = getQuotaManager();
-        const quotaEntityId = userId || channelId;
-        const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
+        const quotaEntityId = _userId || channelId;
+        const quotaEntityType = _userId ? ('user' as const) : ('channel' as const);
         const estimatedTokens =
           llmResponse.usage?.total_tokens ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
         await quotaManager.consumeTokens(quotaEntityId, quotaEntityType, estimatedTokens);
