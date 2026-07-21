@@ -38,13 +38,17 @@ export async function toolAugmentedCompletion(opts: {
   historyMessages: IMessage[];
   metadata: Record<string, unknown>;
   systemPrompt: string;
-  /** Extra context forwarded to tool execution for guard checks. */
+  /** Extra context forwarded to tool execution for guard checks + handoff. */
   toolContext?: {
     userId?: string;
     channelId?: string;
     messageProvider?: string;
     forumId?: string;
     forumOwnerId?: string;
+    sourceMessage?: IMessage;
+    history?: IMessage[];
+    transferHop?: number;
+    sourceBotConfig?: Record<string, unknown>;
   };
 }): Promise<string> {
   const {
@@ -105,6 +109,7 @@ export async function toolAugmentedCompletion(opts: {
     messages.push(assistantMessage);
 
     // Execute each tool call and feed results back.
+    let transferred = false;
     for (const toolCall of assistantMessage.tool_calls) {
       const result = await executeToolCall(toolManager, botName, toolCall, toolContext);
 
@@ -114,6 +119,24 @@ export async function toolAugmentedCompletion(opts: {
         name: toolCall.function.name,
         content: formatToolResultContent(result),
       });
+
+      // Successful handoff: stop the tool loop so this bot does not keep talking
+      // after the MessageBus has re-emitted the message for the target bot.
+      if (
+        result.success &&
+        toolCall.function.name === 'transfer_to_bot' &&
+        result.result &&
+        typeof result.result === 'object' &&
+        (result.result as { transferred?: boolean }).transferred === true
+      ) {
+        transferred = true;
+        break;
+      }
+    }
+
+    if (transferred) {
+      debug(`Bot "${botName}" completed transfer_to_bot — ending tool loop`);
+      return '';
     }
   }
 
@@ -233,6 +256,10 @@ async function executeToolCall(
     messageProvider?: string;
     forumId?: string;
     forumOwnerId?: string;
+    sourceMessage?: IMessage;
+    history?: IMessage[];
+    transferHop?: number;
+    sourceBotConfig?: Record<string, unknown>;
   }
 ): Promise<ToolResult> {
   const toolName = toolCall.function.name;

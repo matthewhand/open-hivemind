@@ -143,6 +143,14 @@ export class InferenceStage {
         userId: authorId,
         messageProvider: ctx.botConfig.MESSAGE_PROVIDER || ctx.platform,
         platform: ctx.platform,
+        // Required by transfer_to_bot for real MessageBus handoff.
+        sourceMessage: ctx.message,
+        transferHop:
+          typeof ctx.metadata?.transferHop === 'number'
+            ? ctx.metadata.transferHop
+            : typeof (ctx.metadata as any)?.handoff?.hop === 'number'
+              ? (ctx.metadata as any).handoff.hop
+              : 0,
       };
 
       const responseText = await this.llmInvoker.generateResponse(

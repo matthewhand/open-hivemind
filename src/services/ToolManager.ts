@@ -1,11 +1,17 @@
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
+import { MessageBus } from '@src/events/MessageBus';
 import { PendingActionManager } from '@src/managers/PendingActionManager';
 import { MCPService } from '@src/mcp/MCPService';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getMcpServerProfileByKey } from '@config/mcpServerProfiles';
 import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:ToolManager');
+
+/** Max handoff hops to prevent A→B→A infinite transfer loops. */
+const MAX_TRANSFER_HOPS = 3;
 
 /** Tool definition in a provider-agnostic format. */
 export interface ToolDefinition {
@@ -134,6 +140,12 @@ export class ToolManager {
       messageProvider?: string;
       forumId?: string;
       forumOwnerId?: string;
+      /** Original platform message — required for real handoff. */
+      sourceMessage?: IMessage;
+      history?: IMessage[];
+      /** Prior handoff hop count (prevents transfer loops). */
+      transferHop?: number;
+      sourceBotConfig?: Record<string, unknown>;
     }
   ): Promise<ToolResult> {
     const startTime = Date.now();
@@ -141,19 +153,9 @@ export class ToolManager {
     try {
       debug(`[${botName}] Executing tool "${toolName}" with args:`, args);
 
-      // Handle built-in swarm routing
+      // Handle built-in swarm routing via MessageBus re-emit to the target bot.
       if (toolName === 'transfer_to_bot') {
-        const targetBotName = args.targetBotName as string;
-
-        debug(`[${botName}] Initiating handoff to ${targetBotName}...`);
-
-        // In a full implementation, we'd reconstruct the IMessage and emit 'message:incoming'.
-        // For now, we return a success signal that the LLM adapter can interpret to end its turn.
-        return {
-          toolName,
-          success: true,
-          result: `Successfully transferred conversation to ${targetBotName}. You should now stop responding and let the other bot take over.`,
-        };
+        return this.executeTransferToBot(botName, args, context);
       }
 
       const mcpService = MCPService.getInstance();
@@ -293,6 +295,148 @@ export class ToolManager {
     }
 
     return null;
+  }
+
+  /**
+   * Real multi-bot handoff: validate target, release the current swarm claim,
+   * and re-emit `message:incoming` onto the MessageBus with the target bot's
+   * config so the pipeline processes the conversation under the new bot.
+   */
+  private executeTransferToBot(
+    botName: string,
+    args: Record<string, unknown>,
+    context?: {
+      userId?: string;
+      channelId?: string;
+      messageProvider?: string;
+      forumId?: string;
+      forumOwnerId?: string;
+      sourceMessage?: IMessage;
+      history?: IMessage[];
+      transferHop?: number;
+      sourceBotConfig?: Record<string, unknown>;
+    }
+  ): ToolResult {
+    const toolName = 'transfer_to_bot';
+    const targetBotName = typeof args.targetBotName === 'string' ? args.targetBotName.trim() : '';
+    const reason = typeof args.reason === 'string' ? args.reason : '';
+
+    if (!targetBotName) {
+      return {
+        toolName,
+        success: false,
+        error: 'transfer_to_bot requires a non-empty targetBotName',
+      };
+    }
+
+    if (targetBotName === botName) {
+      return {
+        toolName,
+        success: false,
+        error: `Cannot transfer to self ("${botName}")`,
+      };
+    }
+
+    const hop = (context?.transferHop ?? 0) + 1;
+    if (hop > MAX_TRANSFER_HOPS) {
+      return {
+        toolName,
+        success: false,
+        error: `Transfer hop limit (${MAX_TRANSFER_HOPS}) exceeded; refusing further handoffs`,
+      };
+    }
+
+    const sourceMessage = context?.sourceMessage;
+    if (!sourceMessage) {
+      return {
+        toolName,
+        success: false,
+        error:
+          'transfer_to_bot cannot hand off without the original message context (sourceMessage missing)',
+      };
+    }
+
+    const manager = BotConfigurationManager.getInstance();
+    const targetBot = manager.getBot(targetBotName);
+    if (!targetBot) {
+      const known = manager
+        .getAllBots()
+        .map((b) => b.name)
+        .filter(Boolean)
+        .slice(0, 20);
+      return {
+        toolName,
+        success: false,
+        error: `Target bot "${targetBotName}" not found. Known bots: ${known.join(', ') || '(none)'}`,
+      };
+    }
+
+    const targetConfig = { ...(targetBot as unknown as Record<string, unknown>) };
+    const history = context?.history ?? [];
+    const channelId =
+      context?.channelId ||
+      (typeof sourceMessage.getChannelId === 'function' ? sourceMessage.getChannelId() : '') ||
+      '';
+    const platform =
+      sourceMessage.platform ||
+      context?.messageProvider ||
+      String(targetConfig.MESSAGE_PROVIDER || targetConfig.messageProvider || 'unknown');
+
+    // Free the exclusive swarm claim so the target bot can re-claim the message.
+    try {
+      const messageId =
+        typeof sourceMessage.getMessageId === 'function' ? sourceMessage.getMessageId() : undefined;
+      if (messageId) {
+        SwarmCoordinator.getInstance().releaseClaim(messageId);
+        debug(
+          `[${botName}] Released swarm claim on %s for handoff to %s`,
+          messageId,
+          targetBotName
+        );
+      }
+    } catch (err) {
+      debug(`[${botName}] Failed to release swarm claim (continuing handoff): %O`, err);
+    }
+
+    const handoffMeta = {
+      handoff: {
+        from: botName,
+        to: targetBotName,
+        reason,
+        hop,
+        at: Date.now(),
+      },
+      transferHop: hop,
+    };
+
+    debug(
+      `[${botName}] Emitting message:incoming handoff to "%s" (hop=%d, reason=%s)`,
+      targetBotName,
+      hop,
+      reason || '(none)'
+    );
+
+    MessageBus.getInstance().emit('message:incoming', {
+      message: sourceMessage,
+      history,
+      botConfig: targetConfig,
+      botName: targetBotName,
+      platform,
+      channelId,
+      metadata: handoffMeta,
+    });
+
+    return {
+      toolName,
+      success: true,
+      result: {
+        transferred: true,
+        targetBotName,
+        reason,
+        hop,
+        message: `Successfully transferred conversation to ${targetBotName}. Stop responding and let the other bot take over.`,
+      },
+    };
   }
 
   // timeoutPromise replaced by withTimeout (AbortController-based) above.

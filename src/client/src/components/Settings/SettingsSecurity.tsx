@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
@@ -10,9 +10,7 @@ import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
-import Toggle from '../DaisyUI/Toggle';
-import FormField from '../DaisyUI/FormField';
-import { Shield, Plus, Trash2 } from 'lucide-react';
+import { Shield, Plus, Trash2, Info } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
@@ -22,47 +20,34 @@ import { useToast } from '../DaisyUI/ToastNotification';
 import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
+/**
+ * Only fields that are actually persisted and consumed by the server.
+ *
+ * CORS origins → `cors.origins` in user-config (read by src/server/corsOrigins.ts).
+ *
+ * Intentionally excluded (not global toggles / not persisted by this form):
+ *  - 2FA: per-user via /api/auth/2fa/* (TotpService)
+ *  - Account lockout: AUTH_MAX_LOGIN_ATTEMPTS / AUTH_LOCKOUT_DURATION_SECONDS env
+ *  - Session timeout/idle: SESSION_MAX_AGE / SESSION_IDLE_TIMEOUT env
+ *  - Rate limiting: RATE_LIMIT_* env + per-bot guard profiles
+ *  - Security headers: always on via setupMiddleware
+ *  - Audit logging / API key auth: not controlled by this form
+ */
 const securitySettingsSchema = z.object({
-  enableAuthentication: z.boolean(),
-  sessionTimeout: z.coerce.number().int().min(300, 'Must be at least 300 seconds').max(86400, 'Must be 86400 seconds or fewer'),
-  maxLoginAttempts: z.coerce.number().int().min(1, 'Must be at least 1').max(100, 'Must be 100 or fewer'),
-  lockoutDuration: z.coerce.number().int().min(60, 'Must be at least 60 seconds').max(86400, 'Must be 86400 seconds or fewer'),
-  enableTwoFactor: z.boolean(),
-  enableAuditLogging: z.boolean(),
-  enableRateLimit: z.boolean(),
-  rateLimitWindow: z.coerce.number().int().min(10, 'Must be at least 10 seconds').max(3600, 'Must be 3600 seconds or fewer'),
-  rateLimitMax: z.coerce.number().int().min(10, 'Must be at least 10').max(10000, 'Must be 10000 or fewer'),
-  enableCors: z.boolean(),
-  corsOrigins: z.array(z.object({ value: z.string() })),
-  enableSecurityHeaders: z.boolean(),
-  enableApiKeyAuth: z.boolean(),
+  corsOrigins: z.array(z.object({ value: z.string().min(1, 'Origin required') })),
 });
 
 type SecurityConfig = z.infer<typeof securitySettingsSchema>;
 
 const defaultValues: SecurityConfig = {
-  enableAuthentication: true,
-  sessionTimeout: 3600,
-  maxLoginAttempts: 5,
-  lockoutDuration: 900,
-  enableTwoFactor: false,
-  enableAuditLogging: true,
-  enableRateLimit: true,
-  rateLimitWindow: 60,
-  rateLimitMax: 100,
-  enableCors: true,
   corsOrigins: [{ value: 'http://localhost:3000' }],
-  enableSecurityHeaders: true,
-  enableApiKeyAuth: true,
 };
 
 const SettingsSecurity: React.FC = () => {
   const {
-    register,
     handleSubmit,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<SecurityConfig>({
     resolver: zodResolver(securitySettingsSchema),
@@ -84,29 +69,27 @@ const SettingsSecurity: React.FC = () => {
     (type, title, message) => { addToast({ type, title, message }); }
   );
 
-  const enableAuthentication = watch('enableAuthentication');
-  const enableRateLimit = watch('enableRateLimit');
-
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const data: any = await apiService.getGlobalConfig();
 
+      const userSettings = data._userSettings?.values || {};
       const config = data.config || {};
+      const rawOrigins =
+        userSettings['cors.origins'] ??
+        config.cors?.origins?.value ??
+        ['http://localhost:3000'];
+      const origins: string[] = Array.isArray(rawOrigins)
+        ? rawOrigins
+        : typeof rawOrigins === 'string'
+          ? rawOrigins.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : ['http://localhost:3000'];
+
       reset({
-        enableAuthentication: config.auth?.enabled?.value !== false,
-        sessionTimeout: 3600,
-        maxLoginAttempts: 5,
-        lockoutDuration: 900,
-        enableTwoFactor: false,
-        enableAuditLogging: true,
-        enableRateLimit: config.rateLimit?.enabled?.value !== false,
-        rateLimitMax: config.rateLimit?.maxRequests?.value || 100,
-        rateLimitWindow: config.rateLimit?.windowMs?.value ? config.rateLimit.windowMs.value / 1000 : 60,
-        enableCors: true,
-        corsOrigins: (config.cors?.origins?.value || ['http://localhost:3000']).map((o: string) => ({ value: o })),
-        enableSecurityHeaders: true,
-        enableApiKeyAuth: true,
+        corsOrigins: (origins.length > 0 ? origins : ['http://localhost:3000']).map(
+          (o: string) => ({ value: o })
+        ),
       });
     } catch (error) {
       debug('ERROR:', 'Failed to load security settings:', error);
@@ -131,16 +114,16 @@ const SettingsSecurity: React.FC = () => {
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({
-        'auth.enabled': values.enableAuthentication,
-        'rateLimit.enabled': values.enableRateLimit,
-        'rateLimit.maxRequests': values.rateLimitMax,
-        'rateLimit.windowMs': values.rateLimitWindow * 1000,
+        'cors.origins': values.corsOrigins.map((o) => o.value).filter(Boolean),
       });
       setAlert({ type: 'success', message: 'Security settings saved!' });
       showStamp();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
+      setAlert({
+        type: 'error',
+        message: 'Failed to save CORS origins. Check server logs and try again.',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -161,7 +144,9 @@ const SettingsSecurity: React.FC = () => {
           <Shield className="w-5 h-5 text-primary" />
           <div>
             <h5 className="text-lg font-bold">Security Settings</h5>
-            <p className="text-sm text-base-content/70">Configure authentication and security policies</p>
+            <p className="text-sm text-base-content/70">
+              Configure settings that persist and take effect at runtime
+            </p>
           </div>
         </div>
 
@@ -174,122 +159,6 @@ const SettingsSecurity: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Authentication */}
-          <Card className="bg-base-200/50 p-4">
-            <fieldset>
-              <legend className="sr-only">Authentication</legend>
-              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
-                <span className="w-2 h-2 bg-primary rounded-full"></span>
-                Authentication
-              </h6>
-
-            <div className="space-y-3">
-              <div className="form-control">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Enable authentication</span>
-                  <Controller
-                    name="enableAuthentication"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        size="sm"
-                      />
-                    )}
-                  />
-                </label>
-              </div>
-
-              <div className={`form-control transition-all duration-200 ${!enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
-                <FormField label="Session Timeout (seconds)" error={errors.sessionTimeout}>
-                  <Input
-                    type="number"
-                    {...register('sessionTimeout')}
-                    disabled={!enableAuthentication}
-                    size="sm"
-                    aria-label="Session timeout in seconds"
-                  />
-                </FormField>
-              </div>
-
-              <div className={`form-control transition-all duration-200 ${!enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Two-factor authentication</span>
-                  <Controller
-                    name="enableTwoFactor"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        disabled={!enableAuthentication}
-                        size="sm"
-                        aria-label="Enable two-factor authentication"
-                      />
-                    )}
-                  />
-                </label>
-              </div>
-            </div>
-            </fieldset>
-          </Card>
-
-          {/* Rate Limiting */}
-          <Card className="bg-base-200/50 p-4">
-            <fieldset>
-              <legend className="sr-only">Rate Limiting</legend>
-              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
-                <span className="w-2 h-2 bg-warning rounded-full"></span>
-                Rate Limiting
-              </h6>
-
-            <div className="space-y-3">
-              <div className="form-control">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Enable rate limiting</span>
-                  <Controller
-                    name="enableRateLimit"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        size="sm"
-                      />
-                    )}
-                  />
-                </label>
-              </div>
-
-              <div className={`form-control transition-all duration-200 ${!enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
-                <FormField label="Time Window (seconds)" error={errors.rateLimitWindow}>
-                  <Input
-                    type="number"
-                    {...register('rateLimitWindow')}
-                    disabled={!enableRateLimit}
-                    size="sm"
-                    aria-label="Rate limit time window in seconds"
-                  />
-                </FormField>
-              </div>
-
-              <div className={`form-control transition-all duration-200 ${!enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
-                <FormField label="Max Requests per Window" error={errors.rateLimitMax}>
-                  <Input
-                    type="number"
-                    {...register('rateLimitMax')}
-                    disabled={!enableRateLimit}
-                    size="sm"
-                    aria-label="Maximum requests per time window"
-                  />
-                </FormField>
-              </div>
-            </div>
-            </fieldset>
-          </Card>
-
-          {/* CORS */}
           <Card className="bg-base-200/50 p-4 lg:col-span-2">
             <fieldset>
               <legend className="sr-only">CORS Configuration</legend>
@@ -297,6 +166,10 @@ const SettingsSecurity: React.FC = () => {
                 <span className="w-2 h-2 bg-accent rounded-full"></span>
                 CORS Configuration
               </h6>
+              <p className="text-xs text-base-content/60 mb-3">
+                Saved to user config as <code className="text-xs">cors.origins</code> and applied
+                by the server without restart. Localhost is always allowed for development.
+              </p>
 
             <div className="flex gap-2 mb-3">
               <Input
@@ -340,80 +213,58 @@ const SettingsSecurity: React.FC = () => {
                 <span className="text-base-content/50 text-sm italic">No origins configured</span>
               )}
             </div>
+            {errors.corsOrigins && (
+              <p className="text-error text-xs mt-2">
+                {errors.corsOrigins.message || 'Invalid origins'}
+              </p>
+            )}
             </fieldset>
           </Card>
 
-          {/* Security Features */}
           <Card className="bg-base-200/50 p-4 lg:col-span-2">
-            <fieldset>
-              <legend className="sr-only">Security Features</legend>
-              <h6 className="text-md font-semibold mb-4 flex items-center gap-2" aria-hidden="true">
-                <span className="w-2 h-2 bg-success rounded-full"></span>
-                Security Features
-              </h6>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="form-control">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Security headers</span>
-                  <Controller
-                    name="enableSecurityHeaders"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        size="sm"
-                      />
-                    )}
-                  />
-                </label>
-              </div>
-
-              <div className="form-control">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Audit logging</span>
-                  <Controller
-                    name="enableAuditLogging"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        size="sm"
-                      />
-                    )}
-                  />
-                </label>
-              </div>
-
-              <div className="form-control">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">API key auth</span>
-                  <Controller
-                    name="enableApiKeyAuth"
-                    control={control}
-                    render={({ field }) => (
-                      <Toggle
-                        checked={field.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
-                        size="sm"
-                      />
-                    )}
-                  />
-                </label>
+            <div className="flex items-start gap-2 mb-3">
+              <Info className="w-4 h-4 text-info mt-0.5 shrink-0" />
+              <div>
+                <h6 className="text-md font-semibold">Configured via environment / API</h6>
+                <p className="text-xs text-base-content/60">
+                  These controls are not toggles here because they are not global form fields.
+                  Use the listed env vars or APIs so production policy is explicit.
+                </p>
               </div>
             </div>
-            </fieldset>
+            <ul className="text-sm space-y-2 list-disc list-inside text-base-content/80">
+              <li>
+                <strong>Two-factor auth (TOTP)</strong> — per-user enrollment via{' '}
+                <code className="text-xs">/api/auth/2fa/*</code> (not a global switch).
+              </li>
+              <li>
+                <strong>Account lockout</strong> —{' '}
+                <code className="text-xs">AUTH_MAX_LOGIN_ATTEMPTS</code>,{' '}
+                <code className="text-xs">AUTH_LOCKOUT_DURATION_SECONDS</code>.
+              </li>
+              <li>
+                <strong>Session lifetime / idle timeout</strong> —{' '}
+                <code className="text-xs">SESSION_MAX_AGE</code>,{' '}
+                <code className="text-xs">SESSION_IDLE_TIMEOUT</code>.
+              </li>
+              <li>
+                <strong>HTTP rate limiting</strong> —{' '}
+                <code className="text-xs">RATE_LIMIT_*</code> env vars and per-bot guard profiles.
+              </li>
+              <li>
+                <strong>Security headers</strong> — always applied by the server middleware.
+              </li>
+              <li>
+                <strong>Tenant isolation</strong> — opt-in via{' '}
+                <code className="text-xs">TENANT_ISOLATION_ENABLED=true</code> (requires{' '}
+                <code className="text-xs">X-Tenant-Id</code>).
+              </li>
+            </ul>
           </Card>
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button
-            type="submit"
-            variant="primary"
-            loading={isSaving}
-          >
+          <Button type="submit" variant="primary" loading={isSaving}>
             {isSaving ? 'Saving...' : 'Save Security Settings'}
           </Button>
         </div>
@@ -421,7 +272,6 @@ const SettingsSecurity: React.FC = () => {
 
       <Divider className="mt-8 mb-6" />
 
-      {/* Secure Configuration Management Section */}
       <div className="mt-8">
         <SecureConfigManager />
       </div>
