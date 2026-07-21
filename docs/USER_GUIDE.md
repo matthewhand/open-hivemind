@@ -82,7 +82,7 @@ That's the core loop: connect providers → create persona-driven bots → guard
   - [Lock down a public-facing deployment](#workflow-10-lock-down-a-public-facing-deployment)
 - [Overview](#overview)
   - [Dashboard / Overview](#dashboard--overview)
-  - [Live Chat Monitor](#live-chat-monitor)
+  - [Live conversations (Activity Feed)](#live-conversations-activity-feed)
   - [Activity Feed](#activity-feed)
 - [Configuration](#configuration)
   - [Bots & Bot Management](#bots--bot-management)
@@ -128,7 +128,7 @@ reference sections below for screenshots and per-page detail.
 1. Start the app (`pnpm run dev`, or the Docker/Pinokio options in the [README](../README.md)) and open `http://localhost:3028`.
 2. Log in with the password you set via the `ADMIN_PASSWORD` environment variable. On a trusted network you can enable password-less local access with `ALLOW_LOCALHOST_ADMIN` / `ALLOW_LOCAL_NETWORK_ACCESS`.
 3. With no bots configured, the app runs in [Demo Mode](#demo-mode): a purple banner appears and every page is seeded with simulated bots, conversations, and metrics. Nothing is persisted.
-4. Browse the [Dashboard](#dashboard--overview), [Live Chat Monitor](#live-chat-monitor), and [Monitoring](#monitoring) pages to get a feel for the UI. Press **Ctrl + K** to jump anywhere via the [Command Palette](#command-palette).
+4. Browse the [Dashboard](#dashboard--overview), [Activity Feed](#activity-feed) (live message flow), and [Monitoring](#monitoring) pages to get a feel for the UI. Press **Ctrl + K** to jump anywhere via the [Command Palette](#command-palette).
 5. When you're ready to go live, click **Get Started** on the demo banner to enter the Setup Wizard (Workflow 2).
 
 ### Workflow 2: Set up your first live bot
@@ -140,7 +140,7 @@ reference sections below for screenshots and per-page detail.
 3. **LLM Provider**: pick OpenAI, Flowise, or OpenWebUI and enter the API key. Any OpenAI-compatible endpoint (e.g. a local Ollama or vLLM server) works via the OpenAI provider's base-URL field. See [LLM Providers](#llm-providers).
 4. **Create a Bot**: name it and link it to the providers from steps 2–3.
 5. **Review** and launch. The wizard summary shows a green check next to each configured provider.
-6. Verify it works: open the bot on the [Bots page](#bots--bot-management) and use the **Test Drive** tab to chat against its LLM provider directly (streamed responses, no platform round-trip). Then mention the bot in your channel and watch the reply arrive in the [Live Chat Monitor](#live-chat-monitor).
+6. Verify it works: open the bot on the [Bots page](#bots--bot-management) and use the **Test Drive** tab to chat against its LLM provider directly (streamed responses, no platform round-trip). Then mention the bot in your channel and watch the reply appear on the [Activity Feed](#activity-feed).
 
 ### Workflow 3: Headless setup with environment variables
 
@@ -169,7 +169,7 @@ reference sections below for screenshots and per-page detail.
 1. Go to [Personas](#personas-management) and create a persona — the system prompt is its core instruction set. Built-in personas are read-only but can be cloned as starting points.
 2. Assign it to one or more bots (bulk assignment is supported). Prompt edits propagate immediately to every assigned bot.
 3. To shape *when* the bot speaks (not just *how*), attach a [Response Profile](#response-profiles): base response probability, mention bonuses, and group-activity modifiers.
-4. Watch the result in the [Live Chat Monitor](#live-chat-monitor) and tune.
+4. Watch the result on the [Activity Feed](#activity-feed) and tune.
 
 ### Workflow 5: Run a multi-bot swarm in one channel
 
@@ -178,7 +178,7 @@ reference sections below for screenshots and per-page detail.
 1. Define multiple bots (Workflow 2 or 3 — e.g. `BOTS_ALPHA_*` and `BOTS_BETA_*`), each with its own platform credentials and persona.
 2. Point them at the same channel/guild.
 3. Set each bot's [Response Profile](#response-profiles) swarm mode — e.g. **Exclusive** (one bot claims a conversation), **Broadcast**, or **Collaborative** — and tune engagement probabilities so bots defer to busy conversations ("social anxiety" logic).
-4. Observe the interplay in the [Live Chat Monitor](#live-chat-monitor) and check per-bot volume on the [Activity Feed](#activity-feed) to confirm no bot is dominating.
+4. Observe the interplay on the [Activity Feed](#activity-feed) (table or Conversations view) and check per-bot volume to confirm no bot is dominating.
 
 ### Workflow 6: Daily health check
 
@@ -223,10 +223,10 @@ reference sections below for screenshots and per-page detail.
 
 1. Set `NODE_ENV=production` — this enforces strict validation; the app refuses to start without a proper `SESSION_SECRET` (≥ 32 chars). All protected API routes share a single authentication middleware (session or JWT bearer) that verifies the token's user still exists and returns uniform JSON 401/403 bodies; the E2E test bypass (`ALLOW_TEST_BYPASS`) is hard-refused in production.
 2. Set strong `ADMIN_PASSWORD`, `SESSION_SECRET`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`; disable `ALLOW_LOCALHOST_ADMIN`/`ALLOW_LOCAL_NETWORK_ACCESS`.
-3. Restrict access: `ADMIN_IP_WHITELIST` for the admin UI, `CORS_ORIGIN`, `TRUST_PROXY` behind a reverse proxy, and rate limits (`RATE_LIMIT_API_MAX`). Webhook endpoints are deny-by-default — allow specific callers via `WEBHOOK_IP_WHITELIST` (exact IPs, no CIDR).
+3. Restrict access: `ADMIN_IP_WHITELIST` for the admin UI, `CORS_ORIGIN`, `TRUST_PROXY` behind a reverse proxy, and rate limits (`RATE_LIMIT_API_MAX`). Webhook endpoints are deny-by-default — allow specific callers via `WEBHOOK_IP_WHITELIST` (exact IPs and/or CIDR ranges, e.g. `10.0.0.0/8`).
 4. Configure [Guards](#guards) for content filtering and tool permissions, and review [Plugin Security](#plugin-security) trust levels for any community packages.
 5. Confirm [Audit & Governance](#audit--governance) is recording admin actions, then re-run the daily health check (Workflow 6).
-6. Note: two-factor authentication and account lockout are **not yet available** (under security review — see [ROADMAP.md](../ROADMAP.md)); compensate with IP restrictions and a strong password.
+6. Enable **TOTP 2FA** and account lockout via the auth API/env (`TotpService` / `AUTH_MAX_LOGIN_ATTEMPTS`) where required — the Settings Security form may not persist every toggle yet; prefer API/env for production policy. Also use IP restrictions and a strong password.
 
 ---
 
@@ -238,15 +238,16 @@ The central hub for monitoring your bot ecosystem.
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
 
-### [Live Chat Monitor](/admin/chat)
-Observe conversations across all active bots in real-time. This is useful for monitoring bot performance, debugging responses, and ensuring quality interactions.
+### Live conversations (Activity Feed)
 
-![Live Chat Monitor](screenshots/chat-monitor.png)
+Cross-channel live message flow is observed on the [Activity Feed](/admin/overview?tab=activity) (also linked as `/admin/activity`). Interactive admin-side chat against a bot’s LLM is on each bot’s **Test Drive** tab ([Bots](/admin/bots)) — there is no separate `/admin/chat` route in the current UI.
 
-*   **Bot List**: View all configured bots and their connection status (Online/Offline) in the sidebar.
-*   **Conversation History**: Select a bot to view its recent chat history with users.
-*   **Real-time Updates**: Use the Refresh button to fetch the latest messages.
-*   **Read-Only Mode**: Currently, the interface is read-only. Sending messages directly from the admin panel is disabled to prevent interference with automated flows.
+![Live conversations on the Activity Feed](screenshots/chat-monitor.png)
+
+*   **Event table**: Incoming/outgoing messages with bot, provider, LLM, and duration.
+*   **Conversations view**: Switch to the Conversations tab for a channel-style timeline when available.
+*   **Filters**: Narrow by bot, platform, LLM, or time range.
+*   **Test Drive**: For a single bot Q&A without a messenger round-trip, open the bot drawer → **Test Drive**.
 
 ### [Activity Feed](/admin/activity)
 A comprehensive view of all message processing events and system actions.
