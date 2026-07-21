@@ -14,7 +14,7 @@ _Audit of all existing code, 307 features across 10 domains. Last regenerated ag
 | **auth-security** | 19 | 8 | 0 | 3 | 0 |
 | **persistence** | 28 | 5 | 3 | 0 | 0 |
 | **webui-infra** | 22 | 3 | 2 | 0 | 0 |
-| **TOTAL** | **226** | **63** | **14** | **5** | **0** |
+| **TOTAL** | **226** | **64** | **13** | **5** | **0** |
 
 
 ## messaging
