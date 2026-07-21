@@ -37,14 +37,17 @@ const clearToasts = (page: Page) =>
     document.querySelectorAll('.toast').forEach((el) => el.remove());
   });
 
-const shot = async (page: Page, name: string) => {
+const shot = async (page: Page, name: string, opts: { keepScroll?: boolean } = {}) => {
   await clearToasts(page);
   // Viewport-framed (NOT fullPage): user-guide screenshots should show the
   // header + the first relevant screenful of each step, not a 10,000px dump of
   // an entire long admin page — full-page captures of dense list pages (e.g.
   // the Bots grid) are overwhelming for a first-time reader. Scroll to top so
-  // the page header is in frame.
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // the page header is in frame — unless keepScroll is set (activity feed rows
+  // live below the KPI strip).
+  if (!opts.keepScroll) {
+    await page.evaluate(() => window.scrollTo(0, 0));
+  }
   await page.waitForTimeout(200);
   await page.screenshot({ path: `${SCREENSHOT_DIR}/journey-${name}.png`, fullPage: false });
 };
@@ -67,7 +70,9 @@ const seeOrWarn = async (locator: Locator, label: string, timeout = 10_000) => {
   try {
     await expect(locator).toBeVisible({ timeout });
   } catch {
-    console.warn(`[journey-user-guide] expected ${label} not visible within ${timeout}ms — screenshot may be incomplete`);
+    console.warn(
+      `[journey-user-guide] expected ${label} not visible within ${timeout}ms — screenshot may be incomplete`
+    );
   }
 };
 
@@ -103,24 +108,37 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
       }
     });
 
-    // 01 — Onboarding: reach the admin dashboard.
+    // 01 — Onboarding wizard (reset so the capture shows the real wizard UI,
+    // not the Overview dashboard — filename/caption are "onboarding").
     await test.step('01-onboarding', async () => {
-      await visit(page, '/admin/overview');
+      // Best-effort reset; demo data may auto-complete status again later.
+      const resetRes = await request.post('/api/onboarding/reset', { headers: apiHeaders });
+      console.log(`[journey-user-guide] onboarding reset status=${resetRes.status()}`);
+
+      await visit(page, '/onboarding', 2000);
 
       const adminBypassBtn = page.getByRole('button', { name: /Login as Admin/i });
       if (await adminBypassBtn.count()) {
+        // Stay on onboarding after trusted entry if possible; otherwise re-open wizard.
         await adminBypassBtn.click();
-        await page.waitForURL(/admin|dashboard|overview/, { timeout: 10_000 });
         await page.waitForLoadState('networkidle');
+        await visit(page, '/onboarding', 1500);
       }
 
+      await seeOrWarn(
+        page.getByText(/onboarding|get started|welcome|step\s*1|llm provider|set up/i).first(),
+        'onboarding content'
+      );
+      await shot(page, '01-onboarding');
+
+      // Land in admin shell for subsequent steps.
+      await visit(page, '/admin/overview');
       await expect(
         page
           .getByRole('link', { name: /^Dashboard$/i })
           .or(page.getByRole('link', { name: /^Bots$/i }))
           .first()
       ).toBeVisible({ timeout: 10_000 });
-      await shot(page, '01-onboarding');
     });
 
     // 02 — Add a Discord message provider profile, then show the providers list.
@@ -169,7 +187,13 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
       ).toBeTruthy();
 
       await visit(page, '/admin/llm');
-      await seeOrWarn(page.getByText(LLM_PROVIDER_NAME).first(), 'content');
+      const llmSearch = page.getByPlaceholder(/Search profiles/i).first();
+      await expect(llmSearch).toBeVisible({ timeout: 10_000 });
+      await llmSearch.click();
+      await llmSearch.fill('');
+      await llmSearch.fill(LLM_PROVIDER_NAME);
+      await page.waitForTimeout(800);
+      await expect(page.getByText(LLM_PROVIDER_NAME).first()).toBeVisible({ timeout: 15_000 });
       await shot(page, '03-openai-add');
     });
 
@@ -182,22 +206,72 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
           description: 'Answers support questions in Discord using OpenAI.',
           messageProvider: 'discord',
           llmProvider: 'openai',
+          // Prefer the profile created in step 03 so Test Drive shows a real model.
+          llmProfile: 'golden-openai',
+          llmModel: 'gpt-4o',
+          systemInstruction: 'You are a helpful support bot for the user-guide demo.',
           isActive: true,
+          config: {
+            openai: { apiKey: process.env.OPENAI_API_KEY || 'sk-test-mock', model: 'gpt-4o' },
+          },
         },
       });
       expect(
         res.ok() || res.status() === 409, // 409 = already created on a previous run
         `bot create returned ${res.status()}: ${await res.text()}`
       ).toBeTruthy();
+      // Ensure list payload includes model + active for clean screenshots even if
+      // an older bot row was left from a prior run (409 path).
+      const created = await res.json().catch(() => ({}));
+      const botId =
+        created?.data?.id ||
+        created?.id ||
+        (await (async () => {
+          const list = await request.get('/api/bots', { headers: apiHeaders });
+          const body = await list.json();
+          const bots = Array.isArray(body?.data) ? body.data : body?.data?.bots || [];
+          return bots.find((b: { name: string }) => b.name === BOT_NAME)?.id as string | undefined;
+        })());
+      if (botId) {
+        await request.put(`/api/bots/${botId}`, {
+          headers: apiHeaders,
+          data: {
+            isActive: true,
+            llmModel: 'gpt-4o',
+            llmProvider: 'openai',
+            description: 'Answers support questions in Discord using OpenAI.',
+            systemInstruction: 'You are a helpful support bot for the user-guide demo.',
+          },
+        });
+      }
 
       await visit(page, '/admin/bots');
-      await seeOrWarn(page.getByText(BOT_NAME).first(), 'content');
+      // Filter so Golden-Journey-Bot is in the viewport (demo fleets are large).
+      const search = page.getByPlaceholder(/Search agents/i).first();
+      await expect(search).toBeVisible({ timeout: 10_000 });
+      await search.click();
+      await search.fill('');
+      await search.fill(BOT_NAME);
+      await page.waitForTimeout(800);
+      // Hard requirement: the created bot must appear for the guide shot.
+      await expect(page.getByText(BOT_NAME).first()).toBeVisible({ timeout: 15_000 });
+      // Prefer Running/active badge on the Golden bot card (not other page chrome).
+      const goldenCard = page
+        .locator('.cursor-pointer, .card')
+        .filter({ hasText: BOT_NAME })
+        .first();
+      await seeOrWarn(goldenCard.getByText(/Running|Active/i).first(), 'active status badge');
       await shot(page, '04-bot-create');
     });
 
     // 05 — Open the bot drawer and exchange a Test Drive message.
     await test.step('05-bot-chat', async () => {
       await page.goto('/admin/bots');
+      const search = page.getByPlaceholder(/Search agents/i);
+      if (await search.count()) {
+        await search.fill(BOT_NAME);
+        await page.waitForTimeout(400);
+      }
       const botCard = page.locator('.cursor-pointer').filter({ hasText: BOT_NAME }).first();
       await expect(botCard).toBeVisible({ timeout: 15_000 });
       await botCard.click();
@@ -220,15 +294,45 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
           timeout: 60_000,
         });
       }
-      await page.waitForTimeout(500);
-      await shot(page, '05-bot-chat');
+      // Prefer a tight crop of the drawer so MODEL + conversation fit in frame.
+      await page.waitForTimeout(300);
+      await seeOrWarn(page.getByText(/gpt-4o|Hello from the mocked/i).first(), 'model or reply');
+      const drawer = page.locator('.drawer-side, [role="dialog"], aside').last();
+      if (await drawer.count()) {
+        await clearToasts(page);
+        await drawer.screenshot({ path: `${SCREENSHOT_DIR}/journey-05-bot-chat.png` });
+      } else {
+        await shot(page, '05-bot-chat', { keepScroll: true });
+      }
     });
 
     // 06 — The activity feed shows what the swarm has been doing.
     await test.step('06-activity', async () => {
-      await visit(page, '/admin/overview?tab=activity', 2500);
+      await visit(page, '/admin/overview?tab=activity', 3000);
       await seeOrWarn(page.getByText(/Activity|Events/i).first(), 'content');
-      await shot(page, '06-activity');
+      // The event table sits below the KPI strip inside a nested scroll area.
+      // Scroll the main page AND any overflow containers so rows enter the viewport.
+      await page.evaluate(() => {
+        const candidates = Array.from(
+          document.querySelectorAll('table tbody tr, [data-testid="activity-row"], .timeline-item')
+        );
+        const firstRow = candidates[0] as HTMLElement | undefined;
+        if (firstRow) {
+          firstRow.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+        } else {
+          // Fallback: nudge past the KPI strip (~360px on 720p).
+          window.scrollTo(0, 420);
+          document.querySelectorAll('.overflow-auto, .overflow-y-auto, main').forEach((el) => {
+            (el as HTMLElement).scrollTop = 280;
+          });
+        }
+      });
+      await page.waitForTimeout(600);
+      await seeOrWarn(
+        page.getByText(/incoming|outgoing|success|filter|discord|openai|channel/i).first(),
+        'activity detail'
+      );
+      await shot(page, '06-activity', { keepScroll: true });
     });
 
     // 07 — Create a persona and show the personas library.
@@ -249,8 +353,16 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
       });
       expect(res.ok(), `persona create returned ${res.status()}: ${await res.text()}`).toBeTruthy();
 
-      await visit(page, '/admin/personas');
-      await seeOrWarn(page.getByText(PERSONA_NAME).first(), 'content');
+      await visit(page, '/admin/personas', 2000);
+      const personaSearch = page.getByPlaceholder(/Search personas/i).first();
+      await expect(personaSearch).toBeVisible({ timeout: 10_000 });
+      await personaSearch.click();
+      await personaSearch.fill('');
+      await personaSearch.fill(PERSONA_NAME);
+      await page.waitForTimeout(800);
+      // Must show Support Concierge (filtered), not a generic unfiltered grid.
+      await expect(page.getByText(PERSONA_NAME).first()).toBeVisible({ timeout: 15_000 });
+      await expect(personaSearch).toHaveValue(PERSONA_NAME);
       await shot(page, '07-personas');
     });
 
@@ -263,22 +375,78 @@ test.describe.serial('User-Guide Journey: onboarding through export', () => {
 
     // 09 — Memory providers: conversation persistence options.
     await test.step('09-memory', async () => {
-      await visit(page, '/admin/memory');
-      await seeOrWarn(page.getByText(/Memory/i).first(), 'content');
+      const res = await request.post('/api/config/memory-profiles', {
+        headers: apiHeaders,
+        data: {
+          key: 'golden-memory',
+          name: 'Golden-Memory',
+          provider: 'mem0',
+          type: 'redis',
+          description: 'Demo memory backend for the user-guide walkthrough.',
+          config: {
+            host: 'localhost',
+            port: 6379,
+            vectorStoreProvider: 'memory',
+          },
+          isDefault: false,
+        },
+      });
+      expect(
+        res.ok() || res.status() === 409,
+        `memory profile create returned ${res.status()}: ${await res.text()}`
+      ).toBeTruthy();
+
+      await visit(page, '/admin/memory', 2500);
+      // Product fix: MemoryProvidersPage must unwrap ApiResponse envelope so
+      // seeded profiles appear. Hard-require Golden-Memory in the shot.
+      await expect(page.getByText('Golden-Memory').first()).toBeVisible({ timeout: 15_000 });
+      await seeOrWarn(page.getByText(/TOTAL PROFILES|1/i).first(), 'profile KPI');
       await shot(page, '09-memory');
     });
 
     // 10 — Monitoring tab: live health of the swarm.
     await test.step('10-monitoring', async () => {
-      await visit(page, '/admin/overview?tab=monitoring', 2500);
+      await visit(page, '/admin/overview?tab=monitoring', 3000);
+      // Give demo metrics / health probes a beat to populate Response Time.
+      await page
+        .getByRole('button', { name: /Refresh/i })
+        .click()
+        .catch(() => undefined);
+      await page.waitForTimeout(1500);
+      await seeOrWarn(page.getByText(/healthy|Response Time|Active Bots/i).first(), 'monitoring');
       await shot(page, '10-monitoring');
     });
 
     // 11 — Export: back up the whole configuration.
     await test.step('11-export', async () => {
-      await visit(page, '/admin/export');
-      await seeOrWarn(page.getByText(/Export/i).first(), 'content');
-      await shot(page, '11-export');
+      // Ensure at least one backup row exists for a non-empty table body.
+      const backupRes = await request
+        .post('/api/import-export/backup', {
+          headers: apiHeaders,
+          data: { description: 'Golden journey guide backup' },
+        })
+        .catch(() => null);
+      if (backupRes) {
+        console.log(`[journey-user-guide] backup create status=${backupRes.status()}`);
+      }
+
+      await visit(page, '/admin/export', 2500);
+      await seeOrWarn(page.getByText(/Export|System Backups/i).first(), 'content');
+      // Scroll so backup table rows (not only KPI cards) are in the viewport.
+      await page.evaluate(() => {
+        const row = document.querySelector('table tbody tr, [data-testid="backup-row"]');
+        if (row) {
+          (row as HTMLElement).scrollIntoView({
+            block: 'center',
+            behavior: 'instant' as ScrollBehavior,
+          });
+        } else {
+          window.scrollTo(0, 380);
+        }
+      });
+      await page.waitForTimeout(500);
+      await seeOrWarn(page.getByText(/backup|KB|Restore|Download/i).first(), 'backup row');
+      await shot(page, '11-export', { keepScroll: true });
     });
   });
 });
