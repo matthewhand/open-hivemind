@@ -105,6 +105,7 @@ const Dashboard: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       const [botsResult, statusResult, healthResult, profilesResult] = await Promise.allSettled([
         apiService.getBots(),
