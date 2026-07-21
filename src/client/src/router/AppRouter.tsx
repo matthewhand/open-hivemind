@@ -67,7 +67,7 @@ interface LoadingFallbackProps {
   message?: string;
 }
 
-const TipRotator = lazyWithRetry(() => import('../components/TipRotator'));
+import TipRotator from '../components/TipRotator';
 
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message: _message = 'Loading...' }) => (
   <div className="min-h-[60vh] p-6">

@@ -6,7 +6,7 @@ import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import Hero from './DaisyUI/Hero';
 import RadialProgress from './DaisyUI/RadialProgress';
-import { SkeletonCard } from './DaisyUI/Skeleton';
+import { SkeletonCard, SkeletonPage } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import Badge from './DaisyUI/Badge';
 import DashboardBotCard from './DashboardBotCard';
@@ -224,70 +224,8 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-base-200">
-        {/* Hero Section Skeleton */}
-        <div className="min-h-[60vh] bg-base-300 flex items-center justify-center">
-          <div className="text-center space-y-6">
-            <div className="skeleton h-12 w-80 rounded"></div>
-            <div className="skeleton h-6 w-64 rounded"></div>
-
-            {/* Stats Overview Skeleton */}
-            <Stats className="shadow-lg bg-base-100/90 backdrop-blur">
-              <Stat className="place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-12 rounded mb-2"></div>
-                <div className="skeleton h-4 w-24 rounded"></div>
-              </Stat>
-              <Stat className="place-items-center">
-                <div className="skeleton h-6 w-24 rounded mb-2"></div>
-                <div className="skeleton h-8 w-16 rounded mb-2"></div>
-                <div className="skeleton h-4 w-20 rounded"></div>
-              </Stat>
-              <Stat className="place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-14 rounded mb-2"></div>
-                <div className="skeleton h-4 w-28 rounded"></div>
-              </Stat>
-            </Stats>
-
-            <div className="skeleton h-12 w-48 rounded"></div>
-          </div>
-        </div>
-
-        {/* Main Content Skeleton */}
-        <div className="px-2 py-2">
-          {/* Quick Actions Skeleton */}
-          <div className="skeleton h-12 w-full rounded-xl mb-4"></div>
-
-          {/* Bot Cards Grid Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <SkeletonCard key={index} />
-            ))}
-          </div>
-
-          {/* System Status Footer Skeleton */}
-          <div className="bg-base-100 rounded-lg shadow p-6">
-            <div className="skeleton h-8 w-48 rounded mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Stat>
-                <div className="skeleton h-4 w-12 rounded mb-2"></div>
-                <div className="skeleton h-6 w-16 rounded mb-2"></div>
-                <div className="skeleton h-3 w-32 rounded"></div>
-              </Stat>
-              <Stat>
-                <div className="skeleton h-4 w-16 rounded mb-2"></div>
-                <div className="skeleton h-6 w-12 rounded mb-2"></div>
-                <div className="skeleton h-3 w-28 rounded"></div>
-              </Stat>
-              <Stat>
-                <div className="skeleton h-4 w-20 rounded mb-2"></div>
-                <div className="skeleton h-6 w-18 rounded mb-2"></div>
-                <div className="skeleton h-3 w-30 rounded"></div>
-              </Stat>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-base-200 p-6" aria-live="polite" aria-busy="true">
+        <SkeletonPage variant="cards" statsCount={4} showFilters={false} />
       </div>
     );
   }

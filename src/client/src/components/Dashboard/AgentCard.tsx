@@ -172,7 +172,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
           </div>
         )}
         
-        <div className="mt-4 space-y-4">
+        <fieldset className="mt-4 space-y-4">
+          <legend className="sr-only">Agent Configuration</legend>
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">LLM Provider</span>
@@ -405,7 +406,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               </div>
             )}
           </div>
-        </div>
+        </fieldset>
     </Card>
   );
 };
