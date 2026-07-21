@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo } from 'react';
 import { Section } from './Section';
-import { BotChatTimeline } from '../../BotChatTimeline';
 import Countdown from '../Countdown';
 import Diff from '../Diff';
 import Divider from '../Divider';
@@ -907,8 +906,11 @@ export const TimelineDemo: React.FC = () => {
         </ul>
       </Section>
 
-      <Section title="Bot Chat Timeline (Vertical Steps)">
-        <BotChatTimeline />
+      <Section title="Bot Response Timeline">
+        <p className="text-sm text-base-content/70">
+          Demo-only placeholder. Production bot detail views use{' '}
+          <code className="text-xs">BotResponseTimeline</code> (see Bots page).
+        </p>
       </Section>
     </div>
   );
