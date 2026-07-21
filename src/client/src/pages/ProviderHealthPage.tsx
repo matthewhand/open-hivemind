@@ -216,9 +216,14 @@ const ProviderHealthPage: React.FC = () => {
       setLastRefresh(new Date());
       setError(null);
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ?? 'Unable to fetch provider health data.';
-      setError(msg);
+      const respStatus = (err as any)?.response?.status;
+      if (respStatus === 501) {
+        setError('Experimental feature disabled. Please enable ENABLE_MOCK_PROVIDER_HEALTH to view simulated provider health.');
+      } else {
+        const msg =
+          (err as { message?: string })?.message ?? 'Unable to fetch provider health data.';
+        setError(msg);
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -298,7 +303,7 @@ const ProviderHealthPage: React.FC = () => {
 
       {/* Error banner */}
       {error && (
-        <div className="alert alert-error shadow-lg">
+        <div className={`alert ${error.includes('Experimental feature disabled') ? 'alert-warning' : 'alert-error'} shadow-lg`}>
           <AlertTriangle className="w-5 h-5" />
           <span>{error}</span>
           <button className="btn btn-sm btn-ghost" onClick={fetchHealth}>
@@ -308,7 +313,7 @@ const ProviderHealthPage: React.FC = () => {
       )}
 
       {/* Provider sections */}
-      {SECTIONS.map((section) => {
+      {!error && SECTIONS.map((section) => {
         const providers = data?.[section.key] ?? [];
         if (providers.length === 0) return null;
 

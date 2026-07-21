@@ -28,6 +28,9 @@ export const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'configuration', label: 'Global Defaults', path: '/admin/configuration', icon: <Settings className="w-4 h-4" />, section: 'Pages' },
   { id: 'showcase', label: 'UI Components', path: '/admin/developer?tab=showcase', icon: <Component className="w-4 h-4" />, section: 'Developer' },
   { id: 'sitemap', label: 'Sitemap', path: '/admin/developer?tab=sitemap', icon: <Map className="w-4 h-4" />, section: 'Developer' },
+  { id: 'create-profile', label: 'Create Profile', path: '/admin/personas?action=create', icon: <Users className="w-4 h-4" />, section: 'Actions' },
+  { id: 'install-url', label: 'Install from URL', path: '/admin/marketplace?action=install', icon: <Component className="w-4 h-4" />, section: 'Actions' },
+  { id: 'clone-bot', label: 'Clone Bot', path: '/admin/bots?action=clone', icon: <Bot className="w-4 h-4" />, section: 'Actions' },
 ];
 
 interface CommandPaletteProps {
@@ -183,11 +186,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                 key={item.id}
                 role="option"
                 aria-selected={isActive}
-                className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'hover:bg-base-200 text-base-content'
                 }`}
+                tabIndex={-1}
                 onClick={() => selectItem(item)}
                 onMouseEnter={() => setSelectedIndex(idx)}
               >
