@@ -106,12 +106,11 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   return (
     <div className={`dropdown ${positionClasses[position]} ${className}`} ref={dropdownRef}>
-      <div
-        tabIndex={disabled ? -1 : 0}
-        role="button"
+      <button
+        type="button"
+        disabled={disabled}
         className={`btn ${sizeClasses[size]} ${colorClasses[color]} ${disabled ? 'btn-disabled opacity-50' : ''} ${triggerClassName}`}
         onClick={handleToggle}
-        onKeyDown={handleKeyDown}
         aria-haspopup={ariaHasPopup}
         aria-expanded={isOpen}
         aria-label={ariaLabel}
@@ -119,7 +118,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       >
         {trigger}
         {!hideArrow && <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />}
-      </div>
+      </button>
       {isOpen && (
         <ul id={menuId} tabIndex={0} className={`dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50 ${contentClassName}`} role="menu">
           {children}

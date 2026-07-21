@@ -49,14 +49,12 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   className = '',
 }) => {
   return (
-    <div
+    <button
+      type="button"
       className={`btn btn-ghost btn-circle lg:hidden min-h-[44px] min-w-[44px] ${className}`}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
       aria-label={isOpen ? 'Close menu' : 'Open menu'}
       aria-expanded={isOpen}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
     >
       <Swap
         checked={isOpen}
@@ -65,7 +63,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         variant="rotate"
         className="swap-active-inherit"
       />
-    </div>
+    </button>
   );
 };
 

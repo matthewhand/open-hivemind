@@ -59,14 +59,26 @@ const Modal: React.FC<ModalProps> = ({
     const modal = modalRef.current;
     if (!modal) {return;}
 
+    let prevOverflow = '';
+
     // Check if showModal is defined (it might not be in JSDOM or some environments without polyfill)
     if (typeof modal.showModal !== 'function' || typeof modal.close !== 'function') {
         // Fallback for environments where HTMLDialogElement is not fully supported
-        return;
+        if (isOpen) {
+          prevOverflow = document.body.style.overflow;
+          document.body.style.overflow = 'hidden';
+        }
+        return () => {
+          if (isOpen) {
+            document.body.style.overflow = prevOverflow;
+          }
+        };
     }
 
     if (isOpen) {
       if (!modal.open) {
+        prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
         modal.showModal();
       }
     } else {
@@ -74,6 +86,12 @@ const Modal: React.FC<ModalProps> = ({
         modal.close();
       }
     }
+
+    return () => {
+      if (isOpen) {
+        document.body.style.overflow = prevOverflow;
+      }
+    };
   }, [isOpen]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -391,9 +409,12 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
 
   useFocusTrap(isOpen, drawerRef, closeButtonRef);
 
-  // ESC closes drawer.
+  // ESC closes drawer and scroll lock
   React.useEffect(() => {
     if (!isOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -404,7 +425,10 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
     };
 
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
   }, [isOpen, onClose]);
 
   return (
