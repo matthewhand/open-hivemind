@@ -111,7 +111,7 @@ const MCPServersPage: React.FC = () => {
     }
   };
 
-  const { handleServerAction, handleTestConnection, isTesting, handleSaveServer } =
+  const { handleServerAction, handleTestConnection, testState, handleSaveServer } =
     useMCPServerActions(servers, setServers, fetchServers, setAlert, showStamp);
   const { handleBulkDeleteServers, handleDeleteServer, bulkDeleting } = useMCPServerDelete(
     bulk,
@@ -427,7 +427,7 @@ const MCPServersPage: React.FC = () => {
         selectedServer={selectedServer}
         setSelectedServer={setSelectedServer as any}
         handleTestConnection={() => handleTestConnection(selectedServer)}
-        isTesting={isTesting}
+        testState={testState}
         handleSaveServer={() => handleSaveServer(selectedServer, isEditing, setDialogOpen)}
         confirmModal={confirmModal}
         setConfirmModal={setConfirmModal}

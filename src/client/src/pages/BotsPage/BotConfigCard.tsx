@@ -56,8 +56,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
   };
 
   return (
-    <Card
-      className={`shadow-xl border transition-shadow duration-200 cursor-pointer
+    <Card role="article" className={`shadow-xl border transition-shadow duration-200 cursor-pointer
         ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}
         ${isDisabledBot ? 'opacity-60 saturate-50 bg-base-200/60' : ''}`}
       onClick={onPreview ? () => onPreview(bot) : undefined}
@@ -124,41 +123,41 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
         </div>
 
         {/* Provider Info */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="bg-base-200/50 p-2 rounded-lg">
-            <label className="text-xs font-bold uppercase opacity-80 block mb-1">Message</label>
-            <div className="flex items-center gap-1.5">
+        <dl className="grid grid-cols-2 gap-2 mb-4">
+          <div className="bg-base-200/50 p-2 rounded-lg flex flex-col">
+            <dt className="text-xs font-bold uppercase opacity-80 mb-1">Message</dt>
+            <dd className="flex items-center gap-1.5 mt-auto">
               <Globe className="w-3 h-3 text-primary shrink-0" />
               <span className="text-xs font-medium uppercase truncate">
                 {bot.messageProvider || 'None'}
               </span>
-            </div>
+            </dd>
           </div>
-          <div className="bg-base-200/50 p-2 rounded-lg">
-            <label className="text-xs font-bold uppercase opacity-80 block mb-1">LLM</label>
-            <div className="flex items-center gap-1.5">
+          <div className="bg-base-200/50 p-2 rounded-lg flex flex-col">
+            <dt className="text-xs font-bold uppercase opacity-80 mb-1">LLM</dt>
+            <dd className="flex items-center gap-1.5 mt-auto">
               <Cpu className="w-3 h-3 text-secondary shrink-0" />
               <span className="text-xs font-medium truncate">
                 {bot.llmProvider || 'None'}
               </span>
-            </div>
+            </dd>
           </div>
-        </div>
+        </dl>
 
         {/* Stats */}
         {(bot.messageCount !== undefined || bot.errorCount !== undefined) && (
-          <div className="grid grid-cols-2 gap-2 mb-4 text-center">
-            <div className="bg-base-200/50 p-2 rounded-lg">
-              <div className="text-lg font-bold text-primary">{bot.messageCount ?? 0}</div>
-              <div className="text-xs uppercase font-bold opacity-80">Messages</div>
+          <dl className="grid grid-cols-2 gap-2 mb-4 text-center">
+            <div className="bg-base-200/50 p-2 rounded-lg flex flex-col items-center">
+              <dd className="text-lg font-bold text-primary">{bot.messageCount ?? 0}</dd>
+              <dt className="text-xs uppercase font-bold opacity-80">Messages</dt>
             </div>
-            <div className="bg-base-200/50 p-2 rounded-lg">
-              <div className={`text-lg font-bold ${(bot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
+            <div className="bg-base-200/50 p-2 rounded-lg flex flex-col items-center">
+              <dd className={`text-lg font-bold ${(bot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
                 {bot.errorCount ?? 0}
-              </div>
-              <div className="text-xs uppercase font-bold opacity-80">Errors</div>
+              </dd>
+              <dt className="text-xs uppercase font-bold opacity-80">Errors</dt>
             </div>
-          </div>
+          </dl>
         )}
 
         {/* Actions */}
@@ -168,6 +167,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             size="sm"
             className={`flex-1 ${isDisabledBot ? 'border border-base-300' : ''}`}
             onClick={(e) => { e.stopPropagation(); onEdit?.(bot); }}
+            aria-label={`Configure ${bot.name}`}
           >
             <Settings className="w-3 h-3 mr-1" />
             Configure

@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { X } from 'lucide-react';
 
 export interface DetailDrawerProps {
@@ -39,6 +40,9 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
   className = '',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  useFocusTrap(isOpen, panelRef, closeBtnRef);
 
   // Escape key dismiss
   useEffect(() => {
@@ -101,6 +105,7 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
             )}
           </div>
           <button
+            ref={closeBtnRef}
             className="btn btn-ghost btn-sm btn-circle ml-2 shrink-0"
             onClick={onClose}
             aria-label="Close detail panel"
