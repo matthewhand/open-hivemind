@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import type { IMessage } from '@hivemind/shared-types';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import {
@@ -17,7 +18,7 @@ import type { MessageContext } from './types';
  */
 export async function processInference(ctx: MessageContext): Promise<boolean> {
   const channelId = ctx.message.getChannelId();
-  const userId = ctx.message.getAuthorId();
+  const _userId = ctx.message.getAuthorId();
   const botId = ctx.resolvedBotId || '';
 
   // Delays
@@ -227,20 +228,22 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
       const minThinkingTime = parseInt(process.env.MESSAGE_MIN_THINKING_TIME || '2000');
       const maxThinkingTime = parseInt(process.env.MESSAGE_MAX_THINKING_TIME || '5000');
 
+      const getRandomFloat = () => crypto.randomBytes(4).readUInt32LE(0) / 0xffffffff;
+
       // Calculate typing time (ms per word)
-      const wordsPerMs = (minWpm + Math.random() * (maxWpm - minWpm)) / 60000;
+      const wordsPerMs = (minWpm + getRandomFloat() * (maxWpm - minWpm)) / 60000;
       const typingTime = wordCount / wordsPerMs;
 
       // Add thinking time
-      const thinkingTime = minThinkingTime + Math.random() * (maxThinkingTime - minThinkingTime);
+      const thinkingTime = minThinkingTime + getRandomFloat() * (maxThinkingTime - minThinkingTime);
       const totalDelay = thinkingTime + typingTime;
 
       // Cap at reasonable maximum and add 10% variation
-      const cappedDelay = Math.min(totalDelay * (0.9 + Math.random() * 0.2), 120000);
+      const cappedDelay = Math.min(totalDelay * (0.9 + getRandomFloat() * 0.2), 120000);
 
       // Critical hit system - 5% chance for instant response
       const criticalHit =
-        Math.random() < parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
+        getRandomFloat() < parseFloat(process.env.MESSAGE_CRITICAL_HIT_CHANCE_0_TYPISTS || '0.05');
 
       if (!criticalHit && cappedDelay > 1000) {
         ctx.logger(
