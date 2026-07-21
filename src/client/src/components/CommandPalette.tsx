@@ -5,7 +5,6 @@ import {
   Brain, MessageSquare, Map, Search, CornerDownLeft,
 } from 'lucide-react';
 import Kbd from './DaisyUI/Kbd';
-import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface PaletteItem {
   id: string;
@@ -40,7 +39,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
 
   const filtered = useMemo(() => {
@@ -54,13 +53,21 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     );
   }, [query]);
 
-  // Reset state when opened
+  // Manage modal open state and reset state
   useEffect(() => {
+    const dialogEl = dialogRef.current;
     if (isOpen) {
+      if (dialogEl && !dialogEl.open) {
+        dialogEl.showModal();
+      }
       setQuery('');
       setSelectedIndex(0);
       // Focus after the dialog has rendered
       requestAnimationFrame(() => inputRef.current?.focus());
+    } else {
+      if (dialogEl && dialogEl.open) {
+        dialogEl.close();
+      }
     }
   }, [isOpen]);
 
@@ -77,8 +84,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     selected?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
-  // Focus trap: keep Tab/Shift-Tab cycling within the dialog
-  useFocusTrap(isOpen, dialogRef);
 
   const selectItem = useCallback(
     (item: PaletteItem) => {
@@ -135,11 +140,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       />
 
       {/* Palette card */}
-      <div
+      <dialog
         ref={dialogRef}
-        className="relative w-full max-w-lg bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
-        role="dialog"
         aria-modal="true"
+        className="relative w-full max-w-lg bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden m-auto"
         aria-label="Command palette"
         onKeyDown={handleKeyDown}
       >
@@ -220,7 +224,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             close
           </span>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 };
