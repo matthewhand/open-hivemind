@@ -132,7 +132,7 @@ const Modal: React.FC<ModalProps> = ({
             {showCloseButton && closable && (
               <button
                 ref={closeBtnRef}
-                className="btn btn-sm btn-circle btn-ghost"
+                className="btn btn-sm btn-circle btn-ghost focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={onClose}
                 aria-label="Close modal"
               >
@@ -429,7 +429,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
                     <button
                       ref={closeButtonRef}
                       type="button"
-                      className="btn btn-sm btn-circle btn-ghost"
+                      className="btn btn-sm btn-circle btn-ghost focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
                       onClick={onClose}
                       aria-label="Close panel"
                     >

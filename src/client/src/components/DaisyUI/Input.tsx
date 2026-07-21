@@ -105,7 +105,7 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
             {isPassword && !disabled && !loading && (
               <button
                 type="button"
-                className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary pointer-events-auto"
+                className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none pointer-events-auto"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >

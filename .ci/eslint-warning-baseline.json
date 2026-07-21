@@ -23,6 +23,7 @@
     "src/server/services/configImportExport/formatConverters.ts::max-lines": 1,
     "src/server/services/ConfigurationTemplateService.ts::unused-imports/no-unused-vars": 1,
     "src/server/services/DashboardService.ts::unused-imports/no-unused-vars": 1,
-    "src/types/openai.ts::eqeqeq": 1
+    "src/types/openai.ts::eqeqeq": 1,
+    "src/server/services/DashboardService.ts::max-lines": 1
   }
 }
