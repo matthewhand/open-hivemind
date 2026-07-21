@@ -60,10 +60,12 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
     >
       <button
         type="button"
-        className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
+        className={`btn btn-ghost btn-sm btn-circle text-warning focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${className}`}
         onClick={handleClick}
         disabled={loading}
         aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
+        aria-busy={loading}
+        aria-live="polite"
       >
         {loading ? (
           <LoadingSpinner size="xs" />

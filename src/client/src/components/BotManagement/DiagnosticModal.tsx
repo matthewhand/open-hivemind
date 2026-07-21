@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../DaisyUI/Modal';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
 import { 
   CheckCircle, 
   XCircle, 
@@ -83,23 +84,27 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
         aria-busy={loading}
       >
         {loading && !results ? (
-          <div className="py-12 text-center space-y-4" role="status">
+          <div className="py-12 text-center space-y-4" role="status" aria-label="Loading diagnostics">
              <LoadingSpinner size="lg" />
              <p className="text-sm opacity-50 animate-pulse">Running multi-point handshake tests...</p>
           </div>
         ) : error ? (
-          <div className="alert alert-error" role="alert">
-             <XCircle className="w-6 h-6" />
-             <span>{error}</span>
-             <button
-               onClick={runDiagnostic}
-               className="btn btn-xs btn-ghost"
-               disabled={loading}
-               aria-label="Retry diagnostic"
-             >
+          <Alert
+            status="error"
+            title="Diagnostic Failed"
+            message={error}
+            actions={[
+              <button
+                key="retry"
+                onClick={runDiagnostic}
+                className="btn btn-xs btn-outline"
+                disabled={loading}
+                aria-label="Retry diagnostic"
+              >
                 {loading ? 'Retrying...' : 'Retry'}
-             </button>
-          </div>
+              </button>
+            ]}
+          />
         ) : results ? (
           <div className="space-y-6 py-2">
              <ul className="timeline timeline-vertical">
@@ -155,7 +160,12 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
                 </div>
              </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="py-12 text-center" role="status" aria-label="No diagnostics available">
+            <AlertTriangle className="w-12 h-12 mx-auto text-base-content/30 mb-4" />
+            <p className="text-base-content/60">No diagnostic data available</p>
+          </div>
+        )}
       </div>
     </Modal>
   );
