@@ -340,9 +340,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       <div className="navbar-start gap-2">
         {/* Mobile Menu */}
         <div className="dropdown lg:hidden">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Open mobile menu">
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" aria-label="Open mobile menu">
             <Menu className="w-5 h-5" />
-          </div>
+          </button>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200">
             {navItems.map((item) => (
               <li key={item.id}>
@@ -530,14 +530,14 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" aria-label="System status">
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle btn-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" aria-label="System status">
             <Indicator
                item={<span className="badge badge-xs badge-success indicator-item"></span>}
                className="p-1"
             >
                <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             </Indicator>
-          </div>
+          </button>
           <ul tabIndex={0} className="dropdown-content z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2">
             <li className="menu-title text-xs opacity-40 uppercase tracking-widest font-bold mb-2">Live Infrastructure</li>
             <li><a className="flex justify-between py-2 font-medium"><span>🟢 System Status</span> <Badge variant="success" size="xs">Healthy</Badge></a></li>
@@ -548,13 +548,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Notifications */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle btn-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
             <Indicator
               item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
             >
               <Bell className="w-5 h-5 opacity-70" />
             </Indicator>
-          </div>
+          </button>
           <ul tabIndex={0} className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
             <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
             <div className="max-h-60 overflow-y-auto">
@@ -661,7 +661,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* User Menu */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar ml-1" aria-label="User menu">
+          <button type="button" aria-haspopup="menu" aria-expanded="false" className="btn btn-ghost btn-circle avatar ml-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" aria-label="User menu">
             <div className="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden shadow-md">
                <Avatar
                 size="sm"
@@ -674,7 +674,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                 {!userAvatar && userName.charAt(0).toUpperCase()}
               </Avatar>
             </div>
-          </div>
+          </button>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200">
             <div className="px-4 py-3 border-b border-base-200 mb-2">
                <p className="text-xs font-bold opacity-40 uppercase tracking-widest mb-1">Signed in as</p>
