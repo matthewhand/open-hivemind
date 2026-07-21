@@ -13,30 +13,34 @@ interface InsightsModalProps {
 }
 
 const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, onClose }) => {
-  const [loading, setLoading] = useState(false);
+  const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [insights, setInsights] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchInsights = async () => {
-    setLoading(true);
+    setFetchState('loading');
     setError(null);
     try {
       const response: any = await apiService.get(`/api/bots/${botId}/insights`);
       if (response.success) {
         setInsights(response.data.insights);
+        setFetchState('success');
       } else {
         throw new Error(response.message || 'Failed to fetch insights');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
+      setFetchState('error');
     }
   };
 
   useEffect(() => {
     if (isOpen && !insights) {
       fetchInsights();
+    } else if (!isOpen) {
+      setFetchState('idle');
+      setInsights(null);
+      setError(null);
     }
   }, [isOpen, botId]);
 
@@ -53,9 +57,9 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
         role="region"
         aria-label="Insights content"
         aria-live="polite"
-        aria-busy={loading}
+        aria-busy={fetchState === 'loading'}
       >
-        {loading && !insights ? (
+        {fetchState === 'loading' && !insights ? (
           <div className="py-20 text-center space-y-4">
             <div className="flex justify-center">
               <Sparkles className="w-12 h-12 text-primary animate-pulse" />
@@ -65,7 +69,7 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               Analyzing metrics, anomalies, and historical data...
             </p>
           </div>
-        ) : error ? (
+        ) : fetchState === 'error' ? (
           <div className="alert alert-error shadow-lg">
             <XCircle className="w-6 h-6" />
             <div className="flex-1">
@@ -75,11 +79,11 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
             <button
               onClick={fetchInsights}
               className="btn btn-sm btn-ghost"
-              disabled={loading}
+              disabled={fetchState === 'loading'}
               aria-label="Retry loading insights"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Retrying...' : 'Retry'}
+              <RefreshCw className={`w-4 h-4 mr-2 ${fetchState === 'loading' ? 'animate-spin' : ''}`} />
+              {fetchState === 'loading' ? 'Retrying...' : 'Retry'}
             </button>
           </div>
         ) : insights ? (
@@ -90,16 +94,19 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               <button 
                 onClick={fetchInsights}
                 className="hover:opacity-100 transition-opacity flex items-center gap-1"
-                disabled={loading}
+                disabled={fetchState === 'loading'}
               >
-                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Regenerating...' : 'Regenerate'}
+                <RefreshCw className={`w-3 h-3 ${fetchState === 'loading' ? 'animate-spin' : ''}`} />
+                {fetchState === 'loading' ? 'Regenerating...' : 'Regenerate'}
               </button>
             </div>
           </div>
         ) : (
           <div className="py-12 text-center opacity-50">
-            No insights available.
+            <section aria-labelledby="empty-insights-title">
+              <h2 id="empty-insights-title" className="sr-only">Insights</h2>
+              No insights available.
+            </section>
           </div>
         )}
       </div>
