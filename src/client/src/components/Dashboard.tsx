@@ -386,11 +386,11 @@ const Dashboard: React.FC = () => {
             </div>
 
             {bots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
+              <section aria-labelledby="empty-agents-heading" className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
                 <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
                   <BotIcon className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold mb-1">No agents yet</h3>
+                <h3 id="empty-agents-heading" className="text-lg font-bold mb-1">No agents yet</h3>
                 <p className="text-sm text-base-content/60 mb-5 max-w-sm">
                   Create your first bot to start seeing it here.
                 </p>
@@ -402,7 +402,7 @@ const Dashboard: React.FC = () => {
                   <Plus className="w-4 h-4" />
                   Create a bot
                 </Link>
-              </div>
+              </section>
             ) : (
               <>
                 {/* Bot Cards Grid */}

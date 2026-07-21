@@ -1,0 +1,3 @@
+## 2026-07-14 | [Architectural Audit] | Insight: Div-Soup Empty States limit discoverability | Protocol: Use semantic HTML5 `<section aria-labelledby="...">` and `<h3 className="sr-only">` for list and panel empty states.
+## 2026-07-14 | [Architectural Audit] | Insight: Loose boolean flags in async connection forms cause race conditions | Protocol: Utilize deterministic state machine variables (e.g., `fetchState: 'idle' | 'testing' | 'loadingAvatar'`) instead of loose booleans (`isLoading`).
+## 2026-07-14 | [Architectural Audit] | Insight: Inconsistent keyboard focus visibility on custom components | Protocol: Standardize keyboard focus using Tailwind's `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none`.
