@@ -117,7 +117,7 @@ const ToolProvidersPage: React.FC = () => {
           {filteredProfiles.map((profile) => (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
               <div>
-                <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
+                <button type="button" className="p-4 w-full text-left flex items-center justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-info/10 text-info rounded-xl">
                       {typeof getProviderIcon(profile.provider) === 'string' ? <span className="text-xl">{getProviderIcon(profile.provider)}</span> : getProviderIcon(profile.provider)}
@@ -140,14 +140,14 @@ const ToolProvidersPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEditProfile(profile); }} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.key); }} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleExpand(profile.key); }} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>
-                </div>
+                </button>
                 {expandedProfile === profile.key && (
                   <div className="px-4 pb-4 pt-0">
                     <div className="bg-base-200/50 rounded-xl p-4 border border-base-200">

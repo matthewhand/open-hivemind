@@ -377,6 +377,7 @@ export interface DetailDrawerProps {
   title: string;
   children: React.ReactNode;
   width?: string;
+  closable?: boolean;
 }
 
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
@@ -385,6 +386,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   title,
   children,
   width = 'max-w-xl',
+  closable = true,
 }) => {
   const drawerRef = React.useRef<HTMLDivElement | null>(null);
   const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
@@ -398,14 +400,14 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        if (closable) onClose();
         return;
       }
     };
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closable]);
 
   return (
     <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true">
@@ -413,7 +415,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
         {/* Backdrop */}
         <div
           className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-          onClick={onClose}
+          onClick={closable ? onClose : undefined}
           aria-hidden="true"
         ></div>
 
