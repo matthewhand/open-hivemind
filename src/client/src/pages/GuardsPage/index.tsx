@@ -1,139 +1,36 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { authFetch } from '../utils/authFetch';
+import { authFetch } from '../../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle, Settings, Users } from 'lucide-react';
-import { useToast } from '../components/DaisyUI/ToastNotification';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import Pagination from '../components/DaisyUI/Pagination';
-import DetailDrawer from '../components/DaisyUI/DetailDrawer';
-import Card from '../components/DaisyUI/Card';
-import Divider from '../components/DaisyUI/Divider';
-import Input from '../components/DaisyUI/Input';
-import Button from '../components/DaisyUI/Button';
-import Toggle from '../components/DaisyUI/Toggle';
-import Select from '../components/DaisyUI/Select';
-import Tabs from '../components/DaisyUI/Tabs';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
-import ModalForm from '../components/DaisyUI/ModalForm';
-import { FormField } from '../components/DaisyUI/formTypes';
-import RangeSlider from '../components/DaisyUI/RangeSlider';
-import { Badge } from '../components/DaisyUI/Badge';
-import Accordion from '../components/DaisyUI/Accordion';
+import { useToast } from '../../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Pagination from '../../components/DaisyUI/Pagination';
+import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
+import Card from '../../components/DaisyUI/Card';
+import Divider from '../../components/DaisyUI/Divider';
+import Input from '../../components/DaisyUI/Input';
+import Button from '../../components/DaisyUI/Button';
+import Toggle from '../../components/DaisyUI/Toggle';
+import Select from '../../components/DaisyUI/Select';
+import Tabs from '../../components/DaisyUI/Tabs';
+import { ConfirmModal } from '../../components/DaisyUI/Modal';
+import ModalForm from '../../components/DaisyUI/ModalForm';
+import { FormField } from '../../components/DaisyUI/formTypes';
+import RangeSlider from '../../components/DaisyUI/RangeSlider';
+import { Badge } from '../../components/DaisyUI/Badge';
+import Accordion from '../../components/DaisyUI/Accordion';
 import {
-  coerceGuardSettings,
-  settingsEqual,
-  windowSecondsToMs,
-  clampMaxRequests,
   formatWindow,
   guardChipClass,
   guardChipVariant,
-  DEFAULT_GUARD_SETTINGS,
-  type GuardSettings,
-} from './guardSettings';
-export interface GuardProfile {
-  id: string;
-  name: string;
-  description?: string;
-  guards: {
-    mcpGuard: { enabled: boolean; type: 'owner' | 'custom'; allowedUsers?: string[]; allowedTools?: string[] };
-    rateLimit?: { enabled: boolean; maxRequests: number; windowMs: number };
-    contentFilter?: { enabled: boolean; strictness: 'low' | 'medium' | 'high'; blockedTerms?: string[] };
-  };
-  createdAt?: string;
-  updatedAt?: string;
-}
+} from '../guardSettings';
+import { CommaSeparatedInput } from './CommaSeparatedInput';
+import { GuardSettingsTab } from './GuardSettingsTab';
+import { GuardStatusRow } from './GuardStatusRow';
+import type { GuardProfile } from './types';
 
-// Custom comma-separated input component
-const CommaSeparatedInput = ({
-  value,
-  onChange,
-  disabled,
-  placeholder,
-  id,
-  validate
-}: {
-  value: string[];
-  onChange: (val: string[]) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  id?: string;
-  validate?: (val: string) => string | null;
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addCurrentValue();
-    }
-  };
-
-  const addCurrentValue = () => {
-    const trimmed = inputValue.trim().replace(/,$/, '');
-    if (!trimmed) return;
-
-    if (validate) {
-      const err = validate(trimmed);
-      if (err) {
-        setError(err);
-        return;
-      }
-    }
-
-    if (!value.includes(trimmed)) {
-      onChange([...value, trimmed]);
-    }
-    setInputValue('');
-    setError(null);
-  };
-
-  const removeValue = (toRemove: string) => {
-    onChange(value.filter(v => v !== toRemove));
-  };
-
-  return (
-    <div className="w-full">
-      <div className="flex flex-wrap gap-2 mb-2">
-        {value.map(val => (
-          <Badge key={val} variant="primary" className="gap-1 p-3">
-            {val}
-            {!disabled && (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="btn-circle h-4 w-4 min-h-0"
-                onClick={() => removeValue(val)}
-                aria-label={`Remove ${val}`}
-              >
-                ✕
-              </Button>
-            )}
-          </Badge>
-        ))}
-      </div>
-      <Input
-        id={id}
-        value={inputValue}
-        onChange={e => {
-          setInputValue(e.target.value);
-          if (e.target.value.includes(',')) {
-            // Trigger add if they paste or type a comma
-            setTimeout(addCurrentValue, 0);
-          }
-        }}
-        onKeyDown={handleKeyDown}
-        onBlur={addCurrentValue}
-        disabled={disabled}
-        placeholder={placeholder || "Type and press Enter or comma..."}
-        variant={error ? 'error' : undefined}
-      />
-      {error && <span className="label-text-alt text-error mt-1">{error}</span>}
-    </div>
-  );
-};
+export type { GuardProfile } from './types';
 
 const defaultNewProfile: Omit<GuardProfile, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '',
@@ -145,208 +42,6 @@ const defaultNewProfile: Omit<GuardProfile, 'id' | 'createdAt' | 'updatedAt'> = 
   }
 };
 
-/** Read-only status row for the detail drawer */
-const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: boolean; detail: string; level?: string }> = ({ icon, label, enabled, detail, level }) => (
-  <div className="flex items-center justify-between gap-3 py-2">
-    <span className="flex items-center gap-2 text-sm font-medium">
-      {icon} {label}
-    </span>
-    <div className="flex items-center gap-2 shrink-0">
-      {enabled ? (
-        <CheckCircle className="w-4 h-4 text-success" />
-      ) : (
-        <XCircle className="w-4 h-4 text-base-content/30" />
-      )}
-      <Badge variant={guardChipVariant(enabled, level)} size="sm">{detail}</Badge>
-    </div>
-  </div>
-);
-
-/**
- * Guard Settings tab — wired to GET/PUT /api/admin/guard-profiles/settings.
- * Edits global defaults applied to newly created guard profiles plus the
- * guard evaluation order.
- */
-const GuardSettingsTab: React.FC = () => {
-  const { addToast } = useToast();
-  const queryClient = useQueryClient();
-  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.guardSettings.showAdvanced', false);
-  const [draft, setDraft] = useState<GuardSettings>(DEFAULT_GUARD_SETTINGS);
-
-  const { data: settings, isLoading } = useQuery<GuardSettings>({
-    queryKey: ['guardSettings'],
-    queryFn: async () => {
-      const res = await authFetch('/api/admin/guard-profiles/settings');
-      if (!res.ok) throw new Error('Failed to fetch guard settings');
-      const json = await res.json();
-      return coerceGuardSettings(json?.data);
-    },
-  });
-
-  // Sync the server value into the local draft once it loads / changes.
-  React.useEffect(() => {
-    if (settings) setDraft(settings);
-  }, [settings]);
-
-  const saveMutation = useMutation({
-    mutationFn: async (next: GuardSettings) => {
-      const res = await authFetch('/api/admin/guard-profiles/settings', {
-        method: 'PUT',
-        body: JSON.stringify(next),
-      });
-      if (!res.ok) throw new Error('Failed to save guard settings');
-      const json = await res.json();
-      return coerceGuardSettings(json?.data);
-    },
-    onSuccess: (saved) => {
-      queryClient.setQueryData(['guardSettings'], saved);
-      setDraft(saved);
-      addToast({ type: 'success', title: 'Saved', message: 'Guard settings updated' });
-    },
-    onError: (error) => {
-      addToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to save guard settings',
-      });
-    },
-  });
-
-  const dirty = !settings || !settingsEqual(draft, settings);
-  const windowSeconds = Math.round(draft.defaultRateLimit.windowMs / 1000);
-
-  return (
-    <div className="space-y-6">
-      <Card className="shadow-md border border-base-200">
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Global Guard Defaults</h3>
-        </div>
-
-        <div className="space-y-4">
-          {/* Default rate limit */}
-          <div className="form-control">
-            <label className="label"><span className="label-text font-medium">Default Rate Limit</span></label>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Max Requests"
-                type="number"
-                min={1}
-                max={1000000}
-                value={draft.defaultRateLimit.maxRequests}
-                disabled={isLoading}
-                onChange={e =>
-                  setDraft(d => ({
-                    ...d,
-                    defaultRateLimit: {
-                      ...d.defaultRateLimit,
-                      maxRequests: clampMaxRequests(parseInt(e.target.value, 10) || 1),
-                    },
-                  }))
-                }
-              />
-              <Input
-                label="Window (seconds)"
-                type="number"
-                min={1}
-                max={3600}
-                value={windowSeconds}
-                disabled={isLoading}
-                helperText={formatWindow(draft.defaultRateLimit.windowMs)}
-                onChange={e =>
-                  setDraft(d => ({
-                    ...d,
-                    defaultRateLimit: {
-                      ...d.defaultRateLimit,
-                      windowMs: windowSecondsToMs(parseInt(e.target.value, 10) || 1),
-                    },
-                  }))
-                }
-              />
-            </div>
-            <label className="label">
-              <span className="label-text-alt text-base-content/50">
-                Applied to new guard profiles by default.
-              </span>
-            </label>
-          </div>
-
-          <Divider>Content Filtering</Divider>
-
-          {/* Default content filter level */}
-          <div className="form-control">
-            <label className="label"><span className="label-text font-medium">Default Content Filter Level</span></label>
-            <Select
-              disabled={isLoading}
-              value={draft.defaultContentFilterStrictness}
-              onChange={e =>
-                setDraft(d => ({
-                  ...d,
-                  defaultContentFilterStrictness: e.target.value as GuardSettings['defaultContentFilterStrictness'],
-                }))
-              }
-              options={[
-                { value: 'low', label: 'Low' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'high', label: 'High' },
-              ]}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <Button
-            variant="primary"
-            loading={saveMutation.isPending}
-            disabled={!dirty || isLoading}
-            onClick={() => saveMutation.mutate(draft)}
-          >
-            Save Settings
-          </Button>
-        </div>
-      </Card>
-
-      {/* Advanced toggle */}
-      <Card className="shadow-md border border-base-200">
-        <Toggle
-          label="Advanced"
-          checked={showAdvanced}
-          onChange={() => setShowAdvanced(v => !v)}
-          color="primary"
-        />
-        {showAdvanced && (
-          <div className="mt-4 space-y-4 animate-fadeIn">
-            <Divider>Advanced Guard Settings</Divider>
-            <div className="form-control">
-              <label className="label" htmlFor="guard-evaluation-order"><span className="label-text">Guard Evaluation Order</span></label>
-              <Select
-                id="guard-evaluation-order"
-                disabled={isLoading}
-                value={draft.evaluationOrder}
-                onChange={e =>
-                  setDraft(d => ({
-                    ...d,
-                    evaluationOrder: e.target.value as GuardSettings['evaluationOrder'],
-                  }))
-                }
-                options={[
-                  { value: 'sequential', label: 'Sequential (all guards run in order)' },
-                  { value: 'parallel', label: 'Parallel (all guards run simultaneously)' },
-                  { value: 'fail-fast', label: 'Fail-Fast (stop on first failure)' },
-                ]}
-              />
-              <label className="label">
-                <span className="label-text-alt text-base-content/50">
-                  Controls how multiple guards are evaluated for a request.
-                </span>
-              </label>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
 
 const GuardsPage: React.FC = () => {
   const { addToast } = useToast();
