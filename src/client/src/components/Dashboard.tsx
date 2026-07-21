@@ -9,6 +9,7 @@ import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import Badge from './DaisyUI/Badge';
+import EmptyState from './DaisyUI/EmptyState';
 import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
 import CommandCenterStream from './Monitoring/CommandCenterStream';
@@ -379,30 +380,31 @@ const Dashboard: React.FC = () => {
           <div key="agents" className="mb-8">
             {controls}
             <div className="flex items-center justify-between mb-4">
-               <h2 className="text-xl font-bold flex items-center gap-2">
+               <h2 id="empty-state-title" className="text-xl font-bold flex items-center gap-2">
                   Agents
                   {!isCustomizing && bots.length > 0 && <Badge variant="primary" size="sm">{bots.length}</Badge>}
                </h2>
             </div>
 
             {bots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
-                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  <BotIcon className="w-7 h-7" />
-                </div>
-                <h3 className="text-lg font-bold mb-1">No agents yet</h3>
-                <p className="text-sm text-base-content/60 mb-5 max-w-sm">
-                  Create your first bot to start seeing it here.
-                </p>
-                <Link
-                  to="/admin/bots/create"
-                  className="btn btn-primary btn-sm gap-2"
-                  aria-label="Create a bot"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create a bot
-                </Link>
-              </div>
+              <section aria-labelledby="empty-state-title" className="mb-8">
+                <EmptyState
+                  icon={BotIcon}
+                  title="No agents yet"
+                  description="Create your first bot to start seeing it here."
+                  actionLabel={
+                    <Link
+                      to="/admin/bots/create"
+                      className="flex items-center gap-2"
+                      aria-label="Create a bot"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create a bot
+                    </Link>
+                  }
+                  variant="primary"
+                />
+              </section>
             ) : (
               <>
                 {/* Bot Cards Grid */}

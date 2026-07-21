@@ -100,6 +100,7 @@ interface CardTitleProps {
 }
 
 interface CardActionsProps {
+  /** @deprecated Action handlers should be placed on individual buttons */
   children?: ReactNode;
   className?: string;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
@@ -122,7 +123,7 @@ const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', tag: Ta
 CardTitle.displayName = 'Card.Title';
 
 const CardActions: React.FC<CardActionsProps> = ({ children, className = '', onClick }) => {
-  return <div className={`card-actions justify-end ${className}`} onClick={onClick}>{children}</div>;
+  return <div className={`card-actions justify-end ${className}`}>{children}</div>;
 };
 CardActions.displayName = 'Card.Actions';
 

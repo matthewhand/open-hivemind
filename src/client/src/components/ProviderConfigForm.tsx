@@ -446,7 +446,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
       {/* Provider Header */}
       <div className="flex items-center space-x-3 pb-4 border-b">
         <span className="text-2xl">{schema.icon}</span>
@@ -460,9 +460,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {Object.entries(groupedFields).map(([groupName, fields]) => (
         <Card key={groupName} className="shadow-sm border border-base-200">
           <Card.Body className="p-6">
+            <fieldset>
             <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
               {groupName}
             </Card.Title>
+            <legend className="sr-only">{groupName} Configuration</legend>
             <div className="overflow-x-auto">
               <SimpleTable className="w-full">
                 <thead>
@@ -501,6 +503,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                 </tbody>
               </SimpleTable>
             </div>
+            </fieldset>
           </Card.Body>
         </Card>
       ))}
@@ -528,7 +531,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             </div>
             
             {showAdvanced && (
-              <div {...advancedDisclosure.contentProps} className="mt-4 space-y-6">
+              <fieldset {...advancedDisclosure.contentProps} className="mt-4 space-y-6">
+                <legend className="sr-only">Advanced Settings Configuration</legend>
                 {Object.entries(groupedAdvancedFields).map(([groupName, fields]) => (
                   <div key={groupName}>
                     {Object.keys(groupedAdvancedFields).length > 1 && (
@@ -572,7 +576,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                     </div>
                   </div>
                 ))}
-              </div>
+              </fieldset>
             )}
           </Card.Body>
         </Card>
@@ -630,6 +634,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Avatar size="md" shape="circle" src={avatarUrl} alt="Provider avatar" />
         </Card>
       )}
-    </div>
+    </form>
   );
 };

@@ -1,0 +1,6 @@
+## $(date +%Y-%m-%d) | [Architectural Audit] | Insight: [Div-Soup & Misplaced Propagation in Core UI] | Protocol: [Semantic Forms & Direct Handling]
+- **Insight:** The codebase exhibited multiple systemic UX/A11y issues, including broken event propagation paradigms in data tables (relying on \`onClick={e => e.stopPropagation()}\` within non-interactive `div` wrappers like \`card-actions\`), unstructured empty states that break screen-reader announcements, and complex forms grouped using generic \`div\` elements instead of semantic fieldsets.
+- **Protocol:**
+  1. Enforced direct event handling on interactive elements (\`<button>\` and \`<Button>\`) and deprecated the \`onClick\` prop on non-semantic wrappers like \`Card.Actions\` to prevent future regressions.
+  2. Standardized the usage of the \`EmptyState\` component wrapped in a semantic \`<section aria-labelledby="empty-state-title">\` to ensure deterministic, accessible loading states.
+  3. Refactored settings groupings (e.g., in \`ProviderConfigForm\` and \`SettingsSecurity\`) to utilize semantic \`<fieldset>\` tags coupled with screen-reader-only (\`sr-only\`) \`<legend>\` tags to maintain a11y context without altering visual design.
