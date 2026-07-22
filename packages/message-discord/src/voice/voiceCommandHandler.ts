@@ -8,7 +8,10 @@ const debug = Debug('app:discord:voiceCommandHandler');
 const TEMP_DIR = './temp';
 
 /**
- * Handles voice commands from Discord voice channels.
+ * Experimental voice-command helper.
+ *
+ * Not wired into live Discord receive: voice channel join is unsupported, so
+ * this handler has no production call path. Kept for tests / future join work.
  */
 export class VoiceCommandHandler {
   private connection: any;

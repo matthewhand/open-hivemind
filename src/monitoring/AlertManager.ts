@@ -1,4 +1,12 @@
 /* eslint-disable max-lines */
+/**
+ * Threshold-based alert manager driven by a HealthChecker instance.
+ *
+ * Opt-in library code — NOT constructed by initServices or monitoring routes.
+ * Production alerting currently flows through AnomalyDetectionService +
+ * WebSocketService.recordAlert. Construct AlertManager only when you
+ * intentionally inject a HealthChecker that reports real OS metrics.
+ */
 import { EventEmitter } from 'events';
 import TimerRegistry from '@src/utils/TimerRegistry';
 import Logger from '@common/logger';

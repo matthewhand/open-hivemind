@@ -22,6 +22,7 @@ import type { IMessage } from '@hivemind/shared-types';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { TRANSFER_COMPLETED_MARKER } from '@src/services/toolAugmentedCompletion';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';
@@ -143,6 +144,14 @@ export class InferenceStage {
         userId: authorId,
         messageProvider: ctx.botConfig.MESSAGE_PROVIDER || ctx.platform,
         platform: ctx.platform,
+        // Required by transfer_to_bot for real MessageBus handoff.
+        sourceMessage: ctx.message,
+        transferHop:
+          typeof ctx.metadata?.transferHop === 'number'
+            ? ctx.metadata.transferHop
+            : typeof (ctx.metadata as any)?.handoff?.hop === 'number'
+              ? (ctx.metadata as any).handoff.hop
+              : 0,
       };
 
       const responseText = await this.llmInvoker.generateResponse(
@@ -154,6 +163,33 @@ export class InferenceStage {
       );
 
       const durationMs = Date.now() - startTime;
+
+      // Successful swarm handoff: source bot intentionally does not reply.
+      // Must not be logged as an empty-LLM error (observability honesty).
+      if (responseText === TRANSFER_COMPLETED_MARKER) {
+        ctx.metadata.inference = {
+          model: (ctx.botConfig.MODEL as string) || 'unknown',
+          durationMs,
+          status: 'transferred',
+        };
+
+        await dbManager.logInference({
+          botName: ctx.botName,
+          prompt: userMessage,
+          status: 'success',
+          errorMessage: undefined,
+          latencyMs: durationMs,
+          provider: (ctx.botConfig.llmProvider as string) || 'unknown',
+        });
+
+        // Claim already released by transfer_to_bot; emit handoff skip (not error).
+        await this.bus.emitAsync('message:skipped', {
+          ...ctx,
+          reason: 'handoff',
+        });
+        debug('Inference completed via transfer_to_bot handoff: bot=%s', ctx.botName);
+        return;
+      }
 
       if (!responseText) {
         // Capture metadata for skipped response

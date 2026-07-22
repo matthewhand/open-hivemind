@@ -211,7 +211,7 @@ Connect your bot to Discord servers.
    - **Client ID**: Your application ID
    - **Guild ID**: Your server ID
    - **Channel ID**: Your default channel ID
-   - **Voice Channel ID**: (Optional) For voice features
+   - **Voice Channel ID**: (Optional, **unsupported**) Legacy field only — Discord voice join is a no-op stub and has no runtime effect
 
 ---
 

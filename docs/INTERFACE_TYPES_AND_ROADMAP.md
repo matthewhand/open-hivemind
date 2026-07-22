@@ -159,7 +159,7 @@ export interface IMessageProvider {
 | [`DiscordService.ts`](packages/message-discord/src/DiscordService.ts) | Main service implementing IMessengerService | ✅ Complete |
 | [`DiscordMessage.ts`](packages/message-discord/src/DiscordMessage.ts) | IMessage implementation | ✅ Complete |
 | [`DiscordMessageProvider.ts`](packages/message-discord/src/providers/DiscordMessageProvider.ts) | Low-level transport | ✅ Complete |
-| [`voiceCommandHandler.ts`](packages/message-discord/src/voice/voiceCommandHandler.ts) | Voice command processing | ⚠️ Experimental |
+| [`voiceCommandHandler.ts`](packages/message-discord/src/voice/voiceCommandHandler.ts) | Voice command helper (no live join path) | ❌ Unsupported |
 | [`audioRecorder.ts`](packages/message-discord/src/voice/audioRecorder.ts) | Audio recording | ⚠️ Experimental |
 
 ### Slack Adapter

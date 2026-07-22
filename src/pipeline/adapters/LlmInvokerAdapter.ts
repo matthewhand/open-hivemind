@@ -107,6 +107,11 @@ export class LlmInvokerAdapter implements LlmInvoker {
           ),
           forumId: metadata?.forumId as string | undefined,
           forumOwnerId: metadata?.forumOwnerId as string | undefined,
+          // Handoff support for transfer_to_bot (MessageBus re-emit).
+          sourceMessage: metadata?.sourceMessage as IMessage | undefined,
+          history: history,
+          transferHop: typeof metadata?.transferHop === 'number' ? metadata.transferHop : undefined,
+          sourceBotConfig: resolvedConfig,
         },
       });
     } catch (err) {

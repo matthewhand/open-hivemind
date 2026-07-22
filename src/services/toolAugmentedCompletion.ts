@@ -4,6 +4,13 @@ import { ToolManager, type OpenAITool, type ToolResult } from './ToolManager';
 
 const debug = Debug('app:toolAugmentedCompletion');
 
+/**
+ * Returned by {@link toolAugmentedCompletion} when `transfer_to_bot` succeeded.
+ * InferenceStage must treat this as a successful handoff (not an empty LLM error)
+ * and must not post it to the channel.
+ */
+export const TRANSFER_COMPLETED_MARKER = '__hivemind_transfer_completed__';
+
 /** A single tool call as returned by the LLM. */
 interface LLMToolCall {
   id: string;
@@ -38,13 +45,17 @@ export async function toolAugmentedCompletion(opts: {
   historyMessages: IMessage[];
   metadata: Record<string, unknown>;
   systemPrompt: string;
-  /** Extra context forwarded to tool execution for guard checks. */
+  /** Extra context forwarded to tool execution for guard checks + handoff. */
   toolContext?: {
     userId?: string;
     channelId?: string;
     messageProvider?: string;
     forumId?: string;
     forumOwnerId?: string;
+    sourceMessage?: IMessage;
+    history?: IMessage[];
+    transferHop?: number;
+    sourceBotConfig?: Record<string, unknown>;
   };
 }): Promise<string> {
   const {
@@ -105,6 +116,7 @@ export async function toolAugmentedCompletion(opts: {
     messages.push(assistantMessage);
 
     // Execute each tool call and feed results back.
+    let transferred = false;
     for (const toolCall of assistantMessage.tool_calls) {
       const result = await executeToolCall(toolManager, botName, toolCall, toolContext);
 
@@ -114,6 +126,26 @@ export async function toolAugmentedCompletion(opts: {
         name: toolCall.function.name,
         content: formatToolResultContent(result),
       });
+
+      // Successful handoff: stop the tool loop so this bot does not keep talking
+      // after the MessageBus has re-emitted the message for the target bot.
+      if (
+        result.success &&
+        toolCall.function.name === 'transfer_to_bot' &&
+        result.result &&
+        typeof result.result === 'object' &&
+        (result.result as { transferred?: boolean }).transferred === true
+      ) {
+        transferred = true;
+        break;
+      }
+    }
+
+    if (transferred) {
+      debug(`Bot "${botName}" completed transfer_to_bot — ending tool loop`);
+      // Non-empty sentinel so InferenceStage does not log an "empty LLM response" error.
+      // Output must not be posted to the channel — InferenceStage treats this specially.
+      return TRANSFER_COMPLETED_MARKER;
     }
   }
 
@@ -233,6 +265,10 @@ async function executeToolCall(
     messageProvider?: string;
     forumId?: string;
     forumOwnerId?: string;
+    sourceMessage?: IMessage;
+    history?: IMessage[];
+    transferHop?: number;
+    sourceBotConfig?: Record<string, unknown>;
   }
 ): Promise<ToolResult> {
   const toolName = toolCall.function.name;

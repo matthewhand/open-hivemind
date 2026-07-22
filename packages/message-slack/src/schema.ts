@@ -12,6 +12,8 @@ export interface ProviderSchema {
   label: string;
   type: 'messenger';
   docsUrl?: string;
+  maturity?: 'stable' | 'beta' | 'experimental';
+  notes?: string;
   fields: {
     required: ProviderField[];
     optional: ProviderField[];
@@ -24,6 +26,9 @@ export const schema: ProviderSchema = {
   label: 'Slack',
   type: 'messenger',
   docsUrl: 'https://api.slack.com/start',
+  maturity: 'stable',
+  notes:
+    'Send/receive, threads, typing, interactive actions. Bot reaction add/send and reaction_added handling are NOT supported (history may include reaction metadata only).',
   fields: {
     required: [
       {

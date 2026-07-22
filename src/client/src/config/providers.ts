@@ -1,7 +1,7 @@
 
 export const PROVIDER_CATEGORIES: Record<string, string[]> = {
   llm: ['openai', 'flowise', 'openwebui', 'letta'],
-  message: ['discord', 'slack', 'mattermost', 'telegram'],
+  message: ['discord', 'slack', 'mattermost', 'telegram', 'webhook'],
 };
 
 export const PROVIDER_LABELS: Record<string, string> = {
@@ -13,4 +13,5 @@ export const PROVIDER_LABELS: Record<string, string> = {
   slack: 'Slack',
   mattermost: 'Mattermost',
   telegram: 'Telegram',
+  webhook: 'Webhook',
 };

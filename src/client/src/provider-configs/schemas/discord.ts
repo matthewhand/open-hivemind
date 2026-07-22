@@ -5,9 +5,13 @@ export const discordProviderSchema: ProviderConfigSchema = {
   type: 'message',
   providerType: 'discord',
   displayName: 'Discord',
-  description: 'Connect to Discord servers with your bot',
+  description:
+    'Connect to Discord text channels with your bot. Voice channel join is not supported.',
   icon: '💬',
   color: '#5865F2',
+  maturity: 'stable',
+  notes:
+    'Text, threads, typing, multi-bot are supported. Voice join/leave and end-to-end STT are not product capabilities.',
   defaultConfig: {
     intents: ['GUILDS', 'GUILD_MESSAGES', 'MESSAGE_CONTENT'],
     presence: {
@@ -63,7 +67,6 @@ export const discordProviderSchema: ProviderConfigSchema = {
         { label: 'Guild Members', value: 'GUILD_MEMBERS' },
         { label: 'Guild Messages', value: 'GUILD_MESSAGES' },
         { label: 'Message Content', value: 'MESSAGE_CONTENT' },
-        { label: 'Guild Message Reactions', value: 'GUILD_MESSAGE_REACTIONS' },
         { label: 'Direct Messages', value: 'DIRECT_MESSAGES' },
       ],
       defaultValue: ['GUILDS', 'GUILD_MESSAGES', 'MESSAGE_CONTENT'],

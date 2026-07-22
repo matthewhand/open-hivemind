@@ -19,6 +19,8 @@ const MESSENGER_PACKAGES = [
   '@hivemind/message-discord',
   '@hivemind/message-slack',
   '@hivemind/message-mattermost',
+  '@hivemind/message-telegram',
+  '@hivemind/message-webhook',
 ];
 
 const MEMORY_PACKAGES = ['@hivemind/memory-mem0', '@hivemind/memory-mem4ai'];

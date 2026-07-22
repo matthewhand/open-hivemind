@@ -104,14 +104,24 @@ describe('LlmInvokerAdapter', () => {
           userId: 'U1',
           maxTokens: 200,
           temperature: 0.5,
+          messageProvider: 'discord',
         }),
-        toolContext: {
+        toolContext: expect.objectContaining({
           userId: 'U1',
           channelId: 'C1',
           messageProvider: 'discord',
           forumId: undefined,
           forumOwnerId: undefined,
-        },
+          sourceMessage: undefined,
+          history: [],
+          transferHop: undefined,
+          sourceBotConfig: expect.objectContaining({
+            name: 'BotB',
+            MESSAGE_PROVIDER: 'discord',
+            LLM_MAX_TOKENS: 200,
+            LLM_TEMPERATURE: 0.5,
+          }),
+        }),
       })
     );
     expect(provider.generateChatCompletion).not.toHaveBeenCalled();

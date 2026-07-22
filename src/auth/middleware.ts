@@ -384,13 +384,79 @@ export const optionalAuth = async (
 };
 
 /**
- * Tenant middleware - ensures tenant context is set and valid.
- * Currently passes through without validation.
- * @param req Express Request object
- * @param res Express Response object
- * @param next Express NextFunction
+ * Whether tenant isolation is active.
+ *
+ * Opt-in via env: `TENANT_ISOLATION_ENABLED=true` or `MULTI_TENANT_ENABLED=true`.
+ * When disabled (default), {@link requireTenant} is a no-op aside from optional
+ * header capture — it is **not** a security boundary in that mode.
+ */
+export function isTenantIsolationEnabled(): boolean {
+  const raw = process.env.TENANT_ISOLATION_ENABLED ?? process.env.MULTI_TENANT_ENABLED ?? 'false';
+  return /^(1|true|yes|on)$/i.test(String(raw).trim());
+}
+
+/**
+ * Resolve a tenant id from the request (header / query / authenticated user).
+ * Does not validate that the tenant exists — only extracts an identifier.
+ */
+export function resolveTenantId(req: Request): string | undefined {
+  const header =
+    (req.headers['x-tenant-id'] as string | undefined) ||
+    (req.headers['x-tenant'] as string | undefined);
+  if (header && String(header).trim()) {
+    return String(header).trim();
+  }
+
+  const q =
+    (req.query as { tenantId?: string; tenant?: string } | undefined)?.tenantId ??
+    (req.query as { tenant?: string } | undefined)?.tenant;
+  if (q && String(q).trim()) {
+    return String(q).trim();
+  }
+
+  const user = (req as Request & { user?: { tenantId?: string } }).user;
+  if (user?.tenantId && String(user.tenantId).trim()) {
+    return String(user.tenantId).trim();
+  }
+
+  return undefined;
+}
+
+/**
+ * Tenant middleware.
+ *
+ * When tenant isolation is **enabled** (`TENANT_ISOLATION_ENABLED` /
+ * `MULTI_TENANT_ENABLED`), every request must supply a tenant id via
+ * `X-Tenant-Id` / `X-Tenant` header, `?tenantId=` query, or the authenticated
+ * user's `tenantId`. Missing ids → 400.
+ *
+ * When isolation is **disabled** (default), the middleware still attaches a
+ * tenant id when present but never rejects — it is **not** a security control
+ * in single-tenant deployments.
+ *
+ * Attaches `req.tenantId` for downstream handlers when resolved.
  */
 export const requireTenant = (req: Request, res: Response, next: NextFunction): void => {
-  // Skip tenant validation for now - just pass through
+  const tenantId = resolveTenantId(req);
+  if (tenantId) {
+    (req as Request & { tenantId?: string }).tenantId = tenantId;
+  }
+
+  if (!isTenantIsolationEnabled()) {
+    next();
+    return;
+  }
+
+  if (!tenantId) {
+    res.status(400).json({
+      success: false,
+      error: 'Tenant id required',
+      code: 'TENANT_REQUIRED',
+      message:
+        'Tenant isolation is enabled. Provide X-Tenant-Id (or X-Tenant) header, tenantId query param, or authenticate as a user with tenantId.',
+    });
+    return;
+  }
+
   next();
 };

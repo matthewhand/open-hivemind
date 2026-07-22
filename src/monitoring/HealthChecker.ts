@@ -1,15 +1,9 @@
-import crypto from 'crypto';
 import { promises as fs } from 'fs';
+import os from 'os';
 import { performance } from 'perf_hooks';
 import Logger from '@common/logger';
 
 const logger = Logger.withContext('HealthChecker');
-
-// Helper to generate random float between 0 and max using crypto
-function getRandomFloat(max: number): number {
-  const randomBytes = crypto.randomBytes(4);
-  return (randomBytes.readUInt32BE() / 0x100000000) * max;
-}
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -37,6 +31,7 @@ export interface HealthCheckResult {
     diskUsage?: number;
     activeConnections?: number;
     errorRate?: number;
+    loadAverage1m?: number;
   };
 }
 
@@ -46,6 +41,8 @@ export class HealthChecker {
   private lastCheckTime: number;
   private healthHistory: HealthCheckResult[];
   private maxHistory: number;
+  private lastCpuUsage: NodeJS.CpuUsage;
+  private lastCpuHrTime: bigint;
 
   constructor(checkInterval = 30000, maxHistory = 100) {
     this.startTime = performance.now();
@@ -53,6 +50,8 @@ export class HealthChecker {
     this.lastCheckTime = 0;
     this.healthHistory = [];
     this.maxHistory = maxHistory;
+    this.lastCpuUsage = process.cpuUsage();
+    this.lastCpuHrTime = process.hrtime.bigint();
   }
 
   public async performHealthCheck(): Promise<HealthCheckResult> {
@@ -94,9 +93,10 @@ export class HealthChecker {
   }
 
   private getMemoryUsage() {
-    const used = process.memoryUsage().heapUsed;
-    const total = process.memoryUsage().heapTotal;
-    const percentage = Math.round((used / total) * 100);
+    const mem = process.memoryUsage();
+    const used = mem.heapUsed;
+    const total = mem.heapTotal;
+    const percentage = total > 0 ? Math.round((used / total) * 100) : 0;
 
     return {
       used: Math.round(used / 1024 / 1024), // MB
@@ -105,77 +105,55 @@ export class HealthChecker {
     };
   }
 
+  /**
+   * Probe the process database manager when available. Does not fabricate a
+   * "connected" result from a sleep timer — reports disconnected when the DB
+   * has not been wired up for this process.
+   */
   private async checkDatabase(): Promise<HealthCheckResult['database']> {
     try {
       const startTime = performance.now();
-      // Placeholder for actual database check
-      // In real implementation, this would ping the database
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      const responseTime = performance.now() - startTime;
+      // Lazy require to avoid hard coupling / circular imports at module load.
+      const { DatabaseManager } = require('../database/DatabaseManager') as {
+        DatabaseManager: {
+          getInstance: () => { isConnected: () => boolean };
+        };
+      };
+      const db = DatabaseManager.getInstance();
+      const responseTime = Math.round(performance.now() - startTime);
 
-      return {
-        status: 'connected',
-        responseTime: Math.round(responseTime),
-      };
-    } catch {
-      return {
-        status: 'error',
-      };
+      if (db.isConnected()) {
+        return { status: 'connected', responseTime };
+      }
+      return { status: 'disconnected', responseTime };
+    } catch (error) {
+      logger.debug('Database health probe unavailable:', error);
+      return { status: 'disconnected' };
     }
   }
 
+  /**
+   * Report only services we can probe without inventing "always up" sleep
+   * placeholders. Event-loop latency is a real process signal; external
+   * integrations are omitted until they have real probes.
+   */
   private async checkServices(): Promise<HealthCheckResult['services']> {
     const services: HealthCheckResult['services'] = {};
 
-    // Check WebSocket service
     try {
       const startTime = performance.now();
-      // Placeholder for WebSocket service check
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      const responseTime = performance.now() - startTime;
+      // Measure event-loop delay with a zero-delay timer (real scheduling lag).
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const responseTime = Math.round(performance.now() - startTime);
 
-      services.websocket = {
-        status: 'up',
-        responseTime: Math.round(responseTime),
+      services.eventLoop = {
+        status: responseTime > 1000 ? 'degraded' : 'up',
+        responseTime,
+        message:
+          responseTime > 1000 ? `Event-loop delay ${responseTime}ms exceeds 1000ms` : undefined,
       };
     } catch (error) {
-      services.websocket = {
-        status: 'down',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-
-    // Check LLM service
-    try {
-      const startTime = performance.now();
-      // Placeholder for LLM service check
-      await new Promise((resolve) => setTimeout(resolve, 15));
-      const responseTime = performance.now() - startTime;
-
-      services.llm = {
-        status: 'up',
-        responseTime: Math.round(responseTime),
-      };
-    } catch (error) {
-      services.llm = {
-        status: 'down',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-
-    // Check external integrations
-    try {
-      const startTime = performance.now();
-      // Placeholder for external integrations check
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      const responseTime = performance.now() - startTime;
-
-      services.integrations = {
-        status: 'up',
-        responseTime: Math.round(responseTime),
-      };
-    } catch (error) {
-      services.integrations = {
+      services.eventLoop = {
         status: 'down',
         message: error instanceof Error ? error.message : 'Unknown error',
       };
@@ -184,22 +162,46 @@ export class HealthChecker {
     return services;
   }
 
+  /**
+   * Collect real OS / process metrics only. Never returns crypto-random or
+   * other fabricated placeholder values for CPU, disk, connections, or errors.
+   */
   private async collectMetrics(): Promise<HealthCheckResult['metrics']> {
     const metrics: HealthCheckResult['metrics'] = {};
 
     try {
-      // CPU Usage (placeholder - would need system-specific implementation)
-      metrics.cpuUsage = getRandomFloat(100); // Placeholder
+      metrics.cpuUsage = this.calculateCpuUsage();
+      metrics.loadAverage1m = os.loadavg()[0];
 
-      // Disk Usage
       const diskInfo = await this.getDiskUsage();
-      metrics.diskUsage = diskInfo.percentage;
+      if (diskInfo !== null) {
+        metrics.diskUsage = diskInfo.percentage;
+      }
 
-      // Active Connections (placeholder)
-      metrics.activeConnections = Math.floor(getRandomFloat(100));
-
-      // Error Rate (placeholder)
-      metrics.errorRate = getRandomFloat(5);
+      // Prefer live MetricsCollector counters when the singleton has been used;
+      // otherwise omit rather than invent connection/error figures.
+      try {
+        const { MetricsCollector } = require('./MetricsCollector') as {
+          MetricsCollector: {
+            getInstance: () => {
+              getMetrics: () => {
+                activeConnections: number;
+                errors: number;
+                messagesProcessed: number;
+              };
+            };
+          };
+        };
+        const m = MetricsCollector.getInstance().getMetrics();
+        metrics.activeConnections = m.activeConnections;
+        if (m.messagesProcessed > 0) {
+          metrics.errorRate = Math.round((m.errors / m.messagesProcessed) * 1000) / 10;
+        } else {
+          metrics.errorRate = 0;
+        }
+      } catch {
+        // MetricsCollector unavailable — leave activeConnections/errorRate unset.
+      }
     } catch (error) {
       logger.error('Failed to collect metrics:', error);
     }
@@ -207,24 +209,57 @@ export class HealthChecker {
     return metrics;
   }
 
-  private async getDiskUsage() {
+  /**
+   * Process CPU usage as a percentage of wall-clock time since the last sample.
+   * Mirrors MetricsCollector.calculateCpuUsage — real process.cpuUsage delta.
+   */
+  private calculateCpuUsage(): number {
+    const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
+    const currentHrTime = process.hrtime.bigint();
+    const elapsedHrTime = currentHrTime - this.lastCpuHrTime;
+
+    this.lastCpuUsage = process.cpuUsage();
+    this.lastCpuHrTime = currentHrTime;
+
+    const elapsedMs = Number(elapsedHrTime) / 1_000_000;
+    if (elapsedMs <= 0) {
+      return 0;
+    }
+
+    const userMs = currentCpuUsage.user / 1000;
+    const systemMs = currentCpuUsage.system / 1000;
+    const cpuPercent = (100 * (userMs + systemMs)) / elapsedMs;
+
+    return Math.max(0, Math.min(100, Math.round(cpuPercent * 10) / 10));
+  }
+
+  /**
+   * Real filesystem usage for the process working directory via fs.statfs.
+   * Returns null when the platform call fails (metrics field is then omitted).
+   */
+  private async getDiskUsage(): Promise<{
+    used: number;
+    total: number;
+    percentage: number;
+  } | null> {
     try {
-      // Placeholder for disk usage check
-      // In real implementation, this would check actual disk usage
-      const used = getRandomFloat(100);
-      const total = 100;
+      const stats = await fs.statfs(process.cwd());
+      const total = Number(stats.blocks) * Number(stats.bsize);
+      const free = Number(stats.bfree) * Number(stats.bsize);
+      if (total <= 0) {
+        return null;
+      }
+      const used = total - free;
+      const percentage = Math.round((used / total) * 1000) / 10;
 
       return {
-        used: Math.round(used),
-        total: Math.round(total),
-        percentage: Math.round((used / total) * 100),
+        used: Math.round(used / 1024 / 1024),
+        total: Math.round(total / 1024 / 1024),
+        percentage: Math.max(0, Math.min(100, percentage)),
       };
-    } catch {
-      return {
-        used: 0,
-        total: 100,
-        percentage: 0,
-      };
+    } catch (error) {
+      logger.debug('Disk usage probe failed:', error);
+      return null;
     }
   }
 
@@ -245,7 +280,7 @@ export class HealthChecker {
     // Check for degraded performance
     if (
       healthCheck.memory.percentage > 90 ||
-      (healthCheck.metrics.diskUsage && healthCheck.metrics.diskUsage > 90)
+      (healthCheck.metrics.diskUsage !== undefined && healthCheck.metrics.diskUsage > 90)
     ) {
       return 'degraded';
     }
@@ -273,7 +308,7 @@ export class HealthChecker {
     };
   }
 
-  private createErrorHealthCheck(error: any): HealthCheckResult {
+  private createErrorHealthCheck(error: unknown): HealthCheckResult {
     return {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

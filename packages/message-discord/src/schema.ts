@@ -12,6 +12,8 @@ export interface ProviderSchema {
   label: string;
   type: 'messenger';
   docsUrl?: string;
+  maturity?: 'stable' | 'beta' | 'experimental';
+  notes?: string;
   fields: {
     required: ProviderField[];
     optional: ProviderField[];
@@ -24,6 +26,9 @@ export const schema: ProviderSchema = {
   label: 'Discord',
   type: 'messenger',
   docsUrl: 'https://discord.com/developers/docs/intro',
+  maturity: 'stable',
+  notes:
+    'Text channels, threads, typing, multi-bot. Voice channel join/leave is NOT supported (no-op stub; public methods throw).',
   fields: {
     required: [
       {

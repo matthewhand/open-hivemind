@@ -13,9 +13,11 @@ Open-Hivemind is a multi-agent orchestration framework that combines messaging p
 ### What platforms does Open-Hivemind support?
 
 Open-Hivemind supports:
-- **Discord** - Full bot integration with voice, channels, and DMs
-- **Slack** - Workspace apps, threads, and reactions
+- **Discord** - Text channels, threads, typing, multi-bot (voice join is **not** supported)
+- **Slack** - Workspace apps, threads, typing, interactive actions (reaction add/send is **not** supported)
 - **Mattermost** - Self-hosted team communication
+- **Telegram** - Send + long-poll receive (no channel history via Bot API)
+- **Webhook** - Outbound HTTP POST + inbound ingress (beta; no channel history)
 
 ### What LLM providers are supported?
 

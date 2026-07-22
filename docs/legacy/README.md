@@ -101,9 +101,10 @@ tuning and indexes for hot read paths. The dead `MigrationManager` was deleted.
 Smaller pieces that were deleted rather than redesigned, kept here so their absence is
 intentional and documented:
 
-- **Voice module** — the original Discord voice sources were removed; the remaining
-  `voiceChannelManager` / `speechToText` are explicit no-op stubs. Voice is *not* a
-  current capability.
+- **Voice module** — the original Discord voice join sources were removed.
+  `voiceChannelManager` is an intentional no-op; DiscordService public voice methods
+  **throw** (no fake success). Whisper `speechToText` exists as a library helper but
+  has no production voice path. Voice is *not* a current product capability.
 - **Fabricated marketplace sample** — a fake `hivemind-plugin-weather` entry that leaked
   into real provider pages was removed.
 - **Fabricated Provider Health SLOs** — a page of invented availability numbers was gated

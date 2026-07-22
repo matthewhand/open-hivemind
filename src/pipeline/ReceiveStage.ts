@@ -34,7 +34,9 @@ export class ReceiveStage {
    */
   register(): void {
     this.bus.on('message:incoming', async (ctx) => {
-      await this.process(ctx.message, ctx.history, ctx.botConfig);
+      // Pass the full MessageContext so handoff metadata (transferHop, handoff)
+      // survives pipeline re-entry from transfer_to_bot.
+      await this.process(ctx.message, ctx.history, ctx.botConfig, ctx);
     });
     debug('ReceiveStage registered on message:incoming');
   }
@@ -48,12 +50,14 @@ export class ReceiveStage {
    * @param message  - The raw incoming message.
    * @param history  - Recent conversation history for this channel/thread.
    * @param botConfig - Active bot configuration snapshot.
+   * @param incoming  - Optional full bus context (preserves transfer/handoff metadata).
    * @returns The built {@link MessageContext}, or `null` if the message was rejected.
    */
   async process(
     message: IMessage,
     history: IMessage[],
-    botConfig: Record<string, unknown>
+    botConfig: Record<string, unknown>,
+    incoming?: Partial<MessageContext>
   ): Promise<MessageContext | null> {
     // 0. Global Kill Switch Check
     try {
@@ -75,10 +79,19 @@ export class ReceiveStage {
       return null;
     }
 
-    // 2. Resolve identity fields
-    const botName = (botConfig.BOT_NAME as string) || (botConfig.name as string) || 'hivemind';
-    const platform = message.platform || 'unknown';
-    const channelId = message.getChannelId();
+    // 2. Resolve identity fields (prefer bus-provided target bot on handoff)
+    const botName =
+      (incoming?.botName as string | undefined) ||
+      (botConfig.BOT_NAME as string) ||
+      (botConfig.name as string) ||
+      'hivemind';
+    const platform = incoming?.platform || message.platform || 'unknown';
+    const channelId = incoming?.channelId || message.getChannelId();
+
+    // Preserve handoff/transfer metadata from prior pipeline turns. receive.*
+    // is always rewritten for this entry.
+    const priorMetadata =
+      incoming?.metadata && typeof incoming.metadata === 'object' ? { ...incoming.metadata } : {};
 
     // 3. Build context
     const ctx: MessageContext = {
@@ -89,6 +102,7 @@ export class ReceiveStage {
       platform,
       channelId,
       metadata: {
+        ...priorMetadata,
         receive: {
           rawTextLength: rawText.length,
           sanitizedTextLength: text.length,
