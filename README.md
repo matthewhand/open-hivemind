@@ -36,7 +36,7 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 *The hivemind in action: a user asks one question in one channel — SupportBot answers, DevOpsBot adds the ops angle, and every other persona decides to stay silent (selective engagement).*
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus outbound Telegram (send) and an inbound webhook ingress. (Telegram receive is not yet implemented — see [ROADMAP.md](ROADMAP.md).)
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard — full two-way messaging (receive + send), threads, and typing indicators — plus Telegram (send + long-poll receive) and inbound/outbound webhook messengers. Remaining platform gaps (channel routing defaults, voice, etc.) are tracked in [ROADMAP.md](ROADMAP.md).
 *   **Consistent Voice**: Maintain consistent identities across different platforms, with persona usage tracking.
 *   **Shared Context & Memory**: Pluggable memory backends (Mem0, Mem4AI, MemVault, PostgreSQL) with retention/eviction, wired into the message pipeline per bot.
 *   **Flexible LLMs**: OpenAI, Flowise, OpenWebUI, Letta, and OpenSwarm — with function/tool calling, plus live model listing and response streaming for OpenAI.
@@ -157,32 +157,24 @@ For a comprehensive, documented list of every supported variable, consult the `.
 
 Open-Hivemind's core is **stable and verified**: multi-bot orchestration on Discord/Slack/Mattermost, five LLM providers, the 5-stage message pipeline, personas, guard profiles, MCP tool execution with approval flow, SQLite/Postgres persistence, and the full WebUI admin (35+ pages) are all working and covered by ~1,150 unit tests plus end-to-end user-journey tests.
 
-The items below are **not finished**. They exist in varying states (partial, stub, or planned) and are tracked with per-item detail and effort estimates in [ROADMAP.md](ROADMAP.md):
+The items below are **not finished** (or only partially finished). Shipped items that used to appear here — Telegram long-poll receive, webhook outbound HTTP POST, durable MemVault (SQLite), pipeline history summarization, MCP auto-connect + HTTP/SSE transports, Slack generic interactive actions, durable scheduled bot tasks, durable refresh-token allow-list, and configurable CORS origins — are done; see [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md). Remaining gaps:
 
 - [ ] **Messaging platforms**
-  - [ ] Telegram support (send works; receive + bootstrap loading unfinished)
-  - [ ] Outgoing webhook messenger (inbound ingress works; outbound send is a stub)
-  - [ ] Slack interactive actions/modals beyond demo handlers
-  - [ ] Smart channel routing enabled by default (`MESSAGE_CHANNEL_ROUTER_ENABLED`, Discord-only today)
+  - [ ] Smart channel routing enabled by default (`MESSAGE_CHANNEL_ROUTER_ENABLED`; Discord-oriented scoring today)
+  - [ ] Discord voice-channel join/leave (Whisper STT code exists; voice manager join/leave is still a no-op stub)
 - [ ] **LLM providers**
   - [ ] Streaming for providers beyond OpenAI
-  - [ ] OpenWebUI: conversation-role fidelity and runtime knowledge-file RAG
+  - [ ] OpenWebUI runtime knowledge-file RAG lifecycle (per-bot upload/refresh)
   - [ ] Vision (image input) support
-- [ ] **Memory**
-  - [ ] Durable MemVault store (in-memory today)
-  - [ ] Automatic conversation summarization (service exists, not yet wired in)
 - [ ] **MCP**
-  - [ ] Auto-connect bot-assigned MCP servers at startup
-  - [ ] Non-stdio MCP server transports in the connect path
-  - [ ] Unify the parallel MCP connection stores
+  - [ ] Unify the parallel MCP connection stores (admin vs bot vs package paths)
 - [ ] **Monitoring**
-  - [ ] Replace remaining demo data in the monitoring dashboard with live series
-  - [ ] Per-step pipeline telemetry for message-flow replay
-- [ ] **Voice**
-  - [ ] Discord voice-channel join/leave (speech-to-text already works)
+  - [ ] Per-step pipeline telemetry for message-flow replay (UI still infers steps)
+  - [ ] Deferred Business KPI metrics (cost/retention/churn/availability) or hide them
+- [ ] **Pipeline / architecture**
+  - [ ] Pipeline ↔ legacy handler parity then sunset (`USE_LEGACY_HANDLER`)
+  - [ ] Real `transfer_to_bot` swarm handoff (currently a canned success signal)
 - [ ] **Operations**
-  - [ ] Scheduled bot tasks persistence (in-memory today, lost on restart)
-  - [ ] Durable refresh-token store for multi-instance deployments
-  - [ ] Configurable CORS origins from settings
+  - [ ] Webhook *scheduled* message durable store + delivery scheduler (CRUD exists; delivery is not durable)
 
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md), and check [ROADMAP.md](ROADMAP.md) for effort-estimated entry points.

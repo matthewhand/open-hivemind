@@ -53,8 +53,10 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       type="button"
       className={`btn btn-ghost btn-circle lg:hidden min-h-[44px] min-w-[44px] ${className}`}
       onClick={onClick}
+      tabIndex={0}
       aria-label={isOpen ? 'Close menu' : 'Open menu'}
       aria-expanded={isOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
     >
       <Swap
         checked={isOpen}

@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.4.0 - 2026-07-20
+
+### 🔒 Security
+
+- **Authz hardening**: `AuthManager.updateUser` now applies an allowlist of safe/admin-managed fields, preventing mass-assignment of secrets (`passwordHash`, `twoFactor*`) and identity keys (`id`, `createdAt`).
+- **Live role enforcement**: `AuthMiddleware` derives permissions from the user's *current* role (not the stale JWT claim) and rejects `isActive === false` users, closing a privilege-escalation window after demotion.
+- **Profile schema isolation**: self-service profile updates use a dedicated schema that strips `role`/`isActive`; `validateRequest` now strips unknown body keys so handlers never see unauthorized fields.
+- **Secure config access**: `/webui/api/secure-config` routes now require admin.
+- **Dangerous-flag refusal**: `FORCE_TRUSTED_LOGIN` and `DISABLE_ENCRYPTION` are rejected in production, even under `ALLOW_INSECURE_PRODUCTION`.
+- **Trusted proxy default**: trusted proxies now default to loopback only (no RFC1918), mitigating `X-Forwarded-For` spoofing.
+- Password change accepts `currentPassword` with `oldPassword` fallback.
+
+### ✨ Added
+
+- **Swarm modes**: `DecisionStage` supports `SWARM_MODE` (`exclusive`/`broadcast`/`rotating`/`priority`/`collaborative`) with atomic claim acquisition and `SwarmCoordinator.decide` for non-exclusive turn/broadcast logic.
+- **Multi-provider send routing**: `MessageSenderAdapter` routes outbound replies to the correct messenger by platform, forwarding thread/reply args; `createPipeline` wires all `messengerServices`.
+- **Tool-augmented inference**: `LlmInvokerAdapter` prefers `toolAugmentedCompletion` (MCP/tools) with a plain-completion fallback.
+- **Swarm claim release**: claims are released on empty/error inference and empty/failed send so another bot can retry.
+
+### 🧪 Tests
+
+- Added coverage for authz hardening, swarm atomic-claim races, tool-augmented inference fallback, thread/reply send, and provider-map routing.
+- Gated real-Neon Postgres integration suites behind `ALLOW_REAL_SECRETS` so they skip (rather than fail) in DB-less/CI environments.
+
 ## Unreleased
 
 ### ⚠️ Breaking Changes
@@ -26,4 +50,7 @@
 
 ### 🚧 Still Pending
 
-- Two-factor authentication, account lockout, and the session manager remain under security review and are not yet enabled. Discord voice / speech-to-text is not implemented.
+- **Session manager** is implemented but **opt-in** (`SESSION_MANAGER_ENABLED=true`); JWT remains the default production auth path until multi-instance session stores are hardened.
+- **TOTP 2FA** and **account lockout** code ships (`TotpService`, `LoginAttemptTracker`); full Settings UI persistence for every security toggle is still partial — treat as available via API/config, not fully operator-UX complete.
+- **Discord voice**: Whisper speech-to-text exists, but **voice-channel join/leave is still a no-op stub** (`VoiceChannelManager`), so end-to-end voice is not production-ready.
+- **Not claimed as shipped here**: multi-provider streaming, vision input, real `transfer_to_bot` handoff, Provider Health SLOs (mock/501 unless `ENABLE_MOCK_PROVIDER_HEALTH`), durable webhook *scheduled* delivery, pipeline↔legacy parity.

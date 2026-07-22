@@ -525,7 +525,15 @@ const DataTable = <T extends Record<string, any>>({
 
                 {/* Actions as button group */}
                 {actions && actions.length > 0 && (
-                  <div className="card-actions justify-end mt-2 pt-2 border-t border-base-200" onClick={e => e.stopPropagation()}>
+                  <div
+                    className="card-actions justify-end mt-2 pt-2 border-t border-base-200"
+                    onClick={e => e.stopPropagation()}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                      }
+                    }}
+                  >
                     {renderActions(row, idx, true)}
                   </div>
                 )}
@@ -653,17 +661,21 @@ const DataTable = <T extends Record<string, any>>({
             {paginatedData.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0) + (actions && actions.length > 0 ? 1 : 0)} className="text-center py-8">
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-base-content/60">No data found</span>
-                    {searchTerm && (
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setSearchTerm('')}
-                      >
-                        Clear search
-                      </button>
-                    )}
-                  </div>
+                  {emptyState ? (
+                    emptyState
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-base-content/60">No data found</span>
+                      {searchTerm && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => setSearchTerm('')}
+                        >
+                          Clear search
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             )}

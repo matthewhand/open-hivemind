@@ -6,14 +6,15 @@ const debug = Debug('app:DatabaseMigrator');
 export class CustomDbStorage {
   constructor(
     private db: IDatabase,
-    private isPostgres: boolean
+    private dialect: 'sqlite' | 'postgres' | 'mysql'
   ) {}
 
   async executed(): Promise<string[]> {
+    const dtType = this.dialect === 'postgres' ? 'TIMESTAMP' : 'DATETIME';
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS umzug_migrations (
-        name ${this.isPostgres ? 'TEXT' : 'TEXT'} PRIMARY KEY,
-        created_at ${this.isPostgres ? 'TIMESTAMP' : 'DATETIME'} DEFAULT ${this.isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+        name TEXT PRIMARY KEY,
+        created_at ${dtType} DEFAULT CURRENT_TIMESTAMP
       )
     `);
     try {
@@ -36,7 +37,10 @@ export class CustomDbStorage {
   }
 }
 
-export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise<void> => {
+export const runMigrations = async (
+  db: IDatabase,
+  dialect: 'sqlite' | 'postgres' | 'mysql'
+): Promise<void> => {
   debug('Initializing migrator...');
 
   // Lazy load Umzug to avoid crashing tests that mock fs
@@ -45,7 +49,11 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
   const migrations = [
     {
       name: '000_initial_schema.ts',
-      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      up: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { up } = await import('./migrations/000_initial_schema');
         await up(context);
       },
@@ -55,34 +63,58 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
     },
     {
       name: '001_add_missing_indexes.ts',
-      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      up: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { up } = await import('./migrations/001_add_missing_indexes');
 
         await up(context);
       },
-      down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      down: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { down } = await import('./migrations/001_add_missing_indexes');
         await down(context);
       },
     },
     {
       name: '002_add_bot_scheduled_tasks.ts',
-      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      up: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { up } = await import('./migrations/002_add_bot_scheduled_tasks');
         await up(context);
       },
-      down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      down: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { down } = await import('./migrations/002_add_bot_scheduled_tasks');
         await down(context);
       },
     },
     {
       name: '003_add_memvault_memories.ts',
-      up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      up: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { up } = await import('./migrations/003_add_memvault_memories');
         await up(context);
       },
-      down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
+      down: async ({
+        context,
+      }: {
+        context: { db: IDatabase; dialect: 'sqlite' | 'postgres' | 'mysql' };
+      }) => {
         const { down } = await import('./migrations/003_add_memvault_memories');
         await down(context);
       },
@@ -91,8 +123,8 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
 
   const umzug = new Umzug({
     migrations,
-    context: { db, isPostgres },
-    storage: new CustomDbStorage(db, isPostgres),
+    context: { db, dialect },
+    storage: new CustomDbStorage(db, dialect),
     logger: console,
   });
 

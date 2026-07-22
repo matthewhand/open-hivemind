@@ -126,10 +126,17 @@ const Accordion: React.FC<AccordionProps> = ({
             <button
               type="button"
               className={getTitleClasses() + ' w-full text-left'}
-              onClick={() => handleToggle(item.id)}
-              disabled={isDisabled}
+              tabIndex={isDisabled ? -1 : 0}
+              onClick={() => !isDisabled && handleToggle(item.id)}
+              onKeyDown={(e) => {
+                if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleToggle(item.id);
+                }
+              }}
               aria-expanded={isOpen}
               aria-controls={`accordion-content-${item.id}`}
+              disabled={isDisabled}
             >
               <div className={`flex items-center gap-2 ${iconPosition === 'right' ? 'justify-between' : ''}`}>
                 {iconPosition === 'left' && item.icon && (
