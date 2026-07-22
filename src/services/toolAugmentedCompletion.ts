@@ -4,6 +4,13 @@ import { ToolManager, type OpenAITool, type ToolResult } from './ToolManager';
 
 const debug = Debug('app:toolAugmentedCompletion');
 
+/**
+ * Returned by {@link toolAugmentedCompletion} when `transfer_to_bot` succeeded.
+ * InferenceStage must treat this as a successful handoff (not an empty LLM error)
+ * and must not post it to the channel.
+ */
+export const TRANSFER_COMPLETED_MARKER = '__hivemind_transfer_completed__';
+
 /** A single tool call as returned by the LLM. */
 interface LLMToolCall {
   id: string;
@@ -136,7 +143,9 @@ export async function toolAugmentedCompletion(opts: {
 
     if (transferred) {
       debug(`Bot "${botName}" completed transfer_to_bot — ending tool loop`);
-      return '';
+      // Non-empty sentinel so InferenceStage does not log an "empty LLM response" error.
+      // Output must not be posted to the channel — InferenceStage treats this specially.
+      return TRANSFER_COMPLETED_MARKER;
     }
   }
 

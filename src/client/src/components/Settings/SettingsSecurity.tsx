@@ -255,9 +255,11 @@ const SettingsSecurity: React.FC = () => {
                 <strong>Security headers</strong> — always applied by the server middleware.
               </li>
               <li>
-                <strong>Tenant isolation</strong> — opt-in via{' '}
-                <code className="text-xs">TENANT_ISOLATION_ENABLED=true</code> (requires{' '}
-                <code className="text-xs">X-Tenant-Id</code>).
+                <strong>Tenant isolation middleware</strong> —{' '}
+                <code className="text-xs">requireTenant</code> exists in auth middleware and
+                validates <code className="text-xs">X-Tenant-Id</code> when{' '}
+                <code className="text-xs">TENANT_ISOLATION_ENABLED=true</code>, but is{' '}
+                <em>not yet mounted</em> on production routes (library-only until wired).
               </li>
             </ul>
           </Card>

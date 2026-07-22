@@ -416,7 +416,8 @@ export class ToolManager {
       reason || '(none)'
     );
 
-    MessageBus.getInstance().emit('message:incoming', {
+    // emitAsync so async ReceiveStage.process is not fire-and-forget.
+    void MessageBus.getInstance().emitAsync('message:incoming', {
       message: sourceMessage,
       history,
       botConfig: targetConfig,

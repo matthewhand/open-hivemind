@@ -63,7 +63,8 @@ describe('ToolManager transfer_to_bot', () => {
   beforeEach(() => {
     MessageBus.getInstance().reset();
     SwarmCoordinator.resetInstance();
-    emitSpy = jest.spyOn(MessageBus.getInstance(), 'emit');
+    // Handoff uses emitAsync so ReceiveStage.process is awaited by the bus.
+    emitSpy = jest.spyOn(MessageBus.getInstance(), 'emitAsync').mockResolvedValue(undefined);
     releaseSpy = jest.spyOn(SwarmCoordinator.getInstance(), 'releaseClaim');
   });
 
