@@ -3,8 +3,8 @@ import path from 'path';
 
 const databaseConfig = convict({
   DATABASE_TYPE: {
-    doc: 'Database type (sqlite or postgres)',
-    format: ['sqlite', 'postgres'],
+    doc: 'Database type (sqlite, postgres, or mysql). If unset, may be inferred from DATABASE_URL scheme.',
+    format: ['sqlite', 'postgres', 'mysql'],
     default: 'sqlite',
     env: 'DATABASE_TYPE',
   },
@@ -15,45 +15,45 @@ const databaseConfig = convict({
     env: 'DATABASE_PATH',
   },
   DATABASE_URL: {
-    doc: 'Postgres connection URL (overrides individual postgres settings)',
+    doc: 'Connection URL for Postgres or MySQL (overrides individual host/port/user settings)',
     format: '*',
     default: '',
     env: 'DATABASE_URL',
     sensitive: true,
   },
   DATABASE_HOST: {
-    doc: 'Postgres host',
+    doc: 'Database host (postgres/mysql when not using DATABASE_URL)',
     format: String,
     default: 'localhost',
     env: 'DATABASE_HOST',
   },
   DATABASE_PORT: {
-    doc: 'Postgres port',
+    doc: 'Database port (postgres/mysql when not using DATABASE_URL)',
     format: 'port',
     default: 5432,
     env: 'DATABASE_PORT',
   },
   DATABASE_USER: {
-    doc: 'Postgres user',
+    doc: 'Database user (postgres/mysql when not using DATABASE_URL)',
     format: String,
     default: 'postgres',
     env: 'DATABASE_USER',
   },
   DATABASE_PASSWORD: {
-    doc: 'Postgres password',
+    doc: 'Database password (postgres/mysql when not using DATABASE_URL)',
     format: String,
     default: '',
     env: 'DATABASE_PASSWORD',
     sensitive: true,
   },
   DATABASE_NAME: {
-    doc: 'Postgres database name',
+    doc: 'Database name (postgres/mysql when not using DATABASE_URL)',
     format: String,
     default: 'hivemind',
     env: 'DATABASE_NAME',
   },
   DATABASE_SSL: {
-    doc: 'Whether to use SSL for Postgres connection',
+    doc: 'Whether to use SSL for remote database connections',
     format: Boolean,
     default: false,
     env: 'DATABASE_SSL',

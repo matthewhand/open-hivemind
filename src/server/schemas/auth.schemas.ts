@@ -56,18 +56,26 @@ export const LogoutSchema = z.object({
   }),
 });
 
-// Schema for password change
+// Schema for password change. `currentPassword` is canonical; `oldPassword`
+// is accepted as a legacy alias so older clients keep working. At least one
+// must be present (validated via refine so both can remain optional fields).
 export const ChangePasswordSchema = z.object({
-  body: z.object({
-    currentPassword: z.string().min(1, { message: 'Current password is required' }),
-    newPassword: z
-      .string()
-      .min(8, { message: 'New password must be at least 8 characters' })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-        message:
-          'New password must contain at least one lowercase letter, one uppercase letter, and one number',
-      }),
-  }),
+  body: z
+    .object({
+      currentPassword: z.string().min(1, { message: 'Current password is required' }).optional(),
+      oldPassword: z.string().min(1).optional(),
+      newPassword: z
+        .string()
+        .min(8, { message: 'New password must be at least 8 characters' })
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+          message:
+            'New password must contain at least one lowercase letter, one uppercase letter, and one number',
+        }),
+    })
+    .refine((data) => Boolean(data.currentPassword || data.oldPassword), {
+      message: 'Current password is required',
+      path: ['currentPassword'],
+    }),
 });
 
 // Schema for user ID parameter
@@ -84,21 +92,32 @@ export const VerifyTokenSchema = z.object({
   }),
 });
 
-// Schema for user updates
+// Shared field validators for username / email on update payloads.
+const optionalUsername = z
+  .string()
+  .min(3, { message: 'Username must be at least 3 characters' })
+  .max(50, { message: 'Username must be less than 50 characters' })
+  .regex(/^[a-zA-Z0-9_-]+$/, {
+    message: 'Username can only contain letters, numbers, underscores, and hyphens',
+  })
+  .optional();
+
+const optionalEmail = z.string().email({ message: 'Valid email is required' }).optional();
+
+// Schema for admin user updates (may change role)
 export const UpdateUserSchema = z.object({
   body: z.object({
-    username: z
-      .string()
-      .min(3, { message: 'Username must be at least 3 characters' })
-      .max(50, { message: 'Username must be less than 50 characters' })
-      .regex(/^[a-zA-Z0-9_-]+$/, {
-        message: 'Username can only contain letters, numbers, underscores, and hyphens',
-      })
-      .optional(),
-    email: z.string().email({ message: 'Valid email is required' }).optional(),
+    username: optionalUsername,
+    email: optionalEmail,
     role: z.enum(['user', 'admin']).optional(),
   }),
 });
 
-// Schema for profile updates (same as UpdateUserSchema but often more limited in real apps)
-export const UpdateProfileSchema = UpdateUserSchema;
+// Schema for self-service profile updates — NEVER accepts role or secrets.
+// Unknown keys (including role) are stripped by Zod + validateRequest reassignment.
+export const UpdateProfileSchema = z.object({
+  body: z.object({
+    username: optionalUsername,
+    email: optionalEmail,
+  }),
+});

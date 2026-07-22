@@ -19,6 +19,28 @@ const envSchema = z
   })
   .passthrough() // Allow other environment variables
   .superRefine((env, ctx) => {
+    // Dangerous test/dev flags — always refused in production, even when
+    // ALLOW_INSECURE_PRODUCTION is set. These actively weaken security rather than
+    // merely skipping missing-secret requirements.
+    if (env.NODE_ENV === 'production') {
+      if (process.env.FORCE_TRUSTED_LOGIN === 'true') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'FORCE_TRUSTED_LOGIN cannot be used in production (passwordless trusted-admin bypass)',
+          path: ['FORCE_TRUSTED_LOGIN'],
+        });
+      }
+      if (process.env.DISABLE_ENCRYPTION === 'true') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'DISABLE_ENCRYPTION cannot be used in production (disables at-rest encryption of secrets)',
+          path: ['DISABLE_ENCRYPTION'],
+        });
+      }
+    }
+
     // ALLOW_INSECURE_PRODUCTION=true opts out of the production-required checks so
     // the app boots lean (degraded features) instead of failing closed. Mirrors the
     // inline guards in EncryptionService / AuthManager / PluginManager. Base-schema

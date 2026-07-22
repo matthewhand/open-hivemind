@@ -199,8 +199,8 @@ export class AuthMiddleware {
       const payload = this.authManager.verifyAccessToken(token) as TokenPayload;
 
       // Get user from token payload. A valid token whose user has been
-      // deleted is rejected — deliberately the same generic message as an
-      // invalid token to avoid user enumeration.
+      // deleted or deactivated is rejected — deliberately the same generic
+      // message as an invalid token to avoid user enumeration.
       const user = this.authManager.getUser(payload.userId);
       if (!user) {
         debug('Token valid but user %s not found', payload.userId);
@@ -208,11 +208,19 @@ export class AuthMiddleware {
         return;
       }
 
+      if (user.isActive === false) {
+        debug('Token valid but user %s is inactive', payload.userId);
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
+      }
+
       const userWithTenant = user;
 
-      // Attach user, permissions, and tenant to request
+      // Attach user and permissions derived from the *live* role, not the JWT
+      // claim. JWT permissions can be stale after demotion/elevation until
+      // token expiry; requirePermission must see the current role.
       (req as AuthMiddlewareRequest).user = userWithTenant;
-      (req as AuthMiddlewareRequest).permissions = payload.permissions;
+      (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(user.role);
 
       debug(`Authenticated user: ${user.username} (role: ${user.role})`);
       next();
@@ -325,10 +333,14 @@ export class AuthMiddleware {
         const payload = this.authManager.verifyAccessToken(token) as TokenPayload;
         const user = this.authManager.getUser(payload.userId);
 
-        if (user) {
+        // Only attach active users; inactive accounts are treated as unauthenticated.
+        if (user && user.isActive !== false) {
           authReq.user = user;
-          authReq.permissions = payload.permissions;
+          // Live role permissions (not JWT payload) — same as authenticate.
+          authReq.permissions = this.authManager.getUserPermissions(user.role);
           debug(`Optional auth: authenticated user ${user.username}`);
+        } else if (user && user.isActive === false) {
+          debug('Optional auth: ignoring inactive user %s', payload.userId);
         }
       }
     } catch (error) {

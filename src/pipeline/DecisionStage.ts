@@ -21,11 +21,19 @@ import Debug from 'debug';
 import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents, ReplyDecision } from '@src/events/types';
-import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { SwarmCoordinator, type SwarmMode } from '@src/services/SwarmCoordinator';
 import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 import { DefaultActivityRecorder, type ActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:decision');
+
+const SWARM_MODES: readonly SwarmMode[] = [
+  'exclusive',
+  'broadcast',
+  'rotating',
+  'priority',
+  'collaborative',
+];
 
 /**
  * Resolve the idle-response service name from the message context. Mirrors the
@@ -34,6 +42,16 @@ const debug = Debug('app:pipeline:decision');
  */
 function resolveServiceName(ctx: MessageContext): string {
   return String(ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic');
+}
+
+/**
+ * Resolve swarm mode from bot config. Defaults to exclusive (atomic claim).
+ */
+function resolveSwarmMode(ctx: MessageContext): SwarmMode {
+  const raw =
+    ctx.botConfig.SWARM_MODE ?? ctx.botConfig.swarmMode ?? process.env.SWARM_MODE ?? 'exclusive';
+  const mode = String(raw).toLowerCase() as SwarmMode;
+  return SWARM_MODES.includes(mode) ? mode : 'exclusive';
 }
 
 type DecisionPayload = MessageEvents['pipeline:decision'];
@@ -52,8 +70,9 @@ function buildDecisionPayload(args: {
   shouldReply: boolean;
   reason?: string;
   meta?: Record<string, unknown>;
+  claimedBy?: string;
 }): DecisionPayload {
-  const { botName, messageId, channelId, shouldReply, reason, meta } = args;
+  const { botName, messageId, channelId, shouldReply, reason, meta, claimedBy } = args;
 
   const payload: DecisionPayload = {
     botName,
@@ -63,6 +82,10 @@ function buildDecisionPayload(args: {
     reason: reason ?? '',
     meta: meta ?? {},
   };
+
+  if (claimedBy) {
+    payload.claimedBy = claimedBy;
+  }
 
   if (meta) {
     if (meta.rolled !== undefined && Number.isFinite(Number(meta.rolled))) {
@@ -165,42 +188,46 @@ export class DecisionStage {
       const swarm = SwarmCoordinator.getInstance();
       const channelId = ctx.channelId;
       const botName = ctx.botName;
+      const swarmMode = resolveSwarmMode(ctx);
 
-      // --- Swarm claim check: skip if another bot already claimed ---
+      // --- Swarm claim check (exclusive): skip if another bot already claimed ---
       // Compare against `botName`, the SAME identity key used when this stage
       // claims the message below via `swarm.claimMessage(messageId, botName)`
       // (SwarmCoordinator stores that value as the claim's `botId`). Using the
       // config `BOT_ID` here instead would mismatch when `BOT_NAME !== BOT_ID`,
       // causing a bot to fail to recognize its own claim and mis-deduplicate.
-      const existingClaim = swarm.getClaim(messageId);
-      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botName;
-      if (alreadyClaimed) {
-        const reason = existingClaim
-          ? `Message already claimed by bot ${existingClaim.botId} in swarm`
-          : 'Message already claimed by another bot in swarm';
+      if (swarmMode === 'exclusive') {
+        const existingClaim = swarm.getClaim(messageId);
+        const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botName;
+        if (alreadyClaimed) {
+          const reason = existingClaim
+            ? `Message already claimed by bot ${existingClaim.botId} in swarm`
+            : 'Message already claimed by another bot in swarm';
 
-        debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
+          debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
 
-        // Capture metadata
-        ctx.metadata.decision = {
-          alreadyClaimed: true,
-          claimedBy: existingClaim?.botId,
-          reason,
-          shouldReply: false,
-        };
+          // Capture metadata
+          ctx.metadata.decision = {
+            alreadyClaimed: true,
+            claimedBy: existingClaim?.botId,
+            reason,
+            shouldReply: false,
+            swarmMode,
+          };
 
-        // Broadcast decision to WebSocket for Live Orchestration Log
-        this.bus.emit('pipeline:decision', {
-          botName,
-          messageId,
-          channelId,
-          shouldReply: false,
-          reason,
-          claimedBy: existingClaim?.botId,
-        });
+          // Broadcast decision to WebSocket for Live Orchestration Log
+          this.bus.emit('pipeline:decision', {
+            botName,
+            messageId,
+            channelId,
+            shouldReply: false,
+            reason,
+            claimedBy: existingClaim?.botId,
+          });
 
-        await this.bus.emitAsync('message:skipped', { ...ctx, reason });
-        return { shouldReply: false, reason };
+          await this.bus.emitAsync('message:skipped', { ...ctx, reason });
+          return { shouldReply: false, reason };
+        }
       }
 
       // --- Run the decision strategy ---
@@ -212,6 +239,7 @@ export class DecisionStage {
         shouldReply: decision.shouldReply,
         reason: decision.reason,
         meta: decision.meta,
+        swarmMode,
       };
 
       // Build the single `pipeline:decision` payload for the live Orchestration
@@ -228,9 +256,90 @@ export class DecisionStage {
       });
 
       if (decision.shouldReply) {
-        // Claim the message for this bot
-        swarm.claimMessage(messageId, botName);
-        debug('[DecisionStage] Message %s: claimed by %s', messageId, botName);
+        // Atomic swarm acquisition — only accept after we win the claim/decide.
+        if (swarmMode === 'exclusive') {
+          const claimed = swarm.claimMessage(messageId, botName, channelId);
+          if (!claimed) {
+            const existing = swarm.getClaim(messageId);
+            const claimedBy = existing?.botId;
+            const reason = claimedBy
+              ? `Message already claimed by bot ${claimedBy} in swarm`
+              : 'Failed to acquire exclusive swarm claim';
+
+            debug(
+              '[DecisionStage] Message %s: claim lost by %s (claimedBy=%s)',
+              messageId,
+              botName,
+              claimedBy ?? 'unknown'
+            );
+
+            ctx.metadata.decision = {
+              alreadyClaimed: true,
+              claimedBy,
+              reason,
+              shouldReply: false,
+              swarmMode,
+            };
+
+            this.bus.emit(
+              'pipeline:decision',
+              buildDecisionPayload({
+                botName,
+                messageId,
+                channelId,
+                shouldReply: false,
+                reason,
+                claimedBy,
+              })
+            );
+
+            await this.bus.emitAsync('message:skipped', { ...ctx, reason });
+            return { shouldReply: false, reason };
+          }
+          debug('[DecisionStage] Message %s: claimed by %s', messageId, botName);
+        } else {
+          // Non-exclusive modes use SwarmCoordinator.decide for turn/broadcast logic.
+          const swarmDecision = swarm.decide(messageId, botName, channelId, swarmMode);
+          if (!swarmDecision.shouldReply) {
+            const reason = swarmDecision.reason;
+            debug(
+              '[DecisionStage] Message %s: swarm mode=%s skipped for %s (%s)',
+              messageId,
+              swarmMode,
+              botName,
+              reason
+            );
+
+            ctx.metadata.decision = {
+              alreadyClaimed: Boolean(swarmDecision.claimedBy),
+              claimedBy: swarmDecision.claimedBy,
+              reason,
+              shouldReply: false,
+              swarmMode,
+            };
+
+            this.bus.emit(
+              'pipeline:decision',
+              buildDecisionPayload({
+                botName,
+                messageId,
+                channelId,
+                shouldReply: false,
+                reason,
+                claimedBy: swarmDecision.claimedBy,
+              })
+            );
+
+            await this.bus.emitAsync('message:skipped', { ...ctx, reason });
+            return { shouldReply: false, reason };
+          }
+          debug(
+            '[DecisionStage] Message %s: swarm mode=%s accepted for %s',
+            messageId,
+            swarmMode,
+            botName
+          );
+        }
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', decisionPayload);

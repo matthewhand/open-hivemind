@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
+import { requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { ConfigBackupSchema } from '../../validation/schemas/configSchema';
@@ -19,6 +20,8 @@ const secureConfigManagerPromise = SecureConfigManager.getInstance();
 
 // Apply audit middleware to all secure config routes
 router.use(auditMiddleware);
+// Admin-only: secure configs hold secrets; authenticate is applied at mount.
+router.use(requireAdmin);
 
 /**
  * GET /webui/api/secure-config

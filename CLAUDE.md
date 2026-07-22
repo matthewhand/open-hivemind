@@ -52,7 +52,7 @@ A console span exporter is always active. The following enable additional export
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `WEBHOOK_IP_WHITELIST` | _(empty → default-deny)_ | Comma-separated list of **exact** IPv4/IPv6 addresses allowed to call webhook endpoints (matched by exact string equality — CIDR notation and ranges are not supported). An empty value **blocks all** requests. IPv4-mapped IPv6 (`::ffff:a.b.c.d`) is normalized to its IPv4 form before matching. |
+| `WEBHOOK_IP_WHITELIST` | _(empty → default-deny)_ | Comma-separated list of **exact** IPv4/IPv6 addresses **or CIDR ranges** (e.g. `10.0.0.0/8`) allowed to call webhook endpoints. Exact entries match by string equality; entries containing `/` are checked via CIDR membership. An empty value **blocks all** requests. IPv4-mapped IPv6 (`::ffff:a.b.c.d`) is normalized to its IPv4 form before matching. |
 
 ## Screenshot Convention
 

@@ -7,6 +7,7 @@ import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import { Logger } from '@common/logger';
 import { runMigrations } from './migrationRunner';
+import { MySQLWrapper } from './mysqlWrapper';
 import { PostgresWrapper } from './postgresWrapper';
 import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
@@ -118,12 +119,33 @@ export class DatabaseManager {
 
   constructor() {
     this.initRepositories();
-    // Load config from databaseConfig (convict)
-    const type = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres';
+    // Load config from databaseConfig (convict). Prefer explicit DATABASE_TYPE,
+    // but infer from DATABASE_URL scheme when present so mysql:// and
+    // postgres:// URLs do not get mis-configured as the wrong dialect.
+    const configuredType = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres' | 'mysql';
+    const dbUrl = String(
+      process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL') || ''
+    ).trim();
+    let type: 'sqlite' | 'postgres' | 'mysql' = configuredType;
+    if (dbUrl.startsWith('mysql://') || dbUrl.startsWith('mysql2://')) {
+      type = 'mysql';
+    } else if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
+      type = 'postgres';
+    }
+
     if (type === 'sqlite') {
       this.configure({
         type: 'sqlite',
         path: databaseConfig.get('DATABASE_PATH'),
+      });
+    } else if (type === 'mysql') {
+      this.configure({
+        type: 'mysql',
+        host: databaseConfig.get('DATABASE_HOST'),
+        port: databaseConfig.get('DATABASE_PORT') || 3306,
+        username: databaseConfig.get('DATABASE_USER'),
+        password: databaseConfig.get('DATABASE_PASSWORD'),
+        database: databaseConfig.get('DATABASE_NAME'),
       });
     } else {
       this.configure({
@@ -200,7 +222,7 @@ export class DatabaseManager {
 
         this.db = new SQLiteWrapper(dbPath);
         debug('DATABASE_MANAGER: this.db initialized (SQLite)');
-        await runMigrations(this.db, false);
+        await runMigrations(this.db, 'sqlite');
       } else if (this.config.type === 'postgres') {
         const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
         if (dbUrl) {
@@ -216,7 +238,22 @@ export class DatabaseManager {
           });
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
-        await runMigrations(this.db, true);
+        await runMigrations(this.db, 'postgres');
+      } else if (this.config.type === 'mysql') {
+        const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
+        if (dbUrl) {
+          this.db = new MySQLWrapper(dbUrl);
+        } else {
+          this.db = new MySQLWrapper({
+            host: this.config.host,
+            port: this.config.port || 3306,
+            user: this.config.username,
+            password: this.config.password,
+            database: this.config.database,
+          });
+        }
+        debug('DATABASE_MANAGER: this.db initialized (MySQL)');
+        await runMigrations(this.db, 'mysql');
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,

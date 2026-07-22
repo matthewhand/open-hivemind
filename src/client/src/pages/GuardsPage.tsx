@@ -496,10 +496,12 @@ const GuardsPage: React.FC = () => {
                 <input type="checkbox" defaultChecked />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <Shield className="w-5 h-5" /> Access Control
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <div className="ml-auto z-10">
                     <Toggle
                       color="primary"
                       checked={guardsValue?.mcpGuard?.enabled || false}
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={e => e.stopPropagation()}
                       onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
                     />
                   </div>
@@ -560,9 +562,11 @@ const GuardsPage: React.FC = () => {
                 <input type="checkbox" />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <RefreshCw className="w-5 h-5" /> Rate Limiter
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <div className="ml-auto z-10">
                     <Toggle
                       checked={guardsValue?.rateLimit?.enabled || false}
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={e => e.stopPropagation()}
                       onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
                     />
                   </div>
@@ -614,10 +618,12 @@ const GuardsPage: React.FC = () => {
                 <input type="checkbox" />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <AlertTriangle className="w-5 h-5" /> Content Filter
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <div className="ml-auto z-10">
                     <Toggle
                       color="primary"
                       checked={guardsValue?.contentFilter?.enabled || false}
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={e => e.stopPropagation()}
                       onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
                     />
                   </div>

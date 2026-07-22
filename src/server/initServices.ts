@@ -535,6 +535,26 @@ export async function initServices(
     // Register messenger services with ShutdownCoordinator
     for (const service of messengerServices) {
       shutdownCoordinator.registerMessengerService(service as any);
+      // Keep DiscordService.getInstance() usable for legacy callers / test helpers
+      // once the real DI-created instance is known (getInstance throws until set).
+      try {
+        const name = String(
+          (service as any).providerName ||
+            (service as any).provider ||
+            service.constructor?.name ||
+            ''
+        ).toLowerCase();
+        if (name.includes('discord')) {
+          const { DiscordService } = require('@hivemind/message-discord');
+          if (typeof DiscordService?.setInstance === 'function') {
+            DiscordService.setInstance(service);
+          }
+        }
+      } catch (e) {
+        appLogger.debug('DiscordService.setInstance skipped', {
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
     }
 
     if (filteredMessengers.length > 0) {
@@ -582,9 +602,12 @@ export async function initServices(
     // (It internally creates a PipelineTracer and stores it via setActiveTracer().)
     const primaryService = messengerServices[0];
     if (primaryService) {
+      // Wire the pipeline once on the shared bus, but hand every messenger to
+      // MessageSenderAdapter so outbound replies route by platform.
       createPipeline(bus, {
         botConfig: {},
         messengerService: primaryService,
+        messengerServices,
         botId: primaryService.botId,
         defaultChannelId: primaryService.getDefaultChannel?.() ?? undefined,
       });

@@ -1,21 +1,4 @@
-/**
- * Regression tests for pipeline-debugger breakpoint coverage.
- *
- * Before the fix, only the DecisionStage consulted
- * `PipelineDebuggerService.shouldPause()` (stage 'validated'), so toggling a
- * breakpoint on any other stage had no effect. The Enrich, Inference, and Send
- * stages now run the same checkpoint, named after the event each stage
- * consumes:
- *
- *   - EnrichStage     -> 'accepted'   (message:accepted)
- *   - InferenceStage  -> 'enriched'   (message:enriched)
- *   - SendStage       -> 'response'   (message:response)
- *
- * These tests assert each stage pauses when (and only when) its breakpoint is
- * armed, and that the (possibly edited) context returned by `pause()` is the
- * one the stage continues with.
- */
-
+/** Pipeline debugger breakpoint coverage tests. */
 import { container } from 'tsyringe';
 import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
@@ -234,6 +217,11 @@ describe('pipeline debugger breakpoint checkpoints', () => {
 
     await stage.process({ ...makeContext(), responseText: 'original' });
 
-    expect(sendToChannel).toHaveBeenCalledWith('ch-debug', 'edited at breakpoint', 'TestBot');
+    expect(sendToChannel).toHaveBeenCalledWith(
+      'ch-debug',
+      'edited at breakpoint',
+      'TestBot',
+      expect.objectContaining({ platform: 'discord' })
+    );
   });
 });

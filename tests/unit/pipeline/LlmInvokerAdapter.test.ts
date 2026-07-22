@@ -6,15 +6,20 @@
  * the pipeline), not the (possibly empty) fallback config captured at
  * construction time. This guards the pipeline-botconfig regression where
  * `createPipeline` was wired with `botConfig: {}`.
+ *
+ * Also verifies tool-augmented completion is preferred, with plain
+ * generateChatCompletion as the failure fallback.
  */
 
-import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
-import * as getLlmProvider from '@src/llm/getLlmProvider';
 import type { ILlmProvider } from '@hivemind/shared-types';
+import * as getLlmProvider from '@src/llm/getLlmProvider';
+import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
+import * as toolAugmented from '@src/services/toolAugmentedCompletion';
 
 describe('LlmInvokerAdapter', () => {
   let provider: ILlmProvider;
   let spy: jest.SpyInstance;
+  let toolSpy: jest.SpyInstance;
 
   beforeEach(() => {
     provider = {
@@ -26,9 +31,11 @@ describe('LlmInvokerAdapter', () => {
       generateCompletion: jest.fn().mockResolvedValue('mock response'),
     } as unknown as ILlmProvider;
 
-    spy = jest
-      .spyOn(getLlmProvider, 'getLlmProviderForBot')
-      .mockResolvedValue(provider);
+    spy = jest.spyOn(getLlmProvider, 'getLlmProviderForBot').mockResolvedValue(provider);
+
+    toolSpy = jest
+      .spyOn(toolAugmented, 'toolAugmentedCompletion')
+      .mockResolvedValue('tool response');
   });
 
   afterEach(() => {
@@ -71,11 +78,66 @@ describe('LlmInvokerAdapter', () => {
     expect(spy).toHaveBeenCalledWith(fallbackConfig);
   });
 
-  it('forwards the system prompt and metadata to the resolved provider', async () => {
+  it('uses toolAugmentedCompletion with bot name, system prompt, and tool context', async () => {
     const adapter = new LlmInvokerAdapter({ botConfig: {} });
 
-    await adapter.generateResponse('hello', [], 'be helpful', { foo: 'bar' }, { name: 'BotB' });
+    const result = await adapter.generateResponse(
+      'hello',
+      [],
+      'be helpful',
+      { channelId: 'C1', userId: 'U1', messageProvider: 'discord' },
+      { name: 'BotB', MESSAGE_PROVIDER: 'discord', LLM_MAX_TOKENS: 200, LLM_TEMPERATURE: 0.5 }
+    );
 
+    expect(result).toBe('tool response');
+    expect(toolSpy).toHaveBeenCalledTimes(1);
+    expect(toolSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botName: 'BotB',
+        llmProvider: provider,
+        userMessage: 'hello',
+        historyMessages: [],
+        systemPrompt: 'be helpful',
+        metadata: expect.objectContaining({
+          systemPrompt: 'be helpful',
+          channelId: 'C1',
+          userId: 'U1',
+          maxTokens: 200,
+          temperature: 0.5,
+        }),
+        toolContext: {
+          userId: 'U1',
+          channelId: 'C1',
+          messageProvider: 'discord',
+          forumId: undefined,
+          forumOwnerId: undefined,
+        },
+      })
+    );
+    expect(provider.generateChatCompletion).not.toHaveBeenCalled();
+  });
+
+  it('resolves bot name from BOT_NAME when name is absent', async () => {
+    const adapter = new LlmInvokerAdapter({ botConfig: {} });
+
+    await adapter.generateResponse('hi', [], 'sys', {}, { BOT_NAME: 'NamedBot' });
+
+    expect(toolSpy).toHaveBeenCalledWith(expect.objectContaining({ botName: 'NamedBot' }));
+  });
+
+  it('falls back to plain generateChatCompletion when toolAugmentedCompletion throws', async () => {
+    toolSpy.mockRejectedValueOnce(new Error('tool setup failed'));
+    const adapter = new LlmInvokerAdapter({ botConfig: {} });
+
+    const result = await adapter.generateResponse(
+      'hello',
+      [],
+      'be helpful',
+      { foo: 'bar' },
+      { name: 'BotB' }
+    );
+
+    expect(result).toBe('mock response');
     expect(provider.generateChatCompletion).toHaveBeenCalledWith('hello', [], {
       foo: 'bar',
       systemPrompt: 'be helpful',

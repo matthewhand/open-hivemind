@@ -58,6 +58,7 @@ vi.mock('../DaisyUI/RadialProgress', () => ({
 
 vi.mock('../DaisyUI/Skeleton', () => ({
   SkeletonCard: () => <div className="skeleton-card" />,
+  SkeletonPage: () => <div className="skeleton-page" />,
 }));
 
 vi.mock('../DaisyUI/Stat', () => ({

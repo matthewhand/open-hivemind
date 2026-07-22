@@ -685,6 +685,11 @@ export class AuthManager {
 
   /**
    * Update user
+   *
+   * Only allowlisted fields are applied. Secrets (passwordHash, twoFactor*)
+   * and identity keys (id, createdAt) can never be mass-assigned via Partial
+   * updates — password / 2FA changes must go through dedicated methods.
+   * role and isActive remain assignable for admin user-management paths.
    */
   public updateUser(userId: string, updates: Partial<User>): User | null {
     const user = this.users.get(userId);
@@ -692,32 +697,40 @@ export class AuthManager {
       return null;
     }
 
+    // Allowlist only safe / admin-managed fields. Never spread `updates` raw.
+    const safeUpdates: Partial<User> = {};
+    if (updates.username !== undefined) safeUpdates.username = updates.username;
+    if (updates.email !== undefined) safeUpdates.email = updates.email;
+    if (updates.role !== undefined) safeUpdates.role = updates.role;
+    if (updates.isActive !== undefined) safeUpdates.isActive = updates.isActive;
+    if (updates.lastLogin !== undefined) safeUpdates.lastLogin = updates.lastLogin;
+
     // Collision check for username (validate only)
-    if (updates.username && updates.username !== user.username) {
-      if (this.usernameMap.has(updates.username)) {
+    if (safeUpdates.username && safeUpdates.username !== user.username) {
+      if (this.usernameMap.has(safeUpdates.username)) {
         throw new ValidationError('Username already exists', 'USER_ALREADY_EXISTS');
       }
     }
 
     // Collision check for email (validate only)
-    if (updates.email && updates.email !== user.email) {
-      if (this.emailMap.has(updates.email)) {
+    if (safeUpdates.email && safeUpdates.email !== user.email) {
+      if (this.emailMap.has(safeUpdates.email)) {
         throw new ValidationError('Email already exists', 'USER_ALREADY_EXISTS');
       }
     }
 
     // Validation passed, safely perform mutations
-    if (updates.username && updates.username !== user.username) {
+    if (safeUpdates.username && safeUpdates.username !== user.username) {
       this.usernameMap.delete(user.username);
-      this.usernameMap.set(updates.username, userId);
+      this.usernameMap.set(safeUpdates.username, userId);
     }
 
-    if (updates.email && updates.email !== user.email) {
+    if (safeUpdates.email && safeUpdates.email !== user.email) {
       this.emailMap.delete(user.email);
-      this.emailMap.set(updates.email, userId);
+      this.emailMap.set(safeUpdates.email, userId);
     }
 
-    const updatedUser = { ...user, ...updates };
+    const updatedUser = { ...user, ...safeUpdates };
     this.users.set(userId, updatedUser);
     this.persistUser(updatedUser);
 

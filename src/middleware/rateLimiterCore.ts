@@ -230,8 +230,10 @@ export function getTrustedProxies(): string[] {
       .filter(Boolean);
   }
 
-  // Default to common private network ranges and loopback
-  return ['127.0.0.1', '::1', '::ffff:127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+  // Default to loopback only. RFC1918 ranges must be opted in via TRUSTED_PROXIES —
+  // trusting all private networks by default allows X-Forwarded-For spoofing from
+  // any host that can reach the process on a LAN/VPC address.
+  return ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 }
 
 /**

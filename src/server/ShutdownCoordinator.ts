@@ -155,6 +155,15 @@ export class ShutdownCoordinator {
   }
 
   /**
+   * Live messenger services registered at boot (read-only snapshot).
+   * Used by authenticated connectivity tests that must not construct a fresh
+   * DiscordService (getInstance is deprecated and throws when unset).
+   */
+  public getRegisteredMessengerServices(): readonly IMessengerService[] {
+    return this.messengerServices;
+  }
+
+  /**
    * Register any shutdownable service.
    */
   public registerService(service: IShutdownable): void {

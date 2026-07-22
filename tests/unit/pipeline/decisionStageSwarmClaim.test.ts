@@ -13,11 +13,11 @@
  * (`botName`) as the write-side claim.
  */
 
+import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
 import type { ActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@hivemind/shared-types';
 
 // ---------------------------------------------------------------------------
 // Stub message
@@ -140,7 +140,7 @@ describe('DecisionStage swarm-claim identity consistency', () => {
     expect(second.shouldReply).toBe(true);
     expect(skipped).toHaveLength(0);
     // Strategy ran on both passes (would be short-circuited if mis-deduplicated).
-    expect((strategy.shouldReply as jest.Mock)).toHaveBeenCalledTimes(2);
+    expect(strategy.shouldReply as jest.Mock).toHaveBeenCalledTimes(2);
   });
 
   it('still skips when a DIFFERENT bot already claimed the message', async () => {
@@ -163,5 +163,29 @@ describe('DecisionStage swarm-claim identity consistency', () => {
     expect(skipped[0]).toContain('BobBot');
     // The strategy should never run — the message was de-duplicated.
     expect(strategy.shouldReply).not.toHaveBeenCalled();
+  });
+
+  it('respects claimMessage return value after strategy accepts (atomic race)', async () => {
+    const strategy: DecisionStrategy = {
+      shouldReply: jest.fn().mockImplementation(async () => {
+        // Simulate a race: another bot claims between early-check and claimMessage.
+        SwarmCoordinator.getInstance().claimMessage('m-race', 'BobBot');
+        return { shouldReply: true, reason: 'yes' };
+      }),
+    };
+    const stage = new DecisionStage(bus, strategy, noopRecorder());
+
+    const accepted: string[] = [];
+    const skipped: string[] = [];
+    bus.on('message:accepted', (ctx: any) => accepted.push(ctx.botName));
+    bus.on('message:skipped', (ctx: any) => skipped.push(ctx.reason));
+
+    const result = await stage.process(makeContext(new StubMessage('m-race')));
+
+    expect(result.shouldReply).toBe(false);
+    expect(result.reason).toContain('BobBot');
+    expect(accepted).toHaveLength(0);
+    expect(skipped).toHaveLength(1);
+    expect(SwarmCoordinator.getInstance().getClaim('m-race')?.botId).toBe('BobBot');
   });
 });

@@ -9,12 +9,25 @@ export const validateRequest =
   (schema: AnyZodObject) =>
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      // Validate request data against schema
-      schema.parse({
+      // Validate and strip unknown keys. Re-assign parsed values so route
+      // handlers never see fields the schema did not allow (e.g. role on
+      // profile update).
+      const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
-      });
+      }) as { body?: unknown; query?: unknown; params?: unknown };
+
+      if (parsed.body !== undefined) {
+        req.body = parsed.body;
+      }
+      if (parsed.query !== undefined) {
+        (req as { query: unknown }).query = parsed.query;
+      }
+      if (parsed.params !== undefined) {
+        (req as { params: unknown }).params = parsed.params;
+      }
+
       next();
       return;
     } catch (error) {

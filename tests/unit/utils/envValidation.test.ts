@@ -25,6 +25,9 @@ describe('validateRequiredEnvVars', () => {
     'HIVEMIND_PLUGIN_SIGNING_KEY',
     'ADMIN_PASSWORD',
     'OPENAI_API_KEY',
+    'FORCE_TRUSTED_LOGIN',
+    'DISABLE_ENCRYPTION',
+    'ALLOW_INSECURE_PRODUCTION',
   ];
 
   beforeEach(() => {
@@ -188,6 +191,51 @@ describe('validateRequiredEnvVars', () => {
       process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN = '   ';
       expect(() => validateRequiredEnvVars()).toThrow(/at least one messaging platform token/);
       delete process.env.MESSAGE_PROFILE_DISCOMAIN_BOT_TOKEN;
+    });
+
+    it('should throw if FORCE_TRUSTED_LOGIN=true in production', () => {
+      process.env.FORCE_TRUSTED_LOGIN = 'true';
+      expect(() => validateRequiredEnvVars()).toThrow(
+        /FORCE_TRUSTED_LOGIN cannot be used in production/
+      );
+    });
+
+    it('should throw if DISABLE_ENCRYPTION=true in production', () => {
+      process.env.DISABLE_ENCRYPTION = 'true';
+      expect(() => validateRequiredEnvVars()).toThrow(
+        /DISABLE_ENCRYPTION cannot be used in production/
+      );
+    });
+
+    it('refuses FORCE_TRUSTED_LOGIN even when ALLOW_INSECURE_PRODUCTION=true', () => {
+      process.env.ALLOW_INSECURE_PRODUCTION = 'true';
+      process.env.FORCE_TRUSTED_LOGIN = 'true';
+      // Missing secrets would otherwise be allowed; dangerous flags still fail closed.
+      delete process.env.OPENAI_API_KEY;
+      delete process.env.SESSION_SECRET;
+      delete process.env.JWT_SECRET;
+      delete process.env.JWT_REFRESH_SECRET;
+      delete process.env.ADMIN_PASSWORD;
+      delete process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
+      delete process.env.DISCORD_BOT_TOKEN;
+      expect(() => validateRequiredEnvVars()).toThrow(
+        /FORCE_TRUSTED_LOGIN cannot be used in production/
+      );
+    });
+
+    it('refuses DISABLE_ENCRYPTION even when ALLOW_INSECURE_PRODUCTION=true', () => {
+      process.env.ALLOW_INSECURE_PRODUCTION = 'true';
+      process.env.DISABLE_ENCRYPTION = 'true';
+      delete process.env.OPENAI_API_KEY;
+      delete process.env.SESSION_SECRET;
+      delete process.env.JWT_SECRET;
+      delete process.env.JWT_REFRESH_SECRET;
+      delete process.env.ADMIN_PASSWORD;
+      delete process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
+      delete process.env.DISCORD_BOT_TOKEN;
+      expect(() => validateRequiredEnvVars()).toThrow(
+        /DISABLE_ENCRYPTION cannot be used in production/
+      );
     });
   });
 
